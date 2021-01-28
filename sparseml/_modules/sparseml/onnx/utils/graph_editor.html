@@ -1,0 +1,392 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.onnx.utils.graph_editor &mdash; sparseml 1.0.9 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../sparseml.html" class="icon icon-home"> sparseml
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.keras.html">sparseml.keras package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.onnx.html">sparseml.onnx package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.optim.html">sparseml.optim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.pytorch.html">sparseml.pytorch package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.tensorflow_v1.html">sparseml.tensorflow_v1 package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../sparseml.utils.html">sparseml.utils package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../sparseml.html">sparseml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../sparseml.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.onnx.utils.graph_editor</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.onnx.utils.graph_editor</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions to edit ONNX Graphs.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">onnx</span>
+<span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.onnx.utils.helpers</span> <span class="kn">import</span> <span class="n">get_node_params</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;update_model_param&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;swap_node_output&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;remove_node_and_params_from_graph&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;override_model_batch_size&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prune_unstructured&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prune_model_one_shot&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prune_model_one_shot_iter&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="update_model_param"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.update_model_param">[docs]</a><span class="k">def</span> <span class="nf">update_model_param</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">val</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Removes the parameter with name param_name from the model</span>
+<span class="sd">    Creates a new parameter using val</span>
+<span class="sd">    Adds val to the model with name param_name as an update</span>
+<span class="sd">    :param model: The model to update</span>
+<span class="sd">    :param param_name: The parameter name in the model to update</span>
+<span class="sd">    :param val: The new value of the parameter</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">param_matches</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">param</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span> <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">param_name</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="n">param_matches</span><span class="p">:</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">param_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">new_param</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">param_name</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_param</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="swap_node_output"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.swap_node_output">[docs]</a><span class="k">def</span> <span class="nf">swap_node_output</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">output</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes the current output of the node and replaces it with the provided value</span>
+<span class="sd">    Assumes that the node only has one output</span>
+<span class="sd">    :param node: Node to change the output of</span>
+<span class="sd">    :param output: New output value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+    <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="remove_node_and_params_from_graph"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.remove_node_and_params_from_graph">[docs]</a><span class="k">def</span> <span class="nf">remove_node_and_params_from_graph</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
+    <span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span>
+    <span class="n">keep_params</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Deletes a node from the mdoel graph as well as its parameters listed in node.input</span>
+<span class="sd">    :param model: Model to delete from</span>
+<span class="sd">    :param node: Node to delete</span>
+<span class="sd">    :param keep_params: Names of node input initializers not to remove from graph default</span>
+<span class="sd">        is None.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">keep_params</span> <span class="o">=</span> <span class="n">keep_params</span> <span class="ow">or</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">keep_params</span> <span class="ow">and</span> <span class="n">param</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+            <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_override_tensor_batch_dim</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">):</span>
+    <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">init</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">tensor</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="c1"># This tensor is actually an initializer =&gt; skip</span>
+            <span class="k">return</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="c1"># skip tensors with variable batch sizes</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dim_param</span> <span class="ow">and</span> <span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span> <span class="o">=</span> <span class="n">batch_size</span>
+
+
+<div class="viewcode-block" id="override_model_batch_size"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.override_model_batch_size">[docs]</a><span class="k">def</span> <span class="nf">override_model_batch_size</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelProto</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Rewrites any positive batch dimensions in the model inputs or outputs to the</span>
+<span class="sd">    given batch_size</span>
+
+<span class="sd">    :param model: Model to modify</span>
+<span class="sd">    :param batch_size: Batch size to enforce</span>
+<span class="sd">    :return: the given model with inputs and outputs set to batch_size if the batch</span>
+<span class="sd">        dimensions are not -1.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+        <span class="c1"># This may not work for ONNX graphs that have hard-coded reshape nodes</span>
+        <span class="n">_override_tensor_batch_dim</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+    <span class="c1"># Do the same for outputs</span>
+    <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+        <span class="c1"># Ignore augmented _Reduce nodes</span>
+        <span class="k">if</span> <span class="s2">&quot;_Reduce&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">tensor</span><span class="o">.</span><span class="n">name</span><span class="p">:</span>
+            <span class="n">_override_tensor_batch_dim</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tensor</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="prune_unstructured"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.prune_unstructured">[docs]</a><span class="k">def</span> <span class="nf">prune_unstructured</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prune a numpy array with unstructured sparsity according to magnitude pruning</span>
+
+<span class="sd">    :param array: the array to prune (introduce zeros), will remove the lowest</span>
+<span class="sd">        absolute values in the array</span>
+<span class="sd">    :param sparsity: the sparsity value, as a decimal, to impose in the array</span>
+<span class="sd">    :return: the pruned array</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>  <span class="c1"># make a copy because arrays from onnx are read only</span>
+    <span class="n">sparse_index</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">sparsity</span> <span class="o">*</span> <span class="n">array</span><span class="o">.</span><span class="n">size</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">sparse_index</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">array</span>
+
+    <span class="n">sorted_array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">flatten</span><span class="p">()))</span>
+    <span class="n">sparse_thresh</span> <span class="o">=</span> <span class="n">sorted_array</span><span class="p">[</span><span class="n">sparse_index</span><span class="p">]</span>
+    <span class="n">array</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">sparse_thresh</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">return</span> <span class="n">array</span></div>
+
+
+<div class="viewcode-block" id="prune_model_one_shot"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.prune_model_one_shot">[docs]</a><span class="k">def</span> <span class="nf">prune_model_one_shot</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">],</span> <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Prune a model in-place with one shot pruning (no retraining) according to</span>
+<span class="sd">    magnitude pruning. Does so in an unstructured way currently</span>
+
+<span class="sd">    :param model: the model to apply pruning to</span>
+<span class="sd">    :param nodes: the nodes within the model to prune to the desired sparsities</span>
+<span class="sd">    :param sparsity: the sparsity level to prune all nodes to if a float,</span>
+<span class="sd">        or the sparsity level to prune each node to if a list of floats</span>
+<span class="sd">    :return: the new, pruned model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+        <span class="n">sparsity</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmp</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">))]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparsity</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;len(nodes) </span><span class="si">{}</span><span class="s2"> does not match len(sparsity) </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">node</span><span class="p">,</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">):</span>
+        <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">get_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="n">pruned_weight_val</span> <span class="o">=</span> <span class="n">prune_unstructured</span><span class="p">(</span><span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
+        <span class="n">update_model_param</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pruned_weight_val</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="prune_model_one_shot_iter"><a class="viewcode-back" href="../../../../sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.prune_model_one_shot_iter">[docs]</a><span class="k">def</span> <span class="nf">prune_model_one_shot_iter</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">],</span> <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Iteratively prune a model in-place with one shot pruning (no retraining) according to</span>
+<span class="sd">    magnitude pruning. Does so in an unstructured way currently</span>
+
+<span class="sd">    :param model: the model to apply pruning to</span>
+<span class="sd">    :param nodes: the nodes within the model to prune to the desired sparsities</span>
+<span class="sd">    :param sparsity: the sparsity level to prune all nodes to if a float,</span>
+<span class="sd">        or the sparsity level to prune each node to if a list of floats</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="n">tmp</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+        <span class="n">sparsity</span> <span class="o">=</span> <span class="p">[</span><span class="n">tmp</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">))]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparsity</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;len(nodes) </span><span class="si">{}</span><span class="s2"> does not match len(sparsity) </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)):</span>
+        <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">get_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="n">pruned_weight_val</span> <span class="o">=</span> <span class="n">prune_unstructured</span><span class="p">(</span><span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
+        <span class="n">update_model_param</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">pruned_weight_val</span><span class="p">)</span>
+        <span class="k">yield</span> <span class="p">(</span><span class="n">index</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Neural Magic.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,454 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.tensorflow_v1.datasets.classification.imagefolder &mdash; sparseml 1.0.9 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+
+  
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../sparseml.html" class="icon icon-home"> sparseml
+          
+
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.keras.html">sparseml.keras package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.onnx.html">sparseml.onnx package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.optim.html">sparseml.optim package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.pytorch.html">sparseml.pytorch package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.tensorflow_v1.html">sparseml.tensorflow_v1 package</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../sparseml.utils.html">sparseml.utils package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../sparseml.html">sparseml</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../sparseml.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.tensorflow_v1.datasets.classification.imagefolder</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.tensorflow_v1.datasets.classification.imagefolder</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ImageFolder dataset implementations for the image</span>
+<span class="sd">classification field in computer vision.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.datasets.dataset</span> <span class="kn">import</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.datasets.helpers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">center_square_crop</span><span class="p">,</span>
+    <span class="n">random_scaling_crop</span><span class="p">,</span>
+    <span class="n">resize</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.datasets.registry</span> <span class="kn">import</span> <span class="n">DatasetRegistry</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span><span class="p">,</span> <span class="n">tf_compat_div</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">clean_path</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils.datasets</span> <span class="kn">import</span> <span class="n">IMAGENET_RGB_MEANS</span><span class="p">,</span> <span class="n">IMAGENET_RGB_STDS</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;imagenet_normalizer&quot;</span><span class="p">,</span> <span class="s2">&quot;ImageFolderDataset&quot;</span><span class="p">,</span> <span class="s2">&quot;SplitsTransforms&quot;</span><span class="p">]</span>
+
+
+<span class="n">SplitsTransforms</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;SplitsTransforms&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span> <span class="kc">None</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span> <span class="kc">None</span><span class="p">]),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="imagenet_normalizer"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.imagenet_normalizer">[docs]</a><span class="k">def</span> <span class="nf">imagenet_normalizer</span><span class="p">(</span><span class="n">img</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize an image using mean and std of the imagenet dataset</span>
+
+<span class="sd">    :param img: The input image to normalize</span>
+<span class="sd">    :return: The normalized image</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat_div</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="mf">255.0</span><span class="p">)</span>
+    <span class="n">means</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">IMAGENET_RGB_MEANS</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">stds</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">IMAGENET_RGB_STDS</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat_div</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">means</span><span class="p">),</span> <span class="n">stds</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">img</span></div>
+
+
+<div class="viewcode-block" id="ImageFolderDataset"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.ImageFolderDataset">[docs]</a><span class="nd">@DatasetRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;imagefolder&quot;</span><span class="p">],</span>
+    <span class="n">attributes</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">&quot;transform_means&quot;</span><span class="p">:</span> <span class="n">IMAGENET_RGB_MEANS</span><span class="p">,</span>
+        <span class="s2">&quot;transform_stds&quot;</span><span class="p">:</span> <span class="n">IMAGENET_RGB_STDS</span><span class="p">,</span>
+    <span class="p">},</span>
+<span class="p">)</span>
+<span class="k">class</span> <span class="nc">ImageFolderDataset</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation for loading an image folder structure into a dataset.</span>
+
+<span class="sd">    | Image folders should be of the form:</span>
+<span class="sd">    |   root/class_x/xxx.ext</span>
+<span class="sd">    |   root/class_x/xxy.ext</span>
+<span class="sd">    |   root/class_x/xxz.ext</span>
+<span class="sd">    |</span>
+<span class="sd">    |   root/class_y/123.ext</span>
+<span class="sd">    |   root/class_y/nsdf3.ext</span>
+<span class="sd">    |   root/class_y/asd932_.ext</span>
+
+<span class="sd">    :param root: the root location for the dataset&#39;s images to load</span>
+<span class="sd">    :param train: True to load the training dataset from the root,</span>
+<span class="sd">        False for validation</span>
+<span class="sd">    :param image_size: the size of the image to reshape to</span>
+<span class="sd">    :param pre_resize_transforms: transforms to be applied before resizing the image</span>
+<span class="sd">    :param post_resize_transforms: transforms to be applied after resizing the image</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">train</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">224</span><span class="p">,</span>
+        <span class="n">pre_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">random_scaling_crop</span><span class="p">(),</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">random_flip_left_right</span><span class="p">,</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">random_flip_up_down</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">post_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="p">(</span><span class="n">imagenet_normalizer</span><span class="p">,),</span>
+            <span class="n">val</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">center_square_crop</span><span class="p">(),</span>
+                <span class="n">imagenet_normalizer</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">),</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">clean_path</span><span class="p">(</span><span class="n">root</span><span class="p">),</span> <span class="s2">&quot;train&quot;</span> <span class="k">if</span> <span class="n">train</span> <span class="k">else</span> <span class="s2">&quot;val&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Data set folder </span><span class="si">{}</span><span class="s2"> must exist&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_train</span> <span class="o">=</span> <span class="n">train</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_image_size</span> <span class="o">=</span> <span class="n">image_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pre_resize_transforms</span> <span class="o">=</span> <span class="n">pre_resize_transforms</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_post_resize_transforms</span> <span class="o">=</span> <span class="n">post_resize_transforms</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_images</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">))]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_classes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+            <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_root</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_images</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the root location for the dataset&#39;s images to load</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">train</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True to load the training dataset from the root, False for validation</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_train</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">image_size</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the size of the images to resize to</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_size</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pre_resize_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SplitsTransforms</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: transforms to be applied before resizing the image</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_resize_transforms</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">post_resize_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">SplitsTransforms</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: transforms to be applied after resizing the image</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_post_resize_transforms</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_images</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the number of images found for the dataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_images</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_classes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the number of classes found for the dataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_classes</span>
+
+<div class="viewcode-block" id="ImageFolderDataset.processor"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.ImageFolderDataset.processor">[docs]</a>    <span class="k">def</span> <span class="nf">processor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">label</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param file_path: the path to the file to load an image from</span>
+<span class="sd">        :param label: the label for the given image</span>
+<span class="sd">        :return: a tuple containing the processed image and label</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;img_to_tensor&quot;</span><span class="p">):</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+            <span class="c1"># Decode and reshape the image to 3 dimensional tensor</span>
+            <span class="c1"># Note: &quot;expand_animations&quot; not available for TF 1.13 and prior,</span>
+            <span class="c1"># hence the reshape trick below</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">decode_image</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+            <span class="n">img_shape</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">[</span><span class="n">img_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">img_shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_resize_transforms</span><span class="p">:</span>
+            <span class="n">transforms</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">pre_resize_transforms</span><span class="o">.</span><span class="n">train</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">pre_resize_transforms</span><span class="o">.</span><span class="n">val</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">transforms</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;pre_resize_transforms&quot;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transforms</span><span class="p">:</span>
+                        <span class="n">img</span> <span class="o">=</span> <span class="n">trans</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_image_size</span><span class="p">:</span>
+            <span class="n">res_callable</span> <span class="o">=</span> <span class="n">resize</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">image_size</span><span class="p">))</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">res_callable</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_resize_transforms</span><span class="p">:</span>
+            <span class="n">transforms</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">post_resize_transforms</span><span class="o">.</span><span class="n">train</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">train</span>
+                <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">post_resize_transforms</span><span class="o">.</span><span class="n">val</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">transforms</span><span class="p">:</span>
+                <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;post_resize_transforms&quot;</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">trans</span> <span class="ow">in</span> <span class="n">transforms</span><span class="p">:</span>
+                        <span class="n">img</span> <span class="o">=</span> <span class="n">trans</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">img</span><span class="p">,</span> <span class="n">label</span></div>
+
+<div class="viewcode-block" id="ImageFolderDataset.creator"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.ImageFolderDataset.creator">[docs]</a>    <span class="k">def</span> <span class="nf">creator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: a created dataset that gives the file_path and label for each</span>
+<span class="sd">            image under self.root</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">labels_strs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">fold</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">fold</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="n">labels_strs</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+        <span class="n">labels_dict</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">lab</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">labels_strs</span><span class="p">))[</span><span class="n">index</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">lab</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">labels_strs</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">files_labels</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">file</span><span class="p">,</span> <span class="n">labels_dict</span><span class="p">[</span><span class="n">file</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">)[</span><span class="o">-</span><span class="mi">2</span><span class="p">]])</span>
+            <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;*&quot;</span><span class="p">))</span>
+        <span class="p">]</span>
+        <span class="n">random</span><span class="o">.</span><span class="n">Random</span><span class="p">(</span><span class="mi">42</span><span class="p">)</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">files_labels</span><span class="p">)</span>
+        <span class="n">files</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="nb">zip</span><span class="p">(</span><span class="o">*</span><span class="n">files_labels</span><span class="p">)</span>
+        <span class="n">files</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">files</span><span class="p">)</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="o">.</span><span class="n">from_tensor_slices</span><span class="p">((</span><span class="n">files</span><span class="p">,</span> <span class="n">labels</span><span class="p">))</span></div>
+
+<div class="viewcode-block" id="ImageFolderDataset.format_iterator_batch"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.ImageFolderDataset.format_iterator_batch">[docs]</a>    <span class="k">def</span> <span class="nf">format_iterator_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">iter_batch</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param iter_batch: the batch ref returned from the iterator</span>
+<span class="sd">        :return: a tuple of image and label tensors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">iter_batch</span></div>
+
+<div class="viewcode-block" id="ImageFolderDataset.name_scope"><a class="viewcode-back" href="../../../../../sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.imagefolder.ImageFolderDataset.name_scope">[docs]</a>    <span class="k">def</span> <span class="nf">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the name scope the dataset should be built under in the graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="s2">&quot;ImageFolderDataset_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">sep</span><span class="p">,</span> <span class="s2">&quot;.&quot;</span><span class="p">))</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2020, Neural Magic.
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
