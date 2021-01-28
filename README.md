@@ -10,10 +10,10 @@ This repo hosts and stages the top level source and markdown files on</br>
 These docs are best-viewed there, thanks!</br></br>
 
 <p align="center">
-  <a href="https://docs.neuralmagic.com/">
+    <a href="https://docs.neuralmagic.com/">
         <img alt="Documentation" src="https://img.shields.io/website/http/neuralmagic.com/sparseml/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
-    <a href="https://github.com/neuralmagic/comingsoon/blob/master/LICENSE">
+    <a href="https://github.com/neuralmagic/comingsoon/blob/master/LICENSE"></a>
     <a href="https://github.com/neuralmagic.com/comingsoon/blob/master/CODE_OF_CONDUCT.md">
         <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
     </a>
@@ -26,7 +26,7 @@ These docs are best-viewed there, thanks!</br></br>
     <a href="https://twitter.com/neuralmagic">
         <img src="https://img.shields.io/twitter/follow/neuralmagic?color=darkgreen&label=Follow&style=social" height=25>
     </a>
-  </p>
+</p>
   
 To learn more about specific projects founded by Neural Magic, check out documentation links below.
 
@@ -34,10 +34,10 @@ To file a docs issue for a specific software component, use its repo issue track
 
 | Docs | GitHub | Issue Tracker | Releases | License |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| [SparseML](https://docs.neuralmagic.com/sparseml/)| [Repo](https://github.com/neuralmagic/sparseml/) |  [Queue](https://github.com/neuralmagic/sparseml/issues/) | [Index](https://github.com/neuralmagic/spareml/releases/) | Apache 2.0 |
-| [Sparsify](https://docs.neuralmagic.com/sparsify/) | [Repo](https://github.com/neuralmagic/sparsify/) | [Queue](https://github.com/neuralmagic/sparsify/issues/) | [Index](https://github.com/neuralmagic/sparsify/releases/) | Apache 2.0 |
-| [SparseZoo](https://docs.neuralmagic.com/sparsezoo/)  | [Repo](https://github.com/neuralmagic/sparsezoo/) | [Queue](https://github.com/neuralmagic/sparsezoo/issues/) | [Index](https://github.com/neuralmagic/sparsezoo/releases/) | Apache 2.0 |
-| [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse/)  | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/)  | Neural Magic Engine 1.0 |
+| [SparseML](https://docs.neuralmagic.com/docs/sparseml/)| [Repo](https://github.com/neuralmagic/sparseml/) |  [Queue](https://github.com/neuralmagic/sparseml/issues/) | [Index](https://github.com/neuralmagic/spareml/releases/) | Apache 2.0 |
+| [Sparsify](https://docs.neuralmagic.com/docs/sparsify/) | [Repo](https://github.com/neuralmagic/sparsify/) | [Queue](https://github.com/neuralmagic/sparsify/issues/) | [Index](https://github.com/neuralmagic/sparsify/releases/) | Apache 2.0 |
+| [SparseZoo](https://docs.neuralmagic.com/docs/sparsezoo/)  | [Repo](https://github.com/neuralmagic/sparsezoo/) | [Queue](https://github.com/neuralmagic/sparsezoo/issues/) | [Index](https://github.com/neuralmagic/sparsezoo/releases/) | Apache 2.0 |
+| [DeepSparse Engine](https://docs.neuralmagic.com/docs/deepsparse/)  | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/)  | Neural Magic Engine 1.0 |
 
 To contribute to Neural Magic documentation, please:</br>
 
