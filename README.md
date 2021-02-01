@@ -5,16 +5,15 @@ Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
 <div align="center"><h2>Neural Magic Documentation</h2></div>
 
 <div align="center">
-This repo hosts and stages the top level source and markdown files on</br>
-<a href="https://docs.neuralmagic.com">https://docs.neuralmagic.com</a></br>
-These docs are best-viewed there, thanks!</br></br>
+Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant deep learning models on CPU resources.
+
 
 <p align="center">
     <a href="https://docs.neuralmagic.com/">
         <img alt="Documentation" src="https://img.shields.io/website/http/neuralmagic.com/sparseml/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
     <a href="https://github.com/neuralmagic/docs/blob/main/LICENSE"></a>
-    <a href="https://github.com/neuralmagic.com/docs/blob/main/CODE_OF_CONDUCT.md">
+    <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
         <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
     </a>
      <a href="https://www.youtube.com/channel/UCo8dO_WMGYbWCRnj_Dxr4EA">
