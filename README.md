@@ -34,10 +34,10 @@ To file a docs issue for a specific software component, use its repo issue track
 
 | Docs | GitHub | Issue Tracker | Releases | License |
 | ----------- | ----------- | ----------- | ----------- | ----------- |
-| [SparseML](https://docs.neuralmagic.com/docs/sparseml/)| [Repo](https://github.com/neuralmagic/sparseml/) |  [Queue](https://github.com/neuralmagic/sparseml/issues/) | [Index](https://github.com/neuralmagic/spareml/releases/) | Apache 2.0 |
-| [Sparsify](https://docs.neuralmagic.com/docs/sparsify/) | [Repo](https://github.com/neuralmagic/sparsify/) | [Queue](https://github.com/neuralmagic/sparsify/issues/) | [Index](https://github.com/neuralmagic/sparsify/releases/) | Apache 2.0 |
-| [SparseZoo](https://docs.neuralmagic.com/docs/sparsezoo/)  | [Repo](https://github.com/neuralmagic/sparsezoo/) | [Queue](https://github.com/neuralmagic/sparsezoo/issues/) | [Index](https://github.com/neuralmagic/sparsezoo/releases/) | Apache 2.0 |
-| [DeepSparse Engine](https://docs.neuralmagic.com/docs/deepsparse/)  | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/)  | Neural Magic Engine 1.0 |
+| [SparseML](https://docs.neuralmagic.com/sparseml/)| [Repo](https://github.com/neuralmagic/sparseml/) |  [Queue](https://github.com/neuralmagic/sparseml/issues/) | [Index](https://github.com/neuralmagic/spareml/releases/) | Apache 2.0 |
+| [Sparsify](https://docs.neuralmagic.com/sparsify/) | [Repo](https://github.com/neuralmagic/sparsify/) | [Queue](https://github.com/neuralmagic/sparsify/issues/) | [Index](https://github.com/neuralmagic/sparsify/releases/) | Apache 2.0 |
+| [SparseZoo](https://docs.neuralmagic.com/sparsezoo/)  | [Repo](https://github.com/neuralmagic/sparsezoo/) | [Queue](https://github.com/neuralmagic/sparsezoo/issues/) | [Index](https://github.com/neuralmagic/sparsezoo/releases/) | Apache 2.0 |
+| [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse/)  | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/)  | Neural Magic Engine 1.0 |
 
 To contribute to Neural Magic documentation, please:</br>
 
