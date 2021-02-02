@@ -1,0 +1,363 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.tensorflow_v1.optim.schedule_lr &mdash; SparseML 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SparseML
+          
+
+          
+            
+            <img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.tensorflow_v1.optim.schedule_lr</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.tensorflow_v1.optim.schedule_lr</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Learning rate schedules implementations for TensorFlow</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;step_lr_schedule&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;multi_step_lr_schedule&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="step_lr_schedule"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.schedule_lr.step_lr_schedule">[docs]</a><span class="k">def</span> <span class="nf">step_lr_schedule</span><span class="p">(</span>
+    <span class="n">global_step</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">start_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">end_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">step_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">init_lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;exponential_lr_schedule&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an exponential learning rate schedule in the current graph.</span>
+<span class="sd">    Multiplies init_lr by gamma after each step_size interval has passed.</span>
+<span class="sd">    Ex: lr = init_lr * (gamma ** NUM_UPDATES)</span>
+
+<span class="sd">    :param global_step: the global step used for training</span>
+<span class="sd">    :param start_step: the step to start the exponential schedule on</span>
+<span class="sd">    :param end_step: the step to end the exponential schedule on,</span>
+<span class="sd">        can be set to -1 and in that event will continually update the LR</span>
+<span class="sd">    :param step_size: the number of steps between each gamma update to the init_lr</span>
+<span class="sd">    :param init_lr: the learning rate to start the schedule with</span>
+<span class="sd">    :param gamma: the decay weight to decrease init_lr by after every step_size interval</span>
+<span class="sd">    :param name: the name scope to create the graph under</span>
+<span class="sd">    :return: the calculated learning rate tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">global_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">max_updates</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">end_step</span> <span class="o">-</span> <span class="n">start_step</span><span class="p">)</span> <span class="o">//</span> <span class="n">step_size</span> <span class="k">if</span> <span class="n">end_step</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;max_updates&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">start_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span>
+            <span class="n">start_step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;start_step&quot;</span>
+        <span class="p">)</span>
+        <span class="n">end_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">end_step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;end_step&quot;</span><span class="p">)</span>
+        <span class="n">init_lr</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">init_lr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;init_lr&quot;</span><span class="p">)</span>
+        <span class="n">step_size</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span>
+            <span class="n">step_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;step_size&quot;</span>
+        <span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gamma&quot;</span><span class="p">)</span>
+        <span class="n">before</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">less</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">start_step</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+        <span class="n">after</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">greater_equal</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">end_step</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;after&quot;</span><span class="p">),</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">not_equal</span><span class="p">(</span><span class="n">end_step</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">)),</span>
+        <span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_calc_lr</span><span class="p">():</span>
+            <span class="n">steps</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">subtract</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">start_step</span><span class="p">)</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+                <span class="n">after</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">max_updates</span><span class="p">,</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+                    <span class="n">tf_compat</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">steps</span><span class="p">,</span> <span class="n">step_size</span><span class="p">)),</span>
+                    <span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+            <span class="n">mult_g</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">updates</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">init_lr</span><span class="p">,</span> <span class="n">mult_g</span><span class="p">)</span>
+
+        <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">before</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">init_lr</span><span class="p">,</span> <span class="n">_calc_lr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;learning_rate&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">learning_rate</span></div>
+
+
+<div class="viewcode-block" id="multi_step_lr_schedule"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.schedule_lr.multi_step_lr_schedule">[docs]</a><span class="k">def</span> <span class="nf">multi_step_lr_schedule</span><span class="p">(</span>
+    <span class="n">global_step</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">start_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">milestone_steps</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">init_lr</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">gamma</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;multi_step_lr_schedule&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a multi step learning rate schedule in the current graph.</span>
+<span class="sd">    Multiplies init_lr by gamma after each milestone has passed.</span>
+<span class="sd">    Ex: lr = init_lr * (gamma ** NUM_UPDATES)</span>
+
+<span class="sd">    :param global_step: the global step used for training</span>
+<span class="sd">    :param start_step: the step to start the exponential schedule on</span>
+<span class="sd">    :param milestone_steps: a list of steps to decrease the learning rate at,</span>
+<span class="sd">        these are the number of steps that must pass after start_step to decrease lr</span>
+<span class="sd">    :param init_lr: the learning rate to start the schedule with</span>
+<span class="sd">    :param gamma: the decay weight to decrease init_lr by after every step_size interval</span>
+<span class="sd">    :param name: the name scope to create the graph under</span>
+<span class="sd">    :return: the calculated learning rate tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+        <span class="n">global_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+        <span class="n">milestone_steps</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">mile</span> <span class="o">+</span> <span class="n">start_step</span> <span class="k">for</span> <span class="n">mile</span> <span class="ow">in</span> <span class="n">milestone_steps</span><span class="p">],</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;milestone_steps&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">start_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span>
+            <span class="n">start_step</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;start_step&quot;</span>
+        <span class="p">)</span>
+        <span class="n">init_lr</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">init_lr</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;init_lr&quot;</span><span class="p">)</span>
+        <span class="n">gamma</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;gamma&quot;</span><span class="p">)</span>
+        <span class="n">before</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">less</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">start_step</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;before&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_calc_lr</span><span class="p">():</span>
+            <span class="n">less</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">greater_equal</span><span class="p">(</span><span class="n">global_step</span><span class="p">,</span> <span class="n">milestone_steps</span><span class="p">),</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">int64</span>
+            <span class="p">)</span>
+            <span class="n">updates</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">reduce_sum</span><span class="p">(</span><span class="n">less</span><span class="p">)</span>
+            <span class="n">mult_g</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">pow</span><span class="p">(</span><span class="n">gamma</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">updates</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">init_lr</span><span class="p">,</span> <span class="n">mult_g</span><span class="p">)</span>
+
+        <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">before</span><span class="p">,</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">init_lr</span><span class="p">,</span> <span class="n">_calc_lr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;learning_rate&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">learning_rate</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

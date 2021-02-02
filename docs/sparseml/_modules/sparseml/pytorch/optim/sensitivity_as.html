@@ -1,0 +1,688 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.pytorch.optim.sensitivity_as &mdash; SparseML 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SparseML
+          
+
+          
+            
+            <img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.pytorch.optim.sensitivity_as</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.pytorch.optim.sensitivity_as</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Sensitivity analysis implementations for increasing activation sparsity by using FATReLU</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span><span class="p">,</span> <span class="n">Dataset</span>
+<span class="kn">from</span> <span class="nn">torch.utils.hooks</span> <span class="kn">import</span> <span class="n">RemovableHandle</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.nn.fatrelu</span> <span class="kn">import</span> <span class="n">FATReLU</span><span class="p">,</span> <span class="n">convert_relus_to_fat</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.analyzer_as</span> <span class="kn">import</span> <span class="n">ModuleASAnalyzer</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">LossWrapper</span><span class="p">,</span>
+    <span class="n">ModuleRunResults</span><span class="p">,</span>
+    <span class="n">ModuleTester</span><span class="p">,</span>
+    <span class="n">get_layer</span><span class="p">,</span>
+    <span class="n">model_to_device</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;ASLayerTracker&quot;</span><span class="p">,</span> <span class="s2">&quot;LayerBoostResults&quot;</span><span class="p">,</span> <span class="s2">&quot;ModuleASOneShootBooster&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="ASLayerTracker"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ASLayerTracker">[docs]</a><span class="k">class</span> <span class="nc">ASLayerTracker</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    An implementation for tracking activation sparsity properties for a module.</span>
+
+<span class="sd">    :param layer: the module to track activation sparsity for</span>
+<span class="sd">    :param track_input: track the input sparsity for the module</span>
+<span class="sd">    :param track_output: track the output sparsity for the module</span>
+<span class="sd">    :param input_func: the function to call on input to the layer</span>
+<span class="sd">        and receives the input tensor</span>
+<span class="sd">    :param output_func: the function to call on output to the layer</span>
+<span class="sd">        and receives the output tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">track_input</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">track_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">input_func</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">output_func</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Callable</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span> <span class="o">=</span> <span class="n">layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_track_input</span> <span class="o">=</span> <span class="n">track_input</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_track_output</span> <span class="o">=</span> <span class="n">track_output</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_func</span> <span class="o">=</span> <span class="n">input_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_func</span> <span class="o">=</span> <span class="n">output_func</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_input</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_output</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: RemovableHandle</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disable_hooks</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ASLayerTracker.enable"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ASLayerTracker.enable">[docs]</a>    <span class="k">def</span> <span class="nf">enable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Enable the forward hooks to the layer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enable_hooks</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ASLayerTracker.disable"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ASLayerTracker.disable">[docs]</a>    <span class="k">def</span> <span class="nf">disable</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Disable the forward hooks for the layer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disable_hooks</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="ASLayerTracker.clear"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ASLayerTracker.clear">[docs]</a>    <span class="k">def</span> <span class="nf">clear</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clear out current results for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_input</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_output</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tracked_input</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the current tracked input results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_input</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tracked_output</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the current tracked output results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_output</span>
+
+    <span class="k">def</span> <span class="nf">_enable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">def</span> <span class="nf">_forward_hook</span><span class="p">(</span>
+            <span class="n">_mod</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+            <span class="n">_inp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span>
+            <span class="n">_out</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_input</span><span class="p">:</span>
+                <span class="n">tracked</span> <span class="o">=</span> <span class="n">_inp</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">tracked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_func</span><span class="p">(</span><span class="n">_inp</span><span class="p">)</span>
+
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;cpu&quot;</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">tracked</span><span class="o">.</span><span class="n">is_cuda</span>
+                    <span class="k">else</span> <span class="s2">&quot;cuda:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tracked</span><span class="o">.</span><span class="n">get_device</span><span class="p">())</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_input</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">tracked</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_output</span><span class="p">:</span>
+                <span class="n">tracked</span> <span class="o">=</span> <span class="n">_out</span>
+
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">tracked</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_func</span><span class="p">(</span><span class="n">_out</span><span class="p">)</span>
+
+                <span class="n">key</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;cpu&quot;</span>
+                    <span class="k">if</span> <span class="ow">not</span> <span class="n">tracked</span><span class="o">.</span><span class="n">is_cuda</span>
+                    <span class="k">else</span> <span class="s2">&quot;cuda:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tracked</span><span class="o">.</span><span class="n">get_device</span><span class="p">())</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_tracked_output</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">tracked</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">register_forward_hook</span><span class="p">(</span><span class="n">_forward_hook</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_disable_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hook_handle</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="LayerBoostResults"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.LayerBoostResults">[docs]</a><span class="k">class</span> <span class="nc">LayerBoostResults</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Results for a specific threshold set in a FATReLU layer.</span>
+
+<span class="sd">    :param name: the name of the layer the results are for</span>
+<span class="sd">    :param threshold: the threshold used in the FATReLU layer</span>
+<span class="sd">    :param boosted_as: the measured activation sparsity after threshold is applied</span>
+<span class="sd">    :param boosted_loss: the measured loss after threshold is applied</span>
+<span class="sd">    :param baseline_as: the measured activation sparsity before threshold is applied</span>
+<span class="sd">    :param baseline_loss: the measured loss before threshold is applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">boosted_as</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">boosted_loss</span><span class="p">:</span> <span class="n">ModuleRunResults</span><span class="p">,</span>
+        <span class="n">baseline_as</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">baseline_loss</span><span class="p">:</span> <span class="n">ModuleRunResults</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_boosted_as</span> <span class="o">=</span> <span class="n">boosted_as</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_boosted_loss</span> <span class="o">=</span> <span class="n">boosted_loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_as</span> <span class="o">=</span> <span class="n">baseline_as</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_loss</span> <span class="o">=</span> <span class="n">baseline_loss</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the name of the layer the results are for</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the threshold used in the FATReLU layer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_threshold</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">boosted_as</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the measured activation sparsity after threshold is applied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boosted_as</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">boosted_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleRunResults</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the measured loss after threshold is applied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_boosted_loss</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">baseline_as</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the measured activation sparsity before threshold is applied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_as</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">baseline_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleRunResults</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the measured loss before threshold is applied</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_loss</span></div>
+
+
+<div class="viewcode-block" id="ModuleASOneShootBooster"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ModuleASOneShootBooster">[docs]</a><span class="k">class</span> <span class="nc">ModuleASOneShootBooster</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Implementation class for boosting the activation sparsity in a given module</span>
+<span class="sd">    using FATReLUs.</span>
+<span class="sd">    Programmatically goes through and figures out the best thresholds to limit loss</span>
+<span class="sd">    based on provided parameters.</span>
+
+<span class="sd">    :param module: the module to boost</span>
+<span class="sd">    :param device: the device to run the analysis on; ex [cpu, cuda, cuda:1]</span>
+<span class="sd">    :param dataset: the dataset used to evaluate the boosting on</span>
+<span class="sd">    :param batch_size: the batch size to run through the module in test mode</span>
+<span class="sd">    :param loss: the loss function to use for calculations</span>
+<span class="sd">    :param data_loader_kwargs: any keyword arguments to supply to a the</span>
+<span class="sd">        DataLoader constructor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Dataset</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">LossWrapper</span><span class="p">,</span>
+        <span class="n">data_loader_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">module</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_device</span> <span class="o">=</span> <span class="n">device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span> <span class="o">=</span> <span class="n">loss</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dataloader_kwargs</span> <span class="o">=</span> <span class="n">data_loader_kwargs</span> <span class="k">if</span> <span class="n">data_loader_kwargs</span> <span class="k">else</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="ModuleASOneShootBooster.run_layers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.sensitivity_as.ModuleASOneShootBooster.run_layers">[docs]</a>    <span class="k">def</span> <span class="nf">run_layers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+        <span class="n">max_target_metric_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">metric_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric_increases</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">LayerBoostResults</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run the booster for the specified layers.</span>
+
+<span class="sd">        :param layers: names of the layers to run boosting on</span>
+<span class="sd">        :param max_target_metric_loss: the max loss in the target metric that</span>
+<span class="sd">            can happen while boosting</span>
+<span class="sd">        :param metric_key: the name of the metric to evaluate while boosting;</span>
+<span class="sd">            ex: [__loss__, top1acc, top5acc]. Must exist in the LossWrapper</span>
+<span class="sd">        :param metric_increases: True if the metric increases for worse loss such as in</span>
+<span class="sd">            a CrossEntropyLoss, False if the metric decreases for worse such as in</span>
+<span class="sd">            accuracy</span>
+<span class="sd">        :param precision: the precision to check the results to. Larger values here will</span>
+<span class="sd">            give less precise results but won&#39;t take as long</span>
+<span class="sd">        :return: The results for the boosting</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fat_relus</span> <span class="o">=</span> <span class="n">convert_relus_to_fat</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>  <span class="c1"># type: Dict[str, FATReLU]</span>
+
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">layer</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">fat_relus</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;layer </span><span class="si">{}</span><span class="s2"> was specified in the config but is not a &quot;</span>
+                        <span class="s2">&quot;boostable layer in the module (ie not a relu)&quot;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">device_ids</span> <span class="o">=</span> <span class="n">model_to_device</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_device</span><span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">min_thresh</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">max_thresh</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="n">baseline_res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measure_layer</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="s2">&quot;baseline loss run&quot;</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="n">results</span><span class="p">[</span><span class="n">layer</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_binary_search_fat</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">device</span><span class="p">,</span>
+                <span class="n">min_thresh</span><span class="p">,</span>
+                <span class="n">max_thresh</span><span class="p">,</span>
+                <span class="n">max_target_metric_loss</span><span class="p">,</span>
+                <span class="n">metric_key</span><span class="p">,</span>
+                <span class="n">metric_increases</span><span class="p">,</span>
+                <span class="n">precision</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">boosted_res</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measure_layer</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="s2">&quot;boosted loss run&quot;</span><span class="p">)</span>
+        <span class="n">results</span><span class="p">[</span><span class="s2">&quot;__module__&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">LayerBoostResults</span><span class="p">(</span>
+            <span class="s2">&quot;__module__&quot;</span><span class="p">,</span>
+            <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">),</span>
+            <span class="n">boosted_res</span><span class="p">,</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="o">-</span><span class="mf">1.0</span><span class="p">),</span>
+            <span class="n">baseline_res</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+    <span class="k">def</span> <span class="nf">_binary_search_fat</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">min_thresh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_thresh</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">max_target_metric_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">metric_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric_increases</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">precision</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.001</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;</span><span class="se">\n\n\n</span><span class="s2">starting binary search for layer </span><span class="si">{}</span><span class="s2"> between (</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">)...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span> <span class="n">min_thresh</span><span class="p">,</span> <span class="n">max_thresh</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">base_res</span><span class="p">,</span> <span class="n">base_as</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measure_layer</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="s2">&quot;baseline for layer: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">fat_relu</span> <span class="o">=</span> <span class="n">get_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>  <span class="c1"># type: FATReLU</span>
+        <span class="n">init_thresh</span> <span class="o">=</span> <span class="n">fat_relu</span><span class="o">.</span><span class="n">get_threshold</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">min_thresh</span> <span class="o">&gt;</span> <span class="n">init_thresh</span><span class="p">:</span>
+            <span class="n">min_thresh</span> <span class="o">=</span> <span class="n">init_thresh</span>
+
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">thresh</span> <span class="o">=</span> <span class="n">ModuleASOneShootBooster</span><span class="o">.</span><span class="n">_get_mid_point</span><span class="p">(</span><span class="n">min_thresh</span><span class="p">,</span> <span class="n">max_thresh</span><span class="p">)</span>
+            <span class="n">fat_relu</span><span class="o">.</span><span class="n">set_threshold</span><span class="p">(</span><span class="n">thresh</span><span class="p">)</span>
+
+            <span class="n">thresh_res</span><span class="p">,</span> <span class="n">thresh_as</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_measure_layer</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">device</span><span class="p">,</span>
+                <span class="s2">&quot;threshold for layer: </span><span class="si">{}</span><span class="s2"> @ </span><span class="si">{:.4f}</span><span class="s2"> (</span><span class="si">{:.4f}</span><span class="s2">, </span><span class="si">{:.4f}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">layer</span><span class="p">,</span> <span class="n">thresh</span><span class="p">,</span> <span class="n">min_thresh</span><span class="p">,</span> <span class="n">max_thresh</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">ModuleASOneShootBooster</span><span class="o">.</span><span class="n">_passes_loss</span><span class="p">(</span>
+                <span class="n">base_res</span><span class="p">,</span>
+                <span class="n">thresh_res</span><span class="p">,</span>
+                <span class="n">max_target_metric_loss</span><span class="p">,</span>
+                <span class="n">metric_key</span><span class="p">,</span>
+                <span class="n">metric_increases</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="n">min_thresh</span> <span class="o">=</span> <span class="n">thresh</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;loss check passed for max change: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">max_target_metric_loss</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;   current loss: </span><span class="si">{:.4f}</span><span class="s2"> baseline loss: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">thresh_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">),</span>
+                        <span class="n">base_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;   current AS: </span><span class="si">{:.4f}</span><span class="s2"> baseline AS: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">thresh_as</span><span class="p">,</span> <span class="n">base_as</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">max_thresh</span> <span class="o">=</span> <span class="n">thresh</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;loss check failed for max change: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">max_target_metric_loss</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;   current loss: </span><span class="si">{:.4f}</span><span class="s2"> baseline loss: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">thresh_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">),</span>
+                        <span class="n">base_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">),</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="nb">print</span><span class="p">(</span>
+                    <span class="s2">&quot;   current AS: </span><span class="si">{:.4f}</span><span class="s2"> baseline AS: </span><span class="si">{:.4f}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">thresh_as</span><span class="p">,</span> <span class="n">base_as</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">max_thresh</span> <span class="o">-</span> <span class="n">min_thresh</span> <span class="o">&lt;=</span> <span class="n">precision</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;completed binary search for layer </span><span class="si">{}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;   found threshold: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">thresh</span><span class="p">))</span>
+        <span class="nb">print</span><span class="p">(</span>
+            <span class="s2">&quot;   AS delta: </span><span class="si">{:.4f}</span><span class="s2"> (</span><span class="si">{:.4f}</span><span class="s2"> =&gt; </span><span class="si">{:.4f}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">thresh_as</span> <span class="o">-</span> <span class="n">base_as</span><span class="p">,</span> <span class="n">base_as</span><span class="p">,</span> <span class="n">thresh_as</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">LayerBoostResults</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">thresh</span><span class="p">,</span> <span class="n">thresh_as</span><span class="p">,</span> <span class="n">thresh_res</span><span class="p">,</span> <span class="n">base_as</span><span class="p">,</span> <span class="n">base_res</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_measure_layer</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">layer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">ModuleRunResults</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">get_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span> <span class="k">if</span> <span class="n">layer</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">as_analyzer</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">layer</span><span class="p">:</span>
+            <span class="n">as_analyzer</span> <span class="o">=</span> <span class="n">ModuleASAnalyzer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">track_outputs_sparsity</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">as_analyzer</span><span class="o">.</span><span class="n">enable</span><span class="p">()</span>
+
+        <span class="n">tester</span> <span class="o">=</span> <span class="n">ModuleTester</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span><span class="p">)</span>
+        <span class="n">data_loader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_dataloader_kwargs</span>
+        <span class="p">)</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">tester</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">data_loader</span><span class="p">,</span> <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span> <span class="n">show_progress</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">track_results</span><span class="o">=</span><span class="kc">True</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">as_analyzer</span><span class="p">:</span>
+            <span class="n">as_analyzer</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">as_analyzer</span><span class="o">.</span><span class="n">outputs_sparsity_mean</span> <span class="k">if</span> <span class="n">as_analyzer</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_get_mid_point</span><span class="p">(</span><span class="n">start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">end</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">end</span> <span class="o">-</span> <span class="n">start</span><span class="p">)</span> <span class="o">/</span> <span class="mf">2.0</span> <span class="o">+</span> <span class="n">start</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_passes_loss</span><span class="p">(</span>
+        <span class="n">base_res</span><span class="p">:</span> <span class="n">ModuleRunResults</span><span class="p">,</span>
+        <span class="n">thresh_res</span><span class="p">:</span> <span class="n">ModuleRunResults</span><span class="p">,</span>
+        <span class="n">max_target_metric_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">metric_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">metric_increases</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">thresh_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">)</span> <span class="o">-</span> <span class="n">base_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">metric_increases</span>
+            <span class="k">else</span> <span class="n">base_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">)</span> <span class="o">-</span> <span class="n">thresh_res</span><span class="o">.</span><span class="n">result_mean</span><span class="p">(</span><span class="n">metric_key</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">diff</span> <span class="o">&lt;</span> <span class="n">max_target_metric_loss</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

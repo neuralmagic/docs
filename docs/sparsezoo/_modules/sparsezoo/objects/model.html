@@ -1,0 +1,726 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparsezoo.objects.model &mdash; Sparse Zoo 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> Sparse Zoo
+          
+
+          
+            
+            <img src="../../../_static/icon-sparsezoo.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../quicktour.html">Quick Tour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../models.html">Models</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../recipes.html">Recipes</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparsezoo.html">sparsezoo package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sparse Zoo</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparsezoo.objects.model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparsezoo.objects.model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code related to a model from the sparsezoo</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.data</span> <span class="kn">import</span> <span class="n">Data</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.downloadable</span> <span class="kn">import</span> <span class="n">Downloadable</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.file</span> <span class="kn">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">FileTypes</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.metadata</span> <span class="kn">import</span> <span class="n">ModelMetadata</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.optimization_recipe</span> <span class="kn">import</span> <span class="n">OptimizationRecipe</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.release_version</span> <span class="kn">import</span> <span class="n">ReleaseVersion</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.result</span> <span class="kn">import</span> <span class="n">Result</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.tag</span> <span class="kn">import</span> <span class="n">Tag</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.user</span> <span class="kn">import</span> <span class="n">User</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Model&quot;</span><span class="p">]</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="Model"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.model.Model">[docs]</a><span class="k">class</span> <span class="nc">Model</span><span class="p">(</span><span class="n">Downloadable</span><span class="p">,</span> <span class="n">ModelMetadata</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A model repo model</span>
+
+<span class="sd">    :param display_name: the display name for the model</span>
+<span class="sd">    :param display_description: the description for the model</span>
+<span class="sd">    :param files: a list of model repo files for this model</span>
+<span class="sd">    :param recipes: a list of model repo optimization recipes for this model</span>
+<span class="sd">    :param results: a list of model repo results for this model</span>
+<span class="sd">    :param tags: a list of model repo tags for this model</span>
+<span class="sd">    :param user: the model repo user who uploaded this model</span>
+<span class="sd">    :param release_version: a model repo release version this model was released with</span>
+<span class="sd">    :param override_folder_name: Override for the name of the folder to save</span>
+<span class="sd">        this file under</span>
+<span class="sd">    :param override_parent_path: Path to override the default save path</span>
+<span class="sd">        for where to save the parent folder for this file under</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">display_description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">files</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">recipes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">results</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">tags</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">user</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">release_version</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override_folder_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">override_parent_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">release_version</span> <span class="o">=</span> <span class="n">ReleaseVersion</span><span class="p">(</span><span class="o">**</span><span class="n">release_version</span><span class="p">)</span> <span class="k">if</span> <span class="n">release_version</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="nb">super</span><span class="p">(</span><span class="n">Model</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="n">folder_name</span><span class="o">=</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;model_id&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">override_folder_name</span>
+            <span class="k">else</span> <span class="n">override_folder_name</span><span class="p">,</span>
+            <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">Downloadable</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">release_version</span><span class="o">=</span><span class="n">release_version</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_results</span> <span class="o">=</span> <span class="p">[</span><span class="n">Result</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">results</span><span class="p">]</span> <span class="k">if</span> <span class="n">results</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tags</span> <span class="o">=</span> <span class="p">[</span><span class="n">Tag</span><span class="p">(</span><span class="o">**</span><span class="n">res</span><span class="p">)</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">tags</span><span class="p">]</span> <span class="k">if</span> <span class="n">tags</span> <span class="k">else</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_user</span> <span class="o">=</span> <span class="n">User</span><span class="p">(</span><span class="o">**</span><span class="n">user</span><span class="p">)</span> <span class="k">if</span> <span class="n">user</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span> <span class="o">=</span> <span class="n">release_version</span>
+
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">ModelMetadata</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">,</span> <span class="n">release_version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span><span class="p">)</span>
+        <span class="n">sorted_files</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">file_type</span><span class="o">.</span><span class="n">value</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">res</span> <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">files</span> <span class="k">if</span> <span class="n">res</span><span class="p">[</span><span class="s2">&quot;file_type&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">file_type</span><span class="o">.</span><span class="n">value</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">file_type</span> <span class="ow">in</span> <span class="n">FileTypes</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_display_name</span> <span class="o">=</span> <span class="n">display_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_display_description</span> <span class="o">=</span> <span class="n">display_description</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recipes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">OptimizationRecipe</span><span class="p">(</span>
+                    <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                    <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                    <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">res</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">recipes</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">recipes</span>
+            <span class="k">else</span> <span class="p">[]</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_INPUTS</span><span class="o">.</span><span class="n">value</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;inputs&quot;</span><span class="p">,</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_INPUTS</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_OUTPUTS</span><span class="o">.</span><span class="n">value</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;outputs&quot;</span><span class="p">,</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_OUTPUTS</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_LABELS</span><span class="o">.</span><span class="n">value</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;labels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;labels&quot;</span><span class="p">,</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_LABELS</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_ORIGINALS</span><span class="o">.</span><span class="n">value</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;originals&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Data</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;originals&quot;</span><span class="p">,</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">DATA_ORIGINALS</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_framework_files</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">File</span><span class="p">(</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">child_folder_name</span><span class="o">=</span><span class="n">metadata</span><span class="o">.</span><span class="n">framework</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">res</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">FRAMEWORK</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+        <span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_files</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">File</span><span class="p">(</span>
+                    <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                    <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                    <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                    <span class="o">**</span><span class="n">res</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">ONNX</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">ONNX</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">ONNX_GZ</span><span class="o">.</span><span class="n">value</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_files</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_files</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_files</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="n">File</span><span class="p">(</span>
+                        <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                        <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                        <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                        <span class="o">**</span><span class="n">res</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">for</span> <span class="n">res</span> <span class="ow">in</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">ONNX_GZ</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_card_file</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">File</span><span class="p">(</span>
+                <span class="n">model_metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">,</span>
+                <span class="n">override_folder_name</span><span class="o">=</span><span class="n">override_folder_name</span><span class="p">,</span>
+                <span class="n">override_parent_path</span><span class="o">=</span><span class="n">override_parent_path</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">CARD</span><span class="o">.</span><span class="n">value</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">sorted_files</span><span class="p">[</span><span class="n">FileTypes</span><span class="o">.</span><span class="n">CARD</span><span class="o">.</span><span class="n">value</span><span class="p">]</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(stub=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">(stub=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the display name for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_display_name</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">display_description</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the description for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_display_description</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">recipes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">OptimizationRecipe</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: list of optimization recipes for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recipes</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">original_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">OptimizationRecipe</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the original optimization recipe used to create the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">original</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recipe</span><span class="o">.</span><span class="n">recipe_type_original</span><span class="p">:</span>
+                <span class="n">original</span> <span class="o">=</span> <span class="n">recipe</span>
+                <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">original</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">transfer_learning_recipe</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">OptimizationRecipe</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the optimization recipe to use for transfer learning from the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">transfer_learning</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">recipes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recipe</span><span class="o">.</span><span class="n">recipe_type_transfer_learn</span><span class="p">:</span>
+                <span class="n">transfer_learning</span> <span class="o">=</span> <span class="n">recipe</span>
+                <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">transfer_learning</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: sample numpy data for inputs into the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;inputs&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;inputs&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_outputs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: sample numpy data recorded as outputs from the model for a given input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;outputs&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;outputs&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_labels</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: sample numpy data for labels for a given input</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;labels&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;labels&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data_originals</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: sample numpy data as originals before any pre processing is applied</span>
+<span class="sd">            to the data to create the inputs for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="s2">&quot;originals&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;originals&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Data</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: A dictionary containing all of the Data objects for this model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">framework_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">File</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: list of Files that are of type framework</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_framework_files</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">onnx_files</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">File</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: list of Files that are of type onnx</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_onnx_files</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">onnx_file</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">File</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The latest converted onnx file for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">onnx_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">file_type_onnx</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">display_name</span> <span class="o">==</span> <span class="s2">&quot;model.onnx&quot;</span><span class="p">:</span>
+                <span class="n">onnx_file</span> <span class="o">=</span> <span class="n">file</span>
+
+        <span class="k">return</span> <span class="n">onnx_file</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">onnx_file_gz</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">File</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The latest converted gziped onnx file for the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">onnx_file</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">file</span><span class="o">.</span><span class="n">file_type_onnx_gz</span> <span class="ow">and</span> <span class="n">file</span><span class="o">.</span><span class="n">display_name</span> <span class="o">==</span> <span class="s2">&quot;model.onnx&quot;</span><span class="p">:</span>
+                <span class="n">onnx_file</span> <span class="o">=</span> <span class="n">file</span>
+
+        <span class="k">return</span> <span class="n">onnx_file</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">card_file</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">File</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The markdown card representing info about the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_card_file</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">tags</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tag</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: a list of model repo tags for this model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tags</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">results</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Result</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: a list of model repo results for this model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_results</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">release_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">ReleaseVersion</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: a model repo release version this model was released with</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">user</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">User</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the model repo user who uploaded this model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_user</span>
+
+<div class="viewcode-block" id="Model.data_loader"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.model.Model.data_loader">[docs]</a>    <span class="k">def</span> <span class="nf">data_loader</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">iter_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">batch_as_list</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DataLoader</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a  data loader containing all of the available data for this model</span>
+
+<span class="sd">        :param batch_size: the size of batches to create for the iterator</span>
+<span class="sd">        :param iter_steps: the number of steps (batches) to create.</span>
+<span class="sd">            Set to -1 for infinite, 0 for running through the loaded data once,</span>
+<span class="sd">            or a positive integer for the desired number of steps</span>
+<span class="sd">        :param batch_as_list: True to create the items from each dataset</span>
+<span class="sd">            as a list, False for an ordereddict</span>
+<span class="sd">        :return: The created data loader</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span>
+        <span class="n">datasets</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">dat</span> <span class="ow">in</span> <span class="n">data</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">datasets</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dat</span><span class="o">.</span><span class="n">dataset</span><span class="p">())</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">datasets</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">FileNotFoundError</span><span class="p">(</span>
+                <span class="s2">&quot;no datasets available for this model to create a loader from&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">DataLoader</span><span class="p">(</span>
+            <span class="o">*</span><span class="n">datasets</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">iter_steps</span><span class="o">=</span><span class="n">iter_steps</span><span class="p">,</span>
+            <span class="n">batch_as_list</span><span class="o">=</span><span class="n">batch_as_list</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Model.sample_batch"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.model.Model.sample_batch">[docs]</a>    <span class="k">def</span> <span class="nf">sample_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch_index</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">batch_as_list</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get a sample batch of data from the data loader</span>
+
+<span class="sd">        :param batch_index: the index of the batch to get</span>
+<span class="sd">        :param batch_size: the size of the batches to create the loader for</span>
+<span class="sd">        :param batch_as_list: True to return multiple inputs/outputs/etc</span>
+<span class="sd">            within the dataset as lists, False for an ordereddict</span>
+<span class="sd">        :return: The sample batch for use with the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loader</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_loader</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">batch_as_list</span><span class="o">=</span><span class="n">batch_as_list</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">loader</span><span class="o">.</span><span class="n">get_batch</span><span class="p">(</span><span class="n">bath_index</span><span class="o">=</span><span class="n">batch_index</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Model.download"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.model.Model.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads a model repo file.</span>
+
+<span class="sd">        :param overwrite: True to overwrite the file if it exists, False otherwise</span>
+<span class="sd">        :param refresh_token: refresh the auth token</span>
+<span class="sd">        :param show_progress: True to use tqdm for progress, False to not show</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">card_file</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model card </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">card_file</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_file</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model onnx </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onnx_file</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">onnx_file_gz</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model onnx gz </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">onnx_file_gz</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">download_framework_files</span><span class="p">(</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+            <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model data </span><span class="si">{</span><span class="n">data</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">data</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recipes</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Downloading model recipe </span><span class="si">{</span><span class="n">recipe</span><span class="o">.</span><span class="n">display_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">recipe</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Model.download_framework_files"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.model.Model.download_framework_files">[docs]</a>    <span class="k">def</span> <span class="nf">download_framework_files</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">overwrite</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">refresh_token</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">extensions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Downloads the framework file(s) for this model.</span>
+
+<span class="sd">        :param overwrite: True to overwrite the file if it exists, False otherwise</span>
+<span class="sd">        :param refresh_token: refresh the auth token</span>
+<span class="sd">        :param show_progress: True to use tqdm for progress, False to not show</span>
+<span class="sd">        :param extensions: List of file extensions to filter for. ex [&#39;.pth&#39;, &#39;.ptc&#39;].</span>
+<span class="sd">            If None or empty list, all framework files are downloaded. Default is None</span>
+<span class="sd">        :return: List of paths to the downloaded files. Empty list if no files are</span>
+<span class="sd">            found or matched</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">downloaded_paths</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">file</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_framework_files</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">extensions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+                <span class="n">file</span><span class="o">.</span><span class="n">display_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="n">ext</span><span class="p">)</span> <span class="k">for</span> <span class="n">ext</span> <span class="ow">in</span> <span class="n">extensions</span>
+            <span class="p">):</span>  <span class="c1"># skip files that do not end in valid extension</span>
+                <span class="k">continue</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Downloading model framework file </span><span class="si">{</span><span class="n">file</span><span class="o">.</span><span class="n">display_name</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">download</span><span class="p">(</span>
+                <span class="n">overwrite</span><span class="o">=</span><span class="n">overwrite</span><span class="p">,</span>
+                <span class="n">refresh_token</span><span class="o">=</span><span class="n">refresh_token</span><span class="p">,</span>
+                <span class="n">show_progress</span><span class="o">=</span><span class="n">show_progress</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">downloaded_paths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">file</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">downloaded_paths</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

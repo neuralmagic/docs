@@ -1,0 +1,1511 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>playhouse.sqlite_ext &mdash; Sparsify 0.1.0 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script src="../../_static/jquery.js"></script>
+        <script src="../../_static/underscore.js"></script>
+        <script src="../../_static/doctools.js"></script>
+        <script src="../../_static/clipboard.min.js"></script>
+        <script src="../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> Sparsify
+          
+
+          
+            
+            <img src="../../_static/icon-sparsify.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quicktour.html">Quick Tour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../userguide/index.html">User Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../api/sparsify.html">sparsify package</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Sparsify</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>playhouse.sqlite_ext</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for playhouse.sqlite_ext</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">struct</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="o">*</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">ColumnBase</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">EnclosedNodeList</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">Entity</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">Expression</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">Node</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">NodeList</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">OP</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">VirtualField</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">merge_dict</span>
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">sqlite3</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">playhouse._sqlite_ext</span> <span class="kn">import</span> <span class="p">(</span>
+        <span class="n">backup</span><span class="p">,</span>
+        <span class="n">backup_to_file</span><span class="p">,</span>
+        <span class="n">Blob</span><span class="p">,</span>
+        <span class="n">ConnectionHelper</span><span class="p">,</span>
+        <span class="n">register_bloomfilter</span><span class="p">,</span>
+        <span class="n">register_hash_functions</span><span class="p">,</span>
+        <span class="n">register_rank_functions</span><span class="p">,</span>
+        <span class="n">sqlite_get_db_status</span><span class="p">,</span>
+        <span class="n">sqlite_get_status</span><span class="p">,</span>
+        <span class="n">TableFunction</span><span class="p">,</span>
+        <span class="n">ZeroBlob</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">CYTHON_SQLITE_EXTENSIONS</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">CYTHON_SQLITE_EXTENSIONS</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="n">basestring</span> <span class="o">=</span> <span class="nb">str</span>
+
+
+<span class="n">FTS3_MATCHINFO</span> <span class="o">=</span> <span class="s1">&#39;pcx&#39;</span>
+<span class="n">FTS4_MATCHINFO</span> <span class="o">=</span> <span class="s1">&#39;pcnalx&#39;</span>
+<span class="k">if</span> <span class="n">sqlite3</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">FTS_VERSION</span> <span class="o">=</span> <span class="mi">4</span> <span class="k">if</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">sqlite_version_info</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">7</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span> <span class="k">else</span> <span class="mi">3</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="n">FTS_VERSION</span> <span class="o">=</span> <span class="mi">3</span>
+
+<span class="n">FTS5_MIN_SQLITE_VERSION</span> <span class="o">=</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">RowIDField</span><span class="p">(</span><span class="n">AutoField</span><span class="p">):</span>
+    <span class="n">auto_increment</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="n">column_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">=</span> <span class="n">required_name</span> <span class="o">=</span> <span class="s1">&#39;rowid&#39;</span>
+
+    <span class="k">def</span> <span class="nf">bind</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> must be named &quot;</span><span class="si">%s</span><span class="s1">&quot;.&#39;</span> <span class="o">%</span>
+                             <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">required_name</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RowIDField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">bind</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">DocIDField</span><span class="p">(</span><span class="n">RowIDField</span><span class="p">):</span>
+    <span class="n">column_name</span> <span class="o">=</span> <span class="n">name</span> <span class="o">=</span> <span class="n">required_name</span> <span class="o">=</span> <span class="s1">&#39;docid&#39;</span>
+
+
+<span class="k">class</span> <span class="nc">AutoIncrementField</span><span class="p">(</span><span class="n">AutoField</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">ddl</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+        <span class="n">node_list</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">AutoIncrementField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">ddl</span><span class="p">(</span><span class="n">ctx</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">NodeList</span><span class="p">((</span><span class="n">node_list</span><span class="p">,</span> <span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;AUTOINCREMENT&#39;</span><span class="p">)))</span>
+
+
+<span class="k">class</span> <span class="nc">TDecimalField</span><span class="p">(</span><span class="n">DecimalField</span><span class="p">):</span>
+    <span class="n">field_type</span> <span class="o">=</span> <span class="s1">&#39;TEXT&#39;</span>
+    <span class="k">def</span> <span class="nf">get_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="k">pass</span>
+
+
+<span class="k">class</span> <span class="nc">JSONPath</span><span class="p">(</span><span class="n">ColumnBase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">JSONPath</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_field</span> <span class="o">=</span> <span class="n">field</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">=</span> <span class="n">path</span> <span class="ow">or</span> <span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">path</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">Value</span><span class="p">(</span><span class="s1">&#39;$</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_path</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="s1">&#39;[</span><span class="si">%s</span><span class="s1">]&#39;</span> <span class="o">%</span> <span class="n">idx</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="s1">&#39;.</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">idx</span>
+        <span class="k">return</span> <span class="n">JSONPath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="o">+</span> <span class="p">(</span><span class="n">item</span><span class="p">,))</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">as_json</span> <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)):</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="o">.</span><span class="n">_json_dumps</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">json_patch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="o">.</span><span class="n">_json_dumps</span><span class="p">(</span><span class="n">value</span><span class="p">)))</span>
+
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_remove</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">json_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_array_length</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_each</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_tree</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__sql__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ctx</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">fn</span><span class="o">.</span><span class="n">json_extract</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+                       <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_path</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_field</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">JSONField</span><span class="p">(</span><span class="n">TextField</span><span class="p">):</span>
+    <span class="n">field_type</span> <span class="o">=</span> <span class="s1">&#39;JSON&#39;</span>
+    <span class="n">unpack</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">json_dumps</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">json_loads</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_json_dumps</span> <span class="o">=</span> <span class="n">json_dumps</span> <span class="ow">or</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_json_loads</span> <span class="o">=</span> <span class="n">json_loads</span> <span class="ow">or</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">JSONField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">python_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_json_loads</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+            <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+                <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">db_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">Node</span><span class="p">):</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_json_dumps</span><span class="p">(</span><span class="n">value</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">_e</span><span class="p">(</span><span class="n">op</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">inner</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rhs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)):</span>
+                <span class="n">rhs</span> <span class="o">=</span> <span class="n">Value</span><span class="p">(</span><span class="n">rhs</span><span class="p">,</span> <span class="n">converter</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">db_value</span><span class="p">,</span> <span class="n">unpack</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">Expression</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">op</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inner</span>
+    <span class="fm">__eq__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">EQ</span><span class="p">)</span>
+    <span class="fm">__ne__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">NE</span><span class="p">)</span>
+    <span class="fm">__gt__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">GT</span><span class="p">)</span>
+    <span class="fm">__ge__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">GTE</span><span class="p">)</span>
+    <span class="fm">__lt__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">LT</span><span class="p">)</span>
+    <span class="fm">__le__</span> <span class="o">=</span> <span class="n">_e</span><span class="p">(</span><span class="n">OP</span><span class="o">.</span><span class="n">LTE</span><span class="p">)</span>
+    <span class="fm">__hash__</span> <span class="o">=</span> <span class="n">Field</span><span class="o">.</span><span class="fm">__hash__</span>
+
+    <span class="k">def</span> <span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)[</span><span class="n">item</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">,</span> <span class="n">as_json</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">as_json</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">remove</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">JSONPath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">json_type</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">length</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_array_length</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">children</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Schema of `json_each` and `json_tree`:</span>
+
+<span class="sd">        key,</span>
+<span class="sd">        value,</span>
+<span class="sd">        type TEXT (object, array, string, etc),</span>
+<span class="sd">        atom (value for primitive/scalar types, NULL for array and object)</span>
+<span class="sd">        id INTEGER (unique identifier for element)</span>
+<span class="sd">        parent INTEGER (unique identifier of parent element or NULL)</span>
+<span class="sd">        fullkey TEXT (full path describing element)</span>
+<span class="sd">        path TEXT (path to the container of the current element)</span>
+<span class="sd">        json JSON hidden (1st input parameter to function)</span>
+<span class="sd">        root TEXT hidden (2nd input parameter, path at which to start)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_each</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tree</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">json_tree</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">SearchField</span><span class="p">(</span><span class="n">Field</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">unindexed</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">column_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">k</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">k</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;SearchField does not accept these keyword &#39;</span>
+                             <span class="s1">&#39;arguments: </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SearchField</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">unindexed</span><span class="o">=</span><span class="n">unindexed</span><span class="p">,</span>
+                                          <span class="n">column_name</span><span class="o">=</span><span class="n">column_name</span><span class="p">,</span> <span class="n">null</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">VirtualTableSchemaManager</span><span class="p">(</span><span class="n">SchemaManager</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">_create_virtual_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">clean_options</span><span class="p">(</span>
+            <span class="n">merge_dict</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">options</span><span class="p">,</span> <span class="n">options</span><span class="p">))</span>
+
+        <span class="c1"># Structure:</span>
+        <span class="c1"># CREATE VIRTUAL TABLE &lt;model&gt;</span>
+        <span class="c1"># USING &lt;extension_module&gt;</span>
+        <span class="c1"># ([prefix_arguments, ...] fields, ... [arguments, ...], [options...])</span>
+        <span class="n">ctx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_context</span><span class="p">()</span>
+        <span class="n">ctx</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="s1">&#39;CREATE VIRTUAL TABLE &#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">safe</span><span class="p">:</span>
+            <span class="n">ctx</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="s1">&#39;IF NOT EXISTS &#39;</span><span class="p">)</span>
+        <span class="p">(</span><span class="n">ctx</span>
+         <span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+         <span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="s1">&#39; USING &#39;</span><span class="p">))</span>
+
+        <span class="n">ext_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">extension_module</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ext_module</span><span class="p">,</span> <span class="n">Node</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">ext_module</span><span class="p">)</span>
+
+        <span class="n">ctx</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">SQL</span><span class="p">(</span><span class="n">ext_module</span><span class="p">))</span><span class="o">.</span><span class="n">literal</span><span class="p">(</span><span class="s1">&#39; &#39;</span><span class="p">)</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">meta</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span>
+
+        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">prefix_arguments</span><span class="p">:</span>
+            <span class="n">arguments</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">SQL</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">prefix_arguments</span><span class="p">])</span>
+
+        <span class="c1"># Constraints, data-types, foreign and primary keys are all omitted.</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">(</span><span class="n">RowIDField</span><span class="p">))</span> <span class="ow">or</span> <span class="n">field</span><span class="o">.</span><span class="n">_hidden</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">field_def</span> <span class="o">=</span> <span class="p">[</span><span class="n">Entity</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">column_name</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="n">field</span><span class="o">.</span><span class="n">unindexed</span><span class="p">:</span>
+                <span class="n">field_def</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;UNINDEXED&#39;</span><span class="p">))</span>
+            <span class="n">arguments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">NodeList</span><span class="p">(</span><span class="n">field_def</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="n">meta</span><span class="o">.</span><span class="n">arguments</span><span class="p">:</span>
+            <span class="n">arguments</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="n">SQL</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">meta</span><span class="o">.</span><span class="n">arguments</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">options</span><span class="p">:</span>
+            <span class="n">arguments</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_create_table_option_sql</span><span class="p">(</span><span class="n">options</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">ctx</span><span class="o">.</span><span class="n">sql</span><span class="p">(</span><span class="n">EnclosedNodeList</span><span class="p">(</span><span class="n">arguments</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_create_table</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">safe</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">issubclass</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">,</span> <span class="n">VirtualModel</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_virtual_table</span><span class="p">(</span><span class="n">safe</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">VirtualTableSchemaManager</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_create_table</span><span class="p">(</span>
+            <span class="n">safe</span><span class="p">,</span> <span class="o">**</span><span class="n">options</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">VirtualModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">arguments</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">extension_module</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">prefix_arguments</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">schema_manager_class</span> <span class="o">=</span> <span class="n">VirtualTableSchemaManager</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">clean_options</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">options</span>
+
+
+<span class="k">class</span> <span class="nc">BaseFTSModel</span><span class="p">(</span><span class="n">VirtualModel</span><span class="p">):</span>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">clean_options</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;content&#39;</span><span class="p">)</span>
+        <span class="n">prefix</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;prefix&#39;</span><span class="p">)</span>
+        <span class="n">tokenize</span> <span class="o">=</span> <span class="n">options</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;tokenize&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">basestring</span><span class="p">)</span> <span class="ow">and</span> <span class="n">content</span> <span class="o">==</span> <span class="s1">&#39;&#39;</span><span class="p">:</span>
+            <span class="c1"># Special-case content-less full-text search tables.</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&#39;&#39;&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">content</span><span class="p">,</span> <span class="n">Field</span><span class="p">):</span>
+            <span class="c1"># Special-case to ensure fields are fully-qualified.</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;content&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">Entity</span><span class="p">(</span><span class="n">content</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+                                        <span class="n">content</span><span class="o">.</span><span class="n">column_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">prefix</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">prefix</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+                <span class="n">prefix</span> <span class="o">=</span> <span class="s1">&#39;,&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">prefix</span><span class="p">])</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;prefix&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;&#39;</span><span class="si">%s</span><span class="s2">&#39;&quot;</span> <span class="o">%</span> <span class="n">prefix</span><span class="o">.</span><span class="n">strip</span><span class="p">(</span><span class="s2">&quot;&#39; &quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">tokenize</span> <span class="ow">and</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">extension_module</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s1">&#39;fts5&#39;</span><span class="p">:</span>
+            <span class="c1"># Tokenizers need to be in quoted string for FTS5, but not for FTS3</span>
+            <span class="c1"># or FTS4.</span>
+            <span class="n">options</span><span class="p">[</span><span class="s1">&#39;tokenize&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">tokenize</span>
+
+        <span class="k">return</span> <span class="n">options</span>
+
+
+<span class="k">class</span> <span class="nc">FTSModel</span><span class="p">(</span><span class="n">BaseFTSModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    VirtualModel class for creating tables that use either the FTS3 or FTS4</span>
+<span class="sd">    search extensions. Peewee automatically determines which version of the</span>
+<span class="sd">    FTS extension is supported and will use FTS4 if possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># FTS3/4 uses &quot;docid&quot; in the same way a normal table uses &quot;rowid&quot;.</span>
+    <span class="n">docid</span> <span class="o">=</span> <span class="n">DocIDField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">extension_module</span> <span class="o">=</span> <span class="s1">&#39;FTS</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">FTS_VERSION</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_fts_cmd</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cmd</span><span class="p">):</span>
+        <span class="n">tbl</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span>
+        <span class="n">res</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">execute_sql</span><span class="p">(</span>
+            <span class="s2">&quot;INSERT INTO </span><span class="si">%s</span><span class="s2">(</span><span class="si">%s</span><span class="s2">) VALUES(&#39;</span><span class="si">%s</span><span class="s2">&#39;);&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">tbl</span><span class="p">,</span> <span class="n">tbl</span><span class="p">,</span> <span class="n">cmd</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">res</span><span class="o">.</span><span class="n">fetchone</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">optimize</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;optimize&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">rebuild</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;rebuild&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">integrity_check</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;integrity-check&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">blocks</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">segments</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;merge=</span><span class="si">%s</span><span class="s1">,</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">blocks</span><span class="p">,</span> <span class="n">segments</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">automerge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">state</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;automerge=</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">state</span> <span class="ow">and</span> <span class="s1">&#39;1&#39;</span> <span class="ow">or</span> <span class="s1">&#39;0&#39;</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a `MATCH` expression appropriate for searching this table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">match</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">rank</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">):</span>
+        <span class="n">matchinfo</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">matchinfo</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">FTS3_MATCHINFO</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">fts_rank</span><span class="p">(</span><span class="n">matchinfo</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">bm25</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">):</span>
+        <span class="n">match_info</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">matchinfo</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">FTS4_MATCHINFO</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">fts_bm25</span><span class="p">(</span><span class="n">match_info</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">bm25f</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">):</span>
+        <span class="n">match_info</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">matchinfo</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">FTS4_MATCHINFO</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">fts_bm25f</span><span class="p">(</span><span class="n">match_info</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">lucene</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">):</span>
+        <span class="n">match_info</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">matchinfo</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">FTS4_MATCHINFO</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">fts_lucene</span><span class="p">(</span><span class="n">match_info</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_search</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">with_score</span><span class="p">,</span> <span class="n">score_alias</span><span class="p">,</span> <span class="n">score_fn</span><span class="p">,</span>
+                <span class="n">explicit_ordering</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">weights</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">score_fn</span><span class="p">()</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">weight_args</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">:</span>
+                <span class="c1"># Attempt to get the specified weight of the field by looking</span>
+                <span class="c1"># it up using it&#39;s field instance followed by name.</span>
+                <span class="n">field_weight</span> <span class="o">=</span> <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span>
+                <span class="n">weight_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">field_weight</span><span class="p">)</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">score_fn</span><span class="p">(</span><span class="o">*</span><span class="n">weight_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">score_fn</span><span class="p">(</span><span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="n">selection</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="n">order_by</span> <span class="o">=</span> <span class="n">rank</span>
+        <span class="k">if</span> <span class="n">with_score</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rank</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">score_alias</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">with_score</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">explicit_ordering</span><span class="p">:</span>
+            <span class="n">order_by</span> <span class="o">=</span> <span class="n">SQL</span><span class="p">(</span><span class="n">score_alias</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="bp">cls</span>
+                <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">selection</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">term</span><span class="p">))</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">order_by</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span>
+               <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search using selected `term`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span>
+            <span class="n">term</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">with_score</span><span class="p">,</span>
+            <span class="n">score_alias</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">rank</span><span class="p">,</span>
+            <span class="n">explicit_ordering</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search_bm25</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search for selected `term` using BM25 algorithm.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span>
+            <span class="n">term</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">with_score</span><span class="p">,</span>
+            <span class="n">score_alias</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">bm25</span><span class="p">,</span>
+            <span class="n">explicit_ordering</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search_bm25f</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                     <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search for selected `term` using BM25 algorithm.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span>
+            <span class="n">term</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">with_score</span><span class="p">,</span>
+            <span class="n">score_alias</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">bm25f</span><span class="p">,</span>
+            <span class="n">explicit_ordering</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search_lucene</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                      <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search for selected `term` using BM25 algorithm.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_search</span><span class="p">(</span>
+            <span class="n">term</span><span class="p">,</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">with_score</span><span class="p">,</span>
+            <span class="n">score_alias</span><span class="p">,</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">lucene</span><span class="p">,</span>
+            <span class="n">explicit_ordering</span><span class="p">)</span>
+
+
+<span class="n">_alphabet</span> <span class="o">=</span> <span class="s1">&#39;abcdefghijklmnopqrstuvwxyz&#39;</span>
+<span class="n">_alphanum</span> <span class="o">=</span> <span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="s1">&#39;</span><span class="se">\t</span><span class="s1"> ,&quot;()</span><span class="si">{}</span><span class="s1">*:_+0123456789&#39;</span><span class="p">)</span> <span class="o">|</span>
+             <span class="nb">set</span><span class="p">(</span><span class="n">_alphabet</span><span class="p">)</span> <span class="o">|</span>
+             <span class="nb">set</span><span class="p">(</span><span class="n">_alphabet</span><span class="o">.</span><span class="n">upper</span><span class="p">())</span> <span class="o">|</span>
+             <span class="nb">set</span><span class="p">((</span><span class="nb">chr</span><span class="p">(</span><span class="mi">26</span><span class="p">),)))</span>
+<span class="n">_invalid_ascii</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">chr</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span> <span class="k">if</span> <span class="nb">chr</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_alphanum</span><span class="p">)</span>
+<span class="n">_quote_re</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s1">&#39;(?:[^\s&quot;]|&quot;(?:</span><span class="se">\\</span><span class="s1">.|[^&quot;])*&quot;)+&#39;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">FTS5Model</span><span class="p">(</span><span class="n">BaseFTSModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Requires SQLite &gt;= 3.9.0.</span>
+
+<span class="sd">    Table options:</span>
+
+<span class="sd">    content: table name of external content, or empty string for &quot;contentless&quot;</span>
+<span class="sd">    content_rowid: column name of external content primary key</span>
+<span class="sd">    prefix: integer(s). Ex: &#39;2&#39; or &#39;2 3 4&#39;</span>
+<span class="sd">    tokenize: porter, unicode61, ascii. Ex: &#39;porter unicode61&#39;</span>
+
+<span class="sd">    The unicode tokenizer supports the following parameters:</span>
+
+<span class="sd">    * remove_diacritics (1 or 0, default is 1)</span>
+<span class="sd">    * tokenchars (string of characters, e.g. &#39;-_&#39;</span>
+<span class="sd">    * separators (string of characters)</span>
+
+<span class="sd">    Parameters are passed as alternating parameter name and value, so:</span>
+
+<span class="sd">    {&#39;tokenize&#39;: &quot;unicode61 remove_diacritics 0 tokenchars &#39;-_&#39;&quot;}</span>
+
+<span class="sd">    Content-less tables:</span>
+
+<span class="sd">    If you don&#39;t need the full-text content in it&#39;s original form, you can</span>
+<span class="sd">    specify a content-less table. Searches and auxiliary functions will work</span>
+<span class="sd">    as usual, but the only values returned when SELECT-ing can be rowid. Also</span>
+<span class="sd">    content-less tables do not support UPDATE or DELETE.</span>
+
+<span class="sd">    External content tables:</span>
+
+<span class="sd">    You can set up triggers to sync these, e.g.</span>
+
+<span class="sd">    -- Create a table. And an external content fts5 table to index it.</span>
+<span class="sd">    CREATE TABLE tbl(a INTEGER PRIMARY KEY, b);</span>
+<span class="sd">    CREATE VIRTUAL TABLE ft USING fts5(b, content=&#39;tbl&#39;, content_rowid=&#39;a&#39;);</span>
+
+<span class="sd">    -- Triggers to keep the FTS index up to date.</span>
+<span class="sd">    CREATE TRIGGER tbl_ai AFTER INSERT ON tbl BEGIN</span>
+<span class="sd">      INSERT INTO ft(rowid, b) VALUES (new.a, new.b);</span>
+<span class="sd">    END;</span>
+<span class="sd">    CREATE TRIGGER tbl_ad AFTER DELETE ON tbl BEGIN</span>
+<span class="sd">      INSERT INTO ft(fts_idx, rowid, b) VALUES(&#39;delete&#39;, old.a, old.b);</span>
+<span class="sd">    END;</span>
+<span class="sd">    CREATE TRIGGER tbl_au AFTER UPDATE ON tbl BEGIN</span>
+<span class="sd">      INSERT INTO ft(fts_idx, rowid, b) VALUES(&#39;delete&#39;, old.a, old.b);</span>
+<span class="sd">      INSERT INTO ft(rowid, b) VALUES (new.a, new.b);</span>
+<span class="sd">    END;</span>
+
+<span class="sd">    Built-in auxiliary functions:</span>
+
+<span class="sd">    * bm25(tbl[, weight_0, ... weight_n])</span>
+<span class="sd">    * highlight(tbl, col_idx, prefix, suffix)</span>
+<span class="sd">    * snippet(tbl, col_idx, prefix, suffix, ?, max_tokens)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># FTS5 does not support declared primary keys, but we can use the</span>
+    <span class="c1"># implicit rowid.</span>
+    <span class="n">rowid</span> <span class="o">=</span> <span class="n">RowIDField</span><span class="p">()</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">extension_module</span> <span class="o">=</span> <span class="s1">&#39;fts5&#39;</span>
+
+    <span class="n">_error_messages</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s1">&#39;field_type&#39;</span><span class="p">:</span> <span class="p">(</span><span class="s1">&#39;Besides the implicit `rowid` column, all columns must &#39;</span>
+                       <span class="s1">&#39;be instances of SearchField&#39;</span><span class="p">),</span>
+        <span class="s1">&#39;index&#39;</span><span class="p">:</span> <span class="s1">&#39;Secondary indexes are not supported for FTS5 models&#39;</span><span class="p">,</span>
+        <span class="s1">&#39;pk&#39;</span><span class="p">:</span> <span class="s1">&#39;FTS5 models must use the default `rowid` primary key&#39;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">validate_model</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="c1"># Perform FTS5-specific validation and options post-processing.</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="o">.</span><span class="n">name</span> <span class="o">!=</span> <span class="s1">&#39;rowid&#39;</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_error_messages</span><span class="p">[</span><span class="s1">&#39;pk&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">fields</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="p">(</span><span class="n">SearchField</span><span class="p">,</span> <span class="n">RowIDField</span><span class="p">)):</span>
+                <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_error_messages</span><span class="p">[</span><span class="s1">&#39;field_type&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">indexes</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_error_messages</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">])</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">fts5_installed</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">sqlite_version_info</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">FTS5_MIN_SQLITE_VERSION</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Test in-memory DB to determine if the FTS5 extension is installed.</span>
+        <span class="n">tmp_db</span> <span class="o">=</span> <span class="n">sqlite3</span><span class="o">.</span><span class="n">connect</span><span class="p">(</span><span class="s1">&#39;:memory:&#39;</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">tmp_db</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="s1">&#39;CREATE VIRTUAL TABLE fts5test USING fts5 (data);&#39;</span><span class="p">)</span>
+        <span class="k">except</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">tmp_db</span><span class="o">.</span><span class="n">enable_load_extension</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+                <span class="n">tmp_db</span><span class="o">.</span><span class="n">load_extension</span><span class="p">(</span><span class="s1">&#39;fts5&#39;</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">load_extension</span><span class="p">(</span><span class="s1">&#39;fts5&#39;</span><span class="p">)</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="n">tmp_db</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">validate_query</span><span class="p">(</span><span class="n">query</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Simple helper function to indicate whether a search query is a</span>
+<span class="sd">        valid FTS5 query. Note: this simply looks at the characters being</span>
+<span class="sd">        used, and is not guaranteed to catch all problematic queries.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">_quote_re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">token</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                <span class="k">continue</span>
+            <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">token</span><span class="p">)</span> <span class="o">&amp;</span> <span class="n">_invalid_ascii</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">clean_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="nb">chr</span><span class="p">(</span><span class="mi">26</span><span class="p">)):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Clean a query of invalid tokens.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">accum</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">any_invalid</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="n">_quote_re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">token</span> <span class="ow">in</span> <span class="n">tokens</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">token</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">token</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;&quot;&#39;</span><span class="p">):</span>
+                <span class="n">accum</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">token_set</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+            <span class="n">invalid_for_token</span> <span class="o">=</span> <span class="n">token_set</span> <span class="o">&amp;</span> <span class="n">_invalid_ascii</span>
+            <span class="k">if</span> <span class="n">invalid_for_token</span><span class="p">:</span>
+                <span class="n">any_invalid</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">invalid_for_token</span><span class="p">:</span>
+                    <span class="n">token</span> <span class="o">=</span> <span class="n">token</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">replace</span><span class="p">)</span>
+            <span class="n">accum</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">token</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">any_invalid</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s1">&#39; &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">accum</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a `MATCH` expression appropriate for searching this table.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">match</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="n">term</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">rank</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">bm25</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span> <span class="k">if</span> <span class="n">args</span> <span class="k">else</span> <span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">bm25</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">fn</span><span class="o">.</span><span class="n">bm25</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span>
+               <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search using selected `term`.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">search_bm25</span><span class="p">(</span>
+            <span class="n">FTS5Model</span><span class="o">.</span><span class="n">clean_query</span><span class="p">(</span><span class="n">term</span><span class="p">),</span>
+            <span class="n">weights</span><span class="p">,</span>
+            <span class="n">with_score</span><span class="p">,</span>
+            <span class="n">score_alias</span><span class="p">,</span>
+            <span class="n">explicit_ordering</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">search_bm25</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">with_score</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                    <span class="n">score_alias</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">,</span> <span class="n">explicit_ordering</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Full-text search using selected `term`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">weights</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">weight_args</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">field</span> <span class="ow">in</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">SearchField</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">field</span><span class="o">.</span><span class="n">unindexed</span><span class="p">:</span>
+                    <span class="n">weight_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="p">,</span> <span class="n">weights</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">field</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)))</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">bm25</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="o">*</span><span class="n">weight_args</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rank</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">bm25</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span> <span class="o">*</span><span class="n">weights</span><span class="p">)</span>
+
+        <span class="n">selection</span> <span class="o">=</span> <span class="p">()</span>
+        <span class="n">order_by</span> <span class="o">=</span> <span class="n">rank</span>
+        <span class="k">if</span> <span class="n">with_score</span><span class="p">:</span>
+            <span class="n">selection</span> <span class="o">=</span> <span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rank</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="n">score_alias</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">with_score</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">explicit_ordering</span><span class="p">:</span>
+            <span class="n">order_by</span> <span class="o">=</span> <span class="n">SQL</span><span class="p">(</span><span class="n">score_alias</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="bp">cls</span>
+                <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="o">*</span><span class="n">selection</span><span class="p">)</span>
+                <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">FTS5Model</span><span class="o">.</span><span class="n">clean_query</span><span class="p">(</span><span class="n">term</span><span class="p">)))</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">order_by</span><span class="p">))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_fts_cmd_sql</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">):</span>
+        <span class="n">tbl</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span>
+        <span class="n">columns</span> <span class="o">=</span> <span class="p">[</span><span class="n">tbl</span><span class="p">]</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">cmd</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">extra_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">columns</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">Entity</span><span class="p">(</span><span class="n">key</span><span class="p">))</span>
+            <span class="n">values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">NodeList</span><span class="p">((</span>
+            <span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;INSERT INTO&#39;</span><span class="p">),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span>
+            <span class="n">EnclosedNodeList</span><span class="p">(</span><span class="n">columns</span><span class="p">),</span>
+            <span class="n">SQL</span><span class="p">(</span><span class="s1">&#39;VALUES&#39;</span><span class="p">),</span>
+            <span class="n">EnclosedNodeList</span><span class="p">(</span><span class="n">values</span><span class="p">)))</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_fts_cmd</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">cmd</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">):</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd_sql</span><span class="p">(</span><span class="n">cmd</span><span class="p">,</span> <span class="o">**</span><span class="n">extra_params</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">automerge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">level</span> <span class="o">&lt;=</span> <span class="mi">16</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;level must be between 0 and 16&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;automerge&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">level</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">merge</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">npages</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;merge&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">npages</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">set_pgsz</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pgsz</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;pgsz&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">pgsz</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">set_rank</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">rank_expression</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;rank&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="n">rank_expression</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">delete_all</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_fts_cmd</span><span class="p">(</span><span class="s1">&#39;delete-all&#39;</span><span class="p">)</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">VocabModel</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">table_type</span><span class="o">=</span><span class="s1">&#39;row&#39;</span><span class="p">,</span> <span class="n">table</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">table_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;row&#39;</span><span class="p">,</span> <span class="s1">&#39;col&#39;</span><span class="p">,</span> <span class="s1">&#39;instance&#39;</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;table_type must be either &quot;row&quot;, &quot;col&quot; or &#39;</span>
+                             <span class="s1">&#39;&quot;instance&quot;.&#39;</span><span class="p">)</span>
+
+        <span class="n">attr</span> <span class="o">=</span> <span class="s1">&#39;_vocab_model_</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">table_type</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr</span><span class="p">):</span>
+            <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+                <span class="n">database</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span>
+                <span class="n">table_name</span> <span class="o">=</span> <span class="n">table</span> <span class="ow">or</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span> <span class="o">+</span> <span class="s1">&#39;_v&#39;</span>
+                <span class="n">extension_module</span> <span class="o">=</span> <span class="n">fn</span><span class="o">.</span><span class="n">fts5vocab</span><span class="p">(</span>
+                    <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">entity</span><span class="p">,</span>
+                    <span class="n">SQL</span><span class="p">(</span><span class="n">table_type</span><span class="p">))</span>
+
+            <span class="n">attrs</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s1">&#39;term&#39;</span><span class="p">:</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">TextField</span><span class="p">),</span>
+                <span class="s1">&#39;doc&#39;</span><span class="p">:</span> <span class="n">IntegerField</span><span class="p">(),</span>
+                <span class="s1">&#39;cnt&#39;</span><span class="p">:</span> <span class="n">IntegerField</span><span class="p">(),</span>
+                <span class="s1">&#39;rowid&#39;</span><span class="p">:</span> <span class="n">RowIDField</span><span class="p">(),</span>
+                <span class="s1">&#39;Meta&#39;</span><span class="p">:</span> <span class="n">Meta</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="k">if</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;col&#39;</span><span class="p">:</span>
+                <span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;col&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">TextField</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">table_type</span> <span class="o">==</span> <span class="s1">&#39;instance&#39;</span><span class="p">:</span>
+                <span class="n">attrs</span><span class="p">[</span><span class="s1">&#39;offset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">IntegerField</span><span class="p">)</span>
+
+            <span class="n">class_name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Vocab&#39;</span> <span class="o">%</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">class_name</span><span class="p">,</span> <span class="p">(</span><span class="n">VirtualModel</span><span class="p">,),</span> <span class="n">attrs</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">ClosureTable</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="n">foreign_key</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">referencing_class</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">referencing_key</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Model factory for the transitive closure extension.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">referencing_class</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">referencing_class</span> <span class="o">=</span> <span class="n">model_class</span>
+
+    <span class="k">if</span> <span class="n">foreign_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">field_obj</span> <span class="ow">in</span> <span class="n">model_class</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">refs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">field_obj</span><span class="o">.</span><span class="n">rel_model</span> <span class="ow">is</span> <span class="n">model_class</span><span class="p">:</span>
+                <span class="n">foreign_key</span> <span class="o">=</span> <span class="n">field_obj</span>
+                <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Unable to find self-referential foreign key.&#39;</span><span class="p">)</span>
+
+    <span class="n">source_key</span> <span class="o">=</span> <span class="n">model_class</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span>
+    <span class="k">if</span> <span class="n">referencing_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">referencing_key</span> <span class="o">=</span> <span class="n">source_key</span>
+
+    <span class="k">class</span> <span class="nc">BaseClosureTable</span><span class="p">(</span><span class="n">VirtualModel</span><span class="p">):</span>
+        <span class="n">depth</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">IntegerField</span><span class="p">)</span>
+        <span class="nb">id</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">IntegerField</span><span class="p">)</span>
+        <span class="n">idcolumn</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">TextField</span><span class="p">)</span>
+        <span class="n">parentcolumn</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">TextField</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">IntegerField</span><span class="p">)</span>
+        <span class="n">tablename</span> <span class="o">=</span> <span class="n">VirtualField</span><span class="p">(</span><span class="n">TextField</span><span class="p">)</span>
+
+        <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+            <span class="n">extension_module</span> <span class="o">=</span> <span class="s1">&#39;transitive_closure&#39;</span>
+
+        <span class="nd">@classmethod</span>
+        <span class="k">def</span> <span class="nf">descendants</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_node</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="n">model_class</span>
+                     <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">depth</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">))</span>
+                     <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">(</span><span class="n">source_key</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">id</span><span class="p">))</span>
+                     <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">root</span> <span class="o">==</span> <span class="n">node</span><span class="p">)</span>
+                     <span class="o">.</span><span class="n">objects</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">depth</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="n">depth</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">include_node</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">query</span>
+
+        <span class="nd">@classmethod</span>
+        <span class="k">def</span> <span class="nf">ancestors</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">include_node</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="n">model_class</span>
+                     <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">model_class</span><span class="p">,</span> <span class="bp">cls</span><span class="o">.</span><span class="n">depth</span><span class="o">.</span><span class="n">alias</span><span class="p">(</span><span class="s1">&#39;depth&#39;</span><span class="p">))</span>
+                     <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">(</span><span class="n">source_key</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
+                     <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">node</span><span class="p">)</span>
+                     <span class="o">.</span><span class="n">objects</span><span class="p">())</span>
+            <span class="k">if</span> <span class="n">depth</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="n">depth</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="n">include_node</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">depth</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">query</span>
+
+        <span class="nd">@classmethod</span>
+        <span class="k">def</span> <span class="nf">siblings</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_node</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">referencing_class</span> <span class="ow">is</span> <span class="n">model_class</span><span class="p">:</span>
+                <span class="c1"># self-join</span>
+                <span class="n">fk_value</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">__data__</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">foreign_key</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">model_class</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">foreign_key</span> <span class="o">==</span> <span class="n">fk_value</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># siblings as given in reference_class</span>
+                <span class="n">siblings</span> <span class="o">=</span> <span class="p">(</span><span class="n">referencing_class</span>
+                            <span class="o">.</span><span class="n">select</span><span class="p">(</span><span class="n">referencing_key</span><span class="p">)</span>
+                            <span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">on</span><span class="o">=</span><span class="p">(</span><span class="n">foreign_key</span> <span class="o">==</span> <span class="bp">cls</span><span class="o">.</span><span class="n">root</span><span class="p">))</span>
+                            <span class="o">.</span><span class="n">where</span><span class="p">((</span><span class="bp">cls</span><span class="o">.</span><span class="n">id</span> <span class="o">==</span> <span class="n">node</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">depth</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)))</span>
+
+                <span class="c1"># the according models</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="p">(</span><span class="n">model_class</span>
+                         <span class="o">.</span><span class="n">select</span><span class="p">()</span>
+                         <span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">source_key</span> <span class="o">&lt;&lt;</span> <span class="n">siblings</span><span class="p">)</span>
+                         <span class="o">.</span><span class="n">objects</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">include_node</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">source_key</span> <span class="o">!=</span> <span class="n">node</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">query</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">referencing_class</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s1">&#39;tablename&#39;</span><span class="p">:</span> <span class="n">referencing_class</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">table_name</span><span class="p">,</span>
+            <span class="s1">&#39;idcolumn&#39;</span><span class="p">:</span> <span class="n">referencing_key</span><span class="o">.</span><span class="n">column_name</span><span class="p">,</span>
+            <span class="s1">&#39;parentcolumn&#39;</span><span class="p">:</span> <span class="n">foreign_key</span><span class="o">.</span><span class="n">column_name</span><span class="p">}</span>
+        <span class="n">primary_key</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="si">%s</span><span class="s1">Closure&#39;</span> <span class="o">%</span> <span class="n">model_class</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseClosureTable</span><span class="p">,),</span> <span class="p">{</span><span class="s1">&#39;Meta&#39;</span><span class="p">:</span> <span class="n">Meta</span><span class="p">})</span>
+
+
+<span class="k">class</span> <span class="nc">LSMTable</span><span class="p">(</span><span class="n">VirtualModel</span><span class="p">):</span>
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">:</span>
+        <span class="n">extension_module</span> <span class="o">=</span> <span class="s1">&#39;lsm1&#39;</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">clean_options</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">options</span><span class="p">):</span>
+        <span class="n">filename</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">filename</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filename</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;LSM1 extension requires that you specify a &#39;</span>
+                             <span class="s1">&#39;filename for the LSM database.&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">filename</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="s1">&#39;&quot;&#39;</span><span class="p">:</span>
+                <span class="n">filename</span> <span class="o">=</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">filename</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;LSM1 models must specify a primary-key field.&#39;</span><span class="p">)</span>
+
+        <span class="n">key</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">AutoField</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;LSM1 models must explicitly declare a primary &#39;</span>
+                             <span class="s1">&#39;key field.&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="n">TextField</span><span class="p">,</span> <span class="n">BlobField</span><span class="p">,</span> <span class="n">IntegerField</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;LSM1 key must be a TextField, BlobField, or &#39;</span>
+                             <span class="s1">&#39;IntegerField.&#39;</span><span class="p">)</span>
+        <span class="n">key</span><span class="o">.</span><span class="n">_hidden</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">IntegerField</span><span class="p">):</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;UINT&#39;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">BlobField</span><span class="p">):</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;BLOB&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data_type</span> <span class="o">=</span> <span class="s1">&#39;TEXT&#39;</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">prefix_arguments</span> <span class="o">=</span> <span class="p">[</span><span class="n">filename</span><span class="p">,</span> <span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot;&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">data_type</span><span class="p">]</span>
+
+        <span class="c1"># Does the key map to a scalar value, or a tuple of values?</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_value_field</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_value_field</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">return</span> <span class="n">options</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">load_extension</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="s1">&#39;lsm.so&#39;</span><span class="p">):</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">database</span><span class="o">.</span><span class="n">load_extension</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">slice_to_expr</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">idx</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">key</span><span class="o">.</span><span class="n">between</span><span class="p">(</span><span class="n">idx</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">key</span> <span class="o">&gt;=</span> <span class="n">idx</span><span class="o">.</span><span class="n">start</span>
+        <span class="k">elif</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">key</span> <span class="o">&lt;=</span> <span class="n">idx</span><span class="o">.</span><span class="n">stop</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_apply_lookup_to_query</span><span class="p">(</span><span class="n">query</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">lookup</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">expr</span> <span class="o">=</span> <span class="n">LSMTable</span><span class="o">.</span><span class="n">slice_to_expr</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">lookup</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">expr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">query</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">expr</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">query</span><span class="p">,</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lookup</span><span class="p">,</span> <span class="n">Expression</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">lookup</span><span class="p">),</span> <span class="kc">False</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="n">lookup</span><span class="p">),</span> <span class="kc">True</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">get_by_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+        <span class="n">query</span><span class="p">,</span> <span class="n">is_single</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_apply_lookup_to_query</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">select</span><span class="p">()</span><span class="o">.</span><span class="n">namedtuples</span><span class="p">(),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+            <span class="n">pk</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_single</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">row</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">get</span><span class="p">()</span>
+            <span class="k">except</span> <span class="bp">cls</span><span class="o">.</span><span class="n">DoesNotExist</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">pk</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">row</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_value_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">row</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">query</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">set_by_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_value_field</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">_value_field</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">field</span><span class="p">,</span> <span class="n">fval</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">sorted_fields</span><span class="p">[</span><span class="mi">1</span><span class="p">:],</span> <span class="n">value</span><span class="p">):</span>
+                <span class="n">data</span><span class="p">[</span><span class="n">field</span><span class="p">]</span> <span class="o">=</span> <span class="n">fval</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="bp">cls</span><span class="p">):</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="vm">__dict__</span>
+        <span class="n">data</span><span class="p">[</span><span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">key</span>
+        <span class="bp">cls</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">delete_by_id</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">pk</span><span class="p">):</span>
+        <span class="n">query</span><span class="p">,</span> <span class="n">is_single</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">_apply_lookup_to_query</span><span class="p">(</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">delete</span><span class="p">(),</span>
+            <span class="bp">cls</span><span class="o">.</span><span class="n">_meta</span><span class="o">.</span><span class="n">primary_key</span><span class="p">,</span>
+            <span class="n">pk</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">query</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+
+<span class="n">OP</span><span class="o">.</span><span class="n">MATCH</span> <span class="o">=</span> <span class="s1">&#39;MATCH&#39;</span>
+
+<span class="k">def</span> <span class="nf">_sqlite_regexp</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">regex</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+
+<span class="k">class</span> <span class="nc">SqliteExtDatabase</span><span class="p">(</span><span class="n">SqliteDatabase</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">,</span> <span class="n">c_extensions</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">rank_functions</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">hash_functions</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">regexp_function</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                 <span class="n">bloomfilter</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">json_contains</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_row_factory</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">c_extensions</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">CYTHON_SQLITE_EXTENSIONS</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s1">&#39;SqliteExtDatabase initialized with &#39;</span>
+                                       <span class="s1">&#39;C extensions, but shared library was &#39;</span>
+                                       <span class="s1">&#39;not found!&#39;</span><span class="p">)</span>
+        <span class="n">prefer_c</span> <span class="o">=</span> <span class="n">CYTHON_SQLITE_EXTENSIONS</span> <span class="ow">and</span> <span class="p">(</span><span class="n">c_extensions</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rank_functions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">prefer_c</span><span class="p">:</span>
+                <span class="n">register_rank_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">bm25</span><span class="p">,</span> <span class="s1">&#39;fts_bm25&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="s1">&#39;fts_rank&#39;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">bm25</span><span class="p">,</span> <span class="s1">&#39;fts_bm25f&#39;</span><span class="p">)</span>  <span class="c1"># Fall back to bm25.</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">bm25</span><span class="p">,</span> <span class="s1">&#39;fts_lucene&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">hash_functions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">prefer_c</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;C extension required to register hash &#39;</span>
+                                 <span class="s1">&#39;functions.&#39;</span><span class="p">)</span>
+            <span class="n">register_hash_functions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">regexp_function</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">_sqlite_regexp</span><span class="p">,</span> <span class="s1">&#39;regexp&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">bloomfilter</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">prefer_c</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;C extension required to use bloomfilter.&#39;</span><span class="p">)</span>
+            <span class="n">register_bloomfilter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">json_contains</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">register_function</span><span class="p">(</span><span class="n">_json_contains</span><span class="p">,</span> <span class="s1">&#39;json_contains&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_c_extensions</span> <span class="o">=</span> <span class="n">prefer_c</span>
+
+    <span class="k">def</span> <span class="nf">_add_conn_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_add_conn_hooks</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_row_factory</span><span class="p">:</span>
+            <span class="n">conn</span><span class="o">.</span><span class="n">row_factory</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_row_factory</span>
+
+    <span class="k">def</span> <span class="nf">row_factory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_row_factory</span> <span class="o">=</span> <span class="n">fn</span>
+
+
+<span class="k">if</span> <span class="n">CYTHON_SQLITE_EXTENSIONS</span><span class="p">:</span>
+    <span class="n">SQLITE_STATUS_MEMORY_USED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SQLITE_STATUS_PAGECACHE_USED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">SQLITE_STATUS_PAGECACHE_OVERFLOW</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">SQLITE_STATUS_SCRATCH_USED</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">SQLITE_STATUS_SCRATCH_OVERFLOW</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">SQLITE_STATUS_MALLOC_SIZE</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">SQLITE_STATUS_PARSER_STACK</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">SQLITE_STATUS_PAGECACHE_SIZE</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">SQLITE_STATUS_SCRATCH_SIZE</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">SQLITE_STATUS_MALLOC_COUNT</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">SQLITE_DBSTATUS_LOOKASIDE_USED</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SQLITE_DBSTATUS_CACHE_USED</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">SQLITE_DBSTATUS_SCHEMA_USED</span> <span class="o">=</span> <span class="mi">2</span>
+    <span class="n">SQLITE_DBSTATUS_STMT_USED</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">SQLITE_DBSTATUS_LOOKASIDE_HIT</span> <span class="o">=</span> <span class="mi">4</span>
+    <span class="n">SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE</span> <span class="o">=</span> <span class="mi">5</span>
+    <span class="n">SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL</span> <span class="o">=</span> <span class="mi">6</span>
+    <span class="n">SQLITE_DBSTATUS_CACHE_HIT</span> <span class="o">=</span> <span class="mi">7</span>
+    <span class="n">SQLITE_DBSTATUS_CACHE_MISS</span> <span class="o">=</span> <span class="mi">8</span>
+    <span class="n">SQLITE_DBSTATUS_CACHE_WRITE</span> <span class="o">=</span> <span class="mi">9</span>
+    <span class="n">SQLITE_DBSTATUS_DEFERRED_FKS</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="c1">#SQLITE_DBSTATUS_CACHE_USED_SHARED = 11</span>
+
+    <span class="k">def</span> <span class="nf">__status__</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">return_highwater</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expose a sqlite3_status() call for a particular flag as a property of</span>
+<span class="sd">        the Database object.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">getter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">sqlite_get_status</span><span class="p">(</span><span class="n">flag</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">return_highwater</span> <span class="k">else</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">getter</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__dbstatus__</span><span class="p">(</span><span class="n">flag</span><span class="p">,</span> <span class="n">return_highwater</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_current</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Expose a sqlite3_dbstatus() call for a particular flag as a property of</span>
+<span class="sd">        the Database instance. Unlike sqlite3_status(), the dbstatus properties</span>
+<span class="sd">        pertain to the current connection.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">def</span> <span class="nf">getter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">conn</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ImproperlyConfigured</span><span class="p">(</span><span class="s1">&#39;database connection not opened.&#39;</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">sqlite_get_db_status</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">conn</span><span class="p">,</span> <span class="n">flag</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">return_current</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">return_highwater</span> <span class="k">else</span> <span class="n">result</span>
+        <span class="k">return</span> <span class="nb">property</span><span class="p">(</span><span class="n">getter</span><span class="p">)</span>
+
+    <span class="k">class</span> <span class="nc">CSqliteExtDatabase</span><span class="p">(</span><span class="n">SqliteExtDatabase</span><span class="p">):</span>
+        <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_commit_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_hook</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_replace_busy_handler</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CSqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">database</span><span class="p">,</span> <span class="n">replace_busy_handler</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CSqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">init</span><span class="p">(</span><span class="n">database</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_replace_busy_handler</span> <span class="o">=</span> <span class="n">replace_busy_handler</span>
+
+        <span class="k">def</span> <span class="nf">_close</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_hook</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_commit_hook</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_hook</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_rollback_hook</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_hook</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_update_hook</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">super</span><span class="p">(</span><span class="n">CSqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_close</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_add_conn_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">conn</span><span class="p">):</span>
+            <span class="nb">super</span><span class="p">(</span><span class="n">CSqliteExtDatabase</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_add_conn_hooks</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span> <span class="o">=</span> <span class="n">ConnectionHelper</span><span class="p">(</span><span class="n">conn</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_commit_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_commit_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_commit_hook</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_rollback_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_rollback_hook</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_update_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_update_hook</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_replace_busy_handler</span><span class="p">:</span>
+                <span class="n">timeout</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="ow">or</span> <span class="mi">5</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_busy_handler</span><span class="p">(</span><span class="n">timeout</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">on_commit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_commit_hook</span> <span class="o">=</span> <span class="n">fn</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_commit_hook</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fn</span>
+
+        <span class="k">def</span> <span class="nf">on_rollback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_rollback_hook</span> <span class="o">=</span> <span class="n">fn</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_rollback_hook</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fn</span>
+
+        <span class="k">def</span> <span class="nf">on_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fn</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_hook</span> <span class="o">=</span> <span class="n">fn</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_closed</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">set_update_hook</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">fn</span>
+
+        <span class="k">def</span> <span class="nf">changes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">changes</span><span class="p">()</span>
+
+        <span class="nd">@property</span>
+        <span class="k">def</span> <span class="nf">last_insert_rowid</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">last_insert_rowid</span><span class="p">()</span>
+
+        <span class="nd">@property</span>
+        <span class="k">def</span> <span class="nf">autocommit</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_conn_helper</span><span class="o">.</span><span class="n">autocommit</span><span class="p">()</span>
+
+        <span class="k">def</span> <span class="nf">backup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">destination</span><span class="p">,</span> <span class="n">pages</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">backup</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">(),</span> <span class="n">destination</span><span class="o">.</span><span class="n">connection</span><span class="p">(),</span>
+                          <span class="n">pages</span><span class="o">=</span><span class="n">pages</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">progress</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">backup_to_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="n">pages</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                           <span class="n">progress</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">backup_to_file</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">connection</span><span class="p">(),</span> <span class="n">filename</span><span class="p">,</span> <span class="n">pages</span><span class="o">=</span><span class="n">pages</span><span class="p">,</span>
+                                  <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">,</span> <span class="n">progress</span><span class="o">=</span><span class="n">progress</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">blob_open</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">rowid</span><span class="p">,</span> <span class="n">read_only</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Blob</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">table</span><span class="p">,</span> <span class="n">column</span><span class="p">,</span> <span class="n">rowid</span><span class="p">,</span> <span class="n">read_only</span><span class="p">)</span>
+
+        <span class="c1"># Status properties.</span>
+        <span class="n">memory_used</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_MEMORY_USED</span><span class="p">)</span>
+        <span class="n">malloc_size</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_MALLOC_SIZE</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">malloc_count</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_MALLOC_COUNT</span><span class="p">)</span>
+        <span class="n">pagecache_used</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_PAGECACHE_USED</span><span class="p">)</span>
+        <span class="n">pagecache_overflow</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_PAGECACHE_OVERFLOW</span><span class="p">)</span>
+        <span class="n">pagecache_size</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_PAGECACHE_SIZE</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">scratch_used</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_SCRATCH_USED</span><span class="p">)</span>
+        <span class="n">scratch_overflow</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_SCRATCH_OVERFLOW</span><span class="p">)</span>
+        <span class="n">scratch_size</span> <span class="o">=</span> <span class="n">__status__</span><span class="p">(</span><span class="n">SQLITE_STATUS_SCRATCH_SIZE</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Connection status properties.</span>
+        <span class="n">lookaside_used</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_LOOKASIDE_USED</span><span class="p">)</span>
+        <span class="n">lookaside_hit</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_LOOKASIDE_HIT</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">lookaside_miss</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_LOOKASIDE_MISS_SIZE</span><span class="p">,</span>
+                                      <span class="kc">True</span><span class="p">)</span>
+        <span class="n">lookaside_miss_full</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_LOOKASIDE_MISS_FULL</span><span class="p">,</span>
+                                           <span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache_used</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_CACHE_USED</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="c1">#cache_used_shared = __dbstatus__(SQLITE_DBSTATUS_CACHE_USED_SHARED,</span>
+        <span class="c1">#                                 False, True)</span>
+        <span class="n">schema_used</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_SCHEMA_USED</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">statement_used</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_STMT_USED</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache_hit</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_CACHE_HIT</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache_miss</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_CACHE_MISS</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+        <span class="n">cache_write</span> <span class="o">=</span> <span class="n">__dbstatus__</span><span class="p">(</span><span class="n">SQLITE_DBSTATUS_CACHE_WRITE</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">match</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">rhs</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">Expression</span><span class="p">(</span><span class="n">lhs</span><span class="p">,</span> <span class="n">OP</span><span class="o">.</span><span class="n">MATCH</span><span class="p">,</span> <span class="n">rhs</span><span class="p">)</span>
+
+<span class="k">def</span> <span class="nf">_parse_match_info</span><span class="p">(</span><span class="n">buf</span><span class="p">):</span>
+    <span class="c1"># See http://sqlite.org/fts3.html#matchinfo</span>
+    <span class="n">bufsize</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>  <span class="c1"># Length in bytes.</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">struct</span><span class="o">.</span><span class="n">unpack</span><span class="p">(</span><span class="s1">&#39;@I&#39;</span><span class="p">,</span> <span class="n">buf</span><span class="p">[</span><span class="n">i</span><span class="p">:</span><span class="n">i</span><span class="o">+</span><span class="mi">4</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">bufsize</span><span class="p">,</span> <span class="mi">4</span><span class="p">)]</span>
+
+<span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="n">ncol</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">raw_weights</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">ncol</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="n">ncol</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">raw_weights</span><span class="p">):</span>
+            <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">weight</span>
+    <span class="k">return</span> <span class="n">weights</span>
+
+<span class="c1"># Ranking implementation, which parse matchinfo.</span>
+<span class="k">def</span> <span class="nf">rank</span><span class="p">(</span><span class="n">raw_match_info</span><span class="p">,</span> <span class="o">*</span><span class="n">raw_weights</span><span class="p">):</span>
+    <span class="c1"># Handle match_info called w/default args &#39;pcx&#39; - based on the example rank</span>
+    <span class="c1"># function http://sqlite.org/fts3.html#appendix_a</span>
+    <span class="n">match_info</span> <span class="o">=</span> <span class="n">_parse_match_info</span><span class="p">(</span><span class="n">raw_match_info</span><span class="p">)</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">p</span><span class="p">,</span> <span class="n">c</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[:</span><span class="mi">2</span><span class="p">]</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">get_weights</span><span class="p">(</span><span class="n">c</span><span class="p">,</span> <span class="n">raw_weights</span><span class="p">)</span>
+
+    <span class="c1"># matchinfo X value corresponds to, for each phrase in the search query, a</span>
+    <span class="c1"># list of 3 values for each column in the search table.</span>
+    <span class="c1"># So if we have a two-phrase search query and three columns of data, the</span>
+    <span class="c1"># following would be the layout:</span>
+    <span class="c1"># p0 : c0=[0, 1, 2],   c1=[3, 4, 5],    c2=[6, 7, 8]</span>
+    <span class="c1"># p1 : c0=[9, 10, 11], c1=[12, 13, 14], c2=[15, 16, 17]</span>
+    <span class="k">for</span> <span class="n">phrase_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">p</span><span class="p">):</span>
+        <span class="n">phrase_info_idx</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">+</span> <span class="p">(</span><span class="n">phrase_num</span> <span class="o">*</span> <span class="n">c</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">col_num</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">c</span><span class="p">):</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="n">col_num</span><span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">weight</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">col_idx</span> <span class="o">=</span> <span class="n">phrase_info_idx</span> <span class="o">+</span> <span class="p">(</span><span class="n">col_num</span> <span class="o">*</span> <span class="mi">3</span><span class="p">)</span>
+
+            <span class="c1"># The idea is that we count the number of times the phrase appears</span>
+            <span class="c1"># in this column of the current row, compared to how many times it</span>
+            <span class="c1"># appears in this column across all rows. The ratio of these values</span>
+            <span class="c1"># provides a rough way to score based on &quot;high value&quot; terms.</span>
+            <span class="n">row_hits</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[</span><span class="n">col_idx</span><span class="p">]</span>
+            <span class="n">all_rows_hits</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[</span><span class="n">col_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">row_hits</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">score</span> <span class="o">+=</span> <span class="n">weight</span> <span class="o">*</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">row_hits</span><span class="p">)</span> <span class="o">/</span> <span class="n">all_rows_hits</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="o">-</span><span class="n">score</span>
+
+<span class="c1"># Okapi BM25 ranking implementation (FTS4 only).</span>
+<span class="k">def</span> <span class="nf">bm25</span><span class="p">(</span><span class="n">raw_match_info</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Usage:</span>
+
+<span class="sd">        # Format string *must* be pcnalx</span>
+<span class="sd">        # Second parameter to bm25 specifies the index of the column, on</span>
+<span class="sd">        # the table being queries.</span>
+<span class="sd">        bm25(matchinfo(document_tbl, &#39;pcnalx&#39;), 1) AS rank</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">match_info</span> <span class="o">=</span> <span class="n">_parse_match_info</span><span class="p">(</span><span class="n">raw_match_info</span><span class="p">)</span>
+    <span class="n">K</span> <span class="o">=</span> <span class="mf">1.2</span>
+    <span class="n">B</span> <span class="o">=</span> <span class="mf">0.75</span>
+    <span class="n">score</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+    <span class="n">P_O</span><span class="p">,</span> <span class="n">C_O</span><span class="p">,</span> <span class="n">N_O</span><span class="p">,</span> <span class="n">A_O</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="mi">4</span><span class="p">)</span>  <span class="c1"># Offsets into the matchinfo buffer.</span>
+    <span class="n">term_count</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[</span><span class="n">P_O</span><span class="p">]</span>  <span class="c1"># n</span>
+    <span class="n">col_count</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[</span><span class="n">C_O</span><span class="p">]</span>
+    <span class="n">total_docs</span> <span class="o">=</span> <span class="n">match_info</span><span class="p">[</span><span class="n">N_O</span><span class="p">]</span>  <span class="c1"># N</span>
+    <span class="n">L_O</span> <span class="o">=</span> <span class="n">A_O</span> <span class="o">+</span> <span class="n">col_count</span>
+    <span class="n">X_O</span> <span class="o">=</span> <span class="n">L_O</span> <span class="o">+</span> <span class="n">col_count</span>
+
+    <span class="c1"># Worked example of pcnalx for two columns and two phrases, 100 docs total.</span>
+    <span class="c1"># {</span>
+    <span class="c1">#   p  = 2</span>
+    <span class="c1">#   c  = 2</span>
+    <span class="c1">#   n  = 100</span>
+    <span class="c1">#   a0 = 4   -- avg number of tokens for col0, e.g. title</span>
+    <span class="c1">#   a1 = 40  -- avg number of tokens for col1, e.g. body</span>
+    <span class="c1">#   l0 = 5   -- curr doc has 5 tokens in col0</span>
+    <span class="c1">#   l1 = 30  -- curr doc has 30 tokens in col1</span>
+    <span class="c1">#</span>
+    <span class="c1">#   x000     -- hits this row for phrase0, col0</span>
+    <span class="c1">#   x001     -- hits all rows for phrase0, col0</span>
+    <span class="c1">#   x002     -- rows with phrase0 in col0 at least once</span>
+    <span class="c1">#</span>
+    <span class="c1">#   x010     -- hits this row for phrase0, col1</span>
+    <span class="c1">#   x011     -- hits all rows for phrase0, col1</span>
+    <span class="c1">#   x012     -- rows with phrase0 in col1 at least once</span>
+    <span class="c1">#</span>
+    <span class="c1">#   x100     -- hits this row for phrase1, col0</span>
+    <span class="c1">#   x101     -- hits all rows for phrase1, col0</span>
+    <span class="c1">#   x102     -- rows with phrase1 in col0 at least once</span>
+    <span class="c1">#</span>
+    <span class="c1">#   x110     -- hits this row for phrase1, col1</span>
+    <span class="c1">#   x111     -- hits all rows for phrase1, col1</span>
+    <span class="c1">#   x112     -- rows with phrase1 in col1 at least once</span>
+    <span class="c1"># }</span>
+
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">get_weights</span><span class="p">(</span><span class="n">col_count</span><span class="p">,</span> <span class="n">args</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">term_count</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">col_count</span><span class="p">):</span>
+            <span class="n">weight</span> <span class="o">=</span> <span class="n">weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">weight</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">x</span> <span class="o">=</span> <span class="n">X_O</span> <span class="o">+</span> <span class="p">(</span><span class="mi">3</span> <span class="o">*</span> <span class="p">(</span><span class="n">j</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">col_count</span><span class="p">))</span>
+            <span class="n">term_frequency</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="n">x</span><span class="p">])</span>  <span class="c1"># f(qi, D)</span>
+            <span class="n">docs_with_term</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="n">x</span> <span class="o">+</span> <span class="mi">2</span><span class="p">])</span>  <span class="c1"># n(qi)</span>
+
+            <span class="c1"># log( (N - n(qi) + 0.5) / (n(qi) + 0.5) )</span>
+            <span class="n">idf</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">log</span><span class="p">(</span>
+                    <span class="p">(</span><span class="n">total_docs</span> <span class="o">-</span> <span class="n">docs_with_term</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span>
+                    <span class="p">(</span><span class="n">docs_with_term</span> <span class="o">+</span> <span class="mf">0.5</span><span class="p">))</span>
+            <span class="k">if</span> <span class="n">idf</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="n">idf</span> <span class="o">=</span> <span class="mf">1e-6</span>
+
+            <span class="n">doc_length</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="n">L_O</span> <span class="o">+</span> <span class="n">j</span><span class="p">])</span>  <span class="c1"># |D|</span>
+            <span class="n">avg_length</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">match_info</span><span class="p">[</span><span class="n">A_O</span> <span class="o">+</span> <span class="n">j</span><span class="p">])</span> <span class="ow">or</span> <span class="mf">1.</span>  <span class="c1"># avgdl</span>
+            <span class="n">ratio</span> <span class="o">=</span> <span class="n">doc_length</span> <span class="o">/</span> <span class="n">avg_length</span>
+
+            <span class="n">num</span> <span class="o">=</span> <span class="n">term_frequency</span> <span class="o">*</span> <span class="p">(</span><span class="n">K</span> <span class="o">+</span> <span class="mf">1.0</span><span class="p">)</span>
+            <span class="n">b_part</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">B</span> <span class="o">+</span> <span class="p">(</span><span class="n">B</span> <span class="o">*</span> <span class="n">ratio</span><span class="p">)</span>
+            <span class="n">denom</span> <span class="o">=</span> <span class="n">term_frequency</span> <span class="o">+</span> <span class="p">(</span><span class="n">K</span> <span class="o">*</span> <span class="n">b_part</span><span class="p">)</span>
+
+            <span class="n">pc_score</span> <span class="o">=</span> <span class="n">idf</span> <span class="o">*</span> <span class="p">(</span><span class="n">num</span> <span class="o">/</span> <span class="n">denom</span><span class="p">)</span>
+            <span class="n">score</span> <span class="o">+=</span> <span class="p">(</span><span class="n">pc_score</span> <span class="o">*</span> <span class="n">weight</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="o">-</span><span class="n">score</span>
+
+
+<span class="k">def</span> <span class="nf">_json_contains</span><span class="p">(</span><span class="n">src_json</span><span class="p">,</span> <span class="n">obj_json</span><span class="p">):</span>
+    <span class="n">stack</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">obj_json</span><span class="p">),</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">src_json</span><span class="p">)))</span>
+    <span class="k">except</span><span class="p">:</span>
+        <span class="c1"># Invalid JSON!</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">while</span> <span class="n">stack</span><span class="p">:</span>
+        <span class="n">obj</span><span class="p">,</span> <span class="n">src</span> <span class="o">=</span> <span class="n">stack</span><span class="o">.</span><span class="n">pop</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+                    <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">obj</span><span class="p">[</span><span class="n">key</span><span class="p">],</span> <span class="n">src</span><span class="p">[</span><span class="n">key</span><span class="p">]))</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">obj</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">item</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">obj</span><span class="p">)):</span>
+                        <span class="n">stack</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">obj</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">src</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+                <span class="k">except</span> <span class="ne">IndexError</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="kc">False</span>
+            <span class="k">elif</span> <span class="n">obj</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">src</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">elif</span> <span class="n">obj</span> <span class="o">!=</span> <span class="n">src</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+    <span class="k">return</span> <span class="kc">True</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
