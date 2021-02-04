@@ -3,7 +3,7 @@
 BUILDDIR := $(PWD)
 PYCHECKDIRS := utils
 PYCHECKGLOBS := 'utils/**/*.py'
-DOCDIR := docs-sphinx
+DOCDIR := docs
 MDCHECKGLOBS := 'docs/**/*.md' 'docs/**/*.rst'
 MDCHECKFILES := CODE_OF_CONDUCT.md CONTRIBUTING.md DEVELOPING.md README.md
 
@@ -31,7 +31,9 @@ docs:
 # creates wheel file
 build:
 	make docs;
-	mv -v docs-sphinx/build/html/* docs/;
+	rm -rf _sources;
+	rm -rf _static;
+	mv -v docs/build/html/* ./;
 
 # clean package
 clean:
