@@ -11,7 +11,7 @@ Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
 
 <p align="center">
     <a href="https://docs.neuralmagic.com/">
-        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/docs/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
+        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
     <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
         <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
