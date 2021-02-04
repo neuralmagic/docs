@@ -5,7 +5,7 @@ Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
 <div align="center"><h2>Neural Magic Documentation</h2></div>
 
 <div align="center">
-<p>Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant
+<p>Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant<br>
     deep learning models on CPU resources.</p>
 
 
