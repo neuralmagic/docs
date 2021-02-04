@@ -10,7 +10,7 @@ Neural Magic’s Deep Sparse Platform provides a suite of software components to
 
 <p align="center">
     <a href="https://docs.neuralmagic.com/">
-        <img alt="Documentation" src="https://img.shields.io/website/http/neuralmagic.com/sparseml/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
+        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/sparseml/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
     <a href="https://github.com/neuralmagic/docs/blob/main/LICENSE"></a>
     <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
