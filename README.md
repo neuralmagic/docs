@@ -5,14 +5,14 @@ Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
 <div align="center"><h2>Neural Magic Documentation</h2></div>
 
 <div align="center">
-Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant deep learning models on CPU resources.
+<p>Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant
+    deep learning models on CPU resources.</p>
 
 
 <p align="center">
     <a href="https://docs.neuralmagic.com/">
-        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/sparseml/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
+        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/docs/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
-    <a href="https://github.com/neuralmagic/docs/blob/main/LICENSE"></a>
     <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
         <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
     </a>
@@ -46,6 +46,8 @@ To contribute to Neural Magic documentation, please:</br>
   proposed documentation changes.</br>
   Get started with
   [writing and formatting on GitHub](https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github).
+  
+  To learn more about Neural Magic, [check our website](https://www.neuralmagic.com).
 </div>
 
  </div>
