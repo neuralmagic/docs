@@ -44,20 +44,44 @@ To file a docs issue for a specific software component, use its repo issue track
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
 | Docs                                                              | GitHub                                                 | Issue Tracker                                                  | Releases                                                         | License             |
 +===================================================================+========================================================+================================================================+==================================================================+=====================+
-| `SparseML <https://docs.neuralmagic.com/sparseml/ />`_            | `Repo <https://github.com/neuralmagic/sparseml/ />`_   | `Queue <https://github.com/neuralmagic/sparseml/issues/ />`_   | `Index <https://github.com/neuralmagic/sparseml/releases/ />`_   | Apache 2.0          |
+| `SparseML <https://docs.neuralmagic.com/sparseml />`_            | `Repo <https://github.com/neuralmagic/sparseml />`_   | `Queue <https://github.com/neuralmagic/sparseml/issues />`_   | `Index <https://github.com/neuralmagic/sparseml/releases />`_   | Apache 2.0          |
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
-| `Sparsify <https://docs.neuralmagic.com/sparsify/ />`_            | `Repo <https://github.com/neuralmagic/sparsify/ />`_   | `Queue <https://github.com/neuralmagic/sparsify/issues/ />`_   | `Index <https://github.com/neuralmagic/sparsify/releases/ />`_   | Apache 2.0          |
+| `Sparsify <https://docs.neuralmagic.com/sparsify />`_            | `Repo <https://github.com/neuralmagic/sparsify />`_   | `Queue <https://github.com/neuralmagic/sparsify/issues />`_   | `Index <https://github.com/neuralmagic/sparsify/releases />`_   | Apache 2.0          |
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
-| `SparseZoo <https://docs.neuralmagic.com/sparsezoo/ />`_          | `Repo <https://github.com/neuralmagic/sparsezoo/ />`_  | `Queue <https://github.com/neuralmagic/sparsezoo/issues/ />`_  | `Index <https://github.com/neuralmagic/sparsezoo/releases/ />`_  | Apache 2.0          |
+| `SparseZoo <https://docs.neuralmagic.com/sparsezoo />`_          | `Repo <https://github.com/neuralmagic/sparsezoo />`_  | `Queue <https://github.com/neuralmagic/sparsezoo/issues />`_  | `Index <https://github.com/neuralmagic/sparsezoo/releases />`_  | Apache 2.0          |
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
-| `DeepSparse Engine <https://docs.neuralmagic.com/deepsparse/ />`_ | `Repo <https://github.com/neuralmagic/deepsparse/ />`_ | `Queue <https://github.com/neuralmagic/deepsparse/issues/ />`_ | `Index <https://github.com/neuralmagic/deepsparse/releases/ />`_ | Neural Magic Engine |
+| `DeepSparse Engine <https://docs.neuralmagic.com/deepsparse />`_ | `Repo <https://github.com/neuralmagic/deepsparse />`_ | `Queue <https://github.com/neuralmagic/deepsparse/issues />`_ | `Index <https://github.com/neuralmagic/deepsparse/releases />`_ | Neural Magic Engine |
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
 
 To contribute to Neural Magic documentation, please:
 
-- Open a `GitHub issue <https://github.com/neuralmagic/docs/issues/ />`_ and give it the `documentation` label.
-- Submit a `pull request <https://github.com/neuralmagic/docs/pulls/ />`_ with your proposed documentation changes.
+- Open a `GitHub issue <https://github.com/neuralmagic/docs/issues />`_ and give it the `documentation` label.
+- Submit a `pull request <https://github.com/neuralmagic/docs/pulls />`_ with your proposed documentation changes.
 - Get started with `writing and formatting on GitHub <https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github />`_
 
-To learn more about Neural Magic, `check our website <https://www.neuralmagic.com/ />`_.
+To learn more about Neural Magic, `check our website <https://www.neuralmagic.com />`_.
 
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Get Started
+
+    getstarted
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Details
+
+    Technical Papers <https://neuralmagic.com/resources/technical-papers>
+    faqs
+    glossary
+
+
+.. toctree::
+    :maxdepth: 3
+    :caption: Help
+
+    Bugs, Feature Requests <https://github.com/neuralmagic/docs/issues>
+    Support, General Q&A <https://github.com/neuralmagic/docs/discussions>
+    Neural Magic Docs <https://docs.neuralmagic.com>
+  
