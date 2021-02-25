@@ -100,7 +100,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -124,10 +124,11 @@
 </ul>
 </li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -218,7 +219,7 @@
 
 <dl class="py function">
 <dt id="sparseml.pytorch.optim.quantization.helpers.fuse_module_conv_bn_relus">
-<code class="sig-prename descclassname">sparseml.pytorch.optim.quantization.helpers.</code><code class="sig-name descname">fuse_module_conv_bn_relus</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span><span class="p">:</span> <span class="n">torch.nn.modules.module.Module</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; torch.nn.modules.module.Module<a class="reference internal" href="../_modules/sparseml/pytorch/optim/quantization/helpers.html#fuse_module_conv_bn_relus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.quantization.helpers.fuse_module_conv_bn_relus" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sparseml.pytorch.optim.quantization.helpers.</code><code class="sig-name descname">fuse_module_conv_bn_relus</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">module</span><span class="p">:</span> <span class="n">torch.nn.modules.module.Module</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em>, <em class="sig-param"><span class="n">override_bn_subclasses_forward</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>bool<span class="p">, </span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; torch.nn.modules.module.Module<a class="reference internal" href="../_modules/sparseml/pytorch/optim/quantization/helpers.html#fuse_module_conv_bn_relus"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.quantization.helpers.fuse_module_conv_bn_relus" title="Permalink to this definition">¶</a></dt>
 <dd><p>Performs fusion of Conv2d, BatchNorm2d, and ReLU layers found in the
 given module. To be fused, these layers must appear sequentially in
 module.named_modules() and be in the same submodule.
@@ -230,6 +231,12 @@ in place fusing function for the model.</p>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>module</strong> – the module to fuse</p></li>
 <li><p><strong>inplace</strong> – set True to perform fusions in-place. default is True</p></li>
+<li><p><strong>override_bn_subclasses_forward</strong> – if True, modules that are subclasses of
+BatchNorm2d will be modified to be BatchNorm2d but with the forward
+pass and state variables copied from the subclass. This is so these
+BN modules can pass PyTorch type checking when fusing. Can set to
+“override-only” and only parameters will be overwritten, not the
+forward pass. Default is True</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
@@ -301,11 +308,12 @@ quantization target if it is an initializer otherwise target will be None</p>
 
 <dl class="py function">
 <dt id="sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export">
-<code class="sig-prename descclassname">sparseml.pytorch.optim.quantization.quantize_qat_export.</code><code class="sig-name descname">quantize_torch_qat_export</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span><span class="p">:</span> <span class="n">onnx.onnx_ONNX_REL_1_6_ml_pb2.ModelProto</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; onnx.onnx_ONNX_REL_1_6_ml_pb2.ModelProto<a class="reference internal" href="../_modules/sparseml/pytorch/optim/quantization/quantize_qat_export.html#quantize_torch_qat_export"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">sparseml.pytorch.optim.quantization.quantize_qat_export.</code><code class="sig-name descname">quantize_torch_qat_export</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">model</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>onnx.onnx_ONNX_REL_1_6_ml_pb2.ModelProto<span class="p">, </span>str<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">output_file_path</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">inplace</span><span class="p">:</span> <span class="n">bool</span> <span class="o">=</span> <span class="default_value">True</span></em><span class="sig-paren">)</span> &#x2192; onnx.onnx_ONNX_REL_1_6_ml_pb2.ModelProto<a class="reference internal" href="../_modules/sparseml/pytorch/optim/quantization/quantize_qat_export.html#quantize_torch_qat_export"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – The model to convert</p></li>
+<li><p><strong>model</strong> – The model to convert, or a file path to it</p></li>
+<li><p><strong>output_file_path</strong> – File path to save the converted model to</p></li>
 <li><p><strong>inplace</strong> – If true, does conversion of model in place. Default is true</p></li>
 </ul>
 </dd>

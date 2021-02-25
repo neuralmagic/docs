@@ -98,16 +98,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -745,15 +746,23 @@
             <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="quantize_torch_qat_export"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.optim.quantization.html#sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export">[docs]</a><span class="k">def</span> <span class="nf">quantize_torch_qat_export</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelProto</span><span class="p">:</span>
+<div class="viewcode-block" id="quantize_torch_qat_export"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.optim.quantization.html#sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export">[docs]</a><span class="k">def</span> <span class="nf">quantize_torch_qat_export</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">output_file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelProto</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    :param model: The model to convert</span>
+<span class="sd">    :param model: The model to convert, or a file path to it</span>
+<span class="sd">    :param output_file_path: File path to save the converted model to</span>
 <span class="sd">    :param inplace: If true, does conversion of model in place. Default is true</span>
 <span class="sd">    :return: Converts a model exported from a torch QAT session from a QAT graph with</span>
 <span class="sd">        fake quantize ops surrounding operations to a quantized graph with quantized</span>
 <span class="sd">        operations. All quantized Convs and FC inputs and outputs be surrounded by</span>
 <span class="sd">        fake quantize ops</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
     <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
@@ -764,6 +773,9 @@
     <span class="n">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_remove_duplicate_quantize__ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file_path</span><span class="p">:</span>
+        <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">model</span></div>
 </pre></div>

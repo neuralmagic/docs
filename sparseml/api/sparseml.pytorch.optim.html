@@ -100,7 +100,7 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul class="current">
@@ -124,10 +124,11 @@
 </ul>
 </li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -718,19 +719,24 @@ Also handles loading modifiers from yaml files</p>
 </dl>
 <dl class="py method">
 <dt id="sparseml.pytorch.optim.manager.ScheduledModifierManager.from_yaml">
-<em class="property">static </em><code class="sig-name descname">from_yaml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span><span class="p">:</span> <span class="n">str</span></em>, <em class="sig-param"><span class="n">add_modifiers</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span><a class="reference internal" href="#sparseml.pytorch.optim.modifier.Modifier" title="sparseml.pytorch.optim.modifier.Modifier">sparseml.pytorch.optim.modifier.Modifier</a><span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/manager.html#ScheduledModifierManager.from_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.manager.ScheduledModifierManager.from_yaml" title="Permalink to this definition">¶</a></dt>
+<em class="property">static </em><code class="sig-name descname">from_yaml</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">file_path</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>str<span class="p">, </span>sparsezoo.objects.optimization_recipe.OptimizationRecipe<span class="p">]</span></span></em>, <em class="sig-param"><span class="n">add_modifiers</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span><a class="reference internal" href="#sparseml.pytorch.optim.modifier.Modifier" title="sparseml.pytorch.optim.modifier.Modifier">sparseml.pytorch.optim.modifier.Modifier</a><span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/manager.html#ScheduledModifierManager.from_yaml"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.manager.ScheduledModifierManager.from_yaml" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convenience function used to create the manager of multiple modifiers from a
-yaml file.</p>
+recipe file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>file_path</strong> – the path to the yaml file to load the modifier from</p></li>
+<li><p><strong>file_path</strong> – the path to the recipe file to load the modifier from, or
+a SparseZoo model stub to load a recipe for a model stored in SparseZoo.
+SparseZoo stubs should be preceded by ‘zoo:’, and can contain an optional
+‘?recipe_type=&lt;type&gt;’ parameter. Can also be a SparseZoo OptimizationRecipe
+object. i.e. ‘/path/to/local/recipe.yaml’, ‘zoo:model/stub/path’,
+‘zoo:model/stub/path?recipe_type=transfer’</p></li>
 <li><p><strong>add_modifiers</strong> – additional modifiers that should be added to the
-returned manager alongside the ones loaded from the yaml file</p></li>
+returned manager alongside the ones loaded from the recipe file</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns</dt>
-<dd class="field-even"><p>ScheduledModifierManager() created from the yaml file</p>
+<dd class="field-even"><p>ScheduledModifierManager() created from the recipe file</p>
 </dd>
 </dl>
 </dd></dl>
@@ -2767,7 +2773,7 @@ Useful for transfer learning use cases.</p>
 <div class="line-block">
 <div class="line">Sample yaml:</div>
 <div class="line-block">
-<div class="line">!ConstantKSModifier</div>
+<div class="line">!ConstantPruningModifier</div>
 <div class="line-block">
 <div class="line">start_epoch: 0.0</div>
 <div class="line">end_epoch: 10.0</div>
@@ -2924,7 +2930,7 @@ and applied with an interpolated function for each step taken.</p>
 <div class="line-block">
 <div class="line">Sample yaml:</div>
 <div class="line-block">
-<div class="line">!GradualKSModifier</div>
+<div class="line">!GMPruningModifier</div>
 <div class="line-block">
 <div class="line">init_sparsity: 0.05</div>
 <div class="line">final_sparsity: 0.8</div>
@@ -3151,7 +3157,7 @@ If end, disables the masks if leave_enabled is False.</p>
 <p>PyTorch version must support quantization (&gt;=1.2, ONNX export support introduced in 1.7)</p>
 <dl class="py class">
 <dt id="sparseml.pytorch.optim.modifier_quantization.QuantizationModifier">
-<em class="property">class </em><code class="sig-prename descclassname">sparseml.pytorch.optim.modifier_quantization.</code><code class="sig-name descname">QuantizationModifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_epoch</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">- 1.0</span></em>, <em class="sig-param"><span class="n">submodules</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>str<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_fuse_fn_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_quantization_observer_epoch</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>None<span class="p">, </span>float<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>None<span class="p">, </span>float<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">end_epoch</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">- 1</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_quantization.html#QuantizationModifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">sparseml.pytorch.optim.modifier_quantization.</code><code class="sig-name descname">QuantizationModifier</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">start_epoch</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">- 1.0</span></em>, <em class="sig-param"><span class="n">submodules</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>List<span class="p">[</span>str<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">model_fuse_fn_name</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>str<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">disable_quantization_observer_epoch</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>None<span class="p">, </span>float<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union<span class="p">[</span>None<span class="p">, </span>float<span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em>, <em class="sig-param"><span class="n">end_epoch</span><span class="p">:</span> <span class="n">float</span> <span class="o">=</span> <span class="default_value">- 1</span></em>, <em class="sig-param"><span class="n">model_fuse_fn_kwargs</span><span class="p">:</span> <span class="n">Optional<span class="p">[</span>Dict<span class="p">[</span>str<span class="p">, </span>Any<span class="p">]</span><span class="p">]</span></span> <span class="o">=</span> <span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_quantization.html#QuantizationModifier"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.optim.modifier.ScheduledModifier</span></code></a></p>
 <p>Enables quantization aware training (QAT) for a given module or its submodules
 After the start epoch, the specified module(s)’ forward pass will emulate
@@ -3186,6 +3192,8 @@ not be updated. Leave None to not disable observers during QAT. Default is None<
 None to not stop tracking batch norm stats during QAT. Default is None</p></li>
 <li><p><strong>end_epoch</strong> – Disabled, setting to anything other than -1 will raise an
 exception. For compatibility with YAML serialization only.</p></li>
+<li><p><strong>model_fuse_fn_kwargs</strong> – dictionary of keyword argument values to be passed
+to the model fusing function</p></li>
 </ul>
 </dd>
 </dl>
