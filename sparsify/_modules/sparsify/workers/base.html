@@ -104,10 +104,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sparsify.html">sparsify package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsify/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsify/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -196,10 +197,10 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterator</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;JobWorkerRegistryHolder&quot;</span><span class="p">,</span> <span class="s2">&quot;BaseJobWorker&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;JobWorkerRegistry&quot;</span><span class="p">,</span> <span class="s2">&quot;JobWorker&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="JobWorkerRegistryHolder"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorkerRegistryHolder">[docs]</a><span class="k">class</span> <span class="nc">JobWorkerRegistryHolder</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
+<div class="viewcode-block" id="JobWorkerRegistry"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorkerRegistry">[docs]</a><span class="k">class</span> <span class="nc">JobWorkerRegistry</span><span class="p">(</span><span class="nb">type</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Registry class for handling and storing BaseJobWorker sub class instances.</span>
 <span class="sd">    All subclasses are added to the the REGISTRY property</span>
@@ -211,10 +212,17 @@
         <span class="n">new_cls</span> <span class="o">=</span> <span class="nb">type</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">bases</span><span class="p">,</span> <span class="n">attrs</span><span class="p">)</span>
         <span class="bp">cls</span><span class="o">.</span><span class="n">REGISTRY</span><span class="p">[</span><span class="n">new_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_cls</span>
 
-        <span class="k">return</span> <span class="n">new_cls</span></div>
+        <span class="k">return</span> <span class="n">new_cls</span>
+
+<div class="viewcode-block" id="JobWorkerRegistry.create_worker"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorkerRegistry.create_worker">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">create_worker</span><span class="p">(</span><span class="n">job</span><span class="p">):</span>
+        <span class="bp">cls</span> <span class="o">=</span> <span class="n">JobWorkerRegistry</span><span class="o">.</span><span class="n">REGISTRY</span><span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">type_</span><span class="p">]</span>
+        <span class="n">worker</span> <span class="o">=</span> <span class="bp">cls</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">,</span> <span class="n">job</span><span class="o">.</span><span class="n">project_id</span><span class="p">,</span> <span class="o">**</span><span class="n">job</span><span class="o">.</span><span class="n">worker_args</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">worker</span></div></div>
 
 
-<div class="viewcode-block" id="BaseJobWorker"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.BaseJobWorker">[docs]</a><span class="k">class</span> <span class="nc">BaseJobWorker</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">JobWorkerRegistryHolder</span><span class="p">):</span>
+<div class="viewcode-block" id="JobWorker"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorker">[docs]</a><span class="k">class</span> <span class="nc">JobWorker</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">JobWorkerRegistry</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    The base job worker instance all job workers must extend</span>
 
@@ -222,14 +230,14 @@
 <span class="sd">    :param project_id: the id of the project the job belongs to</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-<div class="viewcode-block" id="BaseJobWorker.get_type"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.BaseJobWorker.get_type">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="JobWorker.get_type"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorker.get_type">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">get_type</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the type of job worker</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="vm">__name__</span></div>
 
-<div class="viewcode-block" id="BaseJobWorker.format_args"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.BaseJobWorker.format_args">[docs]</a>    <span class="nd">@classmethod</span>
+<div class="viewcode-block" id="JobWorker.format_args"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorker.format_args">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">format_args</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -259,7 +267,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_id</span>
 
-<div class="viewcode-block" id="BaseJobWorker.run"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.BaseJobWorker.run">[docs]</a>    <span class="nd">@abstractmethod</span>
+<div class="viewcode-block" id="JobWorker.run"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.base.JobWorker.run">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterator</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform the work for the job.</span>
