@@ -105,10 +105,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sparsezoo.html">sparsezoo package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsezoo/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsezoo/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -194,14 +195,62 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.model</span> <span class="kn">import</span> <span class="n">Model</span>
-<span class="kn">from</span> <span class="nn">sparsezoo.objects.optimization_recipe</span> <span class="kn">import</span> <span class="n">OptimizationRecipe</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.optimization_recipe</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">OptimizationRecipe</span><span class="p">,</span>
+    <span class="n">OptimizationRecipeTypes</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.requests</span> <span class="kn">import</span> <span class="n">ModelArgs</span><span class="p">,</span> <span class="n">download_get_request</span><span class="p">,</span> <span class="n">search_get_request</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Zoo&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ZOO_STUB_PREFIX&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parse_zoo_stub&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Zoo&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="c1"># optional prefix for stubs</span>
+<span class="n">ZOO_STUB_PREFIX</span> <span class="o">=</span> <span class="s2">&quot;zoo:&quot;</span>
+
+
+<div class="viewcode-block" id="parse_zoo_stub"><a class="viewcode-back" href="../../../api/sparsezoo.models.html#sparsezoo.models.zoo.parse_zoo_stub">[docs]</a><span class="k">def</span> <span class="nf">parse_zoo_stub</span><span class="p">(</span>
+    <span class="n">stub</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">valid_params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param stub: A SparseZoo model stub. i.e. &#39;model/stub/path&#39;,</span>
+<span class="sd">        &#39;zoo:model/stub/path&#39;, &#39;zoo:model/stub/path?param1=value1&amp;param2=value2&#39;</span>
+<span class="sd">    :param valid_params: list of expected parameter names to be encoded in the</span>
+<span class="sd">        stub. Will raise a warning if any unexpected param names are given. Leave</span>
+<span class="sd">        as None to not raise any warnings. Default is None</span>
+<span class="sd">    :return: the parsed base stub and a dictionary of parameter names and their values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># strip optional zoo stub prefix</span>
+    <span class="k">if</span> <span class="n">stub</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">ZOO_STUB_PREFIX</span><span class="p">):</span>
+        <span class="n">stub</span> <span class="o">=</span> <span class="n">stub</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ZOO_STUB_PREFIX</span><span class="p">)</span> <span class="p">:]</span>
+
+    <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stub</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stub</span><span class="p">,</span> <span class="p">{}</span>
+
+    <span class="n">stub_parts</span> <span class="o">=</span> <span class="n">stub</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stub_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Invalid SparseZoo stub, query string must be preceded by only one &#39;?&#39;&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;given </span><span class="si">{</span><span class="n">stub</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">stub</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">stub_parts</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;=&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;&amp;&quot;</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">param</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_params</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Invalid query string for stub </span><span class="si">{</span><span class="n">stub</span><span class="si">}</span><span class="s2"> valid params include </span><span class="si">{</span><span class="n">valid_params</span><span class="si">}</span><span class="s2">,&quot;</span>
+            <span class="sa">f</span><span class="s2">&quot; given </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">stub</span><span class="p">,</span> <span class="n">params</span></div>
 
 
 <div class="viewcode-block" id="Zoo"><a class="viewcode-back" href="../../../api/sparsezoo.models.html#sparsezoo.models.zoo.Zoo">[docs]</a><span class="k">class</span> <span class="nc">Zoo</span><span class="p">:</span>
@@ -296,6 +345,9 @@
 <span class="sd">        :param force_token_refresh: True to refresh the auth token, False otherwise</span>
 <span class="sd">        :return: The requested Model instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stub</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">stub</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">parse_zoo_stub</span><span class="p">(</span><span class="n">stub</span><span class="p">,</span> <span class="n">valid_params</span><span class="o">=</span><span class="p">[])</span>
+
         <span class="n">response_json</span> <span class="o">=</span> <span class="n">download_get_request</span><span class="p">(</span>
             <span class="n">args</span><span class="o">=</span><span class="n">stub</span><span class="p">,</span>
             <span class="n">file_name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -619,7 +671,101 @@
             <span class="n">match_dataset</span><span class="o">=</span><span class="n">match_dataset</span><span class="p">,</span>
             <span class="n">match_training_scheme</span><span class="o">=</span><span class="n">match_training_scheme</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="k">return</span> <span class="p">[</span><span class="n">recipe</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">optimized_models</span> <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">recipes</span><span class="p">]</span></div></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">recipe</span> <span class="k">for</span> <span class="n">model</span> <span class="ow">in</span> <span class="n">optimized_models</span> <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">recipes</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="Zoo.download_recipe_from_stub"><a class="viewcode-back" href="../../../api/sparsezoo.models.html#sparsezoo.models.zoo.Zoo.download_recipe_from_stub">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">download_recipe_from_stub</span><span class="p">(</span>
+        <span class="n">stub</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param stub: a string model stub that points to a SparseZoo model.</span>
+<span class="sd">            recipe_type may be added as a stub parameter. i.e.</span>
+<span class="sd">            &quot;model/stub/path&quot;, &quot;zoo:model/stub/path&quot;,</span>
+<span class="sd">            &quot;zoo:model/stub/path?recipe_type=original&quot;</span>
+<span class="sd">        :return: file path of the downloaded recipe for that model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stub</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parse_zoo_stub</span><span class="p">(</span><span class="n">stub</span><span class="p">,</span> <span class="n">valid_params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;recipe_type&quot;</span><span class="p">])</span>
+        <span class="n">recipe_type</span> <span class="o">=</span> <span class="n">_get_stub_args_recipe_type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">load_model_from_stub</span><span class="p">(</span><span class="n">stub</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">recipes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">recipe</span><span class="o">.</span><span class="n">recipe_type</span> <span class="o">==</span> <span class="n">recipe_type</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">recipe</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
+
+        <span class="n">found_recipe_types</span> <span class="o">=</span> <span class="p">[</span><span class="n">recipe</span><span class="o">.</span><span class="n">recipe_type</span> <span class="k">for</span> <span class="n">recipe</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">recipes</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;No recipe with recipe_type </span><span class="si">{</span><span class="n">recipe_type</span><span class="si">}</span><span class="s2"> found for model </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">recipes</span><span class="p">)</span><span class="si">}</span><span class="s2"> recipes with recipe types </span><span class="si">{</span><span class="n">found_recipe_types</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Zoo.download_recipe_base_framework_files"><a class="viewcode-back" href="../../../api/sparsezoo.models.html#sparsezoo.models.zoo.Zoo.download_recipe_base_framework_files">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">download_recipe_base_framework_files</span><span class="p">(</span>
+        <span class="n">stub</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">extensions</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param stub: a string model stub that points to a SparseZoo model.</span>
+<span class="sd">            recipe_type may be added as a stub parameter. i.e.</span>
+<span class="sd">            &quot;model/stub/path&quot;, &quot;zoo:model/stub/path&quot;,</span>
+<span class="sd">            &quot;zoo:model/stub/path?recipe_type=transfer&quot;</span>
+<span class="sd">        :param extensions: List of file extensions to filter for. ex [&#39;.pth&#39;, &#39;.ptc&#39;].</span>
+<span class="sd">            If None or empty list, all framework files are downloaded. Default is None</span>
+<span class="sd">        :return: file path to the downloaded framework checkpoint files for the</span>
+<span class="sd">            base weights of this recipe</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stub</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">parse_zoo_stub</span><span class="p">(</span><span class="n">stub</span><span class="p">,</span> <span class="n">valid_params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;recipe_type&quot;</span><span class="p">])</span>
+        <span class="n">recipe_type</span> <span class="o">=</span> <span class="n">_get_stub_args_recipe_type</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">load_model_from_stub</span><span class="p">(</span><span class="n">stub</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">recipe_type</span> <span class="o">==</span> <span class="n">OptimizationRecipeTypes</span><span class="o">.</span><span class="n">TRANSFER_LEARN</span><span class="o">.</span><span class="n">value</span><span class="p">:</span>
+            <span class="c1"># return final model&#39;s optimized weights for sparse transfer learning</span>
+            <span class="n">framework_files</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">download_framework_files</span><span class="p">(</span><span class="n">extensions</span><span class="o">=</span><span class="n">extensions</span><span class="p">)</span>
+
+            <span class="c1"># download only pre-quantized weights if available</span>
+            <span class="n">checkpoint_framework_files</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">framework_file</span>
+                <span class="k">for</span> <span class="n">framework_file</span> <span class="ow">in</span> <span class="n">framework_files</span>
+                <span class="k">if</span> <span class="s2">&quot;.ckpt&quot;</span> <span class="ow">in</span> <span class="n">framework_file</span>
+            <span class="p">]</span>
+
+            <span class="c1"># return non-empty list, preferring filtered list</span>
+            <span class="k">return</span> <span class="n">checkpoint_framework_files</span> <span class="ow">or</span> <span class="n">framework_files</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># search for base model, and return those weights as a starting checkpoint</span>
+            <span class="n">base_model</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">result</span>
+                <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">search_optimized_models</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">result</span><span class="o">.</span><span class="n">optim_name</span> <span class="o">==</span> <span class="s2">&quot;base&quot;</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">base_model</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not find base model for model </span><span class="si">{</span><span class="n">model</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">framework_files</span> <span class="o">=</span> <span class="n">base_model</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">download_framework_files</span><span class="p">(</span>
+                <span class="n">extensions</span><span class="o">=</span><span class="n">extensions</span>
+            <span class="p">)</span>
+
+            <span class="c1"># filter out checkpoint weights if any exist</span>
+            <span class="n">base_framework_files</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">framework_file</span>
+                <span class="k">for</span> <span class="n">framework_file</span> <span class="ow">in</span> <span class="n">framework_files</span>
+                <span class="k">if</span> <span class="s2">&quot;.ckpt&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">framework_file</span>
+            <span class="p">]</span>
+
+            <span class="c1"># return non-empty list, preferring filtered list</span>
+            <span class="k">return</span> <span class="n">base_framework_files</span> <span class="ow">or</span> <span class="n">framework_files</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_get_stub_args_recipe_type</span><span class="p">(</span><span class="n">stub_args</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="c1"># check recipe type, default to original, and validate</span>
+    <span class="n">recipe_type</span> <span class="o">=</span> <span class="n">stub_args</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;recipe_type&quot;</span><span class="p">,</span> <span class="n">OptimizationRecipeTypes</span><span class="o">.</span><span class="n">ORIGINAL</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+
+    <span class="c1"># validate</span>
+    <span class="n">valid_recipe_types</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="k">lambda</span> <span class="n">typ</span><span class="p">:</span> <span class="n">typ</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">OptimizationRecipeTypes</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">recipe_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_recipe_types</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Invalid recipe_type: &#39;</span><span class="si">{</span><span class="n">recipe_type</span><span class="si">}</span><span class="s2">&#39;. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Valid recipe types: </span><span class="si">{</span><span class="n">valid_recipe_types</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">recipe_type</span>
 </pre></div>
 
            </div>

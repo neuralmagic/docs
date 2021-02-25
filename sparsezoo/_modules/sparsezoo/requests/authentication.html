@@ -105,10 +105,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../api/sparsezoo.html">sparsezoo package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsezoo/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsezoo/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -231,7 +232,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">CREDENTIALS_YAML</span><span class="p">):</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading sparse zoo credentials from </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Loading sparse zoo credentials from </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CREDENTIALS_YAML</span><span class="p">)</span> <span class="k">as</span> <span class="n">credentials_file</span><span class="p">:</span>
                 <span class="n">credentials_yaml</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">credentials_file</span><span class="p">)</span>
                 <span class="k">if</span> <span class="n">credentials_yaml</span> <span class="ow">and</span> <span class="n">CREDENTIALS_YAML_TOKEN_KEY</span> <span class="ow">in</span> <span class="n">credentials_yaml</span><span class="p">:</span>
@@ -243,7 +244,9 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="kc">None</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_created</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No sparse zoo credentials files found at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;No sparse zoo credentials files found at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="kc">None</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_created</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -255,7 +258,7 @@
 <span class="sd">        :param token: the jwt for accessing sparse zoo APIs</span>
 <span class="sd">        :param created: the approximate time the token was created</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving sparse zoo credentials at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Saving sparse zoo credentials at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">CREDENTIALS_YAML</span><span class="p">):</span>
             <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">CREDENTIALS_YAML</span><span class="p">)</span>
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">CREDENTIALS_YAML</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">credentials_file</span><span class="p">:</span>
@@ -276,17 +279,17 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: obtain the token if under 1 day old, else return None</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Obtaining sparse zoo credentials from </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Obtaining sparse zoo credentials from </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_created</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">creation_date</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">fromtimestamp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_created</span><span class="p">,</span> <span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span>
             <span class="n">creation_difference</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">tz</span><span class="o">=</span><span class="n">timezone</span><span class="o">.</span><span class="n">utc</span><span class="p">)</span> <span class="o">-</span> <span class="n">creation_date</span>
-            <span class="k">if</span> <span class="n">creation_difference</span><span class="o">.</span><span class="n">days</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">creation_difference</span><span class="o">.</span><span class="n">days</span> <span class="o">&lt;</span> <span class="mi">30</span><span class="p">:</span>
                 <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expired sparse zoo credentials at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Expired sparse zoo credentials at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
                 <span class="k">return</span> <span class="kc">None</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No sparse zoo credentials found at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;No sparse zoo credentials found at </span><span class="si">{</span><span class="n">CREDENTIALS_YAML</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
 
 
@@ -315,7 +318,7 @@
     <span class="k">if</span> <span class="n">token</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">force_token_refresh</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">{</span><span class="n">NM_TOKEN_HEADER</span><span class="p">:</span> <span class="n">token</span><span class="p">}</span>
     <span class="k">elif</span> <span class="n">authentication_type</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="n">PUBLIC_AUTH_TYPE</span><span class="p">:</span>
-        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Obtaining new sparse zoo credentials token&quot;</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Obtaining new sparse zoo credentials token&quot;</span><span class="p">)</span>
         <span class="n">created</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
         <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">post</span><span class="p">(</span>
             <span class="n">url</span><span class="o">=</span><span class="n">AUTH_API</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">({</span><span class="s2">&quot;authentication_type&quot;</span><span class="p">:</span> <span class="n">PUBLIC_AUTH_TYPE</span><span class="p">})</span>
