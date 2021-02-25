@@ -30,8 +30,7 @@ The DeepSparse Engine, created by Neural Magic, is a general purpose engine for 
 
 Learn more about Neural Magic and the DeepSparse Engine (formerly known as the Neural Magic Inference Engine).
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/zJy_8uPZd0o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
-</iframe>
+[![Watch the Why Neural Magic video](why-nm.jpg)](https://youtu.be/zJy_8uPZd0o)
 
 **How does Neural Magic make it work?**
 
@@ -53,7 +52,7 @@ We are open to opportunities to expand our support footprint for different CPU-b
 
 **Do you run on ARM architecture?**
 
-We currently do not support ARM and it’s on the Neural Magic roadmap; however, we’d still like to hear your use cases[Contact us to continue the conversation](https://neuralmagic.com/contact/).
+We currently do not support ARM and it’s on the Neural Magic roadmap; however, we’d still like to hear your use cases. [Contact us to continue the conversation](https://neuralmagic.com/contact/).
 
 **To what use cases is the Deep Sparse Platform best suited?**
 
@@ -62,6 +61,14 @@ We focus on the models and use cases related to computer vision due to cost sens
 **What types of models does Neural Magic support?**
 
 Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision such as NLP models like BERT.
+
+**Is dynamic shape supported?**
+
+Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates](https://neuralmagic.com/subscribe/).
+
+**Can multiple model inferences be executed?**
+
+Model inferences are executed as a single stream; concurrent execution is unsupported at this time.
 
 ___
 
@@ -73,7 +80,7 @@ This will vary but, in some cases, we are seeing 3x-10x savings. Typically, we o
 
 **Do you have benchmarks to compare and contrast?**
 
-Yes. Check out our [benchmark demo video](https://neuralmagic.com/blog/neural-magic-demo/) or [contact us to](https://neuralmagic.com/contact/) discuss your particular performance requirements. If you’d rather observe performance for yourself, [head over to the Neural Magic GitHub repo](https://github.com/neuralmagic) to check out our tools and generate your own benchmarks in your environment.
+Yes. Check out our [benchmark demo video](https://neuralmagic.com/blog/neural-magic-demo/) or [contact us](https://neuralmagic.com/contact/) to discuss your particular performance requirements. If you’d rather observe performance for yourself, [head over to the Neural Magic GitHub repo](https://github.com/neuralmagic) to check out our tools and generate your own benchmarks in your environment.
 
 **Do you publish ML Perf inference benchmarks?**
 
@@ -83,11 +90,15 @@ ___
 
 ## Infrastructure FAQs
 
+**Which instruction sets are supported and do we have to enable certain settings?**
+
+AVX-512, AVX2, and VNNI. The DeepSparse Engine will automatically utilize the most effective available instruction set for the task. Generally, if AVX-512 is available then we have no reason to use AVX2 instruction set. AVX-512 VNNI only comes into use for quantized models i.e., INT8 or UINT8.
+
 **Are you suitable for edge deployments (i.e., in-store devices, cameras)?**
 
 Yes, absolutely. We can run anywhere you have a CPU with x86 instructions, including on bare metal, in the cloud, on-prem, or at the edge. Additionally, our model optimization tools are able to reduce the footprint of models across all architectures. We only guarantee performance in the DeepSparse Engine.
 
-We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please reach out](mailto: feedback@neuralmagic.com). Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
+We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please reach out](feedback@neuralmagic.com). Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
 
 **Do you have available solutions or applications on the Microsoft/Azure platform?**
 
