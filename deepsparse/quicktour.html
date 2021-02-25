@@ -100,7 +100,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Tour</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#quickstart-with-sparsezoo-onnx-models">Quickstart with SparseZoo ONNX Models</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#quickstart-with-custom-onnx-models">Quickstart with custom ONNX models</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quickstart-with-custom-onnx-models">Quickstart with Custom ONNX Models</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
@@ -114,10 +114,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/deepsparse.html">deepsparse package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -201,20 +202,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 --><div class="section" id="quick-tour">
 <h1>Quick Tour<a class="headerlink" href="#quick-tour" title="Permalink to this headline">¶</a></h1>
-<p>To expedite inference and benchmarking on real models, we include the <code class="docutils literal notranslate"><span class="pre">sparsezoo</span></code> package.
-<a class="reference external" href="https://github.com/neuralmagic/sparsezoo">SparseZoo</a> hosts inference optimized models,
-trained on repeatable optimization recipes using state-of-the-art techniques from
-<a class="reference external" href="https://github.com/neuralmagic/sparseml">SparseML</a>.</p>
+<p>To expedite inference and benchmarking on real models, we include the <code class="docutils literal notranslate"><span class="pre">sparsezoo</span></code> package. <a class="reference external" href="https://github.com/neuralmagic/sparsezoo">SparseZoo</a> hosts inference-optimized models, trained on repeatable sparsification recipes using state-of-the-art techniques from <a class="reference external" href="https://github.com/neuralmagic/sparseml">SparseML</a>.</p>
 <div class="section" id="quickstart-with-sparsezoo-onnx-models">
 <h2>Quickstart with SparseZoo ONNX Models<a class="headerlink" href="#quickstart-with-sparsezoo-onnx-models" title="Permalink to this headline">¶</a></h2>
-<p><strong>MobileNetV1 Dense</strong></p>
-<p>Here is how to quickly perform inference with DeepSparse Engine on a pre-trained dense MobileNetV1 from SparseZoo.</p>
+<p><strong>ResNet-50 Dense</strong></p>
+<p>Here is how to quickly perform inference with DeepSparse Engine on a pre-trained dense ResNet-50 from SparseZoo.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">deepsparse</span> <span class="kn">import</span> <span class="n">compile_model</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.models</span> <span class="kn">import</span> <span class="n">classification</span>
+
 <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
 
 <span class="c1"># Download model and compile as optimized executable for your machine</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">mobilenet_v1</span><span class="p">()</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">resnet_50</span><span class="p">()</span>
 <span class="n">engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
 
 <span class="c1"># Fetch sample input and predict output using engine</span>
@@ -222,41 +221,61 @@ trained on repeatable optimization recipes using state-of-the-art techniques fro
 <span class="n">outputs</span><span class="p">,</span> <span class="n">inference_time</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">timed_run</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p><strong>MobileNetV1 Optimized</strong></p>
-<p>When exploring available optimized models, you can use the <code class="docutils literal notranslate"><span class="pre">Zoo.search_optimized_models</span></code>
-utility to find models that share a base.</p>
-<p>Let us try this on the dense MobileNetV1 to see what is available.</p>
+<p><strong>ResNet-50 Sparsified</strong></p>
+<p>When exploring available optimized models, you can use the <code class="docutils literal notranslate"><span class="pre">Zoo.search_optimized_models</span></code> utility to find models that share a base.</p>
+<p>Try this on the dense ResNet-50 to see what is available:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.models</span> <span class="kn">import</span> <span class="n">classification</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">Zoo</span><span class="o">.</span><span class="n">search_optimized_models</span><span class="p">(</span><span class="n">classification</span><span class="o">.</span><span class="n">mobilenet_v1</span><span class="p">()))</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">resnet_50</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">Zoo</span><span class="o">.</span><span class="n">search_optimized_models</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
 </pre></div>
 </div>
 <p>Output:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="n">Model</span><span class="p">(</span><span class="n">stub</span><span class="o">=</span><span class="n">cv</span><span class="o">/</span><span class="n">classification</span><span class="o">/</span><span class="n">mobilenet_v1</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">sparseml</span><span class="o">/</span><span class="n">imagenet</span><span class="o">/</span><span class="n">base</span><span class="o">-</span><span class="n">none</span><span class="p">),</span>
- <span class="n">Model</span><span class="p">(</span><span class="n">stub</span><span class="o">=</span><span class="n">cv</span><span class="o">/</span><span class="n">classification</span><span class="o">/</span><span class="n">mobilenet_v1</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">sparseml</span><span class="o">/</span><span class="n">imagenet</span><span class="o">/</span><span class="n">pruned</span><span class="o">-</span><span class="n">conservative</span><span class="p">),</span>
- <span class="n">Model</span><span class="p">(</span><span class="n">stub</span><span class="o">=</span><span class="n">cv</span><span class="o">/</span><span class="n">classification</span><span class="o">/</span><span class="n">mobilenet_v1</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">sparseml</span><span class="o">/</span><span class="n">imagenet</span><span class="o">/</span><span class="n">pruned</span><span class="o">-</span><span class="n">moderate</span><span class="p">),</span>
- <span class="n">Model</span><span class="p">(</span><span class="n">stub</span><span class="o">=</span><span class="n">cv</span><span class="o">/</span><span class="n">classification</span><span class="o">/</span><span class="n">mobilenet_v1</span><span class="o">-</span><span class="mf">1.0</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">sparseml</span><span class="o">/</span><span class="n">imagenet</span><span class="o">/</span><span class="n">pruned_quant</span><span class="o">-</span><span class="n">moderate</span><span class="p">)]</span>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>
+    Model<span class="o">(</span><span class="nv">stub</span><span class="o">=</span>cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/base-none<span class="o">)</span>, 
+    Model<span class="o">(</span><span class="nv">stub</span><span class="o">=</span>cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned-conservative<span class="o">)</span>, 
+    Model<span class="o">(</span><span class="nv">stub</span><span class="o">=</span>cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned-moderate<span class="o">)</span>, 
+    Model<span class="o">(</span><span class="nv">stub</span><span class="o">=</span>cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned_quant-moderate<span class="o">)</span>, 
+    Model<span class="o">(</span><span class="nv">stub</span><span class="o">=</span>cv/classification/resnet_v1-50/pytorch/sparseml/imagenet-augmented/pruned_quant-aggressive<span class="o">)</span>
+<span class="o">]</span>
 </pre></div>
 </div>
-<p>Great. We can see there are two pruned versions targeting FP32,
-<code class="docutils literal notranslate"><span class="pre">conservative</span></code> at 100% and <code class="docutils literal notranslate"><span class="pre">moderate</span></code> at &gt;= 99% of baseline accuracy.
-There is also a <code class="docutils literal notranslate"><span class="pre">pruned_quant</span></code> variant targeting INT8.</p>
-<p>Let’s say you want to evaluate best performance on FP32 and are okay with a small drop in accuracy,
-so we can choose <code class="docutils literal notranslate"><span class="pre">pruned-moderate</span></code> over <code class="docutils literal notranslate"><span class="pre">pruned-conservative</span></code>.</p>
+<p>We can see there are two pruned versions targeting FP32 and two pruned, quantized versions targeting INT8.
+The <code class="docutils literal notranslate"><span class="pre">conservative</span></code>, <code class="docutils literal notranslate"><span class="pre">moderate</span></code>, and <code class="docutils literal notranslate"><span class="pre">aggressive</span></code> tags recover to 100%, &gt;=99%, and &lt;99% of baseline accuracy respectively.</p>
+<p>For a version of ResNet-50 that recovers close to the baseline and is very performant, choose the pruned_quant-moderate model.
+This model will run <a class="reference external" href="https://neuralmagic.com/blog/benchmark-resnet50-with-deepsparse">nearly 7x faster</a> than the baseline model on a compatible CPU (with the VNNI instruction set enabled).
+For hardware compatibility, see the Hardware Support section.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">deepsparse</span> <span class="kn">import</span> <span class="n">compile_model</span>
-<span class="kn">from</span> <span class="nn">sparsezoo.models</span> <span class="kn">import</span> <span class="n">classification</span>
+<span class="kn">import</span> <span class="nn">numpy</span>
+
 <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">64</span>
+<span class="n">sample_inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)]</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">classification</span><span class="o">.</span><span class="n">mobilenet_v1</span><span class="p">(</span><span class="n">optim_name</span><span class="o">=</span><span class="s2">&quot;pruned&quot;</span><span class="p">,</span> <span class="n">optim_category</span><span class="o">=</span><span class="s2">&quot;moderate&quot;</span><span class="p">)</span>
-<span class="n">engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
+<span class="c1"># run baseline benchmarking</span>
+<span class="n">engine_base</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/base-none&quot;</span><span class="p">,</span> 
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">benchmarks_base</span> <span class="o">=</span> <span class="n">engine_base</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">sample_inputs</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">benchmarks_base</span><span class="p">)</span>
 
-<span class="n">inputs</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">data_inputs</span><span class="o">.</span><span class="n">sample_batch</span><span class="p">(</span><span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">)</span>
-<span class="n">outputs</span><span class="p">,</span> <span class="n">inference_time</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">timed_run</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+<span class="c1"># run sparse benchmarking</span>
+<span class="n">engine_sparse</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned_quant-moderate&quot;</span><span class="p">,</span> 
+    <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="k">if</span> <span class="ow">not</span> <span class="n">engine_sparse</span><span class="o">.</span><span class="n">cpu_vnni</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;WARNING: VNNI instructions not detected, quantization speedup not well supported&quot;</span><span class="p">)</span>
+<span class="n">benchmarks_sparse</span> <span class="o">=</span> <span class="n">engine_sparse</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span><span class="n">sample_inputs</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">benchmarks_sparse</span><span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Speedup: </span><span class="si">{</span><span class="n">benchmarks_sparse</span><span class="o">.</span><span class="n">items_per_second</span> <span class="o">/</span> <span class="n">benchmarks_base</span><span class="o">.</span><span class="n">items_per_second</span><span class="si">:</span><span class="s2">.2f</span><span class="si">}</span><span class="s2">x&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="quickstart-with-custom-onnx-models">
-<h2>Quickstart with custom ONNX models<a class="headerlink" href="#quickstart-with-custom-onnx-models" title="Permalink to this headline">¶</a></h2>
+<h2>Quickstart with Custom ONNX Models<a class="headerlink" href="#quickstart-with-custom-onnx-models" title="Permalink to this headline">¶</a></h2>
 <p>We accept ONNX files for custom models, too. Simply plug in your model to compare performance with other solutions.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; wget https://github.com/onnx/models/raw/master/vision/classification/mobilenet/model/mobilenetv2-7.onnx
 Saving to: ‘mobilenetv2-7.onnx’
