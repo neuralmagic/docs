@@ -22,10 +22,10 @@ Neural Magic’s vision is no-hardware AI, shattering the hardware barriers that
 
 To deliver on this vision, there are several components to the Deep Sparse Platform:
 
-1. [Sparsify](https://docs.neuralmagic.com/sparsify): Open-source, easy-to-use interface to automatically sparsify and quantize deep learning models for CPUs & GPUs.
-2. [SparseML](https://docs.neuralmagic.com/sparseml): Open-source libraries and optimization algorithms for CPUs & GPUs, enabling integration with a few lines of code.
-3. [SparseZoo](https://docs.neuralmagic.com/sparsezoo): Open-source neural network model repository for highly sparse and sparse-quantized models with matching pruning recipes for CPUs and GPUs.
-4. [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse):  Free CPU runtime that runs sparse models at GPU speeds.
+1. [Sparsify](https://docs.neuralmagic.com/sparsify): Easy-to-use UI for automatically sparsifying neural networks and creating sparsification recipes for better inference performance and a smaller footprint
+2. [SparseML](https://docs.neuralmagic.com/sparseml): Libraries for applying sparsification recipes to neural networks with a few lines of code, enabling faster and smaller models
+3. [SparseZoo](https://docs.neuralmagic.com/sparsezoo): Neural network model repository for highly sparse and sparse-quantized models with matching sparsification recipes
+4. [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse): Neural network inference engine that delivers GPU-class performance for sparsified models on CPUs
 
 Our inference engine and model optimization technologies enable companies to use ubiquitous and unconstrained CPU resources to achieve performance breakthroughs, at scale, with all the flexibility of software.
 
@@ -62,11 +62,13 @@ Today, we offer support for convolutional neural network-based computer vision m
 
 We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/models.html) and SparseZoo including model architectures beyond computer vision. Popular NLP models such as BERT are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
 
-### PyTorch and ONNX
+### Notes
+
+#### PyTorch and ONNX
 
 Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. PyTorch has native ONNX export and requires fewer steps than other supported frameworks, such as [Keras or TensorFlow](https://docs.neuralmagic.com/sparseml/quicktour.html#exporting-to-onnx). If you have flexibility in frameworks, consider PyTorch to start.
 
-### Model Considerations
+#### Model Considerations
 
 Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
 
