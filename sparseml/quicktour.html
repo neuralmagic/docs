@@ -99,11 +99,11 @@
               <p class="caption"><span class="caption-text">General</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Tour</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#pytorch-optimization">PyTorch Optimization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pytorch-sparsification">PyTorch Sparsification</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#keras-optimization">Keras Optimization</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tensorflow-v1-optimization">TensorFlow V1 Optimization</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#estimator-based-pipelines">Estimator-based pipelines</a></li>
-<li class="toctree-l3"><a class="reference internal" href="#session-based-pipelines">Session-based pipelines</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#tensorflow-v1-sparsification">TensorFlow V1 Sparsification</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#estimator-based-pipelines">Estimator-Based pipelines</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#session-based-pipelines">Session-Based pipelines</a></li>
 </ul>
 </li>
 <li class="toctree-l2"><a class="reference internal" href="#exporting-to-onnx">Exporting to ONNX</a><ul>
@@ -115,16 +115,17 @@
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -208,12 +209,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 --><div class="section" id="quick-tour">
 <h1>Quick Tour<a class="headerlink" href="#quick-tour" title="Permalink to this headline">¶</a></h1>
-<p>To enable flexibility, ease of use, and repeatability, optimizing a model is generally done using a recipe file.
-The files encode the instructions needed for modifying the model and/or training process as a list of modifiers.
+<p>To enable flexibility, ease of use, and repeatability, sparsifying a model is generally done using a recipe.
+The recipes encode the instructions needed for modifying the model and/or training process as a list of modifiers.
 Example modifiers can be anything from setting the learning rate for the optimizer to gradual magnitude pruning.
 The files are written in <a class="reference external" href="https://yaml.org/">YAML</a> and stored in YAML or <a class="reference external" href="https://www.markdownguide.org/">markdown</a> files using <a class="reference external" href="https://assemble.io/docs/YAML-front-matter.html">YAML front matter</a>.
-The rest of the SparseML system is coded to parse the recipe files into a native format for the desired framework
-and apply the modifications to the model and training pipeline.</p>
+The rest of the SparseML system is coded to parse the recipes into a native format for the desired framework and apply the modifications to the model and training pipeline.</p>
 <p>A sample recipe for pruning a model generally looks like the following:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">version</span><span class="p">:</span> <span class="l l-Scalar l-Scalar-Plain">0.1.0</span>
 <span class="nt">modifiers</span><span class="p">:</span>
@@ -242,11 +242,14 @@ and apply the modifications to the model and training pipeline.</p>
 <p>More information on the available recipes, formats, and arguments can be found <a class="reference external" href="https://github.com/neuralmagic/sparseml/blob/main/docs/source/recipes.md">here</a>. Additionally, all code implementations of the modifiers under the <code class="docutils literal notranslate"><span class="pre">optim</span></code> packages for the frameworks are documented with example YAML formats.</p>
 <p>Pre-configured recipes and the resulting models can be explored and downloaded from the <a class="reference external" href="https://github.com/neuralmagic/sparsezoo">SparseZoo</a>. Also, <a class="reference external" href="https://github.com/neuralmagic/sparsify">Sparsify</a> enables autoML style creation of optimization recipes for use with SparseML.</p>
 <p>For a more in-depth read, check out <a class="reference external" href="https://docs.neuralmagic.com/sparseml/">SparseML documentation</a>.</p>
-<div class="section" id="pytorch-optimization">
-<h2>PyTorch Optimization<a class="headerlink" href="#pytorch-optimization" title="Permalink to this headline">¶</a></h2>
-<p>The PyTorch optimization libraries are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.pytorch.optim</span></code> package.
-Inside are APIs designed to make model optimization as easy as possible by integrating seamlessly into PyTorch training pipelines.</p>
-<p>The integration is done using the <code class="docutils literal notranslate"><span class="pre">ScheduledOptimizer</span></code> class. It is intended to wrap your current optimizer and its step function. The step function then calls into the <code class="docutils literal notranslate"><span class="pre">ScheduledModifierManager</span></code> class which can be created from a recipe file. With this setup, the training process can then be modified as desired to optimize the model.</p>
+<div class="section" id="pytorch-sparsification">
+<h2>PyTorch Sparsification<a class="headerlink" href="#pytorch-sparsification" title="Permalink to this headline">¶</a></h2>
+<p>The PyTorch sparsification libraries are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.pytorch.optim</span></code> package.
+Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into PyTorch training pipelines.</p>
+<p>The integration is done using the <code class="docutils literal notranslate"><span class="pre">ScheduledOptimizer</span></code> class.
+It is intended to wrap your current optimizer and its step function.
+The step function then calls into the <code class="docutils literal notranslate"><span class="pre">ScheduledModifierManager</span></code> class which can be created from a recipe file.
+With this setup, the training process can then be modified as desired to sparsify the model.</p>
 <p>To enable all of this, the integration code you’ll need to write is only a handful of lines:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparseml.pytorch.optim</span> <span class="kn">import</span> <span class="n">ScheduledModifierManager</span><span class="p">,</span> <span class="n">ScheduledOptimizer</span>
 
@@ -263,10 +266,10 @@ Inside are APIs designed to make model optimization as easy as possible by integ
 </div>
 <div class="section" id="keras-optimization">
 <h2>Keras Optimization<a class="headerlink" href="#keras-optimization" title="Permalink to this headline">¶</a></h2>
-<p>The Keras optimization libraries are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.keras.optim</span></code> package.
-Inside are APIs designed to make model optimization as easy as possible by integrating seamlessly into Keras training pipelines.</p>
+<p>The Keras sparsification libraries are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.keras.optim</span></code> package.
+Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into Keras training pipelines.</p>
 <p>The integration is done using the <code class="docutils literal notranslate"><span class="pre">ScheduledModifierManager</span></code> class which can be created from a recipe file.
-This class handles modifying the Keras objects for the desired optimizations using the <code class="docutils literal notranslate"><span class="pre">modify</span></code> method.
+This class handles modifying the Keras objects for the desired algorithms using the <code class="docutils literal notranslate"><span class="pre">modify</span></code> method.
 The edited model, optimizer, and any callbacks necessary to modify the training process are returned.
 The model and optimizer can be used normally and the callbacks must be passed into the <code class="docutils literal notranslate"><span class="pre">fit</span></code> or <code class="docutils literal notranslate"><span class="pre">fit_generator</span></code> function.
 If using <code class="docutils literal notranslate"><span class="pre">train_on_batch</span></code>, the callbacks must be invoked after each call.
@@ -294,14 +297,15 @@ After training is completed, call into the manager’s <code class="docutils lit
 </pre></div>
 </div>
 </div>
-<div class="section" id="tensorflow-v1-optimization">
-<h2>TensorFlow V1 Optimization<a class="headerlink" href="#tensorflow-v1-optimization" title="Permalink to this headline">¶</a></h2>
-<p>The TensorFlow optimization libraries for TensorFlow version 1.X are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.tensorflow_v1.optim</span></code> package. Inside are APIs designed to make model optimization as easy as possible by integrating seamlessly into TensorFlow V1 training pipelines.</p>
+<div class="section" id="tensorflow-v1-sparsification">
+<h2>TensorFlow V1 Sparsification<a class="headerlink" href="#tensorflow-v1-sparsification" title="Permalink to this headline">¶</a></h2>
+<p>The TensorFlow sparsification libraries for TensorFlow version 1.X are located under the <code class="docutils literal notranslate"><span class="pre">sparseml.tensorflow_v1.optim</span></code> package.
+Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into TensorFlow V1 training pipelines.</p>
 <p>The integration is done using the <code class="docutils literal notranslate"><span class="pre">ScheduledModifierManager</span></code> class which can be created from a recipe file.
-This class handles modifying the TensorFlow graph for the desired optimizations.
-With this setup, the training process can then be modified as desired to optimize the model.</p>
+This class handles modifying the TensorFlow graph for the desired algorithms.
+With this setup, the training process can then be modified as desired to sparsify the model.</p>
 <div class="section" id="estimator-based-pipelines">
-<h3>Estimator-based pipelines<a class="headerlink" href="#estimator-based-pipelines" title="Permalink to this headline">¶</a></h3>
+<h3>Estimator-Based pipelines<a class="headerlink" href="#estimator-based-pipelines" title="Permalink to this headline">¶</a></h3>
 <p>Estimator-based pipelines are simpler to integrate with as compared to session-based pipelines.
 The <code class="docutils literal notranslate"><span class="pre">ScheduledModifierManager</span></code> can override the necessary callbacks in the estimator to modify the graph using the <code class="docutils literal notranslate"><span class="pre">modify_estimator</span></code> function.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim</span> <span class="kn">import</span> <span class="n">ScheduledModifierManager</span>
@@ -317,11 +321,11 @@ The <code class="docutils literal notranslate"><span class="pre">ScheduledModifi
 </div>
 </div>
 <div class="section" id="session-based-pipelines">
-<h3>Session-based pipelines<a class="headerlink" href="#session-based-pipelines" title="Permalink to this headline">¶</a></h3>
+<h3>Session-Based pipelines<a class="headerlink" href="#session-based-pipelines" title="Permalink to this headline">¶</a></h3>
 <p>Session-based pipelines need a little bit more as compared to estimator-based pipelines; however,
 it is still designed to require only a few lines of code for integration.
 After graph creation, the manager’s <code class="docutils literal notranslate"><span class="pre">create_ops</span></code> method must be called.
-This will modify the graph as needed for the optimizations and return modifying ops and extras.
+This will modify the graph as needed for the algorithms and return modifying ops and extras.
 After creating the session and training normally, call into <code class="docutils literal notranslate"><span class="pre">session.run</span></code> with the modifying ops after each step.
 Modifying extras contain objects such as tensorboard summaries of the modifiers to be used if desired.
 Finally, once completed, <code class="docutils literal notranslate"><span class="pre">complete_graph</span></code> must be called to remove the modifying ops for saving and export.</p>

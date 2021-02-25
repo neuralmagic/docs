@@ -98,16 +98,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -202,10 +203,6 @@
     <span class="n">PruningScheduler</span><span class="p">,</span>
     <span class="n">remove_pruning_masks</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.keras.optim.mask_pruning_creator</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">PruningMaskCreator</span><span class="p">,</span>
-    <span class="n">load_mask_creator</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.keras.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">KerasModifierYAML</span><span class="p">,</span>
     <span class="n">ModifierProp</span><span class="p">,</span>
@@ -250,6 +247,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">inter_func</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">init_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">final_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">start_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span>
 
@@ -260,6 +265,10 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">update_frequency_steps</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency_steps</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">inter_func</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">exponent</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -330,6 +339,20 @@
             <span class="n">sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span>
         <span class="k">return</span> <span class="n">sparsity</span>
 
+    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;class_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s2">&quot;config&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;init_sparsity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">init_sparsity</span><span class="p">,</span>
+                <span class="s2">&quot;final_sparsity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_sparsity</span><span class="p">,</span>
+                <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">,</span>
+                <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_step</span><span class="p">,</span>
+                <span class="s2">&quot;update_frequency_steps&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_frequency_steps</span><span class="p">,</span>
+                <span class="s2">&quot;inter_func&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">config</span>
+
 
 <span class="k">class</span> <span class="nc">SparsityFreezer</span><span class="p">(</span><span class="n">PruningScheduler</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -347,6 +370,14 @@
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span> <span class="o">=</span> <span class="n">start_step</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_end_step</span> <span class="o">=</span> <span class="n">end_step</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">end_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ends_step</span>
 
     <span class="k">def</span> <span class="nf">should_prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -378,6 +409,14 @@
             <span class="c1"># Undefined sparsity</span>
             <span class="n">sparsity</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">return</span> <span class="n">sparsity</span>
+
+    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;class_name&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">,</span>
+            <span class="s2">&quot;end_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_step</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">config</span>
 
 
 <span class="k">class</span> <span class="nc">PruningModifierCallback</span><span class="p">(</span><span class="n">tensorflow</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
@@ -521,7 +560,7 @@
 
 
 <div class="viewcode-block" id="ConstantPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.modifier_pruning.ConstantPruningModifier">[docs]</a><span class="nd">@KerasModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">,</span> <span class="n">PruningScheduler</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Holds the sparsity level and shape for a given param constant while training.</span>
 <span class="sd">    Useful for transfer learning use cases.</span>
@@ -563,7 +602,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_masked_layers</span> <span class="o">=</span> <span class="p">[]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_scheduler</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="s2">&quot;unstructured&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
@@ -632,7 +671,7 @@
         <span class="n">cloned_layer</span> <span class="o">=</span> <span class="n">layer</span>
         <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_names</span><span class="p">:</span>  <span class="c1"># TODO: handle regex params</span>
             <span class="n">cloned_layer</span> <span class="o">=</span> <span class="n">MaskedLayer</span><span class="p">(</span>
-                <span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_scheduler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_scheduler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_masked_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cloned_layer</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cloned_layer</span>
@@ -729,7 +768,7 @@
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: [&#39;unstructured&#39;,</span>
 <span class="sd">        &#39;channel&#39;, &#39;filter&#39;]), List to define block shape of a parameter&#39;s in and out</span>
-<span class="sd">        channels, or a PruningMaskCreator object. default is &#39;unstructured&#39;</span>
+<span class="sd">        channels. default is &#39;unstructured&#39;</span>
 <span class="sd">    :param leave_enabled: True to continue masking the weights after end_epoch,</span>
 <span class="sd">        False to stop masking. Should be set to False if exporting the result</span>
 <span class="sd">        immediately after or doing some other prune</span>
@@ -745,7 +784,7 @@
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubic&quot;</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
-        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
+        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -767,10 +806,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">leave_enabled</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">inter_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="n">mask_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">mask_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">leave_enabled</span><span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mask_type</span><span class="p">,</span> <span class="n">PruningMaskCreator</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="n">mask_type</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_prune_op_vars</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_update_ready</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
@@ -870,21 +906,18 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the PruningMaskCreator object used</span>
+<span class="sd">        :return: the mask type used</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span>
 
     <span class="nd">@mask_type</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: the PruningMaskCreator object to use</span>
+<span class="sd">        :param value: the mask type to use</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">PruningMaskCreator</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">leave_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1010,7 +1043,7 @@
             <span class="n">layer</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">layer_names</span>
         <span class="p">):</span>  <span class="c1"># TODO: handle regex params --- see create_ops in TF version</span>
             <span class="n">cloned_layer</span> <span class="o">=</span> <span class="n">MaskedLayer</span><span class="p">(</span>
-                <span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_scheduler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span>
+                <span class="n">layer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_scheduler</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_masked_layers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cloned_layer</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">cloned_layer</span>
