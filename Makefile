@@ -42,4 +42,3 @@ clean:
 	rm -rf build;
 	rm -rf dist;
 	find $(PYCHECKDIRS) | grep -E "(__pycache__|\.pyc|\.pyo)" | xargs rm -rf;
-	find $(DOCDIR) | grep .rst | xargs rm -rf;
