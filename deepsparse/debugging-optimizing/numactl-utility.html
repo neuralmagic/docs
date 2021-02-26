@@ -119,10 +119,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../api/deepsparse.html">deepsparse package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -208,9 +209,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 --><div class="section" id="using-the-numactl-utility-to-control-resource-utilization-with-the-deepsparse-engine">
 <h1>Using the numactl Utility to Control Resource Utilization with the DeepSparse Engine<a class="headerlink" href="#using-the-numactl-utility-to-control-resource-utilization-with-the-deepsparse-engine" title="Permalink to this headline">¶</a></h1>
-<p>The DeepSparse Engine works best when run on a single socket and with hyper-threading disabled. One standard way of controlling compute/memory resources when running processes is to use the <strong>numactl</strong> utility. <strong>numactl</strong> can be used when multiple processes need to run on the same hardware but require their own CPU/memory resources to run optimally.</p>
+<p>The DeepSparse Engine achieves better performance on multiple-socket systems as well as with hyperthreading disabled; models with larger batch sizes are likely to see an improvement. One standard way of controlling compute/memory resources when running processes is to use the <strong>numactl</strong> utility. <strong>numactl</strong> can be used when multiple processes need to run on the same hardware but require their own CPU/memory resources to run optimally.</p>
 <p>To run the DeepSparse Engine on a single socket (N) of a multi-socket system, you would start the DeepSparse Engine using <strong>numactl</strong>. For example:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    numactl --cpunodebind N &lt;deepsparseengine-process&gt;
+</pre></div>
+</div>
+<p>To run the DeepSparse Engine on multiple sockets (N,M), run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    numactl --cpunodebind N,M &lt;deepsparseengine-process&gt;
 </pre></div>
 </div>
 <p>It is advised to also allocate memory from the same socket on which the engine is running. So, <code class="docutils literal notranslate"><span class="pre">--membind</span></code> or <code class="docutils literal notranslate"><span class="pre">--preferred</span></code> should be used when using <code class="docutils literal notranslate"><span class="pre">--cpunodebind.</span></code> For example:</p>
@@ -226,7 +231,8 @@ limitations under the License.
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    numactl --physcpubind <span class="m">8</span>-11 --preferred <span class="m">1</span> &lt;deepsparseengine-process&gt;
 </pre></div>
 </div>
-<p>Note that <code class="docutils literal notranslate"><span class="pre">--preferred</span> <span class="pre">1</span></code> is needed here since the DeepSparse Engine is being bound to CPUs on the second socket.</p>
+<p>Appending <code class="docutils literal notranslate"><span class="pre">--preferred</span> <span class="pre">1</span></code> is needed here since the DeepSparse Engine is being bound to CPUs on the second socket.</p>
+<p>Note that using more than two sockets may not offer improvements over two sockets; if you have options, try different scenarios to see which setup is ideal for your use case. For batch size considerations, use an amount that is evenly divisible by the number of sockets you intend to use.</p>
 <div class="section" id="deepsparse-engine-and-thread-pinning">
 <h2>DeepSparse Engine and Thread Pinning<a class="headerlink" href="#deepsparse-engine-and-thread-pinning" title="Permalink to this headline">¶</a></h2>
 <p>When using <strong>numactl</strong> to specify which CPUs/sockets the engine is allowed to run on, there is no restriction as to which CPU a particular computation thread is executed on. A single thread of computation may run on one or more CPUs during the course of execution. This is desirable if the system is being shared between multiple processes so that idle CPU threads are not prevented from doing other work.</p>
@@ -237,7 +243,6 @@ limitations under the License.
 </pre></div>
 </div>
 <p><code class="docutils literal notranslate"><span class="pre">NM_BIND_THREADS_TO_CORES</span></code> should be used with care since it forces the DeepSparse Engine to run on only the threads it has been allocated at startup. If any other process ends up running on the same threads, it could result in a major degradation of performance.</p>
-<p>When using server mode with multiple engines, it is advisable to keep thread pinning disabled.</p>
 <p><strong>Note:</strong> The threads-to-cores mappings described above are specific to Intel only. AMD has a different mapping. For AMD, all the threads for a single core are consecutive, i.e., if each core has two threads and there are N cores, the threads for a particular core K are 2<em>K and 2</em>K+1.  The mapping of cores to sockets is also straightforward, for a N socket system with C cores per socket, the cores for a particular socket S are numbered S*C to ((S+1)*C)-1.</p>
 </div>
 <div class="section" id="additional-notes">
