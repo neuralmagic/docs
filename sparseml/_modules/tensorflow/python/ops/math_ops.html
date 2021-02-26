@@ -98,16 +98,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -258,10 +259,8 @@
 <span class="kn">from</span> <span class="nn">tensorflow.python.framework</span> <span class="kn">import</span> <span class="n">ops</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.framework</span> <span class="kn">import</span> <span class="n">sparse_tensor</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.framework</span> <span class="kn">import</span> <span class="n">tensor_shape</span>
-<span class="kn">from</span> <span class="nn">tensorflow.python.framework</span> <span class="kn">import</span> <span class="n">tensor_util</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">array_ops</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">gen_array_ops</span>
-<span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">gen_bitwise_ops</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">gen_data_flow_ops</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">gen_math_ops</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.ops</span> <span class="kn">import</span> <span class="n">gen_nn_ops</span>
@@ -275,131 +274,16 @@
 <span class="kn">from</span> <span class="nn">tensorflow.python.util</span> <span class="kn">import</span> <span class="n">deprecation</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.util</span> <span class="kn">import</span> <span class="n">dispatch</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.util</span> <span class="kn">import</span> <span class="n">nest</span>
-<span class="kn">from</span> <span class="nn">tensorflow.python.util.compat</span> <span class="kn">import</span> <span class="n">collections_abc</span>
 <span class="kn">from</span> <span class="nn">tensorflow.python.util.tf_export</span> <span class="kn">import</span> <span class="n">tf_export</span>
 
 <span class="c1"># Aliases for some automatically-generated names.</span>
+<span class="n">linspace</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">lin_space</span>
 <span class="n">nextafter</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">next_after</span>
-
-
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;linspace&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;lin_space&quot;</span><span class="p">,</span> <span class="s2">&quot;linspace&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
-<span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;lin_space&quot;</span><span class="p">)</span>
-<span class="k">def</span> <span class="nf">linspace_nd</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="n">num</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
-  <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Generates evenly-spaced values in an interval along a given axis.</span>
-
-<span class="sd">  A sequence of `num` evenly-spaced values are generated beginning at `start`</span>
-<span class="sd">  along a given `axis`.</span>
-<span class="sd">  If `num &gt; 1`, the values in the sequence increase by `stop - start / num - 1`,</span>
-<span class="sd">  so that the last one is exactly `stop`. If `num &lt;= 0`, `ValueError` is raised.</span>
-
-<span class="sd">  Matches</span>
-<span class="sd">  [np.linspace](https://docs.scipy.org/doc/numpy/reference/generated/numpy.linspace.html)&#39;s</span>
-<span class="sd">  behaviour</span>
-<span class="sd">  except when `num == 0`.</span>
-
-<span class="sd">  For example:</span>
-
-<span class="sd">  ```</span>
-<span class="sd">  tf.linspace(10.0, 12.0, 3, name=&quot;linspace&quot;) =&gt; [ 10.0  11.0  12.0]</span>
-<span class="sd">  ```</span>
-
-<span class="sd">  `Start` and `stop` can be tensors of arbitrary size:</span>
-
-<span class="sd">  &gt;&gt;&gt; tf.linspace([0., 5.], [10., 40.], 5, axis=0)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(5, 2), dtype=float32, numpy=</span>
-<span class="sd">  array([[ 0.  ,  5.  ],</span>
-<span class="sd">         [ 2.5 , 13.75],</span>
-<span class="sd">         [ 5.  , 22.5 ],</span>
-<span class="sd">         [ 7.5 , 31.25],</span>
-<span class="sd">         [10.  , 40.  ]], dtype=float32)&gt;</span>
-
-<span class="sd">  `Axis` is where the values will be generated (the dimension in the</span>
-<span class="sd">  returned tensor which corresponds to the axis will be equal to `num`)</span>
-
-<span class="sd">  &gt;&gt;&gt; tf.linspace([0., 5.], [10., 40.], 5, axis=-1)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2, 5), dtype=float32, numpy=</span>
-<span class="sd">  array([[ 0.  ,  2.5 ,  5.  ,  7.5 , 10.  ],</span>
-<span class="sd">         [ 5.  , 13.75, 22.5 , 31.25, 40.  ]], dtype=float32)&gt;</span>
-
-
-
-<span class="sd">  Args:</span>
-<span class="sd">    start: A `Tensor`. Must be one of the following types: `bfloat16`,</span>
-<span class="sd">      `float32`, `float64`. N-D tensor. First entry in the range.</span>
-<span class="sd">    stop: A `Tensor`. Must have the same type and shape as `start`. N-D tensor.</span>
-<span class="sd">      Last entry in the range.</span>
-<span class="sd">    num: A `Tensor`. Must be one of the following types: `int32`, `int64`. 0-D</span>
-<span class="sd">      tensor. Number of values to generate.</span>
-<span class="sd">    name: A name for the operation (optional).</span>
-<span class="sd">    axis: Axis along which the operation is performed (used only when N-D</span>
-<span class="sd">      tensors are provided).</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    A `Tensor`. Has the same type as `start`.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
-
-  <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;linspace&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">]):</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;start&quot;</span><span class="p">)</span>
-    <span class="c1"># stop must be convertible to the same dtype as start</span>
-    <span class="n">stop</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;stop&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">start</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">num_int</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">convert_to_int_tensor</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;num&quot;</span><span class="p">)</span>
-    <span class="n">num</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">num_int</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">start</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-
-    <span class="n">broadcast_shape</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">broadcast_dynamic_shape</span><span class="p">(</span>
-        <span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">start</span><span class="p">),</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">stop</span><span class="p">))</span>
-    <span class="n">start</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">broadcast_shape</span><span class="p">)</span>
-    <span class="n">stop</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">broadcast_to</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">broadcast_shape</span><span class="p">)</span>
-
-    <span class="n">expanded_start</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
-    <span class="n">expanded_stop</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">stop</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
-
-    <span class="n">shape</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">expanded_start</span><span class="p">)</span>
-    <span class="n">ndims</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">shape</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-
-    <span class="n">axis</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where_v2</span><span class="p">(</span><span class="n">axis</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">ndims</span> <span class="o">+</span> <span class="n">axis</span><span class="p">)</span>
-
-    <span class="c1"># The purpose is to avoid having negative values when repeating.</span>
-    <span class="n">num_fill</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">num_int</span> <span class="o">-</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-    <span class="c1"># To avoid having negative values in the range or zero division</span>
-    <span class="c1"># the result is sliced in the end so a correct result is returned for</span>
-    <span class="c1"># num == 1, and num == 0.</span>
-    <span class="n">n_steps</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">num_int</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">expanded_stop</span> <span class="o">-</span> <span class="n">expanded_start</span><span class="p">)</span> <span class="o">/</span> <span class="n">cast</span><span class="p">(</span><span class="n">n_steps</span><span class="p">,</span>
-                                                    <span class="n">expanded_stop</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="c1"># Re-cast tensors as delta.</span>
-    <span class="n">expanded_start</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">expanded_start</span><span class="p">,</span> <span class="n">delta</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">expanded_stop</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">expanded_stop</span><span class="p">,</span> <span class="n">delta</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="c1"># If num &lt; 0, we will throw exception in the range</span>
-    <span class="c1"># otherwise use the same div for delta</span>
-    <span class="n">range_end</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where_v2</span><span class="p">(</span><span class="n">num_int</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">n_steps</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="c1"># Even though range supports an output dtype, its limited</span>
-    <span class="c1"># (e.g. doesn&#39;t support half at the moment).</span>
-    <span class="n">desired_range</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">range_end</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int64</span><span class="p">),</span> <span class="n">delta</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
-    <span class="n">mask</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">axis</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="n">ndims</span><span class="p">))</span>
-    <span class="c1"># desired_range_shape is [1. 1. 1. ... 1. num_fill 1. 1. ... 1.], where the</span>
-    <span class="c1"># index of num_fill is equal to axis.</span>
-    <span class="n">desired_range_shape</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where_v2</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">num_fill</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">desired_range</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">desired_range</span><span class="p">,</span> <span class="n">desired_range_shape</span><span class="p">)</span>
-
-    <span class="n">res</span> <span class="o">=</span> <span class="n">expanded_start</span> <span class="o">+</span> <span class="n">delta</span> <span class="o">*</span> <span class="n">desired_range</span>
-
-    <span class="c1"># Add the start and endpoints to the result, and slice out the desired</span>
-    <span class="c1"># portion.</span>
-    <span class="n">all_tensors</span> <span class="o">=</span> <span class="p">(</span><span class="n">expanded_start</span><span class="p">,</span> <span class="n">res</span><span class="p">,</span> <span class="n">expanded_stop</span><span class="p">)</span>
-    <span class="n">concatenated</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">concat</span><span class="p">(</span><span class="n">all_tensors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">)</span>
-    <span class="n">begin</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
-    <span class="n">size</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where_v2</span><span class="p">(</span><span class="n">mask</span><span class="p">,</span> <span class="n">num_int</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">slice</span><span class="p">(</span><span class="n">concatenated</span><span class="p">,</span> <span class="n">begin</span><span class="p">,</span> <span class="n">size</span><span class="p">)</span>
-
-
-<span class="n">linspace</span> <span class="o">=</span> <span class="n">linspace_nd</span>
 
 <span class="n">arg_max</span> <span class="o">=</span> <span class="n">deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Use `tf.math.argmax` instead&quot;</span><span class="p">)(</span><span class="n">arg_max</span><span class="p">)</span>  <span class="c1"># pylint: disable=used-before-assignment</span>
 <span class="n">arg_min</span> <span class="o">=</span> <span class="n">deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Use `tf.math.argmin` instead&quot;</span><span class="p">)(</span><span class="n">arg_min</span><span class="p">)</span>  <span class="c1"># pylint: disable=used-before-assignment</span>
-<span class="n">tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg_max&quot;</span><span class="p">])(</span><span class="n">dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span><span class="p">(</span><span class="n">arg_max</span><span class="p">))</span>
-<span class="n">tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg_min&quot;</span><span class="p">])(</span><span class="n">dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span><span class="p">(</span><span class="n">arg_min</span><span class="p">))</span>
+<span class="n">tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg_max&quot;</span><span class="p">])(</span><span class="n">arg_max</span><span class="p">)</span>
+<span class="n">tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;arg_min&quot;</span><span class="p">])(</span><span class="n">arg_min</span><span class="p">)</span>
 
 
 <span class="c1"># This is set by resource_variable_ops.py. It is included in this way since</span>
@@ -418,7 +302,6 @@
 
 <span class="c1"># pylint: disable=redefined-builtin</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.argmax&quot;</span><span class="p">,</span> <span class="s2">&quot;argmax&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Use the `axis` argument instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;dimension&quot;</span><span class="p">)</span>
 <span class="nd">@_set_doc</span><span class="p">(</span>
@@ -435,11 +318,10 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.argmax&quot;</span><span class="p">,</span> <span class="s2">&quot;argmax&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">argmax_v2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Returns the index with the largest value across axes of a tensor.</span>
 
-<span class="sd">  In case of identity returns the smallest index.</span>
+<span class="sd">  Note that in case of ties the identity of the return value is not guaranteed.</span>
 
 <span class="sd">  For example:</span>
 
@@ -452,9 +334,6 @@
 <span class="sd">  &lt;tf.Tensor: shape=(5,), dtype=int64, numpy=array([2, 2, 0, 2, 2])&gt;</span>
 <span class="sd">  &gt;&gt;&gt; tf.math.argmax(B, 1)</span>
 <span class="sd">  &lt;tf.Tensor: shape=(3,), dtype=int64, numpy=array([2, 2, 1])&gt;</span>
-<span class="sd">  &gt;&gt;&gt; C = tf.constant([0, 0, 0, 0])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.argmax(C) # Returns smallest index in case of ties</span>
-<span class="sd">  &lt;tf.Tensor: shape=(), dtype=int64, numpy=0&gt;</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">    input: A `Tensor`.</span>
@@ -472,7 +351,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.argmin&quot;</span><span class="p">,</span> <span class="s2">&quot;argmin&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Use the `axis` argument instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;dimension&quot;</span><span class="p">)</span>
 <span class="nd">@_set_doc</span><span class="p">(</span>
@@ -489,11 +367,10 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.argmin&quot;</span><span class="p">,</span> <span class="s2">&quot;argmin&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">argmin_v2</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">output_type</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Returns the index with the smallest value across axes of a tensor.</span>
 
-<span class="sd">  Returns the smallest index in case of ties.</span>
+<span class="sd">  Note that in case of ties the identity of the return value is not guaranteed.</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">    input: A `Tensor`. Must be one of the following types: `float32`, `float64`,</span>
@@ -542,18 +419,9 @@
 
 <span class="sd">  Given a tensor `x` of complex numbers, this operation returns a tensor of type</span>
 <span class="sd">  `float32` or `float64` that is the absolute value of each element in `x`. For</span>
-<span class="sd">  a complex number \\(a + bj\\), its absolute value is computed as</span>
-<span class="sd">  \\(\sqrt{a^2 + b^2}\\).</span>
+<span class="sd">  a complex number \\(a + bj\\), its absolute value is computed as \\(\sqrt{a^2</span>
+<span class="sd">  + b^2}\\).  For example:</span>
 
-<span class="sd">  For example:</span>
-
-<span class="sd">  &gt;&gt;&gt; # real number</span>
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([-2.25, 3.25])</span>
-<span class="sd">  &gt;&gt;&gt; tf.abs(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32,</span>
-<span class="sd">  numpy=array([2.25, 3.25], dtype=float32)&gt;</span>
-
-<span class="sd">  &gt;&gt;&gt; # complex number</span>
 <span class="sd">  &gt;&gt;&gt; x = tf.constant([[-2.25 + 4.75j], [-3.25 + 5.75j]])</span>
 <span class="sd">  &gt;&gt;&gt; tf.abs(x)</span>
 <span class="sd">  &lt;tf.Tensor: shape=(2, 1), dtype=float64, numpy=</span>
@@ -638,10 +506,6 @@
     <span class="c1"># override names. Use a dummy class to track the runtime division behavior</span>
     <span class="k">return</span> <span class="n">DivideDelegateWithName</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span> <span class="o">/</span> <span class="n">y</span>
   <span class="k">else</span><span class="p">:</span>
-    <span class="c1"># We do conversion here to make sure at least x is a tensor.</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">tensor_util</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
-      <span class="n">dtype</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span> <span class="k">if</span> <span class="n">tensor_util</span><span class="o">.</span><span class="n">is_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
-      <span class="n">x</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtype</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">x</span> <span class="o">/</span> <span class="n">y</span>
 
 
@@ -709,31 +573,6 @@
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.subtract&quot;</span><span class="p">,</span> <span class="s2">&quot;subtract&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">subtract</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;Returns x - y element-wise.</span>
-
-<span class="sd">  *Note*: Subtract supports broadcasting. More about broadcasting</span>
-<span class="sd">  [here](https://numpy.org/doc/stable/user/basics.broadcasting.html)</span>
-
-<span class="sd">  Both input and output have a range `(-inf, inf)`.</span>
-
-<span class="sd">  For example:</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([1.0, -1.0, 5.0, -2.0, 0.0])</span>
-<span class="sd">  &gt;&gt;&gt; y = tf.constant([5.0, 1.0, 3.7, -19.9, float(&quot;inf&quot;)])</span>
-<span class="sd">  &gt;&gt;&gt; tf.subtract(x,y)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(5,), dtype=float32,</span>
-<span class="sd">  numpy= array([-4. , -2. ,  1.3, 17.9, -inf], dtype=float32)&gt;</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    x: A `Tensor`. Must be one of the following types: `bfloat16`, `half`,</span>
-<span class="sd">      `float32`, `float64`, `uint8`, `int8`, `int16`, `int32`, `int64`,</span>
-<span class="sd">      `complex64`, `complex128`, `string`.</span>
-<span class="sd">    y: A `Tensor`. Must have the same type as x.</span>
-<span class="sd">    name: A name for the operation (optional).</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    A `Tensor`. Has the same type as x.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
   <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 
@@ -778,7 +617,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.scalar_mul&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar_mul&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">scalar_mul</span><span class="p">(</span><span class="n">scalar</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Multiplies a scalar times a `Tensor` or `IndexedSlices` object.</span>
 
@@ -811,7 +649,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.scalar_mul&quot;</span><span class="p">,</span> <span class="s2">&quot;scalar_mul&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@_set_doc</span><span class="p">(</span><span class="n">scalar_mul</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">scalar_mul_v2</span><span class="p">(</span><span class="n">scalar</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;scalar_mul&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
@@ -895,27 +732,20 @@
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.sign&quot;</span><span class="p">,</span> <span class="s2">&quot;sign&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">sign</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns an element-wise indication of the sign of a number.</span>
+  <span class="sd">&quot;&quot;&quot;Returns an element-wise indication of the sign of a number.</span>
 
-<span class="sd">  `y = sign(x) = -1 if x &lt; 0; 0 if x == 0; 1 if x &gt; 0`.</span>
+<span class="sd">  y = sign(x) = -1 if x &lt; 0; 0 if x == 0; 1 if x &gt; 0.</span>
 
-<span class="sd">  For complex numbers, `y = sign(x) = x / |x| if x != 0, otherwise y = 0`.</span>
+<span class="sd">  For complex numbers, y = sign(x) = x / |x| if x != 0, otherwise y = 0.</span>
 
 <span class="sd">  Example usage:</span>
 
-<span class="sd">  &gt;&gt;&gt; # real number</span>
 <span class="sd">  &gt;&gt;&gt; tf.math.sign([0., 2., -3.])</span>
-<span class="sd">  &lt;tf.Tensor: shape=(3,), dtype=float32,</span>
-<span class="sd">  numpy=array([ 0.,  1., -1.], dtype=float32)&gt;</span>
-
-<span class="sd">  &gt;&gt;&gt; # complex number</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.sign([1 + 1j, 0 + 0j])</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=complex128,</span>
-<span class="sd">  numpy=array([0.70710678+0.70710678j, 0.        +0.j        ])&gt;</span>
+<span class="sd">  &lt;tf.Tensor: ... numpy=array([ 0.,  1., -1.], dtype=float32)&gt;</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">   x: A Tensor. Must be one of the following types: bfloat16, half, float32,</span>
-<span class="sd">     float64, int32, int64, complex64, complex128.</span>
+<span class="sd">      float64, int32, int64, complex64, complex128.</span>
 <span class="sd">   name: A name for the operation (optional).</span>
 
 <span class="sd">  Returns:</span>
@@ -925,7 +755,7 @@
 <span class="sd">     tf.math.sign(x.values, ...), x.dense_shape).</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="n">x</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">is_complex</span><span class="p">:</span>
+  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="ow">in</span> <span class="p">(</span><span class="n">dtypes</span><span class="o">.</span><span class="n">complex64</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">complex128</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">div_no_nan</span><span class="p">(</span>
         <span class="n">x</span><span class="p">,</span>
         <span class="n">cast</span><span class="p">(</span>
@@ -939,7 +769,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.real&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.real&quot;</span><span class="p">,</span> <span class="s2">&quot;real&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;real&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">real</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -974,7 +803,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.imag&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.imag&quot;</span><span class="p">,</span> <span class="s2">&quot;imag&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;imag&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">imag</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1008,7 +836,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.angle&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.angle&quot;</span><span class="p">,</span> <span class="s2">&quot;angle&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;angle&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">angle</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1045,8 +872,7 @@
     <span class="k">if</span> <span class="nb">input</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">is_complex</span><span class="p">:</span>
       <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="nb">input</span><span class="p">,</span> <span class="n">Tout</span><span class="o">=</span><span class="nb">input</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">real_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
-      <span class="k">return</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="nb">input</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="nb">input</span><span class="p">),</span>
-                             <span class="n">array_ops</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="nb">input</span><span class="p">))</span>
+      <span class="k">return</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
 
 
 <span class="c1"># pylint: enable=redefined-outer-name,redefined-builtin</span>
@@ -1102,8 +928,6 @@
 <span class="sd">  types to complex types (`complex64`, `complex128`), the imaginary part of the</span>
 <span class="sd">  returned value is set to `0`. The handling of complex types here matches the</span>
 <span class="sd">  behavior of numpy.</span>
-
-<span class="sd">  Note casting nan and inf values to integral types has undefined behavior.</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">    x: A `Tensor` or `SparseTensor` or `IndexedSlices` of numeric type. It could</span>
@@ -1180,7 +1004,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_float&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_float</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToFloat&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `float32`.</span>
 
@@ -1200,7 +1023,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_double&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_double</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToDouble&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `float64`.</span>
 
@@ -1220,7 +1042,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_int32&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_int32</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToInt32&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `int32`.</span>
 
@@ -1240,7 +1061,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_int64&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_int64</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToInt64&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `int64`.</span>
 
@@ -1260,7 +1080,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_bfloat16&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_bfloat16</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToBFloat16&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `bfloat16`.</span>
 
@@ -1280,7 +1099,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_complex64&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_complex64</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToComplex64&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `complex64`.</span>
 
@@ -1300,7 +1118,6 @@
 
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Use `tf.cast` instead.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;to_complex128&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">to_complex128</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ToComplex128&quot;</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Casts a tensor to type `complex128`.</span>
 
@@ -1320,6 +1137,10 @@
 
 <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__neg__&quot;</span><span class="p">,</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">neg</span><span class="p">)</span>
 <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__abs__&quot;</span><span class="p">,</span> <span class="nb">abs</span><span class="p">)</span>
+<span class="c1"># __invert__ corresponds to the ~ operator.  Here we follow the numpy convention</span>
+<span class="c1"># ~ marks an elementwise bit-wise inverse.  This is only implemented for boolean</span>
+<span class="c1"># tensors and will throw a TypeError if used on nonboolean arrays</span>
+<span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__invert__&quot;</span><span class="p">,</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_not</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">op_name</span><span class="p">,</span> <span class="n">clazz_object</span><span class="o">=</span><span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
@@ -1336,26 +1157,21 @@
 
   <span class="k">def</span> <span class="nf">binary_op_wrapper</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">op_name</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
-      <span class="k">try</span><span class="p">:</span>
+      <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
         <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-      <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">)</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="c1"># Even if dispatching the op failed, the RHS may be a tensor aware</span>
-        <span class="c1"># object that can implement the operator with knowledge of itself</span>
-        <span class="c1"># and the tensor.</span>
-        <span class="c1"># If the RHS is not tensor aware we still want to raise the</span>
-        <span class="c1"># original error from the LHS, because it may be more</span>
-        <span class="c1"># informative.</span>
-        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="s2">&quot;__r</span><span class="si">%s</span><span class="s2">__&quot;</span> <span class="o">%</span> <span class="n">op_name</span><span class="p">):</span>
-          <span class="k">try</span><span class="p">:</span>
-            <span class="n">r_op</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="s2">&quot;__r</span><span class="si">%s</span><span class="s2">__&quot;</span> <span class="o">%</span> <span class="n">op_name</span><span class="p">)</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">r_op</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
-            <span class="k">if</span> <span class="n">out</span> <span class="ow">is</span> <span class="bp">NotImplemented</span><span class="p">:</span>
-              <span class="k">raise</span>
-            <span class="k">return</span> <span class="n">out</span>
-          <span class="k">except</span> <span class="p">(</span><span class="ne">TypeError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="n">e</span>
-        <span class="k">else</span><span class="p">:</span>
-          <span class="k">raise</span>
+      <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+          <span class="n">y</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor_v2</span><span class="p">(</span>
+              <span class="n">y</span><span class="p">,</span> <span class="n">dtype_hint</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+          <span class="c1"># If the RHS is not a tensor, it might be a tensor aware object</span>
+          <span class="c1"># that can implement the operator with knowledge of itself</span>
+          <span class="c1"># and the tensor.</span>
+          <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">y</span><span class="p">),</span> <span class="s2">&quot;__r</span><span class="si">%s</span><span class="s2">__&quot;</span> <span class="o">%</span> <span class="n">op_name</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+          <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span>
+      <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
   <span class="k">def</span> <span class="nf">binary_op_wrapper_sparse</span><span class="p">(</span><span class="n">sp_x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
     <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">op_name</span><span class="p">,</span> <span class="p">[</span><span class="n">sp_x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
@@ -1435,7 +1251,7 @@
 <span class="k">def</span> <span class="nf">_truediv_python3</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;truediv&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">])</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype_hint</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+    <span class="n">y</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
     <span class="n">x_dtype</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span>
     <span class="n">y_dtype</span> <span class="o">=</span> <span class="n">y</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span>
     <span class="k">if</span> <span class="n">x_dtype</span> <span class="o">!=</span> <span class="n">y_dtype</span><span class="p">:</span>
@@ -1516,7 +1332,6 @@
     <span class="n">date</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">instructions</span><span class="o">=</span><span class="s2">&quot;Deprecated in favor of operator or tf.math.divide.&quot;</span><span class="p">)</span>
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;div&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">div</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Divides x / y elementwise (using Python 2 division operator semantics).</span>
 
@@ -1540,7 +1355,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.divide_no_nan&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.divide_no_nan&quot;</span><span class="p">,</span> <span class="s2">&quot;div_no_nan&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;div_no_nan&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">div_no_nan</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1631,31 +1445,8 @@
 <span class="n">floormod</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">floor_mod</span>
 
 
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;__operators__.add&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">_add_dispatch</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;The operation invoked by the `Tensor.__add__` operator.</span>
-
-<span class="sd">    Purpose in the API:</span>
-
-<span class="sd">      This method is exposed in TensorFlow&#39;s API so that library developers</span>
-<span class="sd">      can register dispatching for `Tensor.__add__` to allow it to handle</span>
-<span class="sd">      custom composite tensors &amp; other custom objects.</span>
-
-<span class="sd">      The API symbol is not intended to be called by users directly and does</span>
-<span class="sd">      appear in TensorFlow&#39;s generated documentation.</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    x: The left-hand side of the `+` operator.</span>
-<span class="sd">    y: The right-hand side of the `+` operator.</span>
-<span class="sd">    name: an optional name for the operation.</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    The result of the elementwise `+` operation.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
-  <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-      <span class="n">y</span><span class="p">,</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">):</span>
-    <span class="n">y</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">dtype_hint</span><span class="o">=</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;y&quot;</span><span class="p">)</span>
+  <span class="sd">&quot;&quot;&quot;Dispatches to add for strings and add_v2 for all other types.&quot;&quot;&quot;</span>
   <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">string</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
   <span class="k">else</span><span class="p">:</span>
@@ -1664,12 +1455,14 @@
 
 <span class="k">def</span> <span class="nf">_mul_dispatch</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Dispatches cwise mul for &quot;Dense*Dense&quot; and &quot;Dense*Sparse&quot;.&quot;&quot;&quot;</span>
-  <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">):</span>  <span class="c1"># Case: Dense * Sparse.</span>
+  <span class="n">is_tensor_y</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span>
+  <span class="k">if</span> <span class="n">is_tensor_y</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+  <span class="k">else</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">y</span><span class="p">,</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">)</span>  <span class="c1"># Case: Dense * Sparse.</span>
     <span class="n">new_vals</span> <span class="o">=</span> <span class="n">gen_sparse_ops</span><span class="o">.</span><span class="n">sparse_dense_cwise_mul</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">values</span><span class="p">,</span>
                                                      <span class="n">y</span><span class="o">.</span><span class="n">dense_shape</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">indices</span><span class="p">,</span> <span class="n">new_vals</span><span class="p">,</span> <span class="n">y</span><span class="o">.</span><span class="n">dense_shape</span><span class="p">)</span>
-  <span class="k">else</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">multiply</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
 
 <span class="c1"># NOTE(aselle): When integer division is added for sparse_dense_cwise,</span>
@@ -1683,10 +1476,10 @@
                               <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">)</span>
 
 <span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">_add_dispatch</span><span class="p">,</span> <span class="s2">&quot;add&quot;</span><span class="p">)</span>
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">subtract</span><span class="p">,</span> <span class="s2">&quot;sub&quot;</span><span class="p">)</span>
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">gen_math_ops</span><span class="o">.</span><span class="n">sub</span><span class="p">,</span> <span class="s2">&quot;sub&quot;</span><span class="p">)</span>
 <span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">_mul_dispatch</span><span class="p">,</span> <span class="s2">&quot;mul&quot;</span><span class="p">)</span>
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">div</span><span class="p">,</span> <span class="s2">&quot;div&quot;</span><span class="p">)</span>
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">truediv</span><span class="p">,</span> <span class="s2">&quot;truediv&quot;</span><span class="p">)</span>
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">_div_python2</span><span class="p">,</span> <span class="s2">&quot;div&quot;</span><span class="p">)</span>
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">_truediv_python3</span><span class="p">,</span> <span class="s2">&quot;truediv&quot;</span><span class="p">)</span>
 <span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">floordiv</span><span class="p">,</span> <span class="s2">&quot;floordiv&quot;</span><span class="p">)</span>
 <span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">gen_math_ops</span><span class="o">.</span><span class="n">floor_mod</span><span class="p">,</span> <span class="s2">&quot;mod&quot;</span><span class="p">)</span>
 <span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="nb">pow</span><span class="p">,</span> <span class="s2">&quot;pow&quot;</span><span class="p">)</span>
@@ -1783,35 +1576,9 @@
   <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">and_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">gen_bitwise_ops</span><span class="o">.</span><span class="n">bitwise_and</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">or_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_or</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">gen_bitwise_ops</span><span class="o">.</span><span class="n">bitwise_or</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">xor_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">logical_xor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">gen_bitwise_ops</span><span class="o">.</span><span class="n">bitwise_xor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
-
-
-<span class="k">def</span> <span class="nf">invert_</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_not</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-  <span class="k">return</span> <span class="n">gen_bitwise_ops</span><span class="o">.</span><span class="n">invert</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-
-
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">and_</span><span class="p">,</span> <span class="s2">&quot;and&quot;</span><span class="p">)</span>
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">or_</span><span class="p">,</span> <span class="s2">&quot;or&quot;</span><span class="p">)</span>
-<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">xor_</span><span class="p">,</span> <span class="s2">&quot;xor&quot;</span><span class="p">)</span>
-<span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__invert__&quot;</span><span class="p">,</span> <span class="n">invert_</span><span class="p">)</span>
-
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_and</span><span class="p">,</span> <span class="s2">&quot;and&quot;</span><span class="p">)</span>
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">gen_math_ops</span><span class="o">.</span><span class="n">logical_or</span><span class="p">,</span> <span class="s2">&quot;or&quot;</span><span class="p">)</span>
+<span class="n">_OverrideBinaryOperatorHelper</span><span class="p">(</span><span class="n">logical_xor</span><span class="p">,</span> <span class="s2">&quot;xor&quot;</span><span class="p">)</span>
 
 <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__lt__&quot;</span><span class="p">,</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">less</span><span class="p">)</span>
 <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_override_operator</span><span class="p">(</span><span class="s2">&quot;__le__&quot;</span><span class="p">,</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">less_equal</span><span class="p">)</span>
@@ -1842,8 +1609,8 @@
 <span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=bool, numpy=array([ True,  True])&gt;</span>
 
 <span class="sd">  Args:</span>
-<span class="sd">    x: A `tf.Tensor` or `tf.sparse.SparseTensor` or `tf.IndexedSlices`.</span>
-<span class="sd">    y: A `tf.Tensor` or `tf.sparse.SparseTensor` or `tf.IndexedSlices`.</span>
+<span class="sd">    x: A `tf.Tensor` or `tf.SparseTensor` or `tf.IndexedSlices`.</span>
+<span class="sd">    y: A `tf.Tensor` or `tf.SparseTensor` or `tf.IndexedSlices`.</span>
 <span class="sd">    name: A name for the operation (optional).</span>
 
 <span class="sd">  Returns:</span>
@@ -1878,8 +1645,8 @@
 <span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=bool, numpy=array([False,  False])&gt;</span>
 
 <span class="sd">  Args:</span>
-<span class="sd">    x: A `tf.Tensor` or `tf.sparse.SparseTensor` or `tf.IndexedSlices`.</span>
-<span class="sd">    y: A `tf.Tensor` or `tf.sparse.SparseTensor` or `tf.IndexedSlices`.</span>
+<span class="sd">    x: A `tf.Tensor` or `tf.SparseTensor` or `tf.IndexedSlices`.</span>
+<span class="sd">    y: A `tf.Tensor` or `tf.SparseTensor` or `tf.IndexedSlices`.</span>
 <span class="sd">    name: A name for the operation (optional).</span>
 
 <span class="sd">  Returns:</span>
@@ -1891,33 +1658,8 @@
   <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">not_equal</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
 
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;__operators__.eq&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">tensor_equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;The operation invoked by the `Tensor.__eq__` operator.</span>
-
-<span class="sd">  Compares two tensors element-wise for equality if they are</span>
-<span class="sd">  broadcast-compatible; or returns False if they are not broadcast-compatible.</span>
-<span class="sd">  (Note that this behavior differs from `tf.math.equal`, which raises an</span>
-<span class="sd">  exception if the two tensors are not broadcast-compatible.)</span>
-
-<span class="sd">  Purpose in the API:</span>
-
-<span class="sd">    This method is exposed in TensorFlow&#39;s API so that library developers</span>
-<span class="sd">    can register dispatching for `Tensor.__eq__` to allow it to handle</span>
-<span class="sd">    custom composite tensors &amp; other custom objects.</span>
-
-<span class="sd">    The API symbol is not intended to be called by users directly and does</span>
-<span class="sd">    appear in TensorFlow&#39;s generated documentation.</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    self: The left-hand side of the `==` operator.</span>
-<span class="sd">    other: The right-hand side of the `==` operator.</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    The result of the elementwise `==` operation, or `False` if the arguments</span>
-<span class="sd">    are not broadcast-compatible.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="sd">&quot;&quot;&quot;Compares two tensors element-wise for equality.&quot;&quot;&quot;</span>
   <span class="k">if</span> <span class="n">other</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">return</span> <span class="kc">False</span>
   <span class="n">g</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;graph&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
@@ -1929,33 +1671,8 @@
     <span class="k">return</span> <span class="bp">self</span> <span class="ow">is</span> <span class="n">other</span>
 
 
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;__operators__.ne&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">tensor_not_equals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;The operation invoked by the `Tensor.__ne__` operator.</span>
-
-<span class="sd">  Compares two tensors element-wise for inequality if they are</span>
-<span class="sd">  broadcast-compatible; or returns True if they are not broadcast-compatible.</span>
-<span class="sd">  (Note that this behavior differs from `tf.math.not_equal`, which raises an</span>
-<span class="sd">  exception if the two tensors are not broadcast-compatible.)</span>
-
-<span class="sd">  Purpose in the API:</span>
-
-<span class="sd">    This method is exposed in TensorFlow&#39;s API so that library developers</span>
-<span class="sd">    can register dispatching for `Tensor.__ne__` to allow it to handle</span>
-<span class="sd">    custom composite tensors &amp; other custom objects.</span>
-
-<span class="sd">    The API symbol is not intended to be called by users directly and does</span>
-<span class="sd">    appear in TensorFlow&#39;s generated documentation.</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    self: The left-hand side of the `!=` operator.</span>
-<span class="sd">    other: The right-hand side of the `!=` operator.</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    The result of the elementwise `!=` operation, or `True` if the arguments</span>
-<span class="sd">    are not broadcast-compatible.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="sd">&quot;&quot;&quot;Compares two tensors element-wise for equality.&quot;&quot;&quot;</span>
   <span class="k">if</span> <span class="n">other</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">return</span> <span class="kc">True</span>
   <span class="k">if</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="o">.</span><span class="n">_USE_EQUALITY</span> <span class="ow">and</span> <span class="n">ops</span><span class="o">.</span><span class="n">executing_eagerly_outside_functions</span><span class="p">():</span>
@@ -1970,7 +1687,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;range&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">range</span><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">delta</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;range&quot;</span><span class="p">):</span>  <span class="c1"># pylint: disable=redefined-builtin</span>
   <span class="sd">&quot;&quot;&quot;Creates a sequence of numbers.</span>
 
@@ -2064,23 +1780,28 @@
                                           <span class="n">_range_tensor_conversion_function</span><span class="p">)</span>
 
 <span class="c1"># Reduction operations</span>
-<span class="k">def</span> <span class="nf">_ReductionDims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
-  <span class="sd">&quot;&quot;&quot;Returns range(0, rank(x)) if axis is None.&quot;&quot;&quot;</span>
+<span class="k">def</span> <span class="nf">_ReductionDims</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">reduction_indices</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># pylint: disable=invalid-name</span>
+  <span class="sd">&quot;&quot;&quot;Returns range(0, rank(x)) if reduction_indices is None.&quot;&quot;&quot;</span>
+  <span class="c1"># TODO(aselle): Remove this after deprecation</span>
+  <span class="k">if</span> <span class="n">reduction_indices</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Can&#39;t specify both axis&#39; and &#39;reduction_indices&#39;.&quot;</span><span class="p">)</span>
+    <span class="n">axis</span> <span class="o">=</span> <span class="n">reduction_indices</span>
   <span class="k">if</span> <span class="n">axis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">axis</span>
   <span class="k">else</span><span class="p">:</span>
-    <span class="n">x_rank</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="c1"># Fast path: avoid creating Rank and Range ops if ndims is known.</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
-      <span class="n">x_rank</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">rank</span>
+      <span class="n">rank</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">rank</span>
+      <span class="k">if</span> <span class="n">rank</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">constant_op</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
     <span class="k">elif</span> <span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">sparse_tensor</span><span class="o">.</span><span class="n">SparseTensor</span><span class="p">)</span> <span class="ow">and</span>
           <span class="n">x</span><span class="o">.</span><span class="n">dense_shape</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">is_fully_defined</span><span class="p">()):</span>
-      <span class="n">x_rank</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dense_shape</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>  <span class="c1"># sparse.dense_shape is 1-D.</span>
-    <span class="c1"># Fast path: avoid creating Rank and Range ops if ndims is known.</span>
-    <span class="k">if</span> <span class="n">x_rank</span><span class="p">:</span>
-      <span class="k">return</span> <span class="n">constant_op</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">x_rank</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
-    <span class="k">else</span><span class="p">:</span>
-      <span class="c1"># Otherwise, we rely on Range and Rank to do the right thing at run-time.</span>
-      <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
+      <span class="n">rank</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dense_shape</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dims</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">value</span>  <span class="c1"># sparse.dense_shape is 1-D.</span>
+      <span class="k">return</span> <span class="n">constant_op</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">rank</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">))</span>
+
+    <span class="c1"># Otherwise, we rely on Range and Rank to do the right thing at run-time.</span>
+    <span class="k">return</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">x</span><span class="p">))</span>
 
 
 <span class="k">def</span> <span class="nf">_has_fully_defined_shape</span><span class="p">(</span><span class="n">tensor</span><span class="p">):</span>
@@ -2097,7 +1818,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_sum&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_sum&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2111,8 +1831,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2161,49 +1881,28 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
 
 <span class="sd">  For example:</span>
 
-<span class="sd">  &gt;&gt;&gt; # x has a shape of (2, 3) (two rows and three columns):</span>
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([[1, 1, 1], [1, 1, 1]])</span>
-<span class="sd">  &gt;&gt;&gt; x.numpy()</span>
-<span class="sd">  array([[1, 1, 1],</span>
-<span class="sd">         [1, 1, 1]], dtype=int32)</span>
-<span class="sd">  &gt;&gt;&gt; # sum all the elements</span>
-<span class="sd">  &gt;&gt;&gt; # 1 + 1 + 1 + 1 + 1+ 1 = 6</span>
-<span class="sd">  &gt;&gt;&gt; tf.reduce_sum(x).numpy()</span>
-<span class="sd">  6</span>
-<span class="sd">  &gt;&gt;&gt; # reduce along the first dimension</span>
-<span class="sd">  &gt;&gt;&gt; # the result is [1, 1, 1] + [1, 1, 1] = [2, 2, 2]</span>
-<span class="sd">  &gt;&gt;&gt; tf.reduce_sum(x, 0).numpy()</span>
-<span class="sd">  array([2, 2, 2], dtype=int32)</span>
-<span class="sd">  &gt;&gt;&gt; # reduce along the second dimension</span>
-<span class="sd">  &gt;&gt;&gt; # the result is [1, 1] + [1, 1] + [1, 1] = [3, 3]</span>
-<span class="sd">  &gt;&gt;&gt; tf.reduce_sum(x, 1).numpy()</span>
-<span class="sd">  array([3, 3], dtype=int32)</span>
-<span class="sd">  &gt;&gt;&gt; # keep the original dimensions</span>
-<span class="sd">  &gt;&gt;&gt; tf.reduce_sum(x, 1, keepdims=True).numpy()</span>
-<span class="sd">  array([[3],</span>
-<span class="sd">         [3]], dtype=int32)</span>
-<span class="sd">  &gt;&gt;&gt; # reduce along both dimensions</span>
-<span class="sd">  &gt;&gt;&gt; # the result is 1 + 1 + 1 + 1 + 1 + 1 = 6</span>
-<span class="sd">  &gt;&gt;&gt; # or, equivalently, reduce along rows, then reduce the resultant array</span>
-<span class="sd">  &gt;&gt;&gt; # [1, 1, 1] + [1, 1, 1] = [2, 2, 2]</span>
-<span class="sd">  &gt;&gt;&gt; # 2 + 2 + 2 = 6</span>
-<span class="sd">  &gt;&gt;&gt; tf.reduce_sum(x, [0, 1]).numpy()</span>
-<span class="sd">  6</span>
-
+<span class="sd">  ```python</span>
+<span class="sd">  x = tf.constant([[1, 1, 1], [1, 1, 1]])</span>
+<span class="sd">  tf.reduce_sum(x)  # 6</span>
+<span class="sd">  tf.reduce_sum(x, 0)  # [2, 2, 2]</span>
+<span class="sd">  tf.reduce_sum(x, 1)  # [3, 3]</span>
+<span class="sd">  tf.reduce_sum(x, 1, keepdims=True)  # [[3], [3]]</span>
+<span class="sd">  tf.reduce_sum(x, [0, 1])  # 6</span>
+<span class="sd">  ```</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">    input_tensor: The tensor to reduce. Should have numeric type.</span>
 <span class="sd">    axis: The dimensions to reduce. If `None` (the default), reduces all</span>
 <span class="sd">      dimensions. Must be in the range `[-rank(input_tensor),</span>
-<span class="sd">      rank(input_tensor)]`.</span>
+<span class="sd">      rank(input_tensor))`.</span>
 <span class="sd">    keepdims: If true, retains reduced dimensions with length 1.</span>
 <span class="sd">    name: A name for the operation (optional).</span>
 
@@ -2232,14 +1931,13 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reduce_euclidean_norm&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_euclidean_norm</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Computes the Euclidean norm of elements across dimensions of a tensor.</span>
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2276,7 +1974,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.count_nonzero&quot;</span><span class="p">,</span> <span class="s2">&quot;count_nonzero&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2354,7 +2051,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.count_nonzero&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">count_nonzero_v2</span><span class="p">(</span>
     <span class="nb">input</span><span class="p">,</span>  <span class="c1"># pylint: disable=redefined-builtin</span>
     <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -2422,7 +2118,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_mean&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_mean_v1</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span>
                    <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
                    <span class="n">keepdims</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -2434,8 +2129,8 @@
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis` by computing the</span>
 <span class="sd">  mean of elements across the dimensions in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a tensor with a single</span>
 <span class="sd">  element is returned.</span>
@@ -2496,8 +2191,8 @@
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis` by computing the</span>
 <span class="sd">  mean of elements across the dimensions in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions are retained</span>
+<span class="sd">  with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a tensor with a single</span>
 <span class="sd">  element is returned.</span>
@@ -2549,30 +2244,28 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reduce_variance&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_variance</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Computes the variance of elements across dimensions of a tensor.</span>
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
 
 <span class="sd">  For example:</span>
 
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([[1., 2.], [3., 4.]])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_variance(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(), dtype=float32, numpy=1.25&gt;</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_variance(x, 0)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32, numpy=array([1., 1.], ...)&gt;</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_variance(x, 1)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32, numpy=array([0.25, 0.25], ...)&gt;</span>
+<span class="sd">  ```python</span>
+<span class="sd">  x = tf.constant([[1., 2.], [3., 4.]])</span>
+<span class="sd">  tf.reduce_variance(x)  # 1.25</span>
+<span class="sd">  tf.reduce_variance(x, 0)  # [1., 1.]</span>
+<span class="sd">  tf.reduce_variance(x, 1)  # [0.25,  0.25]</span>
+<span class="sd">  ```</span>
 
 <span class="sd">  Args:</span>
-<span class="sd">    input_tensor: The tensor to reduce. Should have real or complex type.</span>
+<span class="sd">    input_tensor: The tensor to reduce. Should have numeric type.</span>
 <span class="sd">    axis: The dimensions to reduce. If `None` (the default), reduces all</span>
 <span class="sd">      dimensions. Must be in the range `[-rank(input_tensor),</span>
 <span class="sd">      rank(input_tensor))`.</span>
@@ -2580,60 +2273,47 @@
 <span class="sd">    name: A name scope for the associated operations (optional).</span>
 
 <span class="sd">  Returns:</span>
-<span class="sd">    The reduced tensor, of the same dtype as the input_tensor. Note,  for</span>
-<span class="sd">    `complex64` or `complex128` input, the returned `Tensor` will be of type</span>
-<span class="sd">    `float32` or `float64`, respectively.</span>
+<span class="sd">    The reduced tensor, of the same dtype as the input_tensor.</span>
 
 <span class="sd">  @compatibility(numpy)</span>
 <span class="sd">  Equivalent to np.var</span>
 
-<span class="sd">  Please note `np.var` has a `dtype` parameter that could be used to specify the</span>
-<span class="sd">  output type. By default this is `dtype=float64`. On the other hand,</span>
-<span class="sd">  `tf.math.reduce_variance` has aggressive type inference from `input_tensor`.</span>
+<span class="sd">  Please note that `np.var` has a `dtype` parameter that could be used to</span>
+<span class="sd">  specify the output type. By default this is `dtype=float64`. On the other</span>
+<span class="sd">  hand, `tf.reduce_variance` has an aggressive type inference from</span>
+<span class="sd">  `input_tensor`,</span>
 <span class="sd">  @end_compatibility</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;reduce_variance&quot;</span>
   <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
     <span class="n">means</span> <span class="o">=</span> <span class="n">reduce_mean</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">means</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">is_integer</span><span class="p">:</span>
-      <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Input must be either real or complex&quot;</span><span class="p">)</span>
-    <span class="n">diff</span> <span class="o">=</span> <span class="n">input_tensor</span> <span class="o">-</span> <span class="n">means</span>
-    <span class="k">if</span> <span class="n">diff</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">is_complex</span><span class="p">:</span>
-      <span class="c1"># For complex values we need to take the absolute value before squaring.</span>
-      <span class="c1"># This is achieved by multiplying with the conjugate.</span>
-      <span class="n">real_dtype</span> <span class="o">=</span> <span class="n">diff</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">real_dtype</span>
-      <span class="n">squared_deviations</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">real</span><span class="p">(</span>
-          <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">mul</span><span class="p">(</span><span class="n">gen_math_ops</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">diff</span><span class="p">),</span> <span class="n">diff</span><span class="p">),</span> <span class="n">Tout</span><span class="o">=</span><span class="n">real_dtype</span><span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-      <span class="n">squared_deviations</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">diff</span><span class="p">)</span>
+    <span class="n">squared_deviations</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">input_tensor</span> <span class="o">-</span> <span class="n">means</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">reduce_mean</span><span class="p">(</span><span class="n">squared_deviations</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="n">keepdims</span><span class="p">)</span>
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reduce_std&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_std</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Computes the standard deviation of elements across dimensions of a tensor.</span>
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
 
 <span class="sd">  For example:</span>
 
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([[1., 2.], [3., 4.]])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_std(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(), dtype=float32, numpy=1.118034&gt;</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_std(x, 0)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32, numpy=array([1., 1.], dtype=float32)&gt;</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.reduce_std(x, 1)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32, numpy=array([0.5, 0.5], dtype=float32)&gt;</span>
+<span class="sd">  ```python</span>
+<span class="sd">  x = tf.constant([[1., 2.], [3., 4.]])</span>
+<span class="sd">  tf.reduce_std(x)  # 1.1180339887498949</span>
+<span class="sd">  tf.reduce_std(x, 0)  # [1., 1.]</span>
+<span class="sd">  tf.reduce_std(x, 1)  # [0.5,  0.5]</span>
+<span class="sd">  ```</span>
 
 <span class="sd">  Args:</span>
-<span class="sd">    input_tensor: The tensor to reduce. Should have real or complex type.</span>
+<span class="sd">    input_tensor: The tensor to reduce. Should have numeric type.</span>
 <span class="sd">    axis: The dimensions to reduce. If `None` (the default), reduces all</span>
 <span class="sd">      dimensions. Must be in the range `[-rank(input_tensor),</span>
 <span class="sd">      rank(input_tensor))`.</span>
@@ -2641,16 +2321,14 @@
 <span class="sd">    name: A name scope for the associated operations (optional).</span>
 
 <span class="sd">  Returns:</span>
-<span class="sd">    The reduced tensor, of the same dtype as the input_tensor. Note,  for</span>
-<span class="sd">    `complex64` or `complex128` input, the returned `Tensor` will be of type</span>
-<span class="sd">    `float32` or `float64`, respectively.</span>
+<span class="sd">    The reduced tensor, of the same dtype as the input_tensor.</span>
 
 <span class="sd">  @compatibility(numpy)</span>
 <span class="sd">  Equivalent to np.std</span>
 
-<span class="sd">  Please note `np.std` has a `dtype` parameter that could be used to specify the</span>
-<span class="sd">  output type. By default this is `dtype=float64`. On the other hand,</span>
-<span class="sd">  `tf.math.reduce_std` has aggressive type inference from `input_tensor`.</span>
+<span class="sd">  Please note that `np.std` has a `dtype` parameter that could be used to</span>
+<span class="sd">  specify the output type. By default this is `dtype=float64`. On the other</span>
+<span class="sd">  hand, `tf.reduce_std` has an aggressive type inference from `input_tensor`,</span>
 <span class="sd">  @end_compatibility</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="n">name</span> <span class="o">=</span> <span class="n">name</span> <span class="k">if</span> <span class="n">name</span> <span class="k">else</span> <span class="s2">&quot;reduce_std&quot;</span>
@@ -2696,7 +2374,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_prod&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_prod&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2710,8 +2387,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2742,7 +2419,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_min&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_min&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2756,8 +2432,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2794,8 +2470,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2829,7 +2505,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_max&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_max&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2843,8 +2518,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2881,8 +2556,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2897,10 +2572,10 @@
 <span class="sd">  tf.Tensor(-1, shape=(), dtype=int32)</span>
 <span class="sd">  &gt;&gt;&gt; x = tf.constant([4, float(&#39;nan&#39;)])</span>
 <span class="sd">  &gt;&gt;&gt; print(tf.reduce_max(x))</span>
-<span class="sd">  tf.Tensor(nan, shape=(), dtype=float32)</span>
+<span class="sd">  tf.Tensor(4.0, shape=(), dtype=float32)</span>
 <span class="sd">  &gt;&gt;&gt; x = tf.constant([float(&#39;nan&#39;), float(&#39;nan&#39;)])</span>
 <span class="sd">  &gt;&gt;&gt; print(tf.reduce_max(x))</span>
-<span class="sd">  tf.Tensor(nan, shape=(), dtype=float32)</span>
+<span class="sd">  tf.Tensor(-inf, shape=(), dtype=float32)</span>
 <span class="sd">  &gt;&gt;&gt; x = tf.constant([float(&#39;-inf&#39;), float(&#39;inf&#39;)])</span>
 <span class="sd">  &gt;&gt;&gt; print(tf.reduce_max(x))</span>
 <span class="sd">  tf.Tensor(inf, shape=(), dtype=float32)</span>
@@ -2934,7 +2609,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_all&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_all&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -2948,8 +2622,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -2988,15 +2662,15 @@
   <span class="k">return</span> <span class="n">reduce_all</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">keepdims</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 
 
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reduce_all&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_all&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
+<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;reduce_all&quot;</span><span class="p">,</span> <span class="s2">&quot;math.reduce_all&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_all</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Computes the &quot;logical and&quot; of elements across dimensions of a tensor.</span>
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -3034,7 +2708,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_any&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_any&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -3048,8 +2721,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -3095,8 +2768,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` is None, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -3134,7 +2807,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.reduce_logsumexp&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_logsumexp&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_args</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims is deprecated, use keepdims instead&quot;</span><span class="p">,</span>
                              <span class="s2">&quot;keep_dims&quot;</span><span class="p">)</span>
@@ -3148,8 +2820,8 @@
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` has no entries, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -3191,14 +2863,13 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reduce_logsumexp&quot;</span><span class="p">,</span> <span class="s2">&quot;reduce_logsumexp&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reduce_logsumexp</span><span class="p">(</span><span class="n">input_tensor</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Computes log(sum(exp(elements across dimensions of a tensor))).</span>
 
 <span class="sd">  Reduces `input_tensor` along the dimensions given in `axis`.</span>
 <span class="sd">  Unless `keepdims` is true, the rank of the tensor is reduced by 1 for each</span>
-<span class="sd">  of the entries in `axis`, which must be unique. If `keepdims` is true, the</span>
-<span class="sd">  reduced dimensions are retained with length 1.</span>
+<span class="sd">  entry in `axis`. If `keepdims` is true, the reduced dimensions</span>
+<span class="sd">  are retained with length 1.</span>
 
 <span class="sd">  If `axis` has no entries, all dimensions are reduced, and a</span>
 <span class="sd">  tensor with a single element is returned.</span>
@@ -3247,12 +2918,11 @@
             <span class="n">dims</span><span class="o">=</span><span class="n">reduce_dim</span><span class="p">))</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">keepdims</span><span class="p">:</span>
       <span class="n">my_max</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">my_max</span><span class="p">,</span> <span class="n">gen_array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">result</span><span class="p">))</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="n">_add_dispatch</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">my_max</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">my_max</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">_may_reduce_to_scalar</span><span class="p">(</span><span class="n">keepdims</span><span class="p">,</span> <span class="n">axis</span><span class="p">,</span> <span class="n">result</span><span class="p">)</span>
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;linalg.trace&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;linalg.trace&quot;</span><span class="p">,</span> <span class="s2">&quot;trace&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;trace&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">trace</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -3262,7 +2932,7 @@
 <span class="sd">  in x. If x is of rank `k` with shape `[I, J, K, ..., L, M, N]`, then output</span>
 <span class="sd">  is a tensor of rank `k-2` with dimensions `[I, J, K, ..., L]` where</span>
 
-<span class="sd">  `output[i, j, k, ..., l] = trace(x[i, j, k, ..., l, :, :])`</span>
+<span class="sd">  `output[i, j, k, ..., l] = trace(x[i, j, i, ..., l, :, :])`</span>
 
 <span class="sd">  For example:</span>
 
@@ -3393,12 +3063,12 @@
 <span class="sd">      **does not support `tf.sparse.SparseTensor`**, it just makes optimizations</span>
 <span class="sd">      that assume most values in `a` are zero.</span>
 <span class="sd">      See `tf.sparse.sparse_dense_matmul`</span>
-<span class="sd">      for some support for `tf.sparse.SparseTensor` multiplication.</span>
+<span class="sd">      for some support for `tf.SparseTensor` multiplication.</span>
 <span class="sd">    b_is_sparse: If `True`, `b` is treated as a sparse matrix. Notice, this</span>
 <span class="sd">      **does not support `tf.sparse.SparseTensor`**, it just makes optimizations</span>
 <span class="sd">      that assume most values in `a` are zero.</span>
 <span class="sd">      See `tf.sparse.sparse_dense_matmul`</span>
-<span class="sd">      for some support for `tf.sparse.SparseTensor` multiplication.</span>
+<span class="sd">      for some support for `tf.SparseTensor` multiplication.</span>
 <span class="sd">    name: Name for the operation (optional).</span>
 
 <span class="sd">  Returns:</span>
@@ -3426,10 +3096,10 @@
       <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">EagerTensor</span><span class="p">,</span> <span class="n">_resource_variable_type</span><span class="p">)):</span>
         <span class="n">a</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
       <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">EagerTensor</span><span class="p">,</span> <span class="n">_resource_variable_type</span><span class="p">)):</span>
-        <span class="n">b</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype_hint</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
     <span class="k">else</span><span class="p">:</span>
       <span class="n">a</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;a&quot;</span><span class="p">)</span>
-      <span class="n">b</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">dtype_hint</span><span class="o">=</span><span class="n">a</span><span class="o">.</span><span class="n">dtype</span><span class="o">.</span><span class="n">base_dtype</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
+      <span class="n">b</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;b&quot;</span><span class="p">)</span>
 
     <span class="c1"># TODO(apassos) remove _shape_tuple here when it is not needed.</span>
     <span class="n">a_shape</span> <span class="o">=</span> <span class="n">a</span><span class="o">.</span><span class="n">_shape_tuple</span><span class="p">()</span>  <span class="c1"># pylint: disable=protected-access</span>
@@ -3492,7 +3162,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;linalg.matvec&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">matvec</span><span class="p">(</span><span class="n">a</span><span class="p">,</span>
            <span class="n">b</span><span class="p">,</span>
            <span class="n">transpose_a</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -3596,7 +3265,6 @@
 <span class="n">sparse_matmul</span> <span class="o">=</span> <span class="n">deprecation</span><span class="o">.</span><span class="n">deprecated</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;Use `tf.linalg.matmul` instead&quot;</span><span class="p">)(</span>
     <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">sparse_mat_mul</span><span class="p">)</span>
 <span class="n">tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sparse_matmul&quot;</span><span class="p">])(</span><span class="n">sparse_matmul</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 
 
 <span class="nd">@ops</span><span class="o">.</span><span class="n">RegisterStatistics</span><span class="p">(</span><span class="s2">&quot;MatMul&quot;</span><span class="p">,</span> <span class="s2">&quot;flops&quot;</span><span class="p">)</span>
@@ -3729,12 +3397,12 @@
 <span class="sd">    ValueError: If `inputs` don&#39;t all have same shape and dtype or the shape</span>
 <span class="sd">    cannot be inferred.</span>
 <span class="sd">  &quot;&quot;&quot;</span>
-  <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">collections_abc</span><span class="o">.</span><span class="n">Iterable</span><span class="p">):</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inputs must be an iterable of at least one &quot;</span>
+  <span class="k">if</span> <span class="ow">not</span> <span class="n">inputs</span> <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inputs must be a list of at least one &quot;</span>
                      <span class="s2">&quot;Tensor/IndexedSlices with the same dtype and shape&quot;</span><span class="p">)</span>
   <span class="n">inputs</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_n_to_tensor_or_indexed_slices</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
   <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">IndexedSlices</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">):</span>
-    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inputs must be an iterable of at least one &quot;</span>
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;inputs must be a list of at least one &quot;</span>
                      <span class="s2">&quot;Tensor/IndexedSlices with the same dtype and shape&quot;</span><span class="p">)</span>
 
   <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
@@ -3749,7 +3417,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.accumulate_n&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.accumulate_n&quot;</span><span class="p">,</span> <span class="s2">&quot;accumulate_n&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;accumulate_n&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">accumulate_n</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">tensor_dtype</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Returns the element-wise sum of a list of tensors.</span>
@@ -3828,13 +3495,12 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.sigmoid&quot;</span><span class="p">,</span> <span class="s2">&quot;nn.sigmoid&quot;</span><span class="p">,</span> <span class="s2">&quot;sigmoid&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">sigmoid</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Computes sigmoid of `x` element-wise.</span>
 
-<span class="sd">  Formula for calculating $\mathrm{sigmoid}(x) = y = 1 / (1 + \exp(-x))$.</span>
+<span class="sd">  Formula for calculating sigmoid(x): `y = 1 / (1 + exp(-x))`.</span>
 
-<span class="sd">  For $x \in (-\infty, \infty)$, $\mathrm{sigmoid}(x) \in (0, 1)$.</span>
+<span class="sd">  For x \in (-inf, inf) =&gt; sigmoid(x) \in (0, 1)</span>
 
 <span class="sd">  Example Usage:</span>
 
@@ -3862,9 +3528,9 @@
 
 <span class="sd">  Returns:</span>
 <span class="sd">    A Tensor with the same type as `x`.</span>
-
+<span class="sd">  </span>
 <span class="sd">  Usage Example:</span>
-
+<span class="sd">  </span>
 <span class="sd">  &gt;&gt;&gt; x = tf.constant([-128.0, 0.0, 128.0], dtype=tf.float32)</span>
 <span class="sd">  &gt;&gt;&gt; tf.sigmoid(x)</span>
 <span class="sd">  &lt;tf.Tensor: shape=(3,), dtype=float32,</span>
@@ -3894,37 +3560,121 @@
 
 <span class="sd">  Returns:</span>
 <span class="sd">    A Tensor with the same type as `x`.</span>
-
-<span class="sd">  Usage Example:</span>
-
-<span class="sd">  If a positive number is large, then its log_sigmoid will approach to 0 since</span>
-<span class="sd">  the formula will be `y = log( &lt;large_num&gt; / (1 + &lt;large_num&gt;) )` which</span>
-<span class="sd">  approximates to `log (1)` which is 0.</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([0.0, 1.0, 50.0, 100.0])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.log_sigmoid(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(4,), dtype=float32, numpy=</span>
-<span class="sd">  array([-6.9314718e-01, -3.1326169e-01, -1.9287499e-22, -0.0000000e+00],</span>
-<span class="sd">        dtype=float32)&gt;</span>
-
-<span class="sd">  If a negative number is large, its log_sigmoid will approach to the number</span>
-<span class="sd">  itself since the formula will be `y = log( 1 / (1 + &lt;large_num&gt;) )` which is</span>
-<span class="sd">  `log (1) - log ( (1 + &lt;large_num&gt;) )` which approximates to `- &lt;large_num&gt;`</span>
-<span class="sd">  that is the number itself.</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([-100.0, -50.0, -1.0, 0.0])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.log_sigmoid(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(4,), dtype=float32, numpy=</span>
-<span class="sd">  array([-100.       ,  -50.       ,   -1.3132616,   -0.6931472],</span>
-<span class="sd">        dtype=float32)&gt;</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;LogSigmoid&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">])</span> <span class="k">as</span> <span class="n">name</span><span class="p">:</span>
     <span class="n">x</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;x&quot;</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">neg</span><span class="p">(</span><span class="n">gen_nn_ops</span><span class="o">.</span><span class="n">softplus</span><span class="p">(</span><span class="o">-</span><span class="n">x</span><span class="p">),</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
 
 
+<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.bincount&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[])</span>
+<span class="k">def</span> <span class="nf">bincount</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span>
+             <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">minlength</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">maxlength</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+             <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span>
+             <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Counts the number of occurrences of each value in an integer array.</span>
+
+<span class="sd">  If `minlength` and `maxlength` are not given, returns a vector with length</span>
+<span class="sd">  `tf.reduce_max(arr) + 1` if `arr` is non-empty, and length 0 otherwise.</span>
+<span class="sd">  If `weights` are non-None, then index `i` of the output stores the sum of the</span>
+<span class="sd">  value in `weights` at each index where the corresponding value in `arr` is</span>
+<span class="sd">  `i`.</span>
+
+<span class="sd">  ```python</span>
+<span class="sd">  values = tf.constant([1,1,2,3,2,4,4,5])</span>
+<span class="sd">  tf.math.bincount(values) #[0 2 2 1 2 1]</span>
+<span class="sd">  ```</span>
+<span class="sd">  Vector length = Maximum element in vector `values` is 5. Adding 1, which is 6</span>
+<span class="sd">                  will be the vector length.</span>
+
+<span class="sd">  Each bin value in the output indicates number of occurrences of the particular</span>
+<span class="sd">  index. Here, index 1 in output has a value 2. This indicates value 1 occurs</span>
+<span class="sd">  two times in `values`.</span>
+
+<span class="sd">  ```python</span>
+<span class="sd">  values = tf.constant([1,1,2,3,2,4,4,5])</span>
+<span class="sd">  weights = tf.constant([1,5,0,1,0,5,4,5])</span>
+<span class="sd">  tf.math.bincount(values, weights=weights) #[0 6 0 1 9 5]</span>
+<span class="sd">  ```</span>
+<span class="sd">  Bin will be incremented by the corresponding weight instead of 1.</span>
+<span class="sd">  Here, index 1 in output has a value 6. This is the summation of weights</span>
+<span class="sd">  corresponding to the value in `values`.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    arr: An int32 tensor of non-negative values.</span>
+<span class="sd">    weights: If non-None, must be the same shape as arr. For each value in</span>
+<span class="sd">      `arr`, the bin will be incremented by the corresponding weight instead of</span>
+<span class="sd">      1.</span>
+<span class="sd">    minlength: If given, ensures the output has length at least `minlength`,</span>
+<span class="sd">      padding with zeros at the end if necessary.</span>
+<span class="sd">    maxlength: If given, skips values in `arr` that are equal or greater than</span>
+<span class="sd">      `maxlength`, ensuring that the output has length at most `maxlength`.</span>
+<span class="sd">    dtype: If `weights` is None, determines the type of the output bins.</span>
+<span class="sd">    name: A name scope for the associated operations (optional).</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A vector with the same dtype as `weights` or the given `dtype`. The bin</span>
+<span class="sd">    values.</span>
+
+<span class="sd">  Raises:</span>
+<span class="sd">    `InvalidArgumentError` if negative values are provided as an input.</span>
+
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;bincount&quot;</span> <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">name</span>
+  <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+    <span class="n">arr</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;arr&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+    <span class="n">array_is_nonempty</span> <span class="o">=</span> <span class="n">reduce_prod</span><span class="p">(</span><span class="n">array_ops</span><span class="o">.</span><span class="n">shape</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+    <span class="n">output_size</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span><span class="n">array_is_nonempty</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">reduce_max</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">minlength</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">minlength</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span>
+          <span class="n">minlength</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;minlength&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+      <span class="n">output_size</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="n">minlength</span><span class="p">,</span> <span class="n">output_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">maxlength</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">maxlength</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span>
+          <span class="n">maxlength</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;maxlength&quot;</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+      <span class="n">output_size</span> <span class="o">=</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">minimum</span><span class="p">(</span><span class="n">maxlength</span><span class="p">,</span> <span class="n">output_size</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">weights</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+      <span class="n">weights</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;weights&quot;</span><span class="p">)</span>
+      <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">unsorted_segment_sum</span><span class="p">(</span><span class="n">weights</span><span class="p">,</span> <span class="n">arr</span><span class="p">,</span> <span class="n">output_size</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="n">constant_op</span><span class="o">.</span><span class="n">constant</span><span class="p">([],</span> <span class="n">dtype</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">bincount</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">output_size</span><span class="p">,</span> <span class="n">weights</span><span class="p">)</span>
+
+
+<span class="nd">@tf_export</span><span class="p">(</span><span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.bincount&quot;</span><span class="p">,</span> <span class="s2">&quot;bincount&quot;</span><span class="p">])</span>
+<span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;bincount&quot;</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">bincount_v1</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span>
+                <span class="n">weights</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">minlength</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">maxlength</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">):</span>
+  <span class="sd">&quot;&quot;&quot;Counts the number of occurrences of each value in an integer array.</span>
+
+<span class="sd">  If `minlength` and `maxlength` are not given, returns a vector with length</span>
+<span class="sd">  `tf.reduce_max(arr) + 1` if `arr` is non-empty, and length 0 otherwise.</span>
+<span class="sd">  If `weights` are non-None, then index `i` of the output stores the sum of the</span>
+<span class="sd">  value in `weights` at each index where the corresponding value in `arr` is</span>
+<span class="sd">  `i`.</span>
+
+<span class="sd">  Args:</span>
+<span class="sd">    arr: An int32 tensor of non-negative values.</span>
+<span class="sd">    weights: If non-None, must be the same shape as arr. For each value in</span>
+<span class="sd">      `arr`, the bin will be incremented by the corresponding weight instead of</span>
+<span class="sd">      1.</span>
+<span class="sd">    minlength: If given, ensures the output has length at least `minlength`,</span>
+<span class="sd">      padding with zeros at the end if necessary.</span>
+<span class="sd">    maxlength: If given, skips values in `arr` that are equal or greater than</span>
+<span class="sd">      `maxlength`, ensuring that the output has length at most `maxlength`.</span>
+<span class="sd">    dtype: If `weights` is None, determines the type of the output bins.</span>
+
+<span class="sd">  Returns:</span>
+<span class="sd">    A vector with the same dtype as `weights` or the given `dtype`. The bin</span>
+<span class="sd">    values.</span>
+<span class="sd">  &quot;&quot;&quot;</span>
+  <span class="k">return</span> <span class="n">bincount</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">weights</span><span class="p">,</span> <span class="n">minlength</span><span class="p">,</span> <span class="n">maxlength</span><span class="p">,</span> <span class="n">dtype</span><span class="p">)</span>
+
+
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.cumsum&quot;</span><span class="p">,</span> <span class="s2">&quot;cumsum&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">cumsum</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">exclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Compute the cumulative sum of the tensor `x` along `axis`.</span>
 
@@ -3996,7 +3746,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.cumprod&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.cumprod&quot;</span><span class="p">,</span> <span class="s2">&quot;cumprod&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;cumprod&quot;</span><span class="p">)</span>
 <span class="k">def</span> <span class="nf">cumprod</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">exclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Compute the cumulative product of the tensor `x` along `axis`.</span>
@@ -4050,7 +3799,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.cumulative_logsumexp&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.cumulative_logsumexp&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">cumulative_logsumexp</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">exclusive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">reverse</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Compute the cumulative log-sum-exp of the tensor `x` along `axis`.</span>
 
@@ -4111,28 +3859,19 @@
 <span class="k">def</span> <span class="nf">conj</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Returns the complex conjugate of a complex number.</span>
 
-<span class="sd">  Given a tensor `x` of complex numbers, this operation returns a tensor of</span>
-<span class="sd">  complex numbers that are the complex conjugate of each element in `x`. The</span>
-<span class="sd">  complex numbers in `x` must be of the form \\(a + bj\\), where `a` is the</span>
-<span class="sd">  real part and `b` is the imaginary part.</span>
+<span class="sd">  Given a tensor `input` of complex numbers, this operation returns a tensor of</span>
+<span class="sd">  complex numbers that are the complex conjugate of each element in `input`. The</span>
+<span class="sd">  complex numbers in `input` must be of the form \\(a + bj\\), where *a* is the</span>
+<span class="sd">  real part and *b* is the imaginary part.</span>
 
 <span class="sd">  The complex conjugate returned by this operation is of the form \\(a - bj\\).</span>
 
 <span class="sd">  For example:</span>
 
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([-2.25 + 4.75j, 3.25 + 5.75j])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.conj(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=complex128,</span>
-<span class="sd">  numpy=array([-2.25-4.75j,  3.25-5.75j])&gt;</span>
+<span class="sd">      # tensor &#39;input&#39; is [-2.25 + 4.75j, 3.25 + 5.75j]</span>
+<span class="sd">      tf.math.conj(input) ==&gt; [-2.25 - 4.75j, 3.25 - 5.75j]</span>
 
 <span class="sd">  If `x` is real, it is returned unchanged.</span>
-
-<span class="sd">  For example:</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([-2.25, 3.25])</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.conj(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(2,), dtype=float32,</span>
-<span class="sd">  numpy=array([-2.25,  3.25], dtype=float32)&gt;</span>
 
 <span class="sd">  Args:</span>
 <span class="sd">    x: `Tensor` to conjugate.  Must have numeric or variant type.</span>
@@ -4143,10 +3882,6 @@
 
 <span class="sd">  Raises:</span>
 <span class="sd">    TypeError: If `x` is not a numeric tensor.</span>
-
-<span class="sd">  @compatibility(numpy)</span>
-<span class="sd">  Equivalent to numpy.conj.</span>
-<span class="sd">  @end_compatibility</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">ops</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
     <span class="n">dt</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span>
@@ -4173,18 +3908,11 @@
 <span class="sd">  Returns:</span>
 <span class="sd">    A 1-D Tensor, the output shape as if keepdims were set to True.</span>
 <span class="sd">  &quot;&quot;&quot;</span>
-  <span class="c1"># TODO(allenl): Refactor `reduced_shape` to take the tensor corresponding to</span>
-  <span class="c1"># `input_shape` rather than `tf.shape` of it. Then we can check if the shape</span>
-  <span class="c1"># is fully defined here, which may be faster executing eagerly than running</span>
-  <span class="c1"># `tf.shape` and then fetching its constant value.</span>
-  <span class="n">constant_input_shape</span> <span class="o">=</span> <span class="n">tensor_util</span><span class="o">.</span><span class="n">constant_value</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
-  <span class="k">if</span> <span class="n">constant_input_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="n">constant_axes</span> <span class="o">=</span> <span class="n">tensor_util</span><span class="o">.</span><span class="n">constant_value</span><span class="p">(</span><span class="n">axes</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">constant_axes</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-      <span class="n">constant_axes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">constant_axes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-      <span class="n">constant_input_shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">constant_input_shape</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
-      <span class="n">constant_input_shape</span><span class="p">[</span><span class="n">constant_axes</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-      <span class="k">return</span> <span class="n">constant_input_shape</span>
+  <span class="k">if</span> <span class="n">context</span><span class="o">.</span><span class="n">executing_eagerly</span><span class="p">():</span>
+    <span class="n">input_shape</span> <span class="o">=</span> <span class="n">input_shape</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">axes</span> <span class="o">=</span> <span class="n">axes</span><span class="o">.</span><span class="n">numpy</span><span class="p">()</span>
+    <span class="n">input_shape</span><span class="p">[</span><span class="n">axes</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">input_shape</span>
 
   <span class="c1"># Example:</span>
   <span class="c1"># cast needed for SparseTensor reductions</span>
@@ -4230,7 +3958,6 @@
 <span class="nd">@tf_export</span><span class="p">(</span>
     <span class="s2">&quot;math.unsorted_segment_mean&quot;</span><span class="p">,</span>
     <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.unsorted_segment_mean&quot;</span><span class="p">,</span> <span class="s2">&quot;unsorted_segment_mean&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;unsorted_segment_mean&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">unsorted_segment_mean</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">num_segments</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -4240,7 +3967,8 @@
 <span class="sd">  segmentation](https://www.tensorflow.org/versions/r2.0/api_docs/python/tf/math#about_segmentation)</span>
 <span class="sd">  for an explanation of segments.</span>
 
-<span class="sd">  This operator is similar to the `tf.math.unsorted_segment_sum` operator.</span>
+<span class="sd">  This operator is similar to the unsorted segment sum operator found</span>
+<span class="sd">  [here](../../../api_docs/python/math_ops.md#UnsortedSegmentSum).</span>
 <span class="sd">  Instead of computing the sum over segments, it computes the mean of all</span>
 <span class="sd">  entries belonging to a segment such that:</span>
 
@@ -4276,7 +4004,6 @@
 <span class="nd">@tf_export</span><span class="p">(</span>
     <span class="s2">&quot;math.unsorted_segment_sqrt_n&quot;</span><span class="p">,</span>
     <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.unsorted_segment_sqrt_n&quot;</span><span class="p">,</span> <span class="s2">&quot;unsorted_segment_sqrt_n&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;unsorted_segment_sqrt_n&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">unsorted_segment_sqrt_n</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">segment_ids</span><span class="p">,</span> <span class="n">num_segments</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -4286,7 +4013,8 @@
 <span class="sd">  segmentation](https://www.tensorflow.org/versions/r2.0/api_docs/python/tf/math#about_segmentation)</span>
 <span class="sd">  for an explanation of segments.</span>
 
-<span class="sd">  This operator is similar to the `tf.math.unsorted_segment_sum` operator.</span>
+<span class="sd">  This operator is similar to the unsorted segment sum operator found</span>
+<span class="sd">  [here](../../../api_docs/python/math_ops.md#UnsortedSegmentSum).</span>
 <span class="sd">  Additionally to computing the sum over segments, it divides the results by</span>
 <span class="sd">  sqrt(N).</span>
 
@@ -4625,7 +4353,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;tensordot&quot;</span><span class="p">,</span> <span class="s2">&quot;linalg.tensordot&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">tensordot</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Tensor contraction of a and b along specified axes and outer product.</span>
 
@@ -4738,7 +4465,7 @@
         <span class="n">rank_a</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">rank</span><span class="p">(</span><span class="n">a</span><span class="p">)</span>
         <span class="n">axes</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">axes</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;axes&quot;</span><span class="p">)</span>
         <span class="n">axes</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">axes</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">,</span> <span class="n">axes</span><span class="p">,</span> <span class="n">axes</span> <span class="o">+</span> <span class="n">rank_a</span><span class="p">)</span>
-        <span class="n">free</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">gen_array_ops</span><span class="o">.</span><span class="n">list_diff</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">rank_a</span><span class="p">),</span> <span class="n">axes</span><span class="p">,</span> <span class="n">dtypes</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">free</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">rank_a</span><span class="p">),</span> <span class="n">axes</span><span class="p">)</span>
       <span class="n">free_dims</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">shape_a</span><span class="p">,</span> <span class="n">free</span><span class="p">)</span>
       <span class="n">axes_dims</span> <span class="o">=</span> <span class="n">array_ops</span><span class="o">.</span><span class="n">gather</span><span class="p">(</span><span class="n">shape_a</span><span class="p">,</span> <span class="n">axes</span><span class="p">)</span>
       <span class="n">prod_free_dims</span> <span class="o">=</span> <span class="n">reduce_prod</span><span class="p">(</span><span class="n">free_dims</span><span class="p">)</span>
@@ -4812,22 +4539,21 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.polyval&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">polyval</span><span class="p">(</span><span class="n">coeffs</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sa">r</span><span class="sd">&quot;&quot;&quot;Computes the elementwise value of a polynomial.</span>
 
 <span class="sd">  If `x` is a tensor and `coeffs` is a list n + 1 tensors,</span>
 <span class="sd">  this function returns the value of the n-th order polynomial</span>
 
-<span class="sd">  `p(x) = coeffs[n-1] + coeffs[n-2] * x + ...  + coeffs[0] * x**(n-1)`</span>
+<span class="sd">     p(x) = coeffs[n-1] + coeffs[n-2] * x + ...  + coeffs[0] * x**(n-1)</span>
 
 <span class="sd">  evaluated using Horner&#39;s method, i.e.</span>
 
-<span class="sd">  `p(x) = coeffs[n-1] + x * (coeffs[n-2] + ... + x * (coeffs[1]</span>
-<span class="sd">          + x * coeffs[0]))`</span>
-
+<span class="sd">     p(x) = coeffs[n-1] + x * (coeffs[n-2] + ... + x * (coeffs[1] +</span>
+<span class="sd">            x * coeffs[0]))</span>
+<span class="sd">            </span>
 <span class="sd">  Usage Example:</span>
-
+<span class="sd">  </span>
 <span class="sd">  &gt;&gt;&gt; coefficients = [1.0, 2.5, -4.2]</span>
 <span class="sd">  &gt;&gt;&gt; x = 5.0</span>
 <span class="sd">  &gt;&gt;&gt; y = tf.math.polyval(coefficients, x)</span>
@@ -4883,7 +4609,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.reciprocal_no_nan&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">reciprocal_no_nan</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Performs a safe reciprocal operation, element wise.</span>
 
@@ -4985,37 +4710,7 @@
     <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">ndtri</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
 
 
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.erfcinv&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
-<span class="k">def</span> <span class="nf">erfcinv</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;Computes the inverse of complementary error function.</span>
-
-<span class="sd">  Given `x`, compute the inverse complementary error function of `x`.</span>
-<span class="sd">  This function is the inverse of `tf.math.erfc`, and is defined on</span>
-<span class="sd">  `[0, 2]`.</span>
-
-<span class="sd">  &gt;&gt;&gt; tf.math.erfcinv([0., 0.2, 1., 1.5, 2.])</span>
-<span class="sd">  &lt;tf.Tensor: shape=(5,), dtype=float32, numpy=</span>
-<span class="sd">  array([       inf,  0.9061935, -0.       , -0.4769363,       -inf],</span>
-<span class="sd">        dtype=float32)&gt;</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    x: `Tensor` with type `float` or `double`.</span>
-<span class="sd">    name: A name for the operation (optional).</span>
-<span class="sd">  Returns:</span>
-<span class="sd">    Inverse complementary error function of `x`.</span>
-
-<span class="sd">  @compatibility(numpy)</span>
-<span class="sd">  Equivalent to scipy.special.erfcinv</span>
-<span class="sd">  @end_compatibility</span>
-<span class="sd">  &quot;&quot;&quot;</span>
-  <span class="k">with</span> <span class="n">ops</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;erfcinv&quot;</span><span class="p">,</span> <span class="p">[</span><span class="n">x</span><span class="p">]):</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">ops</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;start&quot;</span><span class="p">)</span>
-    <span class="k">return</span> <span class="o">-</span><span class="n">ndtri</span><span class="p">(</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.5</span><span class="p">)</span>
-
-
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.ceil&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.ceil&quot;</span><span class="p">,</span> <span class="s2">&quot;ceil&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;ceil&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">ceil</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -5100,14 +4795,10 @@
 <span class="sd">  numpy=array([   7.389056, 2980.958   ], dtype=float32)&gt;</span>
 
 <span class="sd">  For complex numbers, the exponential value is calculated as</span>
-<span class="sd">  $$</span>
-<span class="sd">  e^{x+iy} = {e^x} {e^{iy}} = {e^x} ({\cos (y) + i \sin (y)})</span>
-<span class="sd">  $$</span>
+<span class="sd">  \\(e^{x+iy}={e^x}{e^{iy}}={e^x}{\\cos(y)+i\\sin(y)}\\)</span>
 
 <span class="sd">  For `1+1j` the value would be computed as:</span>
-<span class="sd">  $$</span>
-<span class="sd">  e^1 (\cos (1) + i \sin (1)) = 2.7182817 \times (0.5403023+0.84147096j)</span>
-<span class="sd">  $$</span>
+<span class="sd">  \\(e^1{\\cos(1)+i\\sin(1)} = 2.7182817 \\times (0.5403023+0.84147096j)\\)</span>
 
 <span class="sd">  &gt;&gt;&gt; x = tf.constant(1 + 1j)</span>
 <span class="sd">  &gt;&gt;&gt; tf.math.exp(x)</span>
@@ -5133,7 +4824,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.sobol_sample&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">sobol_sample</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="n">num_results</span><span class="p">,</span> <span class="n">skip</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">dtypes</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
   <span class="sd">&quot;&quot;&quot;Generates points from the Sobol sequence.</span>
 
@@ -5158,7 +4848,6 @@
 
 
 <span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.rsqrt&quot;</span><span class="p">,</span> <span class="n">v1</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;math.rsqrt&quot;</span><span class="p">,</span> <span class="s2">&quot;rsqrt&quot;</span><span class="p">])</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="nd">@deprecation</span><span class="o">.</span><span class="n">deprecated_endpoints</span><span class="p">(</span><span class="s2">&quot;rsqrt&quot;</span><span class="p">)</span>
 <span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
 <span class="k">def</span> <span class="nf">rsqrt</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -5173,69 +4862,13 @@
 
 <span class="sd">  Args:</span>
 <span class="sd">    x: A `tf.Tensor`. Must be one of the following types: `bfloat16`, `half`,</span>
-<span class="sd">      `float32`, `float64`.</span>
+<span class="sd">      `float32`, `float64`. `int32`</span>
 <span class="sd">    name: A name for the operation (optional).</span>
 
 <span class="sd">  Returns:</span>
 <span class="sd">    A `tf.Tensor`. Has the same type as `x`.</span>
 <span class="sd">  &quot;&quot;&quot;</span>
   <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">rsqrt</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-
-
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.acos&quot;</span><span class="p">,</span> <span class="s2">&quot;acos&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
-<span class="k">def</span> <span class="nf">acos</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;Computes acos of x element-wise.</span>
-
-<span class="sd">  Provided an input tensor, the `tf.math.acos` operation</span>
-<span class="sd">  returns the inverse cosine of each element of the tensor.</span>
-<span class="sd">  If `y = tf.math.cos(x)` then, `x = tf.math.acos(y)`.</span>
-
-<span class="sd">  Input range is `[-1, 1]` and the output has a range of `[0, pi]`.</span>
-
-<span class="sd">  For example:</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([1.0, -0.5, 3.4, 0.2, 0.0, -2], dtype = tf.float32)</span>
-<span class="sd">  &gt;&gt;&gt; tf.math.acos(x)</span>
-<span class="sd">  &lt;tf.Tensor: shape=(6,), dtype=float32,</span>
-<span class="sd">  numpy= array([0. , 2.0943952, nan, 1.3694383, 1.5707964, nan],</span>
-<span class="sd">  dtype=float32)&gt;</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    x: A `Tensor`. Must be one of the following types: `bfloat16`, `half`,</span>
-<span class="sd">      `float32`, `float64`, `uint8`, `int8`, `int16`, `int32`, `int64`,</span>
-<span class="sd">      `complex64`, `complex128`, `string`.</span>
-<span class="sd">    name: A name for the operation (optional).</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    A `Tensor`. Has the same type as x.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
-  <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">acos</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-
-
-<span class="nd">@tf_export</span><span class="p">(</span><span class="s2">&quot;math.floor&quot;</span><span class="p">,</span> <span class="s2">&quot;floor&quot;</span><span class="p">)</span>
-<span class="nd">@dispatch</span><span class="o">.</span><span class="n">add_dispatch_support</span>
-<span class="k">def</span> <span class="nf">floor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-  <span class="sd">&quot;&quot;&quot;Returns element-wise largest integer not greater than x.</span>
-
-<span class="sd">  Both input range is `(-inf, inf)` and the</span>
-<span class="sd">  ouput range consists of all integer values.</span>
-
-<span class="sd">  For example:</span>
-
-<span class="sd">  &gt;&gt;&gt; x = tf.constant([1.3324, -1.5, 5.555, -2.532, 0.99, float(&quot;inf&quot;)])</span>
-<span class="sd">  &gt;&gt;&gt; tf.floor(x).numpy()</span>
-<span class="sd">  array([ 1., -2.,  5., -3.,  0., inf], dtype=float32)</span>
-
-<span class="sd">  Args:</span>
-<span class="sd">    x:  A `Tensor`. Must be one of the following types: `bfloat16`, `half`,</span>
-<span class="sd">      `float32`, `float64`.</span>
-<span class="sd">    name: A name for the operation (optional).</span>
-
-<span class="sd">  Returns:</span>
-<span class="sd">    A `Tensor`. Has the same type as x.</span>
-<span class="sd">  &quot;&quot;&quot;</span>
-  <span class="k">return</span> <span class="n">gen_math_ops</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
 </pre></div>
 
            </div>

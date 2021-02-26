@@ -98,16 +98,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -200,6 +201,7 @@
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.utils.helpers</span> <span class="kn">import</span> <span class="n">create_parent_dirs</span>
+<span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -233,7 +235,10 @@
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Load the state dict into a model from a given file.</span>
 
-<span class="sd">    :param path: the path to the pth file to load the state dict from</span>
+<span class="sd">    :param path: the path to the pth file to load the state dict from.</span>
+<span class="sd">        May also be a SparseZoo stub path preceded by &#39;zoo:&#39; with the optional</span>
+<span class="sd">        `?recipe_type=` argument. If given a recipe type, the base model weights</span>
+<span class="sd">        for that recipe will be loaded.</span>
 <span class="sd">    :param model: the model to load the state dict into</span>
 <span class="sd">    :param strict: True to enforce that all tensors match between the model</span>
 <span class="sd">        and the file; False otherwise</span>
@@ -243,6 +248,15 @@
 <span class="sd">        look like they came from DataParallel type setup (start with module.).</span>
 <span class="sd">        This removes &quot;module.&quot; all keys</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;zoo:&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;recipe_type=&quot;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">download_recipe_base_framework_files</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pth&quot;</span><span class="p">])[</span>
+                <span class="mi">0</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">load_model_from_stub</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">download_framework_files</span><span class="p">(</span>
+                <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pth&quot;</span><span class="p">]</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
     <span class="n">current_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
 

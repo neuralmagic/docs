@@ -98,16 +98,17 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../quicktour.html">Quick Tour</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../installation.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Optimization Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../recipes.html">Sparsification Recipes</a></li>
 </ul>
 <p class="caption"><span class="caption-text">API</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help and Support</span></p>
+<p class="caption"><span class="caption-text">Help</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
             
@@ -195,7 +196,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
@@ -251,6 +252,8 @@
 <span class="sd">        None to not stop tracking batch norm stats during QAT. Default is None</span>
 <span class="sd">    :param end_epoch: Disabled, setting to anything other than -1 will raise an</span>
 <span class="sd">        exception. For compatibility with YAML serialization only.</span>
+<span class="sd">    :param model_fuse_fn_kwargs: dictionary of keyword argument values to be passed</span>
+<span class="sd">        to the model fusing function</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -261,6 +264,7 @@
         <span class="n">disable_quantization_observer_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">model_fuse_fn_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch_intrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -279,6 +283,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">=</span> <span class="n">start_epoch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="n">submodules</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="n">model_fuse_fn_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span> <span class="o">=</span> <span class="n">model_fuse_fn_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">disable_quantization_observer_epoch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">freeze_bn_stats_epoch</span>
 
@@ -430,9 +435,10 @@
                             <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
                         <span class="p">)</span>
                     <span class="p">)</span>
-                <span class="n">module_fuse_fn</span><span class="p">()</span>
+                <span class="n">module_fuse_fn</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
             <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># default auto fn</span>
-                <span class="n">fuse_module_conv_bn_relus</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">[</span><span class="s2">&quot;inplace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">fuse_module_conv_bn_relus</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
             <span class="c1"># prepare each module / submodule for quantization</span>
             <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
             <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
