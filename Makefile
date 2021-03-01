@@ -27,6 +27,8 @@ style:
 # create docs
 docs:
 	cd $(DOCDIR) && $(MAKE) html;
+	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
+		cp -r docs/build/html/ ./;
 
 # creates wheel file
 build:
