@@ -32,10 +32,8 @@ docs:
 
 # creates wheel file
 build:
-	make docs;
-	rm -rf _sources;
-	rm -rf _static;
-	mv -v docs/build/html/* ./;
+	@echo "Build is not supported for docs repo, run 'make docs' instead";
+	exit 1;
 
 # clean package
 clean:
