@@ -337,26 +337,35 @@
 <span class="sd">    _map_mask_to_tensor</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="n">_GROUPING_FUNCTIONS</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">args</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">),</span>
-        <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">args</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-        <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="k">lambda</span> <span class="n">args</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="o">**</span><span class="n">args</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span>
-    <span class="p">}</span>
+    <span class="n">_VALID_GROUPING_FN_NAMES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="s2">&quot;min&quot;</span><span class="p">]</span>
 
-<div class="viewcode-block" id="GroupedPruningMaskCreator.get_grouping_fn"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.get_grouping_fn">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">get_grouping_fn</span><span class="p">(</span><span class="n">grouping_fn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="n">Tensor</span><span class="p">]:</span>
+<div class="viewcode-block" id="GroupedPruningMaskCreator.reduce_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.reduce_tensor">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">reduce_tensor</span><span class="p">(</span>
+        <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
+        <span class="n">reduce_fn_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">keepdim</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param grouping_fn_name: name of grouping function to get torch function for</span>
-<span class="sd">        :return: torch function for grouping_fn_name if available,</span>
-<span class="sd">            raises error otherwise</span>
+
+<span class="sd">        :param tensor: the tensor to reduce</span>
+<span class="sd">        :param dim: dimension or list of dimension to reduce along</span>
+<span class="sd">        :param reduce_fn_name: function name to reduce tensor with. valid options</span>
+<span class="sd">            are &#39;mean&#39;, &#39;max&#39;, &#39;min&#39;</span>
+<span class="sd">        :param keepdim: preserves the reduced dimension(s) in returned tensor shape</span>
+<span class="sd">            as shape 1. default is True</span>
+<span class="sd">        :return: Tensor reduced along the given dimension(s)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="n">grouping_fn_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">_GROUPING_FUNCTIONS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Invalid grouping fn </span><span class="si">{}</span><span class="s2">, valid grouping fns: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">grouping_fn_name</span><span class="p">,</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">_GROUPING_FUNCTIONS</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">return</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">_GROUPING_FUNCTIONS</span><span class="p">[</span><span class="n">grouping_fn_name</span><span class="p">]</span></div>
+        <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;min&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Invalid grouping fn </span><span class="si">{</span><span class="n">reduce_fn_name</span><span class="si">}</span><span class="s2">, valid grouping fns: &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">_VALID_GROUPING_FN_NAMES</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="GroupedPruningMaskCreator.group_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.group_tensor">[docs]</a>    <span class="nd">@abstractmethod</span>
     <span class="k">def</span> <span class="nf">group_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
@@ -440,7 +449,7 @@
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
             <span class="n">dim</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">get_grouping_fn</span><span class="p">(</span><span class="n">grouping_fn_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span> <span class="o">=</span> <span class="n">grouping_fn_name</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">valid_dim_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">valid_dim_names</span><span class="p">:</span>
@@ -467,8 +476,8 @@
                 <span class="s2">&quot; Received tensor with shape </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="n">reduced_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span><span class="p">]</span>
-        <span class="n">reduced_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn</span><span class="p">(</span>
-            <span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">),</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="n">reduced_dims</span><span class="p">,</span> <span class="s2">&quot;keepdim&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="n">reduced_tensor</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">reduce_tensor</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">),</span> <span class="n">reduced_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">reduced_tensor</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
 
@@ -520,7 +529,7 @@
                 <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block_shape</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_block_shape</span> <span class="o">=</span> <span class="n">block_shape</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">get_grouping_fn</span><span class="p">(</span><span class="n">grouping_fn_name</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span> <span class="o">=</span> <span class="n">grouping_fn_name</span>
 
 <div class="viewcode-block" id="BlockPruningMaskCreator.group_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.BlockPruningMaskCreator.group_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">group_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -530,8 +539,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">blocked_tens_shape</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_blocked_tens_shape_and_validate</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
         <span class="n">blocked_tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">blocked_tens_shape</span><span class="p">)</span>
-        <span class="n">reduced_blocks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn</span><span class="p">(</span>
-            <span class="p">{</span><span class="s2">&quot;input&quot;</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">blocked_tensor</span><span class="p">),</span> <span class="s2">&quot;dim&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;keepdim&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">}</span>
+        <span class="n">reduced_blocks</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">reduce_tensor</span><span class="p">(</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">blocked_tensor</span><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">reduced_blocks</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
 
