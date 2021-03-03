@@ -28,7 +28,7 @@ style:
 docs:
 	cd $(DOCDIR) && $(MAKE) html;
 
-# creates wheel file
+# formats docs source build for github pages
 build:
 	make docs;
 	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
