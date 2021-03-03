@@ -27,13 +27,13 @@ style:
 # create docs
 docs:
 	cd $(DOCDIR) && $(MAKE) html;
-	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
-		cp -r docs/build/html/ ./;
 
 # creates wheel file
 build:
-	@echo "Build is not supported for docs repo, run 'make docs' instead";
-	exit 1;
+	make docs;
+	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
+		cp -r docs/build/html/ ./;
+	make clean;
 
 # clean package
 clean:
