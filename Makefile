@@ -32,7 +32,7 @@ docs:
 build:
 	make docs;
 	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
-		cp -r docs/build/html/ ./;
+		cp -r docs/build/html/* ./;
 	make clean;
 
 # clean package
