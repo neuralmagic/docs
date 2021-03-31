@@ -195,16 +195,14 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
-<span class="kn">from</span> <span class="nn">tensorflow.keras</span> <span class="kn">import</span> <span class="n">backend</span> <span class="k">as</span> <span class="n">K</span>
-<span class="kn">from</span> <span class="nn">tensorflow.keras.optimizers.schedules</span> <span class="kn">import</span> <span class="n">LearningRateSchedule</span>
+<span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.keras.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">KerasModifierYAML</span><span class="p">,</span>
     <span class="n">ScheduledModifier</span><span class="p">,</span>
     <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.keras.utils</span> <span class="kn">import</span> <span class="n">KerasLogger</span><span class="p">,</span> <span class="n">LoggerSettingCallback</span><span class="p">,</span> <span class="n">LoggingMode</span>
+<span class="kn">from</span> <span class="nn">sparseml.keras.utils</span> <span class="kn">import</span> <span class="n">KerasLogger</span><span class="p">,</span> <span class="n">LoggerSettingCallback</span><span class="p">,</span> <span class="n">LoggingMode</span><span class="p">,</span> <span class="n">keras</span>
 <span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">LearningRate</span><span class="p">,</span> <span class="n">SetLearningRate</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span>
 
@@ -212,7 +210,7 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;SetLearningRateModifier&quot;</span><span class="p">,</span> <span class="s2">&quot;LearningRateModifier&quot;</span><span class="p">]</span>
 
 
-<span class="k">class</span> <span class="nc">LRModifierCallback</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">LRModifierCallback</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Callback to modify learning rate of an optimizer</span>
 
@@ -224,10 +222,10 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">optimizer</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
         <span class="n">start_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">end_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">LearningRateSchedule</span><span class="p">],</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">LearningRateSchedule</span><span class="p">],</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span> <span class="o">=</span> <span class="n">start_step</span>
@@ -241,7 +239,10 @@
 
 <span class="sd">        :param logs: dictionary of logs (see Keras Callback doc)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_step</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_step</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_batch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_train_batch_begin</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="n">logs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_train_batch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -256,6 +257,9 @@
             <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_step</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span>
             <span class="n">persist_lr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span><span class="o">.</span><span class="n">lr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_step</span><span class="p">)</span>
             <span class="nb">setattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span><span class="p">,</span> <span class="s2">&quot;lr&quot;</span><span class="p">,</span> <span class="n">persist_lr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">on_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">on_train_batch_end</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="n">logs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_train_batch_end</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -299,7 +303,7 @@
 <span class="sd">        :param logs: dictionary of logs (see Keras Callback doc)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">(</span><span class="n">logs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_step</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_step</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">on_epoch_begin</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">logs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -346,10 +350,10 @@
 
     <span class="k">def</span> <span class="nf">_get_lr</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">lr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">lr</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">LearningRateSchedule</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lr</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">LearningRateSchedule</span><span class="p">):</span>
             <span class="n">lr_val</span> <span class="o">=</span> <span class="n">lr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">iterations</span><span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">lr_val</span> <span class="o">=</span> <span class="n">K</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">lr</span><span class="p">)</span>
+            <span class="n">lr_val</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="n">lr</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">lr_val</span>
 
     <span class="k">def</span> <span class="nf">_is_logging_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -404,7 +408,7 @@
         <span class="n">optimizer</span><span class="p">,</span>
         <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Modify model and optimizer, and provide callbacks to process the model</span>
@@ -432,7 +436,7 @@
         <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="p">[</span><span class="n">lr_callback</span><span class="p">,</span> <span class="n">lr_logging_callback</span><span class="p">]</span></div></div>
 
 
-<span class="k">class</span> <span class="nc">_ExponentialDecay</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">ExponentialDecay</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">_ExponentialDecay</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">ExponentialDecay</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">start_step</span><span class="p">,</span>
@@ -463,14 +467,14 @@
 
     <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">config</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">})</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">})</span>
         <span class="k">return</span> <span class="n">config</span>
 
 
-<span class="k">class</span> <span class="nc">_PiecewiseConstantDecay</span><span class="p">(</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">PiecewiseConstantDecay</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">_PiecewiseConstantDecay</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">schedules</span><span class="o">.</span><span class="n">PiecewiseConstantDecay</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_step</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">boundaries</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_step</span> <span class="o">=</span> <span class="n">start_step</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">start_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -484,7 +488,7 @@
 
     <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">config</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">})</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="s2">&quot;start_step&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_step</span><span class="p">})</span>
         <span class="k">return</span> <span class="n">config</span>
 
 
@@ -560,7 +564,8 @@
         <span class="k">elif</span> <span class="n">lr_class</span> <span class="o">==</span> <span class="s2">&quot;MultiStepLR&quot;</span><span class="p">:</span>
             <span class="n">boundaries</span> <span class="o">=</span> <span class="n">lr_kwargs</span><span class="p">[</span><span class="s2">&quot;milestones&quot;</span><span class="p">]</span>
             <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">init_lr</span> <span class="o">*</span> <span class="p">(</span><span class="n">lr_kwargs</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span> <span class="o">^</span> <span class="n">k</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">boundaries</span><span class="p">))</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">init_lr</span> <span class="o">*</span> <span class="p">(</span><span class="n">lr_kwargs</span><span class="p">[</span><span class="s2">&quot;gamma&quot;</span><span class="p">]</span> <span class="o">**</span> <span class="n">k</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">boundaries</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
             <span class="p">]</span>
             <span class="n">learning_rate</span> <span class="o">=</span> <span class="n">_PiecewiseConstantDecay</span><span class="p">(</span>
                 <span class="n">start_step</span><span class="p">,</span> <span class="n">boundaries</span><span class="p">,</span> <span class="n">values</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;MultiStepLR&quot;</span>
@@ -584,7 +589,7 @@
         <span class="n">optimizer</span><span class="p">,</span>
         <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Modify model and optimizer, and provide callbacks to process the model</span>

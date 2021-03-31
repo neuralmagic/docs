@@ -197,9 +197,10 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">import</span> <span class="nn">tensorflow</span> <span class="k">as</span> <span class="nn">tf</span>
+<span class="kn">from</span> <span class="nn">tensorflow</span> <span class="kn">import</span> <span class="n">Tensor</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.keras.optim.modifier</span> <span class="kn">import</span> <span class="n">Modifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.keras.utils.compat</span> <span class="kn">import</span> <span class="n">keras</span>
 <span class="kn">from</span> <span class="nn">sparseml.keras.utils.logger</span> <span class="kn">import</span> <span class="n">KerasLogger</span>
 <span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseManager</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">load_recipe_yaml_str</span>
@@ -248,11 +249,11 @@
 
 <div class="viewcode-block" id="ScheduledModifierManager.modify"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.manager.ScheduledModifierManager.modify">[docs]</a>    <span class="k">def</span> <span class="nf">modify</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Sequential</span><span class="p">],</span>
-        <span class="n">optimizer</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">Sequential</span><span class="p">],</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">optimizers</span><span class="o">.</span><span class="n">Optimizer</span><span class="p">,</span>
         <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">KerasLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">input_tensors</span><span class="p">:</span> <span class="n">Tensor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Modify the model and optimizer based on the requirements of modifiers</span>
@@ -283,14 +284,14 @@
                 <span class="k">continue</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
                 <span class="n">callbacks</span> <span class="o">=</span> <span class="n">callbacks</span> <span class="o">+</span> <span class="n">callback</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">callback</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">Callback</span><span class="p">):</span>
                 <span class="n">callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Invalid callback type&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="n">optimizer</span>
         <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">callbacks</span></div>
 
-<div class="viewcode-block" id="ScheduledModifierManager.finalize"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.manager.ScheduledModifierManager.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+<div class="viewcode-block" id="ScheduledModifierManager.finalize"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.manager.ScheduledModifierManager.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Remove extra information related to the modifier from the model that is</span>
 <span class="sd">        not necessary for exporting</span>

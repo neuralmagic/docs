@@ -201,9 +201,52 @@
 <span class="kn">from</span> <span class="nn">deepsparse.utils.log</span> <span class="kn">import</span> <span class="n">log_init</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;verify_outputs&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;arrays_to_bytes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;bytes_to_arrays&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;verify_outputs&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 <span class="n">log</span> <span class="o">=</span> <span class="n">log_init</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="arrays_to_bytes"><a class="viewcode-back" href="../../../api/deepsparse.utils.html#deepsparse.utils.data.arrays_to_bytes">[docs]</a><span class="k">def</span> <span class="nf">arrays_to_bytes</span><span class="p">(</span><span class="n">arrays</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bytearray</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param arrays: List of numpy arrays to serialize as bytes</span>
+<span class="sd">    :return: bytearray representation of list of numpy arrays</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">to_return</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">arr</span> <span class="ow">in</span> <span class="n">arrays</span><span class="p">:</span>
+        <span class="n">arr_dtype</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">),</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">arr_shape</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">]),</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">sep</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">(</span><span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">arr_bytes</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span><span class="o">.</span><span class="n">tobytes</span><span class="p">()</span>
+        <span class="n">to_return</span> <span class="o">+=</span> <span class="n">arr_dtype</span> <span class="o">+</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">arr_shape</span> <span class="o">+</span> <span class="n">sep</span> <span class="o">+</span> <span class="n">arr_bytes</span>
+    <span class="k">return</span> <span class="n">to_return</span></div>
+
+
+<div class="viewcode-block" id="bytes_to_arrays"><a class="viewcode-back" href="../../../api/deepsparse.utils.html#deepsparse.utils.data.bytes_to_arrays">[docs]</a><span class="k">def</span> <span class="nf">bytes_to_arrays</span><span class="p">(</span><span class="n">serialized_arr</span><span class="p">:</span> <span class="nb">bytearray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param serialized_arr: bytearray representation of list of numpy arrays</span>
+<span class="sd">    :return: List of numpy arrays decoded from input</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sep</span> <span class="o">=</span> <span class="s2">&quot;|&quot;</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+    <span class="n">arrays</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">i_start</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">while</span> <span class="n">i_start</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">serialized_arr</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">i_0</span> <span class="o">=</span> <span class="n">serialized_arr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="n">i_start</span><span class="p">)</span>
+        <span class="n">i_1</span> <span class="o">=</span> <span class="n">serialized_arr</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="n">sep</span><span class="p">,</span> <span class="n">i_0</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="n">arr_dtype</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">(</span><span class="n">serialized_arr</span><span class="p">[</span><span class="n">i_start</span><span class="p">:</span><span class="n">i_0</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">))</span>
+        <span class="n">arr_shape</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">a</span><span class="p">)</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="n">serialized_arr</span><span class="p">[</span><span class="n">i_0</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">i_1</span><span class="p">]</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="n">arr_num_bytes</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">arr_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">arr_dtype</span><span class="o">.</span><span class="n">itemsize</span>
+        <span class="n">arr_str</span> <span class="o">=</span> <span class="n">serialized_arr</span><span class="p">[</span><span class="n">i_1</span> <span class="o">+</span> <span class="mi">1</span> <span class="p">:</span> <span class="n">arr_num_bytes</span> <span class="o">+</span> <span class="p">(</span><span class="n">i_1</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)]</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">arr_str</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">arr_dtype</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">arr_shape</span><span class="p">)</span>
+        <span class="n">arrays</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+        <span class="n">i_start</span> <span class="o">=</span> <span class="n">i_1</span> <span class="o">+</span> <span class="n">arr_num_bytes</span> <span class="o">+</span> <span class="mi">1</span>
+    <span class="k">return</span> <span class="n">arrays</span></div>
 
 
 <div class="viewcode-block" id="verify_outputs"><a class="viewcode-back" href="../../../api/deepsparse.utils.html#deepsparse.utils.data.verify_outputs">[docs]</a><span class="k">def</span> <span class="nf">verify_outputs</span><span class="p">(</span>

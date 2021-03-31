@@ -193,16 +193,18 @@
 <span class="sd">Helper functions to edit ONNX Graphs.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
-<span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
+<span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils.helpers</span> <span class="kn">import</span> <span class="n">get_node_params</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ONNXGraph&quot;</span><span class="p">,</span>
     <span class="s2">&quot;update_model_param&quot;</span><span class="p">,</span>
     <span class="s2">&quot;swap_node_output&quot;</span><span class="p">,</span>
     <span class="s2">&quot;remove_node_and_params_from_graph&quot;</span><span class="p">,</span>
@@ -211,6 +213,177 @@
     <span class="s2">&quot;prune_model_one_shot&quot;</span><span class="p">,</span>
     <span class="s2">&quot;prune_model_one_shot_iter&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+
+<div class="viewcode-block" id="ONNXGraph"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph">[docs]</a><span class="k">class</span> <span class="nc">ONNXGraph</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for quick look-up of ONNX graph nodes and initializers. If graph state</span>
+<span class="sd">    changes outside of ONNXGraph class functions, update() should be called.</span>
+
+<span class="sd">    :param model: the ONNX graph to represent</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+
+<div class="viewcode-block" id="ONNXGraph.update"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the graph state based on the model this graph represents or</span>
+<span class="sd">        the given model.</span>
+
+<span class="sd">        :param model: model to represent. defaults to current loaded model state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span>
+
+        <span class="c1"># nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_store_node_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+        <span class="c1"># initializers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">init</span> <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span>
+        <span class="p">}</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.get_init_by_name"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_init_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_init_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: name of initializer</span>
+<span class="sd">        :return: tensor of initializer with given name, returns None if the name does</span>
+<span class="sd">            not exist in the cached graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.get_node_parents"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_parents</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node: node to get the input objects for</span>
+<span class="sd">        :return: input nodes or tensors of this node in order. if an input doesn&#39;t exist,</span>
+<span class="sd">            None will be returned in its place</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+            <span class="n">inp</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">:</span>
+                <span class="n">inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="p">:</span>
+                <span class="n">inp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">inputs</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.get_node_children"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node: the node to get the children node of</span>
+<span class="sd">        :return: list of nodes that include this node as an output</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+            <span class="n">children</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">output_id</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">children</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.add_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.add_node">[docs]</a>    <span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds the given node to the model and graph state</span>
+
+<span class="sd">        :param node: node to add to the model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_store_node_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.update_node_input"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.update_node_input">[docs]</a>    <span class="k">def</span> <span class="nf">update_node_input</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">input_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">input_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node: node to update the inputs of</span>
+<span class="sd">        :param input_id: new input_id to attach to the node</span>
+<span class="sd">        :param input_idx: optional index of the node input list to update,</span>
+<span class="sd">            if none is given, the new input id will be appended to the input list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">input_idx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">input_idx</span><span class="p">]]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">input_idx</span><span class="p">]]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">input_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_id</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">input_id</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.delete_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.delete_node">[docs]</a>    <span class="k">def</span> <span class="nf">delete_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        deletes the given node from the graph</span>
+
+<span class="sd">        :param node: node to delete</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_delete_node_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.delete_nodes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.delete_nodes">[docs]</a>    <span class="k">def</span> <span class="nf">delete_nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        deletes the given nodes from the graph</span>
+<span class="sd">        :param nodes: list of nodes to delete</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node_ouptut_ids_to_delete</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">}</span>
+        <span class="n">nodes_to_keep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">in</span> <span class="n">node_ouptut_ids_to_delete</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_delete_node_edges</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">nodes_to_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="s2">&quot;node&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">nodes_to_keep</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.delete_initializers"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.delete_initializers">[docs]</a>    <span class="k">def</span> <span class="nf">delete_initializers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initializers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        deletes the given initializers from the model</span>
+
+<span class="sd">        :param initializers: list of initializers or initializer names to delete</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">inits_to_delete</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">init</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="n">init</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="n">initializers</span>
+        <span class="p">}</span>
+        <span class="n">inits_to_keep</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">init</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">inits_to_delete</span><span class="p">:</span>
+                <span class="c1"># keep edge reference if nodes in the graph still point to the</span>
+                <span class="c1"># initializer name</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]:</span>
+                    <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">inits_to_keep</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">init</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="s2">&quot;initializer&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">inits_to_keep</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.delete_unused_initializers"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.delete_unused_initializers">[docs]</a>    <span class="k">def</span> <span class="nf">delete_unused_initializers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        deletes tensors in the initializer list that are not listed as inputs to any node</span>
+<span class="sd">        in the current graph state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">delete_initializers</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">init</span>
+                <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>  <span class="c1"># delete inits that have no edge</span></div>
+
+    <span class="k">def</span> <span class="nf">_store_node_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">output_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">node</span>
+        <span class="k">for</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_delete_node_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
+        <span class="c1"># remove node edges from cache</span>
+        <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">output_id</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">node</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="update_model_param"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.update_model_param">[docs]</a><span class="k">def</span> <span class="nf">update_model_param</span><span class="p">(</span>

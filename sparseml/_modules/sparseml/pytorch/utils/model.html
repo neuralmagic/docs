@@ -194,7 +194,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">DataParallel</span><span class="p">,</span> <span class="n">Module</span>
@@ -218,6 +218,8 @@
     <span class="s2">&quot;load_optimizer&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_epoch&quot;</span><span class="p">,</span>
     <span class="s2">&quot;save_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;script_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;trace_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;model_to_device&quot;</span><span class="p">,</span>
     <span class="s2">&quot;parallelize_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;device_to_name_ids&quot;</span><span class="p">,</span>
@@ -317,6 +319,38 @@
         <span class="k">return</span> <span class="n">model_dict</span><span class="p">[</span><span class="s2">&quot;epoch&quot;</span><span class="p">]</span>
 
     <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="trace_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.trace_model">[docs]</a><span class="k">def</span> <span class="nf">trace_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function which traces the provided module using the sample batch</span>
+<span class="sd">    into a TorchScript script and saves to provied path.</span>
+
+<span class="sd">    :param path: path to save torchscript</span>
+<span class="sd">    :param model: module to convert to TorchScript</span>
+<span class="sd">    :param sample_batch: sample batch to trace module with</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace_module</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;forward&quot;</span><span class="p">:</span> <span class="n">sample_batch</span><span class="p">})</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="script_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.script_model">[docs]</a><span class="k">def</span> <span class="nf">script_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function which scripts the provided module into a TorchScript script</span>
+<span class="sd">    and saves to provied path.</span>
+
+<span class="sd">    :param path: path to save torchscript</span>
+<span class="sd">    :param model: module to convert to torchscript</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">script</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="save_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.save_model">[docs]</a><span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span>
