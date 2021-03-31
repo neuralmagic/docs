@@ -202,6 +202,12 @@
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">ReLU6</span> <span class="k">as</span> <span class="n">TReLU6</span>
 
 
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">SiLU</span>
+<span class="k">except</span><span class="p">:</span>
+    <span class="n">SiLU</span> <span class="o">=</span> <span class="kc">None</span>
+
+
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;ReLU&quot;</span><span class="p">,</span>
     <span class="s2">&quot;ReLU6&quot;</span><span class="p">,</span>
@@ -211,6 +217,7 @@
     <span class="s2">&quot;hard_swish&quot;</span><span class="p">,</span>
     <span class="s2">&quot;create_activation&quot;</span><span class="p">,</span>
     <span class="s2">&quot;replace_activation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;replace_activations&quot;</span><span class="p">,</span>
     <span class="s2">&quot;is_activation&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -335,7 +342,7 @@
 <span class="sd">    :param module: the module to replace the activation function in</span>
 <span class="sd">    :param name: the name of the layer to replace the activation for</span>
 <span class="sd">    :param act_type: the type of activation to replace with; options:</span>
-<span class="sd">        [relu, relu6, prelu, lrelu, swish]</span>
+<span class="sd">        [relu, relu6, prelu, lrelu, swish, silu]</span>
 <span class="sd">    :param inplace: True to create the activation as an inplace, False otherwise</span>
 <span class="sd">    :param num_channels: The number of channels to create the activation for</span>
 <span class="sd">    :param kwargs: Additional kwargs to pass to the activation constructor</span>
@@ -362,6 +369,42 @@
     <span class="k">return</span> <span class="n">act</span></div>
 
 
+<div class="viewcode-block" id="replace_activations"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.nn.html#sparseml.pytorch.nn.activations.replace_activations">[docs]</a><span class="k">def</span> <span class="nf">replace_activations</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">act_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">num_channels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    General function to replace all activation functions in a Module</span>
+<span class="sd">    with a new one.</span>
+
+<span class="sd">    :param module: the module to replace the activation function in</span>
+<span class="sd">    :param act_type: the type of activation to replace with; options:</span>
+<span class="sd">        [relu, relu6, prelu, lrelu, swish, silu]</span>
+<span class="sd">    :param inplace: True to create the activation as an inplace, False otherwise</span>
+<span class="sd">    :param num_channels: The number of channels to create the activation for</span>
+<span class="sd">    :param kwargs: Additional kwargs to pass to the activation constructor</span>
+<span class="sd">    :return: the updated module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">is_activation</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">create_activation</span><span class="p">(</span>
+            <span class="n">act_type</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">,</span> <span class="n">num_channels</span><span class="o">=</span><span class="n">num_channels</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">child_module</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span>
+            <span class="n">child_name</span><span class="p">,</span>
+            <span class="n">replace_activations</span><span class="p">(</span>
+                <span class="n">child_module</span><span class="p">,</span> <span class="n">act_type</span><span class="p">,</span> <span class="n">inplace</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">module</span></div>
+
+
 <div class="viewcode-block" id="create_activation"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.nn.html#sparseml.pytorch.nn.activations.create_activation">[docs]</a><span class="k">def</span> <span class="nf">create_activation</span><span class="p">(</span>
     <span class="n">act_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
@@ -369,7 +412,7 @@
 <span class="sd">    Create an activation function using the given parameters.</span>
 
 <span class="sd">    :param act_type: the type of activation to replace with; options:</span>
-<span class="sd">        [relu, relu6, prelu, lrelu, swish, hardswish]</span>
+<span class="sd">        [relu, relu6, prelu, lrelu, swish, hardswish, silu]</span>
 <span class="sd">    :param inplace: True to create the activation as an inplace, False otherwise</span>
 <span class="sd">    :param num_channels: The number of channels to create the activation for</span>
 <span class="sd">    :param kwargs: Additional kwargs to pass to the activation constructor</span>
@@ -395,6 +438,9 @@
     <span class="k">if</span> <span class="n">act_type</span> <span class="o">==</span> <span class="s2">&quot;hardswish&quot;</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Hardswish</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="n">inplace</span><span class="p">)</span>
 
+    <span class="k">if</span> <span class="n">act_type</span> <span class="o">==</span> <span class="s2">&quot;silu&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">SiLU</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown act_type given of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">act_type</span><span class="p">))</span></div>
 
 
@@ -413,6 +459,7 @@
         <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">LeakyReLU</span><span class="p">)</span>
         <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">Swish</span><span class="p">)</span>
         <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">Hardswish</span><span class="p">)</span>
+        <span class="ow">or</span> <span class="p">(</span><span class="n">SiLU</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">SiLU</span><span class="p">))</span>
     <span class="p">)</span></div>
 </pre></div>
 

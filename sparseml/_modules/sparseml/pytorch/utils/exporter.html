@@ -193,9 +193,10 @@
 <span class="sd">Export PyTorch models to the local device</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
@@ -204,13 +205,20 @@
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
+<span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.helpers</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">tensors_export</span><span class="p">,</span>
     <span class="n">tensors_module_forward</span><span class="p">,</span>
     <span class="n">tensors_to_device</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.model</span> <span class="kn">import</span> <span class="n">is_parallel_model</span><span class="p">,</span> <span class="n">save_model</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.model</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">is_parallel_model</span><span class="p">,</span>
+    <span class="n">save_model</span><span class="p">,</span>
+    <span class="n">script_model</span><span class="p">,</span>
+    <span class="n">trace_model</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.quantization</span> <span class="kn">import</span> <span class="n">quantize_torch_qat_export</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">clean_path</span><span class="p">,</span> <span class="n">create_parent_dirs</span>
 
 
@@ -218,6 +226,7 @@
 
 
 <span class="n">DEFAULT_ONNX_OPSET</span> <span class="o">=</span> <span class="mi">9</span> <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&lt;</span> <span class="s2">&quot;1.3&quot;</span> <span class="k">else</span> <span class="mi">11</span>
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="ModuleExporter"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter">[docs]</a><span class="k">class</span> <span class="nc">ModuleExporter</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
@@ -240,12 +249,92 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_module</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span> <span class="o">=</span> <span class="n">clean_path</span><span class="p">(</span><span class="n">output_dir</span><span class="p">)</span>
 
+<div class="viewcode-block" id="ModuleExporter.export_to_zoo"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_to_zoo">[docs]</a>    <span class="k">def</span> <span class="nf">export_to_zoo</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">dataloader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">original_dataloader</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">DataLoader</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shuffle</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">max_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">data_split_cb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">label_mapping_cb</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">trace_script</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">fail_on_torchscript_failure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">export_entire_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Creates and exports all related content of module including</span>
+<span class="sd">        sample data, onnx, pytorch and torchscript.</span>
+
+<span class="sd">        :param dataloader: DataLoader used to generate sample data</span>
+<span class="sd">        :param original_dataloader: Optional dataloader to obtain the untransformed</span>
+<span class="sd">            image.</span>
+<span class="sd">        :param shuffle: Whether to shuffle sample data</span>
+<span class="sd">        :param max_samples: Max number of sample data to create</span>
+<span class="sd">        :param data_split_cb: Optional callback function to split data sample into</span>
+<span class="sd">            a tuple (features,labels). If not provided will assume dataloader</span>
+<span class="sd">            returns a tuple (features,labels).</span>
+<span class="sd">        :param label_mapping_cb: Optional callback function to mapping dataset label to</span>
+<span class="sd">            other   formats.</span>
+<span class="sd">        :param dataset_wrapper: Wrapper function for the dataset to add original data</span>
+<span class="sd">            to each sample. If set to None will default to use the</span>
+<span class="sd">            &#39;iter_dataset_with_orig_wrapper&#39; function.</span>
+<span class="sd">        :param trace_script: If true, creates torchscript via tracing. Otherwise,</span>
+<span class="sd">            creates the torchscripe via scripting.</span>
+<span class="sd">        :param fail_on_torchscript_failure: If true, fails if torchscript is unable</span>
+<span class="sd">            to export model.</span>
+<span class="sd">        :param export_entire_model: Exports entire file instead of state_dict</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sample_batches</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sample_labels</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sample_originals</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">original_dataloader</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">sample_originals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">originals</span> <span class="ow">in</span> <span class="n">original_dataloader</span><span class="p">:</span>
+                <span class="n">sample_originals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">originals</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_originals</span><span class="p">)</span> <span class="o">==</span> <span class="n">max_samples</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+        <span class="k">for</span> <span class="n">sample</span> <span class="ow">in</span> <span class="n">dataloader</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">data_split_cb</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">data_split_cb</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="n">sample</span>
+            <span class="k">if</span> <span class="n">label_mapping_cb</span><span class="p">:</span>
+                <span class="n">labels</span> <span class="o">=</span> <span class="n">label_mapping_cb</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+
+            <span class="n">sample_batches</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">sample_labels</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">labels</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">sample_batches</span><span class="p">)</span> <span class="o">==</span> <span class="n">max_samples</span><span class="p">:</span>
+                <span class="k">break</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">export_onnx</span><span class="p">(</span><span class="n">sample_batch</span><span class="o">=</span><span class="n">sample_batches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">export_pytorch</span><span class="p">(</span><span class="n">export_entire_model</span><span class="o">=</span><span class="n">export_entire_model</span><span class="p">)</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">trace_script</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">export_torchscript</span><span class="p">(</span><span class="n">sample_batch</span><span class="o">=</span><span class="n">sample_batches</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">export_torchscript</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">fail_on_torchscript_failure</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">e</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Unable to create torchscript file. Following error occurred: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">export_samples</span><span class="p">(</span>
+            <span class="n">sample_batches</span><span class="p">,</span>
+            <span class="n">sample_labels</span><span class="o">=</span><span class="n">sample_labels</span><span class="p">,</span>
+            <span class="n">sample_originals</span><span class="o">=</span><span class="n">sample_originals</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
 <div class="viewcode-block" id="ModuleExporter.export_onnx"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_onnx">[docs]</a>    <span class="k">def</span> <span class="nf">export_onnx</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;model.onnx&quot;</span><span class="p">,</span>
         <span class="n">opset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_ONNX_OPSET</span><span class="p">,</span>
         <span class="n">disable_bn_fusing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">convert_qat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Export an onnx file for the current module and for a sample batch.</span>
@@ -263,6 +352,10 @@
 <span class="sd">            sensitivity analyses of the exported graph.  Additionally, the DeepSparse</span>
 <span class="sd">            inference engine, and other engines, perform batch norm fusing at model</span>
 <span class="sd">            compilation.</span>
+<span class="sd">        :param convert_qat: if True and quantization aware training is detected in</span>
+<span class="sd">            the module being exported, the resulting QAT ONNX model will be converted</span>
+<span class="sd">            to a fully quantized ONNX model using `quantize_torch_qat_export`. Default</span>
+<span class="sd">            is False.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">sample_batch</span> <span class="o">=</span> <span class="n">tensors_to_device</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
         <span class="n">onnx_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
@@ -329,7 +422,32 @@
         <span class="k">if</span> <span class="n">batch_norms_wrapped</span><span class="p">:</span>
             <span class="n">onnx_model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">onnx_path</span><span class="p">)</span>
             <span class="n">_delete_trivial_onnx_adds</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">)</span>
-            <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> <span class="n">onnx_path</span><span class="p">)</span></div>
+            <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> <span class="n">onnx_path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">convert_qat</span> <span class="ow">and</span> <span class="n">is_quant_module</span><span class="p">:</span>
+            <span class="c1"># overwrite exported model with fully quantized version</span>
+            <span class="n">quantize_torch_qat_export</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">onnx_path</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="n">onnx_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModuleExporter.export_torchscript"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_torchscript">[docs]</a>    <span class="k">def</span> <span class="nf">export_torchscript</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;model.pts&quot;</span><span class="p">,</span>
+        <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Export the torchscript into a pts file within a framework directory. If</span>
+<span class="sd">        a sample batch is provided, will create torchscript model in trace mode.</span>
+<span class="sd">        Otherwise uses script to create torchscript.</span>
+
+<span class="sd">        :param name: name of the torchscript file to save</span>
+<span class="sd">        :param sample_batch: If provided, will create torchscript model via tracing</span>
+<span class="sd">            using the sample_batch</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;framework&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">sample_batch</span><span class="p">:</span>
+            <span class="n">trace_model</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">sample_batch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">script_model</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModuleExporter.export_pytorch"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_pytorch">[docs]</a>    <span class="k">def</span> <span class="nf">export_pytorch</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -338,6 +456,7 @@
         <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;model.pth&quot;</span><span class="p">,</span>
         <span class="n">use_zipfile_serialization_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">include_modifiers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">export_entire_model</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Export the pytorch state dicts into pth file within a</span>
@@ -351,25 +470,31 @@
 <span class="sd">        :param include_modifiers: if True, and a ScheduledOptimizer is provided</span>
 <span class="sd">            as the optimizer, the associated ScheduledModifierManager and its</span>
 <span class="sd">            Modifiers will be exported under the &#39;manager&#39; key. Default is False</span>
+<span class="sd">        :param export_entire_model: Exports entire file instead of state_dict</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">pytorch_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;pytorch&quot;</span><span class="p">)</span>
+        <span class="n">pytorch_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;framework&quot;</span><span class="p">)</span>
         <span class="n">pth_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">pytorch_path</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
         <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">pth_path</span><span class="p">)</span>
-        <span class="n">save_model</span><span class="p">(</span>
-            <span class="n">pth_path</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span>
-            <span class="n">optimizer</span><span class="p">,</span>
-            <span class="n">epoch</span><span class="p">,</span>
-            <span class="n">use_zipfile_serialization_if_available</span><span class="o">=</span><span class="p">(</span>
-                <span class="n">use_zipfile_serialization_if_available</span>
-            <span class="p">),</span>
-            <span class="n">include_modifiers</span><span class="o">=</span><span class="n">include_modifiers</span><span class="p">,</span>
-        <span class="p">)</span></div>
+
+        <span class="k">if</span> <span class="n">export_entire_model</span><span class="p">:</span>
+            <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">pth_path</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">save_model</span><span class="p">(</span>
+                <span class="n">pth_path</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span>
+                <span class="n">optimizer</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="n">use_zipfile_serialization_if_available</span><span class="o">=</span><span class="p">(</span>
+                    <span class="n">use_zipfile_serialization_if_available</span>
+                <span class="p">),</span>
+                <span class="n">include_modifiers</span><span class="o">=</span><span class="n">include_modifiers</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModuleExporter.export_samples"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_samples">[docs]</a>    <span class="k">def</span> <span class="nf">export_samples</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_batches</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span>
-        <span class="n">sample_labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_labels</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sample_originals</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">exp_counter</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -382,14 +507,18 @@
 <span class="sd">        :param exp_counter: the counter to start exporting the tensor files at</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">sample_batches</span> <span class="o">=</span> <span class="p">[</span><span class="n">tensors_to_device</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">sample_batches</span><span class="p">]</span>
-        <span class="n">inputs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;_sample-inputs&quot;</span><span class="p">)</span>
-        <span class="n">outputs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;_sample-outputs&quot;</span><span class="p">)</span>
-        <span class="n">labels_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;_sample-labels&quot;</span><span class="p">)</span>
+        <span class="n">inputs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;sample-inputs&quot;</span><span class="p">)</span>
+        <span class="n">outputs_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;sample-outputs&quot;</span><span class="p">)</span>
+        <span class="n">labels_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;sample-labels&quot;</span><span class="p">)</span>
+        <span class="n">originals_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="s2">&quot;sample-originals&quot;</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="n">lab</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+            <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="n">lab</span><span class="p">,</span> <span class="n">orig</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
                 <span class="n">sample_batches</span><span class="p">,</span>
                 <span class="n">sample_labels</span> <span class="k">if</span> <span class="n">sample_labels</span> <span class="k">else</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">sample_batches</span><span class="p">],</span>
+                <span class="n">sample_originals</span>
+                <span class="k">if</span> <span class="n">sample_originals</span>
+                <span class="k">else</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">sample_batches</span><span class="p">],</span>
             <span class="p">):</span>
                 <span class="n">out</span> <span class="o">=</span> <span class="n">tensors_module_forward</span><span class="p">(</span><span class="n">batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">)</span>
 
@@ -416,6 +545,15 @@
                 <span class="k">if</span> <span class="n">lab</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                     <span class="n">tensors_export</span><span class="p">(</span>
                         <span class="n">lab</span><span class="p">,</span> <span class="n">labels_dir</span><span class="p">,</span> <span class="s2">&quot;lab&quot;</span><span class="p">,</span> <span class="n">counter</span><span class="o">=</span><span class="n">exp_counter</span><span class="p">,</span> <span class="n">break_batch</span><span class="o">=</span><span class="kc">True</span>
+                    <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">orig</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">tensors_export</span><span class="p">(</span>
+                        <span class="n">orig</span><span class="p">,</span>
+                        <span class="n">originals_dir</span><span class="p">,</span>
+                        <span class="s2">&quot;orig&quot;</span><span class="p">,</span>
+                        <span class="n">counter</span><span class="o">=</span><span class="n">exp_counter</span><span class="p">,</span>
+                        <span class="n">break_batch</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                     <span class="p">)</span>
 
                 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">exported_input</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">exported_output</span><span class="p">)</span>

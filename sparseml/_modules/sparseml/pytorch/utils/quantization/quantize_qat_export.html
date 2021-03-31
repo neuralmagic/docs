@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.quantization.quantize_qat_export &mdash; SparseML 0.1.0 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.1.0 documentation</title>
   
 
   
@@ -159,7 +159,7 @@
         
           <li><a href="../../../../index.html">Module code</a> &raquo;</li>
         
-      <li>sparseml.pytorch.optim.quantization.quantize_qat_export</li>
+      <li>sparseml.pytorch.utils.quantization.quantize_qat_export</li>
     
     
       <li class="wy-breadcrumbs-aside">
@@ -174,7 +174,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <h1>Source code for sparseml.pytorch.optim.quantization.quantize_qat_export</h1><div class="highlight"><pre>
+  <h1>Source code for sparseml.pytorch.utils.quantization.quantize_qat_export</h1><div class="highlight"><pre>
 <span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
 <span class="c1">#</span>
 <span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
@@ -195,28 +195,39 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
 <span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ONNXGraph</span><span class="p">,</span>
     <span class="n">get_batch_norm_params</span><span class="p">,</span>
     <span class="n">get_init_by_name</span><span class="p">,</span>
     <span class="n">get_node_attributes</span><span class="p">,</span>
     <span class="n">get_node_output_nodes</span><span class="p">,</span>
     <span class="n">get_nodes_by_output_id</span><span class="p">,</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">,</span>
+    <span class="n">quantized_residual_add_optim</span><span class="p">,</span>
     <span class="n">remove_node_and_params_from_graph</span><span class="p">,</span>
     <span class="n">swap_node_output</span><span class="p">,</span>
     <span class="n">update_model_param</span><span class="p">,</span>
 <span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;get_quantization_params&quot;</span><span class="p">,</span> <span class="s2">&quot;QuantizationParams&quot;</span><span class="p">,</span> <span class="s2">&quot;quantize_torch_qat_export&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;get_quantization_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;QuantizationParams&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;quantize_torch_qat_export&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;skip_onnx_input_quantize&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="sd">&quot;&quot;&quot;</span>
@@ -231,7 +242,7 @@
 <span class="n">_QUANTIZE_OP_NAMES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">,</span> <span class="s2">&quot;DequantizeLinear&quot;</span><span class="p">]</span>
 
 
-<div class="viewcode-block" id="get_quantization_params"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.optim.quantization.html#sparseml.pytorch.optim.quantization.quantize_qat_export.get_quantization_params">[docs]</a><span class="k">def</span> <span class="nf">get_quantization_params</span><span class="p">(</span>
+<div class="viewcode-block" id="get_quantization_params"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.quantize_qat_export.get_quantization_params">[docs]</a><span class="k">def</span> <span class="nf">get_quantization_params</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_target</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantizationParams</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -376,36 +387,25 @@
         <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">relu_node</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_convert_tensor_constant_to_initializer</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
-    <span class="n">const_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="c1"># create initializer</span>
-    <span class="n">const_array</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">const_node</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
-    <span class="c1"># convert int8 -&gt; uint8</span>
-    <span class="k">if</span> <span class="n">const_array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int8</span><span class="p">:</span>
-        <span class="n">const_array</span> <span class="o">=</span> <span class="n">const_array</span> <span class="o">+</span> <span class="mi">128</span>
-        <span class="n">const_array</span> <span class="o">=</span> <span class="n">const_array</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
-    <span class="n">initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">const_array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">const_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-    <span class="c1"># add initializer to graph</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
-    <span class="c1"># remove const node from graph</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">const_node</span><span class="p">)</span>
+<span class="k">def</span> <span class="nf">_convert_single_constants_to_initializers</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
+    <span class="n">non_single_constant_nodes</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># list of nodes to keep</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;Constant&quot;</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attribute</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">non_single_constant_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">continue</span>  <span class="c1"># skip non-constants, and constants with multiple tensors</span>
 
-
-<span class="k">def</span> <span class="nf">_convert_quantization_constants_to_initializers</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
-    <span class="k">for</span> <span class="n">quant_node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">quant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_QUANTIZE_OP_NAMES</span><span class="p">:</span>
-            <span class="k">continue</span>
-
-        <span class="n">scale_const</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
-        <span class="n">zp_const</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
-        <span class="n">consts</span> <span class="o">=</span> <span class="n">scale_const</span> <span class="o">+</span> <span class="n">zp_const</span>
-        <span class="k">for</span> <span class="n">const</span> <span class="ow">in</span> <span class="n">consts</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">const</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;Constant&quot;</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="c1"># constants should be tensor type</span>
-            <span class="n">_convert_tensor_constant_to_initializer</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">const</span><span class="p">)</span>
+        <span class="c1"># create initializer</span>
+        <span class="n">const_array</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span><span class="p">)</span>
+        <span class="c1"># convert int8 -&gt; uint8</span>
+        <span class="k">if</span> <span class="n">const_array</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">numpy</span><span class="o">.</span><span class="n">int8</span><span class="p">:</span>
+            <span class="n">const_array</span> <span class="o">=</span> <span class="n">const_array</span> <span class="o">+</span> <span class="mi">128</span>
+            <span class="n">const_array</span> <span class="o">=</span> <span class="n">const_array</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+        <span class="c1"># add named tensor to initializer list</span>
+        <span class="n">initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span><span class="n">const_array</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
+    <span class="c1"># bulk remove all converted constants by overwriting node list</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="s2">&quot;node&quot;</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">non_single_constant_nodes</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_delete_repeated_qat_blocks</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
@@ -501,6 +501,7 @@
         <span class="n">weight_quantize_params</span><span class="o">.</span><span class="n">target</span><span class="p">,</span>
         <span class="n">weight_quantize_params</span><span class="o">.</span><span class="n">scale</span><span class="p">,</span>
         <span class="n">weight_quantize_params</span><span class="o">.</span><span class="n">zero_point</span><span class="p">,</span>
+        <span class="n">weight_quantize_params</span><span class="o">.</span><span class="n">zero_point</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">quantized_weight_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.weight_quantized&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">conv_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
     <span class="n">quantized_weight_initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span>
@@ -746,7 +747,7 @@
             <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="p">)</span>
 
 
-<div class="viewcode-block" id="quantize_torch_qat_export"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.optim.quantization.html#sparseml.pytorch.optim.quantization.quantize_qat_export.quantize_torch_qat_export">[docs]</a><span class="k">def</span> <span class="nf">quantize_torch_qat_export</span><span class="p">(</span>
+<div class="viewcode-block" id="quantize_torch_qat_export"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.quantize_qat_export.quantize_torch_qat_export">[docs]</a><span class="k">def</span> <span class="nf">quantize_torch_qat_export</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
     <span class="n">output_file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -768,16 +769,95 @@
 
     <span class="n">_fold_qat_conv_bns</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_fold_relu_quants</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    <span class="n">_convert_quantization_constants_to_initializers</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">_convert_single_constants_to_initializers</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_delete_repeated_qat_blocks</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">quantized_residual_add_optim</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_remove_duplicate_quantize__ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">output_file_path</span><span class="p">:</span>
         <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">model</span></div>
+
+
+<span class="k">def</span> <span class="nf">_skip_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
+        <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span> <span class="o">!=</span> <span class="mi">1</span>
+    <span class="p">):</span>
+        <span class="c1"># more than 1 input or input is not FP32</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;Not modifying ONNX graph inputs - either graph has more than one &quot;</span>
+            <span class="s2">&quot;input or input type is not FP32&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">input_node</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">input_children</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">input_node</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span>
+    <span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;QuantizeLinear&quot;</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">input_children</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="s2">&quot;Not modifying ONNX graph inputs - only QuantizeLinear nodes may follow the &quot;</span>
+            <span class="s2">&quot;FP32 input tensor in original graph, prior to converting to uint8&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">quantize_node</span> <span class="ow">in</span> <span class="n">input_children</span><span class="p">:</span>
+        <span class="n">quantize_children</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">quantize_node</span><span class="p">)</span>
+        <span class="n">quantize_node_id</span> <span class="o">=</span> <span class="n">quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">child_node</span> <span class="ow">in</span> <span class="n">quantize_children</span><span class="p">:</span>
+            <span class="n">input_idx</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">idx</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">child_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="n">quantize_node_id</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">input_idx</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">input_idx</span> <span class="o">=</span> <span class="n">input_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">update_node_input</span><span class="p">(</span><span class="n">child_node</span><span class="p">,</span> <span class="n">input_node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">input_idx</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;set node with output id </span><span class="si">{</span><span class="n">child_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> as initial node in &quot;</span>
+                <span class="s2">&quot;graph&quot;</span>
+            <span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;deleting QuantizeLinear node(s) with output id(s): &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">input_children</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_nodes</span><span class="p">(</span><span class="n">input_children</span><span class="p">)</span>  <span class="c1"># only contains references to the Quantize nodes</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>  <span class="c1"># cleanup</span>
+    <span class="n">input_node</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># fp32 -&gt; uint8</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model initial QuantizeLinear node(s) deleted and inputs set to uint8&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="skip_onnx_input_quantize"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.quantize_qat_export.skip_onnx_input_quantize">[docs]</a><span class="k">def</span> <span class="nf">skip_onnx_input_quantize</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">output_file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    If the given model has a single FP32 input that feeds into a QuantizeLinear</span>
+<span class="sd">    node, then the input will be changed to uint8 and the QuantizeLinear node will be</span>
+<span class="sd">    deleted. This enables quantize graphs to take quantized inputs instead of floats.</span>
+
+<span class="sd">    If no optimization is made, a RuntimeError will be raised.</span>
+
+<span class="sd">    :param model: The model to convert, or a file path to it</span>
+<span class="sd">    :param output_file_path: File path to save the converted model to</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">optim_error_message</span> <span class="o">=</span> <span class="n">_skip_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">optim_error_message</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">optim_error_message</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_file_path</span><span class="p">:</span>
+        <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_file_path</span><span class="p">)</span></div>
 </pre></div>
 
            </div>
