@@ -66,15 +66,15 @@ To learn more about Neural Magic, `check our website <https://www.neuralmagic.co
     :maxdepth: 3
     :caption: Get Started
 
-    getstarted
+    source/getstarted
 
 .. toctree::
     :maxdepth: 3
     :caption: Details
 
     Technical Papers <https://neuralmagic.com/resources/technical-papers>
-    faqs
-    glossary
+    source/faqs
+    source/glossary
 
 
 .. toctree::

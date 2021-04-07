@@ -26,7 +26,8 @@ style:
 
 # create docs
 docs:
-	cd $(DOCDIR) && $(MAKE) html;
+	@echo "Running docs creation";
+	python utils/docs_builder.py --src $(DOCDIR) --dest $(DOCDIR)/build/html;
 
 # formats docs source build for github pages
 build:
