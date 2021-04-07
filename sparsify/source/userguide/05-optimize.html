@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   Optimize — Sparsify 0.2.0 documentation
+  </title>
+  <link href="../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/copybutton.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/css/nm-theme-adjustment.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/favicon.ico" rel="shortcut icon"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js" type="text/javascript">
+  </script>
+  <script src="../../_static/jquery.js">
+  </script>
+  <script src="../../_static/underscore.js">
+  </script>
+  <script src="../../_static/doctools.js">
+  </script>
+  <script src="../../_static/clipboard.min.js">
+  </script>
+  <script src="../../_static/copybutton.js">
+  </script>
+  <script src="../../_static/js/theme.js" type="text/javascript">
+  </script>
+  <link href="../../genindex.html" rel="index" title="Index"/>
+  <link href="../../search.html" rel="search" title="Search"/>
+  <link href="05a-benchmark.html" rel="next" title="Benchmarking"/>
+  <link href="04c-reviewing-loss-profiles.html" rel="prev" title="Reviewing Loss Profiles"/>
+ </head>
+ <body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+   <nav class="wy-nav-side" data-toggle="wy-nav-shift">
+    <div class="wy-side-scroll">
+     <div class="wy-side-nav-search">
+      <a class="icon icon-home" href="../../index.html">
+       Sparsify
+       <img alt="Logo" class="logo" src="../../_static/icon-sparsify.png"/>
+      </a>
+      <div class="version">
+       0.2
+      </div>
+      <div role="search">
+       <form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+        <input name="q" placeholder="Search docs" type="text"/>
+        <input name="check_keywords" type="hidden" value="yes"/>
+        <input name="area" type="hidden" value="default"/>
+       </form>
+      </div>
+     </div>
+     <div aria-label="main navigation" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+      <p class="caption">
+       <span class="caption-text">
+        General
+       </span>
+      </p>
+      <ul class="current">
+       <li class="toctree-l1">
+        <a class="reference internal" href="../quicktour.html">
+         Quick Tour
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../installation.html">
+         Installation
+        </a>
+       </li>
+       <li class="toctree-l1 current">
+        <a class="reference internal" href="index.html">
+         User Guide
+        </a>
+        <ul class="current">
+         <li class="toctree-l2">
+          <a class="reference internal" href="01-intro.html">
+           Welcome to Sparsify
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="02-install-sparsify.html">
+           Installing and Launching Sparsify
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="03-sparsify-overview.html">
+           Sparsify Overview
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="04-analyze.html">
+           Analyze
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="04b-reviewing-performance-profiles.html">
+           Reviewing Performance Profiles
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="04c-reviewing-loss-profiles.html">
+           Reviewing Loss Profiles
+          </a>
+         </li>
+         <li class="toctree-l2 current">
+          <a class="current reference internal" href="#">
+           Optimize
+          </a>
+          <ul>
+           <li class="toctree-l3">
+            <a class="reference internal" href="#running-sparsify-for-model-optimization">
+             Running Sparsify for Model Optimization
+            </a>
+            <ul>
+             <li class="toctree-l4">
+              <a class="reference internal" href="#pruning-modifier">
+               Pruning Modifier
+              </a>
+             </li>
+             <li class="toctree-l4">
+              <a class="reference internal" href="#learning-rate-modifier">
+               Learning Rate Modifier
+              </a>
+             </li>
+             <li class="toctree-l4">
+              <a class="reference internal" href="#training-summary">
+               Training Summary
+              </a>
+             </li>
+            </ul>
+           </li>
+           <li class="toctree-l3">
+            <a class="reference internal" href="#exporting">
+             Exporting
+            </a>
+           </li>
+          </ul>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="05a-benchmark.html">
+           Benchmarking
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="06-integrate.html">
+           Integrate
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="06a-optimize-config.html">
+           Optimization Config File and Code for Optimization
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="07-settings.html">
+           Settings
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="08-key-terms.html">
+           Key Concepts/Features/Terms
+          </a>
+         </li>
+        </ul>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        API
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../../api/sparsify.html">
+         sparsify package
+        </a>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        Help
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://github.com/neuralmagic/sparsify/issues">
+         Bugs, Feature Requests
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://github.com/neuralmagic/sparsify/discussions">
+         Support, General Q&amp;A
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://docs.neuralmagic.com">
+         Neural Magic Docs
+        </a>
+       </li>
+      </ul>
+     </div>
+    </div>
+   </nav>
+   <section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+    <nav aria-label="top navigation" class="wy-nav-top">
+     <i class="fa fa-bars" data-toggle="wy-nav-top">
+     </i>
+     <a href="../../index.html">
+      Sparsify
+     </a>
+    </nav>
+    <div class="wy-nav-content">
+     <div class="rst-content">
+      <div aria-label="breadcrumbs navigation" role="navigation">
+       <ul class="wy-breadcrumbs">
+        <li>
+         <a class="icon icon-home" href="../../index.html">
+         </a>
+         »
+        </li>
+        <li>
+         <a href="index.html">
+          User Guide
+         </a>
+         »
+        </li>
+        <li>
+         Optimize
+        </li>
+        <li class="wy-breadcrumbs-aside">
+         <a href="../../_sources/source/userguide/05-optimize.md.txt" rel="nofollow">
+          View page source
+         </a>
+        </li>
+       </ul>
+       <hr/>
+      </div>
+      <div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+       <div itemprop="articleBody">
+        <!--
+Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+        <div class="section" id="optimize">
+         <h1>
+          Optimize
+          <a class="headerlink" href="#optimize" title="Permalink to this headline">
+           ¶
+          </a>
+         </h1>
+         <p>
+          After you analyze your model, you are ready to make optimizations on it. When you apply model optimizations (such as pruning), retraining the model is required. During model optimization, you will use Sparsify to apply the latest techniques to make your model run faster. Your goals are to:
+         </p>
+         <ul class="simple">
+          <li>
+           <p>
+            Create and edit an automatic model optimization configuration using one of the Sparsify techniques:
+           </p>
+           <ul>
+            <li>
+             <p>
+              Pruning
+             </p>
+            </li>
+            <li>
+             <p>
+              Quantization (future)
+             </p>
+            </li>
+            <li>
+             <p>
+              Sparse transfer learning (future)
+             </p>
+            </li>
+           </ul>
+          </li>
+          <li>
+           <p>
+            Optionally, benchmark the model to get measured (rather than estimated) values.
+           </p>
+          </li>
+         </ul>
+         <div class="section" id="running-sparsify-for-model-optimization">
+          <h2>
+           Running Sparsify for Model Optimization
+           <a class="headerlink" href="#running-sparsify-for-model-optimization" title="Permalink to this headline">
+            ¶
+           </a>
+          </h2>
+          <p>
+           There are two ways to use model optimization settings:
+          </p>
+          <ul>
+           <li>
+            <p>
+             Custom—Pruning, Quantization (future), or Sparse transfer learning (future)
+            </p>
+           </li>
+           <li>
+            <p>
+             Presets (future)
+            </p>
+            <p>
+             <kbd>
+              <img alt="(Model optimization settings)" height="280" src="images/image_26.jpg" width="320"/>
+             </kbd>
+            </p>
+            <p>
+             <strong>
+              Note:
+             </strong>
+             If you already ran optimization for your model, you will not see these options. Instead, the
+             <a class="reference external" href="#pruning-modifier">
+              Optimization screen
+             </a>
+             will be displayed.
+            </p>
+           </li>
+          </ul>
+          <p>
+           To run Sparsify for optimization:
+          </p>
+          <ol>
+           <li>
+            <p>
+             Select your optimization choice and click
+             <strong>
+              Next
+             </strong>
+             .
+            </p>
+           </li>
+           <li>
+            <p>
+             To help Sparsify set up a pruning profile, indicate how you trained your model. Select:
+            </p>
+            <ul class="simple">
+             <li>
+              <p>
+               Optimizer used.
+              </p>
+             </li>
+             <li>
+              <p>
+               Number of epochs used for your original training. This value must be greater than 1 and is generally 20 or greater.
+              </p>
+             </li>
+             <li>
+              <p>
+               Learning rate range that you used for training. The Initial LR should be less than 1 and the Final LR must be less than the Initial LR.
+              </p>
+             </li>
+            </ul>
+            <p>
+             For example:
+            </p>
+            <p>
+             <kbd>
+              <img alt="(Initial LR and Final LR)" height="280" src="images/image_27.jpg" width="340"/>
+             </kbd>
+            </p>
+           </li>
+           <li>
+            <p>
+             Click
+             <strong>
+              APPLY
+             </strong>
+             .
+            </p>
+            <p>
+             <strong>
+              Note:
+             </strong>
+             If you need to change these settings in the future, you can do so by changing the
+             <a class="reference external" href="06-settings-key">
+              Settings
+             </a>
+             . However, changing these values later will not change the modifiers on the Optimization screen.
+            </p>
+           </li>
+          </ol>
+          <p>
+           The Optimization screen is displayed. For example:
+          </p>
+          <p>
+           <kbd>
+            <img alt="(Optimization screen)" height="270" src="images/image_28.jpg" width="480"/>
+           </kbd>
+          </p>
+          <p>
+           The Optimization screen consists of three sections:
+          </p>
+          <ul class="simple">
+           <li>
+            <p>
+             Pruning Modifier
+            </p>
+           </li>
+           <li>
+            <p>
+             Learning Rate Modifier (displayed only if you entered the learning rates)
+            </p>
+           </li>
+           <li>
+            <p>
+             Training Summary
+            </p>
+           </li>
+          </ul>
+          <div class="section" id="pruning-modifier">
+           <h3>
+            Pruning Modifier
+            <a class="headerlink" href="#pruning-modifier" title="Permalink to this headline">
+             ¶
+            </a>
+           </h3>
+           <p>
+            The Pruning Modifier represents the sparsity profile, which shows all of the modifications that will be done to the training process to make it faster. For example:
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Pruning modifier)" height="150" src="images/image_29.jpg" width="370"/>
+            </kbd>
+           </p>
+           <p>
+            The graph provides a visual of the modifier—the sparsity across all the layers in the model. This gives you a sense of what is changing. Tooltips provide additional information at each layer.
+           </p>
+           <p>
+            Values on the left of this section show the modifier results—what is expected to happen during optimization. You want to see as much speedup as possible. Below the values, notice that you can scroll through the following to see different types of information:
+           </p>
+           <ul>
+            <li>
+             <p>
+              Summary
+             </p>
+             <p>
+              <kbd>
+               <img alt="(Summary)" height="200" src="images/image_29a.jpg" width="110"/>
+              </kbd>
+             </p>
+             <p>
+              <strong>
+               Recovery Confidence
+              </strong>
+              is the estimated chance of recovering the original accuracy of your model after pruning. Recovery Confidence compares the sparsity values with the optimal for loss use case. This value should be as close to 1 as possible (or greater than 1).
+             </p>
+            </li>
+            <li>
+             <p>
+              Performance
+             </p>
+             <p>
+              <kbd>
+               <img alt="(Performance)" height="200" src="images/image_29b.jpg" width="110"/>
+              </kbd>
+             </p>
+            </li>
+            <li>
+             <p>
+              FLOPS
+             </p>
+             <p>
+              <kbd>
+               <img alt="(FLOPS)" height="200" src="images/image_29c.jpg" width="110"/>
+              </kbd>
+             </p>
+            </li>
+            <li>
+             <p>
+              Params
+             </p>
+             <p>
+              <kbd>
+               <img alt="(Params)" height="200" src="images/image_29d.jpg" width="110"/>
+              </kbd>
+             </p>
+            </li>
+           </ul>
+           <p>
+            Pruning settings and the active epoch range are displayed to the right of the graph.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Params)" height="60" src="images/image_29e.jpg" width="190"/>
+            </kbd>
+           </p>
+           <p>
+            The average sparsity is displayed. You can use the slider to redistribute the sparsity across all layers to determine what will provide the best performance and the best chance for recovery. As you move the sparsity slider, you will see instant feedback in the measurement values and the graph. You will see changes in the estimated speedup, time, and recovery confidence. This gives you a relative sense of how much better the profile is. Sparsify redistributes the average sparsity for the model such that layers that affect the loss less and performance more are pruned to a higher level than others.
+           </p>
+           <p>
+            Click the
+            <kbd>
+             <img alt="(Adjustment icon)" height="25" src="images/image_30.jpg" width="25"/>
+            </kbd>
+            icon to see additional pruning settings. You can filter the layers by adjusting the minimum sparsity, minimum speedup, and/or minimum recovery. In addition, you can establish the optimization balance between performance and recovery.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Pruning settings)" height="250" src="images/image_31.jpg" width="170"/>
+            </kbd>
+           </p>
+           <p>
+            The active epoch range indicates when pruning will be active while training. The specified range affects accuracy and loss. If the range starts at 1 and ends at 31, pruning will run from epochs 1 through 31. The update frequency indicates the pruning steps taken (how often pruning occurs) while training. For example, if the update frequency is set to 1, pruning will take place once every epoch. If the update frequency is set to 0.5, pruning will take place at a rate of twice per epoch.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Pruning settings)" height="100" src="images/image_31a.jpg" width="140"/>
+            </kbd>
+           </p>
+           <p>
+            <em>
+             Pruning Editor
+            </em>
+           </p>
+           <p>
+            Click
+            <kbd>
+             <img alt="(Editor icon)" height="15" src="images/image_32.jpg" width="15"/>
+            </kbd>
+            to access the Pruning Editor.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Pruning editor)" height="270" src="images/image_33.jpg" width="400"/>
+            </kbd>
+           </p>
+           <p>
+            The table below the graph lists information for all layers. You can open each layer for more detail that you can adjust for optimization on a layer-by-layer basis. You can click
+            <img alt="&gt; icon" src="../../_images/image_34.jpg"/>
+            to display more detail for a layer. For example:
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Layer graphs)" height="170" src="images/image_35.jpg" width="480"/>
+            </kbd>
+           </p>
+          </div>
+          <div class="section" id="learning-rate-modifier">
+           <h3>
+            Learning Rate Modifier
+            <a class="headerlink" href="#learning-rate-modifier" title="Permalink to this headline">
+             ¶
+            </a>
+           </h3>
+           <p>
+            This section is displayed only if you entered the learning rates on the Model Optimization Settings dialog.
+           </p>
+           <p>
+            When you apply model optimizations (such as pruning), retraining the model is required. So, the learning rate modifier indicates (as you are training) how the system will control the learning rate for that training process. The graph represents a set learning rate schedule. It shows that at each learning rate step, increasingly fine-grained details of the model are learned.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Learning rate modifier)" height="170" src="images/image_36.jpg" width="480"/>
+            </kbd>
+           </p>
+           <p>
+            These values apply to the learning rate range when retraining the model. The initial learning rate value corresponds to the starting epoch and the final learning rate corresponds to the ending epoch.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Learning rate modifier)" height="100" src="images/image_36a.jpg" width="85"/>
+            </kbd>
+           </p>
+           <p>
+            <em>
+             Learning Rate Editor
+            </em>
+           </p>
+           <p>
+            The recovery confidence is closely tied to the learning rate range. You can adjust learning rate information and save multiple schedules.
+           </p>
+           <p>
+            Click
+            <kbd>
+             <img alt="(Editor icon)" height="15" src="images/image_37.jpg" width="15"/>
+            </kbd>
+            to access the Learning Rate Editor. For example:
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Learning rate editor)" height="300" src="images/image_38.jpg" width="480"/>
+            </kbd>
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Remove icon)" src="images/image_39.jpg"/>
+            </kbd>
+            (to the right of a schedule) removes the schedule.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(+ icon)" src="images/image_40.jpg"/>
+            </kbd>
+            (at the top right of the learning rate schedules table) adds a learning rate schedule.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Save icon)" src="images/image_41.jpg"/>
+            </kbd>
+            saves the schedule.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(X icon)" src="images/image_42.jpg"/>
+            </kbd>
+            removes the current settings.
+           </p>
+          </div>
+          <div class="section" id="training-summary">
+           <h3>
+            Training Summary
+            <a class="headerlink" href="#training-summary" title="Permalink to this headline">
+             ¶
+            </a>
+           </h3>
+           <p>
+            The training summary lays out all of the modifiers that are running and when those modifiers are active while you are training. In the following example, the pruning modifier is active during the pruning stage from epochs 1 to 31, and the learning rate modifier is active throughout the training (epochs 0 to 53) during the stabilization, pruning, and fine-tuning stages.
+           </p>
+           <p>
+            <kbd>
+             <img alt="(Pruning and LR Modifiers)" height="80" src="images/image_43.jpg" width="480"/>
+            </kbd>
+           </p>
+          </div>
+         </div>
+         <div class="section" id="exporting">
+          <h2>
+           Exporting
+           <a class="headerlink" href="#exporting" title="Permalink to this headline">
+            ¶
+           </a>
+          </h2>
+          <p>
+           When you are satisfied with the optimization setting, click the
+           <strong>
+            EXPORT
+           </strong>
+           button to export a configuration file and integrate code into your training, as described in the
+           <a class="reference internal" href="06-integrate.html">
+            <span class="doc">
+             Integrate
+            </span>
+           </a>
+           section.
+          </p>
+          <hr class="docutils"/>
+          <p>
+           <strong>
+            Next steps…
+           </strong>
+          </p>
+          <p>
+           Continue by
+           <a class="reference internal" href="05a-benchmark.html">
+            <span class="doc">
+             Benchmarking
+            </span>
+           </a>
+           .
+Otherwise, you are ready to
+           <a class="reference internal" href="06-integrate.html">
+            <span class="doc">
+             Integrate
+            </span>
+           </a>
+           .
+          </p>
+         </div>
+        </div>
+       </div>
+      </div>
+      <footer>
+       <div aria-label="footer navigation" class="rst-footer-buttons" role="navigation">
+        <a accesskey="n" class="btn btn-neutral float-right" href="05a-benchmark.html" rel="next" title="Benchmarking">
+         Next
+         <span aria-hidden="true" class="fa fa-arrow-circle-right">
+         </span>
+        </a>
+        <a accesskey="p" class="btn btn-neutral float-left" href="04c-reviewing-loss-profiles.html" rel="prev" title="Reviewing Loss Profiles">
+         <span aria-hidden="true" class="fa fa-arrow-circle-left">
+         </span>
+         Previous
+        </a>
+       </div>
+       <hr/>
+       <div role="contentinfo">
+        <p>
+         © Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the "License").
+        </p>
+       </div>
+       Built with
+       <a href="https://www.sphinx-doc.org/">
+        Sphinx
+       </a>
+       using a
+       <a href="https://github.com/readthedocs/sphinx_rtd_theme">
+        theme
+       </a>
+       provided by
+       <a href="https://readthedocs.org">
+        Read the Docs
+       </a>
+       .
+      </footer>
+     </div>
+    </div>
+   </section>
+  </div>
+  <div aria-label="versions" class="rst-versions" data-toggle="rst-versions" role="note">
+   <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book">
+     Other Versions
+    </span>
+    v: main
+    <span class="fa fa-caret-down">
+    </span>
+   </span>
+   <div class="rst-other-versions">
+    <dl>
+     <dt>
+      Branches
+     </dt>
+     <dd>
+      <a href="05-optimize.html">
+       main
+      </a>
+     </dd>
+    </dl>
+   </div>
+  </div>
+  <script type="text/javascript">
+   jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+  <!-- Theme Analytics -->
+  <script>
+   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-128364174-1', 'auto');
+    
+    ga('send', 'pageview');
+  </script>
+ </body>
+</html>
