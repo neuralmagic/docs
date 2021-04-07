@@ -12,6 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Utility to create and package documentation for the repository
+
+##########
+Command help:
+usage: docs_builder.py [-h] --src SRC --dest DEST
+
+Create and package documentation for the repository
+
+optional arguments:
+  -h, --help   show this help message and exit
+  --src SRC    the source directory to read the source for the docs from
+  --dest DEST  the destination directory to put the built docs
+
+
+##########
+Example command:
+python utils/docs_builder.py --src docs --dest docs/build/html
+"""
+
 import argparse
 import glob
 import os

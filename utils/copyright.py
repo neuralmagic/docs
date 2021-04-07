@@ -12,6 +12,62 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+"""
+Utility to add Neuralmagic copyright to the beginning of all files under
+the given glob patterns.
+
+
+##########
+Command help:
+usage: copyright.py [-h] {quality,style} ...
+
+Add Neuralmagic copyright to the beginning of all files under the given glob
+patterns. Currently assumes Python files using '#' as the commenting prefix.
+
+positional arguments:
+  {quality,style}
+
+optional arguments:
+  -h, --help       show this help message and exit
+
+
+##########
+quality command help:
+usage: copyright.py quality [-h] patterns [patterns ...]
+
+Run check across the files in the given patterns and fail if any do not have a
+copyright in them
+
+positional arguments:
+  patterns    the patterns to search through
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+
+##########
+style command help:
+usage: copyright.py style [-h] patterns [patterns ...]
+
+Add the copyright to any files in the given patterns if it is not present
+
+positional arguments:
+  patterns    the patterns to search through
+
+optional arguments:
+  -h, --help  show this help message and exit
+
+
+##########
+Quality example command:
+python utils/copyright.py quality utils/**/*.py
+
+
+##########
+Style example command:
+python utils/copyright.py style utils/**/*.py
+"""
+
 import argparse
 import glob
 import os
