@@ -168,7 +168,7 @@
 <span class="sd">aka model pruning</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -187,94 +187,113 @@
 <div class="viewcode-block" id="ModuleParamPruningMask"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask">[docs]</a><span class="k">class</span> <span class="nc">ModuleParamPruningMask</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Mask to apply kernel sparsity (model pruning) to a specific parameter in a layer</span>
+
+<span class="sd">    :param layers: the layers containing the parameters to mask</span>
+<span class="sd">    :param param_names: the names of the parameter to mask in each layer. If only</span>
+<span class="sd">        one name is given, that name will be applied to all layers that this object</span>
+<span class="sd">        masks. default is weight</span>
+<span class="sd">    :param store_init: store the init weights in a separate variable that can be</span>
+<span class="sd">        used and referenced later</span>
+<span class="sd">    :param store_unmasked: store the unmasked weights in a separate variable that</span>
+<span class="sd">        can be used and referenced later</span>
+<span class="sd">    :param track_grad_mom: store the gradient updates to the parameter with a</span>
+<span class="sd">        momentum variable must be in the range [0.0, 1.0), if set to 0.0 then will</span>
+<span class="sd">        only keep most recent</span>
+<span class="sd">    :param mask_creator: object to define sparisty mask creation,</span>
+<span class="sd">        default is unstructured mask</span>
+<span class="sd">    :param layer_names: the name of the layers the parameters to mask are located in</span>
+<span class="sd">    :param global_sparsity: set True to enable global pruning. if True, when creating</span>
+<span class="sd">        sparsity masks for a target sparsity sparsity masks will be created such that</span>
+<span class="sd">        the average sparsity across all given layers is the target sparsity with the</span>
+<span class="sd">        lowest global values masked. If False, each layer will be masked to the target</span>
+<span class="sd">        sparsity ranking values within each individual tensor. Default is False</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">layer</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
-        <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"weight"</span><span class="p">,</span>
+        <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">],</span>
+        <span class="n">param_names</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">"weight"</span><span class="p">,</span>
         <span class="n">store_init</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">store_unmasked</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">track_grad_mom</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">mask_creator</span><span class="p">:</span> <span class="n">PruningMaskCreator</span> <span class="o">=</span> <span class="n">UnstructuredPruningMaskCreator</span><span class="p">(),</span>
-        <span class="n">layer_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">layer_names</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="sd">"""</span>
-<span class="sd">        :param layer: the layer containing the parameter to mask</span>
-<span class="sd">        :param param_name: the name of the parameter to mask in the layer,</span>
-<span class="sd">            default is weight</span>
-<span class="sd">        :param store_init: store the init weights in a separate variable that can be</span>
-<span class="sd">            used and referenced later</span>
-<span class="sd">        :param store_unmasked: store the unmasked weights in a separate variable that</span>
-<span class="sd">            can be used and referenced later</span>
-<span class="sd">        :param track_grad_mom: store the gradient updates to the parameter with a</span>
-<span class="sd">            momentum variable must be in the range [0.0, 1.0), if set to 0.0 then will</span>
-<span class="sd">            only keep most recent</span>
-<span class="sd">        :param mask_creator: object to define sparisty mask creation,</span>
-<span class="sd">            default is unstructured mask</span>
-<span class="sd">        :param layer_name: the name of the layer the parameter to mask is located in</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span> <span class="o">=</span> <span class="n">layer</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_name</span> <span class="o">=</span> <span class="n">param_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_layer_name</span> <span class="o">=</span> <span class="n">layer_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="n">layers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_names</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">param_names</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">[</span><span class="n">param_names</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layer_names</span> <span class="o">=</span> <span class="n">layer_names</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_store_init</span> <span class="o">=</span> <span class="n">store_init</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_store_unmasked</span> <span class="o">=</span> <span class="n">store_unmasked</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">=</span> <span class="n">track_grad_mom</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">mask_creator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span> <span class="o">=</span> <span class="n">global_sparsity</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>
 
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_name</span><span class="p">)</span>  <span class="c1"># type: Parameter</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">"Error occurred while trying to get param </span><span class="si">{}</span><span class="s2"> in layer </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_param_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">,</span> <span class="n">err</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[Parameter]</span>
+        <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_names</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Error occurred while trying to get param </span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2"> "</span>
+                    <span class="sa">f</span><span class="s2">"in layer </span><span class="si">{</span><span class="n">layer</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">"</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>  <span class="c1"># initialize to all ones</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Tensor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Tensor</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Tensor</span>
+        <span class="c1"># initialize masks to all ones</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span> <span class="o">=</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_param_init</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_param_unmasked</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_param_grad</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_params_init</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_params_unmasked</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_params_grad</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_delete_hooks</span><span class="p">()</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">layer</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the layer containing the parameter to mask</span>
+<span class="sd">        :return: the layers containing the parameters to mask</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">param_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the name of the parameter to mask in the layer, default is weight</span>
+<span class="sd">        :return: the names of the parameters to mask in the layers</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_name</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_names</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">layer_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">layer_names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the name of the layer the parameter to mask is located in</span>
+<span class="sd">        :return: the names of the layers the parameter to mask is located in</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer_name</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer_names</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">names</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the full name of this sparsity mask in the following format:</span>
+<span class="sd">        :return: the full names of the sparsity masks in the following format:</span>
 <span class="sd">            &lt;LAYER&gt;.&lt;PARAM&gt;.sparsity_mask</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">.sparsity_mask"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer_name</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">.sparsity_mask"</span>
+            <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer_names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_names</span><span class="p">)</span>
+        <span class="p">]</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">store_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -309,6 +328,13 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span>
 
     <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">global_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :return: True if global pruning is enabled, False otherwise</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
+
+    <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">"""</span>
 <span class="sd">        :return: True if the parameter is currently being masked, False otherwise</span>
@@ -322,258 +348,307 @@
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_create_hooks</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="o">=</span> <span class="kc">None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_param_grad</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_setup_params_grad</span><span class="p">()</span>
         <span class="k">elif</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_delete_hooks</span><span class="p">()</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="n">value</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">params_data</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the current tensor in the parameter</span>
+<span class="sd">        :return: the current tensors in each of the parameters</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">]</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">param_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the current mask applied to the parameter</span>
+<span class="sd">        :return: the current masks applied to each of the parameters</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">params_init</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the initial value of the parameter before being masked</span>
+<span class="sd">        :return: the initial values of the parameters before being masked</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_unmasked</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">params_unmasked</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the unmasked value of the parameter</span>
+<span class="sd">        :return: the unmasked values of the parameters</span>
 <span class="sd">            (stores the last unmasked value before masking)</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">return</span> <span class="kc">None</span>
-
-        <span class="k">return</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span>
-            <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
-            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span>
-        <span class="p">)</span>
+        <span class="n">params_unmasked</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">params_unmasked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">params_unmasked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span>
+                    <span class="o">+</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
+                    <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">params_unmasked</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">param_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">params_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the current gradient values for the parameter</span>
+<span class="sd">        :return: the current gradient values for each parameter</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.set_param_data"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+<div class="viewcode-block" id="ModuleParamPruningMask.set_param_data"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_data">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        :param value: the value to set as the current tensor for the parameter,</span>
 <span class="sd">            if enabled the mask will be applied</span>
+<span class="sd">        :param param_idx: index of the parameter in this object to set the data of</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"param_data cannot be set to None"</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"param data cannot be set to None"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"param_tensor shape of </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> does not match layer.param "</span>
-                <span class="sa">f</span><span class="s2">"shape of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
+                <span class="sa">f</span><span class="s2">"param_tensor shape of </span><span class="si">{</span><span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2"> does not match parameter "</span>
+                <span class="sa">f</span><span class="s2">"shape of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">"</span>
             <span class="p">)</span>
 
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_param_unmasked</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span></div>
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_setup_params_unmasked</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.set_param_mask"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_mask">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">):</span>
+<div class="viewcode-block" id="ModuleParamPruningMask.set_param_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_masks">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">masks</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]):</span>
         <span class="sd">"""</span>
-<span class="sd">        :param value: the mask to set and apply as the current tensor,</span>
+<span class="sd">        :param masks: the masks to set and apply as the current param tensors,</span>
 <span class="sd">            if enabled mask is applied immediately</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"mask cannot be set to None"</span><span class="p">)</span>
+        <span class="n">mask_diffs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">masks</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"mask cannot be set to None"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">"mask shape of </span><span class="si">{}</span><span class="s2"> does not match layer.param shape of </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">shape</span>
+            <span class="k">if</span> <span class="n">value</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">"mask shape of </span><span class="si">{}</span><span class="s2"> does not match layer.param shape of </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="n">value</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+                    <span class="p">)</span>
                 <span class="p">)</span>
-            <span class="p">)</span>
 
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">()</span>
-        <span class="n">mask_diff</span> <span class="o">=</span> <span class="n">mask_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_value</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+            <span class="n">mask_diff</span> <span class="o">=</span> <span class="n">mask_difference</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="n">value</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="c1"># store our unmasked values if they should be tracked</span>
-            <span class="c1"># we only want to update our param_masked tensor with the ones</span>
-            <span class="c1"># that are newly masked</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask_diff</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
-            <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="p">(</span><span class="n">mask_diff</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
-            <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># store our unmasked values if they should be tracked</span>
+                <span class="c1"># we only want to update our param_masked tensor with the ones</span>
+                <span class="c1"># that are newly masked</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">mask_diff</span> <span class="o">==</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
+                <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span> <span class="o">+</span> <span class="p">(</span><span class="n">mask_diff</span> <span class="o">!=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">type</span><span class="p">()</span>
+                <span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span>
+                    <span class="n">idx</span>
+                <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">mask_diff</span></div>
+            <span class="n">mask_diffs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask_diff</span><span class="p">)</span>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.set_param_mask_from_weights"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_mask_from_weights">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_mask_from_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">mask_diffs</span></div>
+
+<div class="viewcode-block" id="ModuleParamPruningMask.set_param_masks_from_weights"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_masks_from_weights">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_masks_from_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Convenience function to set the parameter mask such that the</span>
-<span class="sd">        mask is 1 if the parameter value is non zero and 0 otherwise,</span>
+<span class="sd">        Convenience function to set the parameter masks such that the</span>
+<span class="sd">        mask is 1 if a parameter value is non zero and 0 otherwise,</span>
 <span class="sd">        unless otherwise defined by this object's mask_creator.</span>
 
 <span class="sd">        """</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_mask_from_tensor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_masks_from_tensor</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">]</span>
+        <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_mask</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.set_param_mask_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_mask_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_mask_from_abs_threshold</span><span class="p">(</span>
+<div class="viewcode-block" id="ModuleParamPruningMask.set_param_masks_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_masks_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_masks_from_abs_threshold</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Convenience function to set the parameter mask such that if</span>
-<span class="sd">        abs(value) &lt;= threshold the it is masked to 0</span>
+<span class="sd">        Convenience function to set the parameter masks such that if</span>
+<span class="sd">        abs(value) &lt;= threshold the it a value is masked to 0</span>
 
 <span class="sd">        :param threshold: the threshold at which all values will be masked to 0</span>
 <span class="sd">        """</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_mask_from_abs_threshold</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">threshold</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_masks_from_abs_threshold</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">],</span> <span class="n">threshold</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_mask</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.set_param_mask_from_sparsity"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_mask_from_sparsity">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_mask_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="ModuleParamPruningMask.set_param_masks_from_sparsity"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.set_param_masks_from_sparsity">[docs]</a>    <span class="k">def</span> <span class="nf">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        Convenience function to set the parameter mask such that it has a specific</span>
+<span class="sd">        Convenience function to set the parameter masks such that each masks have an</span>
 <span class="sd">        amount of masked values such that the percentage equals the sparsity amount</span>
 <span class="sd">        given. Masks the absolute smallest values up until sparsity is reached.</span>
 
 <span class="sd">        :param sparsity: the decimal sparsity to set the param mask to</span>
 <span class="sd">        """</span>
-        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_mask</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_masks</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">],</span>
+            <span class="n">sparsity</span><span class="p">,</span>
+            <span class="n">global_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span><span class="p">,</span>
+        <span class="p">)</span>
 
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_mask</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">(</span><span class="n">masks</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModuleParamPruningMask.apply"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<div class="viewcode-block" id="ModuleParamPruningMask.apply"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        apply the current mask to the params tensor (zero out the desired values)</span>
+
+<span class="sd">        :param param_idx: index of parameter to apply mask to. if not set, then masks</span>
+<span class="sd">            will be applied to all parameters with available masks</span>
 <span class="sd">        """</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">()</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">))</span> <span class="k">if</span> <span class="n">param_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">param_idx</span><span class="p">]</span>
 
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span></div>
 
 <div class="viewcode-block" id="ModuleParamPruningMask.reset"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_pruning.ModuleParamPruningMask.reset">[docs]</a>    <span class="k">def</span> <span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
 <span class="sd">        resets the current stored tensors such that they will be on the same device</span>
-<span class="sd">        and have the proper data</span>
+<span class="sd">        and have the initial data</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_regen_param_vals</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span><span class="p">)</span></div>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">):</span>
+            <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span></div>
 
-    <span class="k">def</span> <span class="nf">_check_regen_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">val</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">_check_regen_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="n">val</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
             <span class="n">val</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">val</span>
 
-    <span class="k">def</span> <span class="nf">_check_regen_param_vals</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span><span class="p">)</span>
-            <span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_check_regen_param_vals</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">))</span> <span class="k">if</span> <span class="n">param_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">param_idx</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span><span class="o">.</span><span class="n">device</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span><span class="p">)</span>
-            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span><span class="o">.</span><span class="n">device</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span><span class="o">.</span><span class="n">device</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span><span class="p">)</span>
-            <span class="p">)</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">device</span>
+            <span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_create_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">register_forward_pre_hook</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_hook_mask_forward</span>
-            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">register_forward_pre_hook</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_param_mask_forward_hook</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="p">)</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hook_mask_gradient</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_param_mask_gradient_hook</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_delete_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hook</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hook</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_hook_mask_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mod</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_get_param_mask_forward_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">hook_mask_forward</span><span class="p">(</span><span class="n">mod</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_hook_mask_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">grad</span><span class="p">):</span>
-        <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span>
-                <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad</span>
-            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">hook_mask_forward</span>
 
-        <span class="k">return</span> <span class="n">grad</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_mask</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_get_param_mask_gradient_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">hook_mask_gradient</span><span class="p">(</span><span class="n">grad</span><span class="p">):</span>
+            <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span>
+                    <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad</span>
+                <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_setup_param_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_init</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_init</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_init</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">return</span> <span class="n">grad</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">param_idx</span><span class="p">])</span>
 
-    <span class="k">def</span> <span class="nf">_setup_param_unmasked</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_unmasked</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_unmasked</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_unmasked</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">hook_mask_gradient</span>
 
-    <span class="k">def</span> <span class="nf">_setup_param_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&gt;=</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_param_grad</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">def</span> <span class="nf">_setup_params_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_init</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_init</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_init</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_setup_params_unmasked</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">))</span> <span class="k">if</span> <span class="n">param_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">param_idx</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_unmasked</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_store_unmasked</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_setup_params_grad</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&gt;=</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@staticmethod</span>
     <span class="k">def</span> <span class="nf">_detach_tens</span><span class="p">(</span><span class="n">tens</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>

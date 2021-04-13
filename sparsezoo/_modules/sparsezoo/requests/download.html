@@ -178,12 +178,18 @@
 <span class="kn">import</span> <span class="nn">requests</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo.requests.authentication</span> <span class="kn">import</span> <span class="n">get_auth_header</span>
-<span class="kn">from</span> <span class="nn">sparsezoo.requests.base</span> <span class="kn">import</span> <span class="n">MODELS_API_URL</span><span class="p">,</span> <span class="n">SPARSEZOO_TEST_MODE</span><span class="p">,</span> <span class="n">ModelArgs</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.requests.base</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">MODELS_API_URL</span><span class="p">,</span>
+    <span class="n">RECIPES_API_URL</span><span class="p">,</span>
+    <span class="n">SPARSEZOO_TEST_MODE</span><span class="p">,</span>
+    <span class="n">ModelArgs</span><span class="p">,</span>
+<span class="p">)</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"download_get_request"</span><span class="p">,</span>
     <span class="s2">"download_model_get_request"</span><span class="p">,</span>
+    <span class="s2">"download_recipe_get_request"</span><span class="p">,</span>
     <span class="s2">"DOWNLOAD_PATH"</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -231,6 +237,7 @@
 
     <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"GET download from </span><span class="si">{</span><span class="n">url</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="n">response</span> <span class="o">=</span> <span class="n">requests</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">url</span><span class="o">=</span><span class="n">url</span><span class="p">,</span> <span class="n">headers</span><span class="o">=</span><span class="n">header</span><span class="p">)</span>
+
     <span class="n">response</span><span class="o">.</span><span class="n">raise_for_status</span><span class="p">()</span>
     <span class="n">response_json</span> <span class="o">=</span> <span class="n">response</span><span class="o">.</span><span class="n">json</span><span class="p">()</span>
 
@@ -254,6 +261,27 @@
         <span class="n">base_url</span><span class="o">=</span><span class="n">MODELS_API_URL</span><span class="p">,</span>
         <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
         <span class="n">sub_path</span><span class="o">=</span><span class="n">file_name</span><span class="p">,</span>
+        <span class="n">force_token_refresh</span><span class="o">=</span><span class="n">force_token_refresh</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="download_recipe_get_request"><a class="viewcode-back" href="../../../api/sparsezoo.requests.html#sparsezoo.requests.download.download_recipe_get_request">[docs]</a><span class="k">def</span> <span class="nf">download_recipe_get_request</span><span class="p">(</span>
+    <span class="n">args</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelArgs</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">recipe_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">force_token_refresh</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Get a downloadable recipe from the sparsezoo for any objects matching the args</span>
+
+<span class="sd">    :param args: the model args describing what should be downloaded for</span>
+<span class="sd">    :param recipe_type: the recipe_type to get download info for if not original</span>
+<span class="sd">    :param force_token_refresh: True to refresh the auth token, False otherwise</span>
+<span class="sd">    :return: the json response as a dict</span>
+<span class="sd">    """</span>
+    <span class="k">return</span> <span class="n">download_get_request</span><span class="p">(</span>
+        <span class="n">base_url</span><span class="o">=</span><span class="n">RECIPES_API_URL</span><span class="p">,</span>
+        <span class="n">args</span><span class="o">=</span><span class="n">args</span><span class="p">,</span>
+        <span class="n">sub_path</span><span class="o">=</span><span class="n">recipe_type</span><span class="p">,</span>
         <span class="n">force_token_refresh</span><span class="o">=</span><span class="n">force_token_refresh</span><span class="p">,</span>
     <span class="p">)</span></div>
 </pre>

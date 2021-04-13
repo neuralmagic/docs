@@ -58,15 +58,15 @@ Our inference engine and model optimization technologies enable companies to use
   </tr>
 </table>
 
-Today, we offer support for convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://docs.neuralmagic.com/sparsezoo/models.html).
+Today, we offer support for convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://docs.neuralmagic.com/sparsezoo/source/models.html).
 
-We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/models.html) and SparseZoo including model architectures beyond computer vision. Popular NLP models such as BERT are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
+We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/source/models.html) and SparseZoo including model architectures beyond computer vision. Popular NLP models such as BERT are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
 
 ### Notes
 
 #### PyTorch and ONNX
 
-Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. PyTorch has native ONNX export and requires fewer steps than other supported frameworks, such as [Keras or TensorFlow](https://docs.neuralmagic.com/sparseml/quicktour.html#exporting-to-onnx). If you have flexibility in frameworks, consider PyTorch to start.
+Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. PyTorch has native ONNX export and requires fewer steps than other supported frameworks, such as [Keras or TensorFlow](https://docs.neuralmagic.com/sparseml/source/quicktour.html#exporting-to-onnx). If you have flexibility in frameworks, consider PyTorch to start.
 
 #### Model Considerations
 

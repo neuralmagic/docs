@@ -98,7 +98,7 @@ AVX-512, AVX2, and VNNI. The DeepSparse Engine will automatically utilize the mo
 
 Yes, absolutely. We can run anywhere you have a CPU with x86 instructions, including on bare metal, in the cloud, on-prem, or at the edge. Additionally, our model optimization tools are able to reduce the footprint of models across all architectures. We only guarantee performance in the DeepSparse Engine.
 
-We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please reach out](feedback@neuralmagic.com). Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
+We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please contact us](https://neuralmagic.com/contact/). Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
 
 **Do you have available solutions or applications on the Microsoft/Azure platform?**
 

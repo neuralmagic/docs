@@ -176,11 +176,12 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.base</span> <span class="kn">import</span> <span class="n">BaseObject</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.downloadable</span> <span class="kn">import</span> <span class="n">Downloadable</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.metadata</span> <span class="kn">import</span> <span class="n">ModelMetadata</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects.release_version</span> <span class="kn">import</span> <span class="n">ReleaseVersion</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.requests</span> <span class="kn">import</span> <span class="n">download_model_get_request</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">create_parent_dirs</span><span class="p">,</span> <span class="n">download_file</span>
 
@@ -215,6 +216,7 @@
 <span class="sd">    :param display_name: The file name and extension</span>
 <span class="sd">    :param file_type: The type of file the object represents</span>
 <span class="sd">    :param operator_version: Version of the file such as onnx OPSET for onnx files</span>
+<span class="sd">    :param release_version: The Release Version of the file, as a Dict or ReleaseVersion</span>
 <span class="sd">    :param checkpoint: True if the model is a checkpoint file</span>
 <span class="sd">        (for use with transfer learning flows), False otherwise</span>
 <span class="sd">    :param md5: The md5 hash for the file as stored in the cloud</span>
@@ -231,11 +233,12 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model_metadata</span><span class="p">:</span> <span class="n">ModelMetadata</span><span class="p">,</span>
+        <span class="n">model_metadata</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">ModelMetadata</span><span class="p">],</span>
         <span class="n">file_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">display_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">file_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">operator_version</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">release_version</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">,</span> <span class="n">ReleaseVersion</span><span class="p">],</span>
         <span class="n">checkpoint</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
         <span class="n">md5</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">file_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -246,6 +249,17 @@
         <span class="n">override_parent_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">release_version</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="n">release_version</span> <span class="o">=</span> <span class="n">ReleaseVersion</span><span class="p">(</span><span class="o">**</span><span class="n">release_version</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">"release_version"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_metadata</span><span class="p">:</span>
+                <span class="n">model_metadata</span> <span class="o">=</span> <span class="n">ModelMetadata</span><span class="p">(</span>
+                    <span class="n">release_version</span><span class="o">=</span><span class="n">release_version</span><span class="p">,</span> <span class="o">**</span><span class="n">model_metadata</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">model_metadata</span> <span class="o">=</span> <span class="n">ModelMetadata</span><span class="p">(</span><span class="o">**</span><span class="n">model_metadata</span><span class="p">)</span>
+
         <span class="n">folder_name</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">model_metadata</span><span class="o">.</span><span class="n">model_id</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="n">override_folder_name</span>
@@ -270,6 +284,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_file_size</span> <span class="o">=</span> <span class="n">file_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_downloads</span> <span class="o">=</span> <span class="n">downloads</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_url</span> <span class="o">=</span> <span class="n">url</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span> <span class="o">=</span> <span class="n">release_version</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">model_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelMetadata</span><span class="p">:</span>
@@ -430,6 +445,13 @@
 <span class="sd">        :return: True if the file has already been downloaded, False otherwise</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">release_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ReleaseVersion</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :return: the file's release version</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span>
 
 <div class="viewcode-block" id="File.downloaded_path"><a class="viewcode-back" href="../../../api/sparsezoo.objects.html#sparsezoo.objects.file.File.downloaded_path">[docs]</a>    <span class="k">def</span> <span class="nf">downloaded_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">"""</span>

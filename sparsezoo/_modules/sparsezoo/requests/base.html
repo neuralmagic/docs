@@ -178,7 +178,14 @@
 <span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">convert_to_bool</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"BASE_API_URL"</span><span class="p">,</span> <span class="s2">"ModelArgs"</span><span class="p">,</span> <span class="s2">"MODELS_API_URL"</span><span class="p">,</span> <span class="s2">"SPARSEZOO_TEST_MODE"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">"BASE_API_URL"</span><span class="p">,</span>
+    <span class="s2">"ModelArgs"</span><span class="p">,</span>
+    <span class="s2">"MODELS_API_URL"</span><span class="p">,</span>
+    <span class="s2">"SPARSEZOO_TEST_MODE"</span><span class="p">,</span>
+    <span class="s2">"RecipeArgs"</span><span class="p">,</span>
+    <span class="s2">"RECIPES_API_URL"</span><span class="p">,</span>
+<span class="p">]</span>
 
 <span class="n">SPARSEZOO_TEST_MODE</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SPARSEZOO_TEST_MODE"</span><span class="p">))</span>
 
@@ -188,6 +195,7 @@
     <span class="k">else</span> <span class="s2">"https://api.neuralmagic.com"</span>
 <span class="p">)</span>
 <span class="n">MODELS_API_URL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">BASE_API_URL</span><span class="si">}</span><span class="s2">/models"</span>
+<span class="n">RECIPES_API_URL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">BASE_API_URL</span><span class="si">}</span><span class="s2">/recipes"</span>
 
 
 <div class="viewcode-block" id="ModelArgs"><a class="viewcode-back" href="../../../api/sparsezoo.requests.html#sparsezoo.requests.base.ModelArgs">[docs]</a><span class="k">class</span> <span class="nc">ModelArgs</span><span class="p">:</span>
@@ -436,6 +444,107 @@
             <span class="s2">"optim_name"</span><span class="p">,</span>
             <span class="s2">"optim_category"</span><span class="p">,</span>
             <span class="s2">"optim_target"</span><span class="p">,</span>
+        <span class="p">]:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">"</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">value</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">value</span><span class="p">:</span>
+                <span class="n">args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">=</span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">args</span></div>
+
+
+<div class="viewcode-block" id="RecipeArgs"><a class="viewcode-back" href="../../../api/sparsezoo.requests.html#sparsezoo.requests.base.RecipeArgs">[docs]</a><span class="k">class</span> <span class="nc">RecipeArgs</span><span class="p">(</span><span class="n">ModelArgs</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Arguments for making recipe requests into the sparsezoo</span>
+
+<span class="sd">    :param domain: The domain of the model the object belongs to;</span>
+<span class="sd">        e.g. cv, nlp</span>
+<span class="sd">    :param sub_domain: The sub domain of the model the object belongs to;</span>
+<span class="sd">        e.g. classification, segmentation</span>
+<span class="sd">    :param architecture: The architecture of the model the object belongs to;</span>
+<span class="sd">        e.g. resnet_v1, mobilenet_v1</span>
+<span class="sd">    :param sub_architecture: The sub architecture (scaling factor) of the model</span>
+<span class="sd">        the object belongs to; e.g. 50, 101, 152</span>
+<span class="sd">    :param framework: The framework the model the object belongs to was trained on;</span>
+<span class="sd">        e.g. pytorch, tensorflow</span>
+<span class="sd">    :param repo: the source repo for the model the object belongs to;</span>
+<span class="sd">        e.g. sparseml, torchvision</span>
+<span class="sd">    :param dataset: The dataset the model the object belongs to was trained on;</span>
+<span class="sd">        e.g. imagenet, cifar10</span>
+<span class="sd">    :param training_scheme: The training scheme used on the model the object belongs</span>
+<span class="sd">        to if any; e.g. augmented</span>
+<span class="sd">    :param optim_name: The name describing the optimization of the model</span>
+<span class="sd">        the object belongs to, e.g. base, pruned, pruned_quant,</span>
+<span class="sd">    :param optim_category: The degree of optimization of the model the object</span>
+<span class="sd">        belongs to; e.g. none, conservative (~100% baseline metric),</span>
+<span class="sd">        moderate (&gt;=99% baseline metric), aggressive (&lt;99% baseline metric)</span>
+<span class="sd">    :param optim_target: The deployment target of optimization of the model</span>
+<span class="sd">        the object belongs to; e.g. edge, deepsparse, deepsparse_throughput, gpu</span>
+<span class="sd">    :param release_version: The sparsezoo release version for the model</span>
+<span class="sd">    :param recipe_type: The recipe type; e.g. original, transfer_learn</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">domain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sub_domain</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">architecture</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sub_architecture</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">framework</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">repo</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">training_scheme</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optim_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optim_category</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optim_target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">release_version</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">recipe_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RecipeArgs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">domain</span><span class="o">=</span><span class="n">domain</span><span class="p">,</span>
+            <span class="n">sub_domain</span><span class="o">=</span><span class="n">sub_domain</span><span class="p">,</span>
+            <span class="n">architecture</span><span class="o">=</span><span class="n">architecture</span><span class="p">,</span>
+            <span class="n">sub_architecture</span><span class="o">=</span><span class="n">sub_architecture</span><span class="p">,</span>
+            <span class="n">framework</span><span class="o">=</span><span class="n">framework</span><span class="p">,</span>
+            <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
+            <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
+            <span class="n">training_scheme</span><span class="o">=</span><span class="n">training_scheme</span><span class="p">,</span>
+            <span class="n">optim_name</span><span class="o">=</span><span class="n">optim_name</span><span class="p">,</span>
+            <span class="n">optim_category</span><span class="o">=</span><span class="n">optim_category</span><span class="p">,</span>
+            <span class="n">optim_target</span><span class="o">=</span><span class="n">optim_target</span><span class="p">,</span>
+            <span class="n">release_version</span><span class="o">=</span><span class="n">release_version</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_type</span> <span class="o">=</span> <span class="n">recipe_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">recipe_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :return: The recipe type; e.g. original, transfer_learn</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_type</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">model_url_args</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :return: arguments for searching in the sparsezoo</span>
+<span class="sd">        """</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span>
+            <span class="s2">"architecture"</span><span class="p">,</span>
+            <span class="s2">"sub_architecture"</span><span class="p">,</span>
+            <span class="s2">"framework"</span><span class="p">,</span>
+            <span class="s2">"repo"</span><span class="p">,</span>
+            <span class="s2">"dataset"</span><span class="p">,</span>
+            <span class="s2">"training_scheme"</span><span class="p">,</span>
+            <span class="s2">"optim_name"</span><span class="p">,</span>
+            <span class="s2">"optim_category"</span><span class="p">,</span>
+            <span class="s2">"optim_target"</span><span class="p">,</span>
+            <span class="s2">"recipe_type"</span><span class="p">,</span>
         <span class="p">]:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 

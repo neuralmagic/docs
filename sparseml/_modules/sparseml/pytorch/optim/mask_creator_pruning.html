@@ -169,7 +169,7 @@
 
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -191,33 +191,41 @@
 <span class="sd">    Subclasses should define all methods for creating masks</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_mask_from_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_mask_from_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask_from_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_masks_from_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_masks_from_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask based on its values</span>
-<span class="sd">        :return: a mask derived from the values of tensor</span>
+<span class="sd">        :param tensors: list of tensors to calculate a masks based on their values</span>
+<span class="sd">        :return: list of masks derived from each of the given tensors</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
+        <span class="k">return</span> <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">ne</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span></div>
 
-<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_mask_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_mask_from_abs_threshold">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">create_sparsity_mask_from_abs_threshold</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_masks_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_masks_from_abs_threshold">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_abs_threshold</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained</span>
+<span class="sd">        :param tensors: list of tensors to calculate a masks based on their contained</span>
 <span class="sd">            values</span>
 <span class="sd">        :param threshold: a threshold to determine cutoff for sparsification</span>
-<span class="sd">        :return: a mask derived from the tensor and the threshold</span>
+<span class="sd">        :return: list of masks derived from each of the given tensors and the threshold</span>
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
 
-<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_mask"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_mask">[docs]</a>    <span class="nd">@abstractmethod</span>
-    <span class="k">def</span> <span class="nf">create_sparsity_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="PruningMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.PruningMaskCreator.create_sparsity_masks">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained values</span>
+<span class="sd">        :param tensors: list of tensors to calculate a masks based on their contained</span>
+<span class="sd">            values</span>
 <span class="sd">        :param sparsity: the desired sparsity to reach within the mask</span>
 <span class="sd">            (decimal fraction of zeros)</span>
-<span class="sd">        :return: a mask (0.0 for values that are masked, 1.0 for values that are</span>
-<span class="sd">            unmasked) calculated from the tens such that the desired number of zeros</span>
+<span class="sd">        :param global_sparsity: if True, sparsity masks will be created such that the</span>
+<span class="sd">            average sparsity across all given tensors is the target sparsity with the</span>
+<span class="sd">            lowest global values masked. If False, each tensor will be masked to the</span>
+<span class="sd">            target sparsity ranking values within each individual tensor. Default is</span>
+<span class="sd">            False</span>
+<span class="sd">        :return: list of masks (0.0 for values that are masked, 1.0 for values that are</span>
+<span class="sd">            unmasked) calculated from the tensors such that the desired number of zeros</span>
 <span class="sd">            matches the sparsity.</span>
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
@@ -227,54 +235,88 @@
     <span class="sd">"""</span>
 <span class="sd">    Class for creating unstructured sparsity masks.</span>
 <span class="sd">    Masks will be created using unstructured sparsity by pruning weights ranked</span>
-<span class="sd">    by their magnitude.</span>
+<span class="sd">    by their magnitude.  Each mask will correspond to the given tensor.</span>
 <span class="sd">    """</span>
 
-<div class="viewcode-block" id="UnstructuredPruningMaskCreator.create_sparsity_mask_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.UnstructuredPruningMaskCreator.create_sparsity_mask_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask_from_abs_threshold</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="UnstructuredPruningMaskCreator.create_sparsity_masks_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.UnstructuredPruningMaskCreator.create_sparsity_masks_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_abs_threshold</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained values</span>
+<span class="sd">        :param tensors: list of tensors to calculate a masks based on their contained</span>
+<span class="sd">            values</span>
 <span class="sd">        :param threshold: a threshold at which to mask abs(values) if they are</span>
 <span class="sd">            less than it or equal</span>
-<span class="sd">        :return: a mask (0.0 for values that are masked, 1.0 for values that are</span>
-<span class="sd">            unmasked) calculated from the tens abs(values) &lt;= threshold are masked,</span>
+<span class="sd">        :return: list of masks (0.0 for values that are masked, 1.0 for values that are</span>
+<span class="sd">            unmasked) calculated from the tensors abs(values) &lt;= threshold are masked,</span>
 <span class="sd">            all others are unmasked</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span>
+        <span class="p">]</span></div>
 
-<div class="viewcode-block" id="UnstructuredPruningMaskCreator.create_sparsity_mask"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.UnstructuredPruningMaskCreator.create_sparsity_mask">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="UnstructuredPruningMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.UnstructuredPruningMaskCreator.create_sparsity_masks">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained values</span>
+<span class="sd">        :param tensors: list of tensors to calculate a mask from based on their</span>
+<span class="sd">            contained values</span>
 <span class="sd">        :param sparsity: the desired sparsity to reach within the mask</span>
 <span class="sd">            (decimal fraction of zeros)</span>
-<span class="sd">        :return: a mask (0.0 for values that are masked, 1.0 for values that are</span>
-<span class="sd">            unmasked) calculated from the tens such that the desired number of zeros</span>
-<span class="sd">            matches the sparsity. removes the abs lowest values if there are more zeros</span>
-<span class="sd">            in the tens than desired sparsity, then will randomly choose the zeros</span>
+<span class="sd">        :param global_sparsity: if True, sparsity masks will be created such that the</span>
+<span class="sd">            average sparsity across all given tensors is the target sparsity with the</span>
+<span class="sd">            lowest global values masked. If False, each tensor will be masked to the</span>
+<span class="sd">            target sparsity ranking values within each individual tensor. Default is</span>
+<span class="sd">            False</span>
+<span class="sd">        :return: list of masks (0.0 for values that are masked, 1.0 for values that are</span>
+<span class="sd">            unmasked) calculated from the tensors such that the desired number of zeros</span>
+<span class="sd">            matches the sparsity.  If there are more zeros than the desired sparsity,</span>
+<span class="sd">            zeros will be randomly chosen to match the target sparsity</span>
 <span class="sd">        """</span>
-        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs_threshold_from_sparsity</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">global_sparsity</span><span class="p">:</span>
+            <span class="c1"># create tensor to make global mask with</span>
+            <span class="n">original_tensors</span> <span class="o">=</span> <span class="n">tensors</span>
+            <span class="n">tensors</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_flatten_and_stack_tensors</span><span class="p">(</span><span class="n">tensors</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">original_tensors</span> <span class="o">=</span> <span class="kc">None</span>
 
-        <span class="k">if</span> <span class="n">threshold</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="k">return</span> <span class="n">tensor</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
 
-        <span class="k">if</span> <span class="n">threshold</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
-            <span class="k">return</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
+            <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_abs_threshold_from_sparsity</span><span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
 
-        <span class="c1"># too many zeros so will go over the already given sparsity</span>
-        <span class="c1"># and choose which zeros to not keep in mask at random</span>
-        <span class="n">zero_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">tensor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
-        <span class="n">rand_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">zero_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-        <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">rand_indices</span><span class="p">)</span>
-        <span class="n">num_elem</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
-        <span class="n">num_mask</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_elem</span> <span class="o">*</span> <span class="n">sparsity</span><span class="p">)</span>
-        <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">rand_indices</span><span class="p">[:</span><span class="n">num_mask</span><span class="p">]</span>
-        <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">new_tensor</span><span class="p">(</span><span class="n">rand_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
-        <span class="n">zero_indices</span> <span class="o">=</span> <span class="n">zero_indices</span><span class="p">[</span><span class="n">rand_indices</span><span class="p">,</span> <span class="p">:]</span>
-        <span class="n">mask</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
-        <span class="n">mask</span><span class="p">[</span><span class="n">zero_indices</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">if</span> <span class="n">threshold</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+                <span class="k">continue</span>
 
-        <span class="k">return</span> <span class="n">mask</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
+            <span class="k">if</span> <span class="n">threshold</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">()))</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># too many zeros so will go over the already given sparsity</span>
+            <span class="c1"># and choose which zeros to not keep in mask at random</span>
+            <span class="n">zero_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">tensor</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">)</span><span class="o">.</span><span class="n">nonzero</span><span class="p">()</span>
+            <span class="n">rand_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">zero_indices</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+            <span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">rand_indices</span><span class="p">)</span>
+            <span class="n">num_elem</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="n">num_mask</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">num_elem</span> <span class="o">*</span> <span class="n">sparsity</span><span class="p">)</span>
+            <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">rand_indices</span><span class="p">[:</span><span class="n">num_mask</span><span class="p">]</span>
+            <span class="n">rand_indices</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">new_tensor</span><span class="p">(</span><span class="n">rand_indices</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">int64</span><span class="p">)</span>
+            <span class="n">zero_indices</span> <span class="o">=</span> <span class="n">zero_indices</span><span class="p">[</span><span class="n">rand_indices</span><span class="p">,</span> <span class="p">:]</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">new_ones</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
+            <span class="n">mask</span><span class="p">[</span><span class="n">zero_indices</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mask</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">()))</span>
+
+        <span class="k">if</span> <span class="n">global_sparsity</span><span class="p">:</span>
+            <span class="c1"># unpack global mask into tensor-masks with the original shapes</span>
+            <span class="n">global_mask</span> <span class="o">=</span> <span class="n">masks</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unstack_flattened_tensors</span><span class="p">(</span><span class="n">global_mask</span><span class="p">,</span> <span class="n">original_tensors</span><span class="p">)</span>
+            <span class="k">del</span> <span class="n">global_mask</span>
+
+        <span class="k">return</span> <span class="n">masks</span></div>
 
     <span class="k">def</span> <span class="nf">_abs_threshold_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>
@@ -296,6 +338,42 @@
             <span class="n">lookup_index</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
 
         <span class="k">return</span> <span class="n">sorted_vals</span><span class="p">[</span><span class="n">lookup_index</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_flatten_and_stack_tensors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="n">total_elements</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">)</span>
+
+        <span class="n">global_tensor</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">tensors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">new_zeros</span><span class="p">(</span><span class="n">total_elements</span><span class="p">)</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">curr_element</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">tensors</span><span class="p">):</span>
+            <span class="n">global_tensor</span><span class="p">[</span>
+                <span class="n">curr_element</span> <span class="p">:</span> <span class="n">curr_element</span> <span class="o">+</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">curr_element</span> <span class="o">+=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">global_tensor</span>
+
+    <span class="k">def</span> <span class="nf">_unstack_flattened_tensors</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">stacked_tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">original_tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">unstacked_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">global_idx</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">original_tensors</span><span class="p">:</span>
+            <span class="c1"># unpack global tensor into masks matching original tensor shapes</span>
+            <span class="n">unstacked_tensor</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">tensor</span><span class="o">.</span><span class="n">new_empty</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">())</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">requires_grad_</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">unstacked_tensor</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                <span class="n">stacked_tensor</span><span class="p">[</span><span class="n">global_idx</span> <span class="p">:</span> <span class="n">global_idx</span> <span class="o">+</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()]</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span>
+            <span class="n">unstacked_tensor</span> <span class="o">=</span> <span class="n">unstacked_tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+            <span class="n">unstacked_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">unstacked_tensor</span><span class="p">)</span>
+            <span class="n">global_idx</span> <span class="o">+=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">unstacked_tensors</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="s2">"unstructured"</span>
@@ -364,44 +442,71 @@
 <span class="sd">        """</span>
         <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
 
-<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_mask_from_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_mask_from_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask_from_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_masks_from_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_masks_from_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask based on its values</span>
-<span class="sd">        :return: a mask derived from the values of tensor grouped by the group_tensor</span>
+<span class="sd">        :param tensors: list of tensors to calculate masks based on their values</span>
+<span class="sd">        :return: list of masks derived from the values of the tensors grouped by</span>
+<span class="sd">            the group_tensor function.</span>
 <span class="sd">        """</span>
-        <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_mask_from_tensor</span><span class="p">(</span><span class="n">grouped_tensor</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+        <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
+            <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+            <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks_from_tensor</span><span class="p">([</span><span class="n">grouped_tensor</span><span class="p">])[</span>
+                <span class="mi">0</span>
+            <span class="p">]</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">masks</span></div>
 
-<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_mask_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_mask_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask_from_abs_threshold</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_masks_from_abs_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_masks_from_abs_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_abs_threshold</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">threshold</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained</span>
+<span class="sd">        :param tensors: list of tensors to calculate masks from based on their contained</span>
 <span class="sd">            values</span>
 <span class="sd">        :param threshold: a threshold of group_tensor values to determine cutoff</span>
 <span class="sd">            for sparsification</span>
-<span class="sd">        :return: a mask derived from the tensor and the grouped threshold</span>
+<span class="sd">        :return: list of masks derived from the tensors and the grouped threshold</span>
 <span class="sd">        """</span>
-        <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_mask_from_abs_threshold</span><span class="p">(</span>
-            <span class="n">grouped_tensor</span><span class="p">,</span> <span class="n">threshold</span>
-        <span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div>
+        <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
+            <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+            <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks_from_abs_threshold</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">grouped_tensor</span><span class="p">],</span> <span class="n">threshold</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">masks</span></div>
 
-<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_mask"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_mask">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_mask</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+<div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_masks">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :param tensor: the tensor to calculate a mask from based on the contained values</span>
+<span class="sd">        :param tensors: list of tensors to calculate masks from based on their contained</span>
+<span class="sd">            values</span>
 <span class="sd">        :param sparsity: the desired sparsity to reach within the mask</span>
 <span class="sd">            (decimal fraction of zeros)</span>
-<span class="sd">        :return: a mask (0.0 for values that are masked, 1.0 for values that are</span>
-<span class="sd">            unmasked) calculated from the tens such that the desired number of zeros</span>
-<span class="sd">            matches the sparsity and all values mapped to the same group have the</span>
-<span class="sd">            same value.</span>
+<span class="sd">        :param global_sparsity: if True, sparsity masks will be created such that the</span>
+<span class="sd">            average sparsity across all given tensors is the target sparsity with the</span>
+<span class="sd">            lowest global values masked. If False, each tensor will be masked to the</span>
+<span class="sd">            target sparsity ranking values within each individual tensor. Default is</span>
+<span class="sd">            False</span>
+<span class="sd">        :return: list of masks (0.0 for values that are masked, 1.0 for values that are</span>
+<span class="sd">            unmasked) calculated from the tensors such that the desired number of zeros</span>
+<span class="sd">            matches the sparsity and all values mapped to the same group have the same</span>
+<span class="sd">            value</span>
 <span class="sd">        """</span>
-        <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
-        <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_mask</span><span class="p">(</span><span class="n">grouped_tensor</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span></div></div>
+        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span>
+        <span class="n">grouped_masks</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks</span><span class="p">(</span>
+            <span class="n">grouped_tensors</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">global_sparsity</span>
+        <span class="p">)</span>
+        <span class="n">masks</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">grouped_masks</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">masks</span></div></div>
 
 
 <div class="viewcode-block" id="DimensionSparsityMaskCreator"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator">[docs]</a><span class="k">class</span> <span class="nc">DimensionSparsityMaskCreator</span><span class="p">(</span><span class="n">GroupedPruningMaskCreator</span><span class="p">):</span>
@@ -436,6 +541,31 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span> <span class="o">=</span> <span class="n">dim</span>  <span class="c1"># List[int]</span>
+
+<div class="viewcode-block" id="DimensionSparsityMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator.create_sparsity_masks">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :param tensors: list of tensors to calculate masks from based on their contained</span>
+<span class="sd">            values</span>
+<span class="sd">        :param sparsity: the desired sparsity to reach within the mask</span>
+<span class="sd">            (decimal fraction of zeros)</span>
+<span class="sd">        :param global_sparsity: do not set True, unsupported for</span>
+<span class="sd">            DimensionSparsityMaskCreator</span>
+<span class="sd">        :return: list of masks (0.0 for values that are masked, 1.0 for values that are</span>
+<span class="sd">            unmasked) calculated from the tensors such that the desired number of zeros</span>
+<span class="sd">            matches the sparsity and all values mapped to the same group have the same</span>
+<span class="sd">            value</span>
+<span class="sd">        """</span>
+        <span class="k">if</span> <span class="n">global_sparsity</span><span class="p">:</span>
+            <span class="c1"># global sparsity unsupported because channel dims may vary across layers</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"global_sparsity not supported for DimensionSparsityMaskCreator"</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="DimensionSparsityMaskCreator.group_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator.group_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">group_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">"""</span>

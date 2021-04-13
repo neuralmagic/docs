@@ -197,6 +197,7 @@
 
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Optional</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.file</span> <span class="kn">import</span> <span class="n">File</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects.metadata</span> <span class="kn">import</span> <span class="n">ModelMetadata</span>
@@ -224,6 +225,7 @@
 <span class="sd">    :param recipe_id: the recipe id</span>
 <span class="sd">    :param recipe_type: the type of optimization recipe</span>
 <span class="sd">    :param display_description: the display description for the optimization</span>
+<span class="sd">    :param base_stub: the stub for the base model of this recipe, if any</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -232,6 +234,7 @@
         <span class="n">recipe_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">recipe_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
         <span class="n">display_description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">base_stub</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">OptimizationRecipe</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
@@ -240,6 +243,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_id</span> <span class="o">=</span> <span class="n">recipe_id</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_recipe_type</span> <span class="o">=</span> <span class="n">recipe_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_display_description</span> <span class="o">=</span> <span class="n">display_description</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_base_stub</span> <span class="o">=</span> <span class="n">base_stub</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">recipe_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -283,7 +288,21 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the display description for the optimization</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_display_description</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_display_description</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">base_stub</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the stub for the base model of this recipe, if any</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_stub</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">stub</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: full path for where the recipe is located in the sparsezoo</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_metadata</span><span class="o">.</span><span class="n">stub</span></div>
 </pre></div>
 
            </div>
