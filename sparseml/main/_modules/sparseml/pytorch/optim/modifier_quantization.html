@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.2.0 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.3.0.20210430 documentation</title>
   
 
   
@@ -70,7 +70,7 @@
             
             
               <div class="version">
-                0.2
+                0.3
               </div>
             
           
@@ -255,6 +255,9 @@
 <span class="sd">        exception. For compatibility with YAML serialization only.</span>
 <span class="sd">    :param model_fuse_fn_kwargs: dictionary of keyword argument values to be passed</span>
 <span class="sd">        to the model fusing function</span>
+<span class="sd">    :param enable_on_initialize: if True, QAT will be enabled in the given module</span>
+<span class="sd">        when this modifier is initialized. This means that QAT will begin from modifier</span>
+<span class="sd">        initialization regardless of the start_epoch value. Default is False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -266,6 +269,7 @@
         <span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">model_fuse_fn_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">enable_on_initialize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch_intrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -287,8 +291,10 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span> <span class="o">=</span> <span class="n">model_fuse_fn_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">disable_quantization_observer_epoch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">freeze_bn_stats_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enable_on_initialize</span> <span class="o">=</span> <span class="n">enable_on_initialize</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_quantization_observer_disabled</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -382,6 +388,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
 
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">enable_on_initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if QAT should be enabled when this modifier is initialized,</span>
+<span class="sd">            False otherwise. If true, start_epoch will not be respected</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enable_on_initialize</span>
+
 <div class="viewcode-block" id="QuantizationModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Grab the module / submodule to perform QAT on</span>
@@ -405,7 +419,10 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enable_on_initialize</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enable_module_qat</span><span class="p">(</span><span class="n">module</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="QuantizationModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
@@ -423,33 +440,8 @@
 <span class="sd">            (calculate batch number using this and epoch)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;no_fuse&quot;</span>
-            <span class="p">):</span>  <span class="c1"># module class fn</span>
-                <span class="n">module_fuse_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">module_fuse_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">module_fuse_fn</span><span class="p">):</span>
-                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                        <span class="s2">&quot;Invalid model_fuse_fn_name. &quot;</span>
-                        <span class="s2">&quot;Module has no callable function </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
-                        <span class="p">)</span>
-                    <span class="p">)</span>
-                <span class="n">module_fuse_fn</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># default auto fn</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">[</span><span class="s2">&quot;inplace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
-                <span class="n">fuse_module_conv_bn_relus</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
-            <span class="c1"># prepare each module / submodule for quantization</span>
-            <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
-            <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
-                <span class="c1"># set quantization config (asymmetric activations, symmetric weights)</span>
-                <span class="n">quant_module</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span>
-                <span class="c1"># wrap all conv / linear blocks in with quantization observers</span>
-                <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
-                <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
-                <span class="c1"># set model to QAT mode</span>
-                <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enable_module_qat</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
             <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
@@ -460,6 +452,37 @@
             <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
                 <span class="n">quant_module</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">torch_intrinsic</span><span class="o">.</span><span class="n">qat</span><span class="o">.</span><span class="n">freeze_bn_stats</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+    <span class="k">def</span> <span class="nf">_enable_module_qat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+        <span class="c1"># fuse module Conv-BNs</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;no_fuse&quot;</span>
+        <span class="p">):</span>  <span class="c1"># module class fn</span>
+            <span class="n">module_fuse_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">module_fuse_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">module_fuse_fn</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Invalid model_fuse_fn_name. &quot;</span>
+                    <span class="s2">&quot;Module has no callable function </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">module_fuse_fn</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># default auto fn</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">[</span><span class="s2">&quot;inplace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">fuse_module_conv_bn_relus</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
+
+        <span class="c1"># prepare each module / submodule for quantization</span>
+        <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+            <span class="c1"># set quantization config (asymmetric activations, symmetric weights)</span>
+            <span class="n">quant_module</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span>
+            <span class="c1"># wrap all conv / linear blocks in with quantization observers</span>
+            <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="c1"># set model to QAT mode</span>
+            <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">(</span>

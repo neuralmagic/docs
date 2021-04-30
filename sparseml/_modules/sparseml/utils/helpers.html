@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.utils.helpers — SparseML 0.2.0 documentation
+   sparseml.utils.helpers — SparseML 0.3.0.20210430 documentation
   </title>
   <link href="../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../../_static/icon-sparseml.png"/>
       </a>
       <div class="version">
-       0.2
+       0.3
       </div>
       <div role="search">
        <form action="../../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -181,7 +181,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
-<span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">OptimizationRecipe</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">load_numpy_list</span>
 
 
@@ -919,11 +919,11 @@
     <span class="p">)</span>
 
 
-<div class="viewcode-block" id="load_recipe_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.utils.html#sparseml.utils.helpers.load_recipe_yaml_str">[docs]</a><span class="k">def</span> <span class="nf">load_recipe_yaml_str</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OptimizationRecipe</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="viewcode-block" id="load_recipe_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.utils.html#sparseml.utils.helpers.load_recipe_yaml_str">[docs]</a><span class="k">def</span> <span class="nf">load_recipe_yaml_str</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Loads a YAML recipe file to a string or</span>
 <span class="sd">    extracts recipe from YAML front matter in a sparsezoo markdown recipe card.</span>
-<span class="sd">    Recipes can also be provided as SparseZoo model stubs or OptimizationRecipe</span>
+<span class="sd">    Recipes can also be provided as SparseZoo model stubs or Recipe</span>
 <span class="sd">    objects.</span>
 
 <span class="sd">    YAML front matter: https://jekyllrb.com/docs/front-matter/</span>
@@ -932,13 +932,13 @@
 <span class="sd">        stub to a SparseZoo model whose recipe will be downloaded and loaded.</span>
 <span class="sd">        SparseZoo stubs should be preceded by 'zoo:', and can contain an optional</span>
 <span class="sd">        '?recipe_type=&lt;type&gt;' parameter or include a `/&lt;type&gt;` subpath. Can also</span>
-<span class="sd">        be a SparseZoo OptimizationRecipe object. i.e. '/path/to/local/recipe.yaml',</span>
+<span class="sd">        be a SparseZoo Recipe object. i.e. '/path/to/local/recipe.yaml',</span>
 <span class="sd">        'zoo:model/stub/path', 'zoo:model/stub/path?recipe_type=transfer_learn',</span>
 <span class="sd">        'zoo:model/stub/path/transfer_learn'</span>
 <span class="sd">    :return: the recipe YAML configuration loaded as a string</span>
 <span class="sd">    """</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">OptimizationRecipe</span><span class="p">):</span>
-        <span class="c1"># download and unwrap OptimizationRecipe object</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">):</span>
+        <span class="c1"># download and unwrap Recipe object</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
     <span class="k">elif</span> <span class="n">file_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"zoo:"</span><span class="p">):</span>
         <span class="c1"># download from zoo stub</span>
@@ -975,16 +975,16 @@
     <span class="sd">"""</span>
 <span class="sd">    :param optim_full_name: A name of a pretrained model optimization. i.e.</span>
 <span class="sd">        'pruned-moderate-deepsparse', 'pruned-aggressive', 'base'</span>
-<span class="sd">    :return: A tuple representing the corresponding SparseZoo model optim_name,</span>
-<span class="sd">        optim_category, and optim_target values with appropriate defaults when</span>
+<span class="sd">    :return: A tuple representing the corresponding SparseZoo model sparse_name,</span>
+<span class="sd">        sparse_category, and sparse_target values with appropriate defaults when</span>
 <span class="sd">        not present.</span>
 <span class="sd">    """</span>
     <span class="n">optim_defaults</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"base"</span><span class="p">,</span> <span class="s2">"none"</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span>
     <span class="n">optim_split_name</span> <span class="o">=</span> <span class="n">optim_full_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"-"</span><span class="p">)</span>
     <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">optim_split_name</span><span class="p">)</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">optim_defaults</span><span class="p">):</span>
         <span class="n">optim_split_name</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">optim_defaults</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">optim_split_name</span><span class="p">)])</span>
-    <span class="n">optim_name</span><span class="p">,</span> <span class="n">optim_category</span><span class="p">,</span> <span class="n">optim_target</span> <span class="o">=</span> <span class="n">optim_split_name</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
-    <span class="k">return</span> <span class="n">optim_name</span><span class="p">,</span> <span class="n">optim_category</span><span class="p">,</span> <span class="n">optim_target</span></div>
+    <span class="n">sparse_name</span><span class="p">,</span> <span class="n">sparse_category</span><span class="p">,</span> <span class="n">sparse_target</span> <span class="o">=</span> <span class="n">optim_split_name</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">sparse_name</span><span class="p">,</span> <span class="n">sparse_category</span><span class="p">,</span> <span class="n">sparse_target</span></div>
 </pre>
         </div>
        </div>

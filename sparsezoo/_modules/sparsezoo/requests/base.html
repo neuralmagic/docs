@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparsezoo.requests.base — SparseZoo 0.2.0 documentation
+   sparsezoo.requests.base — SparseZoo 0.3.0.20210430 documentation
   </title>
   <link href="../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../../_static/icon-sparsezoo.png"/>
       </a>
       <div class="version">
-       0.2
+       0.3
       </div>
       <div role="search">
        <form action="../../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -173,7 +173,8 @@
 <span class="sd">"""</span>
 
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">convert_to_bool</span>
 
@@ -185,7 +186,9 @@
     <span class="s2">"SPARSEZOO_TEST_MODE"</span><span class="p">,</span>
     <span class="s2">"RecipeArgs"</span><span class="p">,</span>
     <span class="s2">"RECIPES_API_URL"</span><span class="p">,</span>
+    <span class="s2">"parse_zoo_stub"</span><span class="p">,</span>
 <span class="p">]</span>
+
 
 <span class="n">SPARSEZOO_TEST_MODE</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"SPARSEZOO_TEST_MODE"</span><span class="p">))</span>
 
@@ -196,6 +199,45 @@
 <span class="p">)</span>
 <span class="n">MODELS_API_URL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">BASE_API_URL</span><span class="si">}</span><span class="s2">/models"</span>
 <span class="n">RECIPES_API_URL</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">BASE_API_URL</span><span class="si">}</span><span class="s2">/recipes"</span>
+
+<span class="c1"># optional prefix for stubs</span>
+<span class="n">ZOO_STUB_PREFIX</span> <span class="o">=</span> <span class="s2">"zoo:"</span>
+
+
+<div class="viewcode-block" id="parse_zoo_stub"><a class="viewcode-back" href="../../../api/sparsezoo.requests.html#sparsezoo.requests.base.parse_zoo_stub">[docs]</a><span class="k">def</span> <span class="nf">parse_zoo_stub</span><span class="p">(</span>
+    <span class="n">stub</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">valid_params</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]:</span>
+    <span class="sd">"""</span>
+<span class="sd">    :param stub: A SparseZoo model stub. i.e. 'model/stub/path',</span>
+<span class="sd">        'zoo:model/stub/path', 'zoo:model/stub/path?param1=value1&amp;param2=value2'</span>
+<span class="sd">    :param valid_params: list of expected parameter names to be encoded in the</span>
+<span class="sd">        stub. Will raise a warning if any unexpected param names are given. Leave</span>
+<span class="sd">        as None to not raise any warnings. Default is None</span>
+<span class="sd">    :return: the parsed base stub and a dictionary of parameter names and their values</span>
+<span class="sd">    """</span>
+    <span class="c1"># strip optional zoo stub prefix</span>
+    <span class="k">if</span> <span class="n">stub</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">ZOO_STUB_PREFIX</span><span class="p">):</span>
+        <span class="n">stub</span> <span class="o">=</span> <span class="n">stub</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">ZOO_STUB_PREFIX</span><span class="p">)</span> <span class="p">:]</span>
+
+    <span class="k">if</span> <span class="s2">"?"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">stub</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">stub</span><span class="p">,</span> <span class="p">{}</span>
+
+    <span class="n">stub_parts</span> <span class="o">=</span> <span class="n">stub</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"?"</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stub_parts</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"Invalid SparseZoo stub, query string must be preceded by only one '?'"</span>
+            <span class="sa">f</span><span class="s2">"given </span><span class="si">{</span><span class="n">stub</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+    <span class="n">stub</span><span class="p">,</span> <span class="n">params</span> <span class="o">=</span> <span class="n">stub_parts</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"="</span><span class="p">)</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"&amp;"</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">valid_params</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span><span class="n">param</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_params</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">"Invalid query string for stub </span><span class="si">{</span><span class="n">stub</span><span class="si">}</span><span class="s2"> valid params include </span><span class="si">{</span><span class="n">valid_params</span><span class="si">}</span><span class="s2">,"</span>
+            <span class="sa">f</span><span class="s2">" given </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">params</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">stub</span><span class="p">,</span> <span class="n">params</span></div>
 
 
 <div class="viewcode-block" id="ModelArgs"><a class="viewcode-back" href="../../../api/sparsezoo.requests.html#sparsezoo.requests.base.ModelArgs">[docs]</a><span class="k">class</span> <span class="nc">ModelArgs</span><span class="p">:</span>
@@ -218,12 +260,12 @@
 <span class="sd">        e.g. imagenet, cifar10</span>
 <span class="sd">    :param training_scheme: The training scheme used on the model the object belongs</span>
 <span class="sd">        to if any; e.g. augmented</span>
-<span class="sd">    :param optim_name: The name describing the optimization of the model</span>
+<span class="sd">    :param sparse_name: The name describing the sparsification of the model</span>
 <span class="sd">        the object belongs to, e.g. base, pruned, pruned_quant,</span>
-<span class="sd">    :param optim_category: The degree of optimization of the model the object</span>
+<span class="sd">    :param sparse_category: The degree of sparsification of the model the object</span>
 <span class="sd">        belongs to; e.g. none, conservative (~100% baseline metric),</span>
 <span class="sd">        moderate (&gt;=99% baseline metric), aggressive (&lt;99% baseline metric)</span>
-<span class="sd">    :param optim_target: The deployment target of optimization of the model</span>
+<span class="sd">    :param sparse_target: The deployment target of sparsification of the model</span>
 <span class="sd">        the object belongs to; e.g. edge, deepsparse, deepsparse_throughput, gpu</span>
 <span class="sd">    :param release_version: The sparsezoo release version for the model</span>
 <span class="sd">    """</span>
@@ -238,9 +280,9 @@
         <span class="n">repo</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">training_scheme</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_category</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_category</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">release_version</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
@@ -252,9 +294,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_repo</span> <span class="o">=</span> <span class="n">repo</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dataset</span> <span class="o">=</span> <span class="n">dataset</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_training_scheme</span> <span class="o">=</span> <span class="n">training_scheme</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_optim_name</span> <span class="o">=</span> <span class="n">optim_name</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_optim_category</span> <span class="o">=</span> <span class="n">optim_category</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_optim_target</span> <span class="o">=</span> <span class="n">optim_target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_name</span> <span class="o">=</span> <span class="n">sparse_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_category</span> <span class="o">=</span> <span class="n">sparse_category</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_target</span> <span class="o">=</span> <span class="n">sparse_target</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_release_version</span> <span class="o">=</span> <span class="n">release_version</span>
 
     <span class="nd">@property</span>
@@ -322,29 +364,29 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_training_scheme</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">optim_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">sparse_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: The name describing the optimization of the model</span>
+<span class="sd">        :return: The name describing the sparsification of the model</span>
 <span class="sd">            the object belongs to, e.g. base, pruned, pruned_quant</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optim_name</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_name</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">optim_category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">sparse_category</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: The degree of optimization of the model the object belongs to;</span>
+<span class="sd">        :return: The degree of sparsification of the model the object belongs to;</span>
 <span class="sd">            e.g. none, conservative (~100% baseline metric),</span>
 <span class="sd">            moderate (&gt;=99% baseline metric), aggressive (&lt;99% baseline metric)</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optim_category</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_category</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">optim_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">sparse_target</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: The deployment target of optimization of the model</span>
+<span class="sd">        :return: The deployment target of sparsification of the model</span>
 <span class="sd">            the object belongs to; e.g. edge, deepsparse, deepsparse_throughput, gpu</span>
 <span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optim_target</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sparse_target</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">release_version</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
@@ -382,21 +424,21 @@
         <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">training_scheme</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="nd">@property</span>
-    <span class="k">def</span> <span class="nf">optimization_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">sparse_id</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: Unique id for how the model was optimized containing the</span>
-<span class="sd">            optim_name, optim_category, optim_target</span>
+<span class="sd">        :return: Unique id for how the model was sparse containing the</span>
+<span class="sd">            sparse_name, sparse_category, sparse_target</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">optim_name</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_name</span><span class="p">:</span>
             <span class="k">return</span> <span class="s2">""</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">optim_category</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_name</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_category</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_name</span><span class="si">}</span><span class="s2">"</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">optim_target</span><span class="p">:</span>
-            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_category</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparse_target</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_category</span><span class="si">}</span><span class="s2">"</span>
 
-        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_category</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">optim_target</span><span class="si">}</span><span class="s2">"</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_name</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_category</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_target</span><span class="si">}</span><span class="s2">"</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">model_url_root</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -423,7 +465,7 @@
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">framework</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">framework</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">repo</span><span class="si">}</span><span class="s2">"</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">repo</span> <span class="k">else</span> <span class="s2">""</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">training_id</span><span class="p">,</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">optimization_id</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">sparse_id</span><span class="p">,</span>
             <span class="p">]</span>
         <span class="p">)</span>
 
@@ -441,9 +483,9 @@
             <span class="s2">"repo"</span><span class="p">,</span>
             <span class="s2">"dataset"</span><span class="p">,</span>
             <span class="s2">"training_scheme"</span><span class="p">,</span>
-            <span class="s2">"optim_name"</span><span class="p">,</span>
-            <span class="s2">"optim_category"</span><span class="p">,</span>
-            <span class="s2">"optim_target"</span><span class="p">,</span>
+            <span class="s2">"sparse_name"</span><span class="p">,</span>
+            <span class="s2">"sparse_category"</span><span class="p">,</span>
+            <span class="s2">"sparse_target"</span><span class="p">,</span>
         <span class="p">]:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>
 
@@ -475,12 +517,12 @@
 <span class="sd">        e.g. imagenet, cifar10</span>
 <span class="sd">    :param training_scheme: The training scheme used on the model the object belongs</span>
 <span class="sd">        to if any; e.g. augmented</span>
-<span class="sd">    :param optim_name: The name describing the optimization of the model</span>
+<span class="sd">    :param sparse_name: The name describing the sparsification of the model</span>
 <span class="sd">        the object belongs to, e.g. base, pruned, pruned_quant,</span>
-<span class="sd">    :param optim_category: The degree of optimization of the model the object</span>
+<span class="sd">    :param sparse_category: The degree of sparsification of the model the object</span>
 <span class="sd">        belongs to; e.g. none, conservative (~100% baseline metric),</span>
 <span class="sd">        moderate (&gt;=99% baseline metric), aggressive (&lt;99% baseline metric)</span>
-<span class="sd">    :param optim_target: The deployment target of optimization of the model</span>
+<span class="sd">    :param sparse_target: The deployment target of sparsification of the model</span>
 <span class="sd">        the object belongs to; e.g. edge, deepsparse, deepsparse_throughput, gpu</span>
 <span class="sd">    :param release_version: The sparsezoo release version for the model</span>
 <span class="sd">    :param recipe_type: The recipe type; e.g. original, transfer_learn</span>
@@ -496,9 +538,9 @@
         <span class="n">repo</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">dataset</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">training_scheme</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_category</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-        <span class="n">optim_target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_category</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">sparse_target</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">release_version</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">recipe_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -512,9 +554,9 @@
             <span class="n">repo</span><span class="o">=</span><span class="n">repo</span><span class="p">,</span>
             <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">,</span>
             <span class="n">training_scheme</span><span class="o">=</span><span class="n">training_scheme</span><span class="p">,</span>
-            <span class="n">optim_name</span><span class="o">=</span><span class="n">optim_name</span><span class="p">,</span>
-            <span class="n">optim_category</span><span class="o">=</span><span class="n">optim_category</span><span class="p">,</span>
-            <span class="n">optim_target</span><span class="o">=</span><span class="n">optim_target</span><span class="p">,</span>
+            <span class="n">sparse_name</span><span class="o">=</span><span class="n">sparse_name</span><span class="p">,</span>
+            <span class="n">sparse_category</span><span class="o">=</span><span class="n">sparse_category</span><span class="p">,</span>
+            <span class="n">sparse_target</span><span class="o">=</span><span class="n">sparse_target</span><span class="p">,</span>
             <span class="n">release_version</span><span class="o">=</span><span class="n">release_version</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
@@ -541,9 +583,9 @@
             <span class="s2">"repo"</span><span class="p">,</span>
             <span class="s2">"dataset"</span><span class="p">,</span>
             <span class="s2">"training_scheme"</span><span class="p">,</span>
-            <span class="s2">"optim_name"</span><span class="p">,</span>
-            <span class="s2">"optim_category"</span><span class="p">,</span>
-            <span class="s2">"optim_target"</span><span class="p">,</span>
+            <span class="s2">"sparse_name"</span><span class="p">,</span>
+            <span class="s2">"sparse_category"</span><span class="p">,</span>
+            <span class="s2">"sparse_target"</span><span class="p">,</span>
             <span class="s2">"recipe_type"</span><span class="p">,</span>
         <span class="p">]:</span>
             <span class="n">value</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span>

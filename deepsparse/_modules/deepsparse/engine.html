@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   deepsparse.engine — DeepSparse 0.2.0 documentation
+   deepsparse.engine — DeepSparse 0.3.0 documentation
   </title>
   <link href="../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../_static/icon-deepsparse.png"/>
       </a>
       <div class="version">
-       0.2
+       0.3
       </div>
       <div role="search">
        <form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -83,6 +83,11 @@
        <li class="toctree-l1">
         <a class="reference internal" href="../../debugging-optimizing/index.html">
          Debugging and Optimizing
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../../source/scheduler.html">
+         Serial or Concurrent Inferences
         </a>
        </li>
       </ul>
@@ -181,6 +186,7 @@
 
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
@@ -212,7 +218,7 @@
     <span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Engine"</span><span class="p">,</span> <span class="s2">"compile_model"</span><span class="p">,</span> <span class="s2">"benchmark_model"</span><span class="p">,</span> <span class="s2">"analyze_model"</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"Engine"</span><span class="p">,</span> <span class="s2">"compile_model"</span><span class="p">,</span> <span class="s2">"benchmark_model"</span><span class="p">,</span> <span class="s2">"analyze_model"</span><span class="p">,</span> <span class="s2">"Scheduler"</span><span class="p">]</span>
 
 
 <span class="n">ARCH</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
@@ -222,6 +228,34 @@
 <span class="n">VNNI</span> <span class="o">=</span> <span class="n">ARCH</span><span class="o">.</span><span class="n">vnni</span>
 
 <span class="n">LIB</span> <span class="o">=</span> <span class="n">init_deepsparse_lib</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Scheduler"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Scheduler">[docs]</a><span class="k">class</span> <span class="nc">Scheduler</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Scheduler kinds to determine Engine execution strategy.</span>
+<span class="sd">    For most synchronous cases, the default single_stream is recommended.</span>
+<span class="sd">    For running a model server or parallel inferences, try multi_stream for</span>
+<span class="sd">    maximum utilization of hardware.</span>
+
+<span class="sd">    - default: maps to single_stream</span>
+<span class="sd">    - single_stream: requests from separate threads execute serially</span>
+<span class="sd">    - multi_stream: requests from separate threads execute in parallel</span>
+<span class="sd">    """</span>
+
+    <span class="n">default</span> <span class="o">=</span> <span class="s2">"default"</span>
+    <span class="n">single_stream</span> <span class="o">=</span> <span class="s2">"single_stream"</span>
+    <span class="n">multi_stream</span> <span class="o">=</span> <span class="s2">"multi_stream"</span>
+
+<div class="viewcode-block" id="Scheduler.from_str"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Scheduler.from_str">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_str</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"default"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">default</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"single"</span><span class="p">,</span> <span class="s2">"single_stream"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">single_stream</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">"multi"</span><span class="p">,</span> <span class="s2">"multi_stream"</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">multi_stream</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"unsupported Scheduler: </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div></div>
 
 
 <span class="k">def</span> <span class="nf">_model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -277,6 +311,21 @@
     <span class="k">return</span> <span class="n">num_sockets</span>
 
 
+<span class="k">def</span> <span class="nf">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Scheduler</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Scheduler</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">scheduler</span><span class="p">:</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">default</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="n">Scheduler</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">"unsupported type for scheduler: </span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scheduler</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="n">scheduler</span><span class="p">))</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">scheduler</span>
+
+
 <div class="viewcode-block" id="Engine"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Engine">[docs]</a><span class="k">class</span> <span class="nc">Engine</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    Create a new DeepSparse Engine that compiles the given onnx file</span>
@@ -299,6 +348,7 @@
 <span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
 <span class="sd">        current machine, default None</span>
+<span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -307,15 +357,21 @@
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span> <span class="o">=</span> <span class="n">_model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_sockets</span> <span class="o">=</span> <span class="n">_validate_num_sockets</span><span class="p">(</span><span class="n">num_sockets</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_avx_type</span> <span class="o">=</span> <span class="n">AVX_TYPE</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_vnni</span> <span class="o">=</span> <span class="n">VNNI</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_sockets</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_num_sockets</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
@@ -646,6 +702,7 @@
             <span class="s2">"batch_size"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
             <span class="s2">"num_cores"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
             <span class="s2">"num_sockets"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_sockets</span><span class="p">,</span>
+            <span class="s2">"scheduler"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="p">,</span>
             <span class="s2">"cpu_avx_type"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_avx_type</span><span class="p">,</span>
             <span class="s2">"cpu_vnni"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_vnni</span><span class="p">,</span>
         <span class="p">}</span></div>
@@ -656,6 +713,7 @@
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Engine</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Convenience function to compile a model in the DeepSparse Engine</span>
@@ -673,9 +731,16 @@
 <span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
 <span class="sd">        current machine, default None</span>
+<span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: The created Engine after compiling the model</span>
 <span class="sd">    """</span>
-    <span class="k">return</span> <span class="n">Engine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">)</span></div>
+    <span class="k">return</span> <span class="n">Engine</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">,</span>
+        <span class="n">num_sockets</span><span class="o">=</span><span class="n">num_sockets</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="benchmark_model"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.benchmark_model">[docs]</a><span class="k">def</span> <span class="nf">benchmark_model</span><span class="p">(</span>
@@ -689,6 +754,7 @@
     <span class="n">include_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BenchmarkResults</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Convenience function to benchmark a model in the DeepSparse Engine</span>
@@ -721,9 +787,16 @@
 <span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
 <span class="sd">        current machine, default None</span>
+<span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: the results of benchmarking</span>
 <span class="sd">    """</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">,</span>
+        <span class="n">num_sockets</span><span class="o">=</span><span class="n">num_sockets</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span>
         <span class="n">inp</span><span class="p">,</span>
@@ -746,6 +819,7 @@
     <span class="n">imposed_as</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">imposed_ks</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    Function to analyze a model's performance in the DeepSparse Engine.</span>
@@ -781,13 +855,17 @@
 <span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
 <span class="sd">        current machine, default None</span>
+<span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: the analysis structure containing the performance details of each layer</span>
 <span class="sd">    """</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">_model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
     <span class="n">num_sockets</span> <span class="o">=</span> <span class="n">_validate_num_sockets</span><span class="p">(</span><span class="n">num_sockets</span><span class="p">)</span>
-    <span class="n">eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">)</span>
+    <span class="n">scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
+    <span class="n">eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">value</span>
+    <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">eng_net</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span>
         <span class="n">inp</span><span class="p">,</span>
