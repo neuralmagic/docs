@@ -1,0 +1,452 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.3.0.20210503 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../../index.html" class="icon icon-home"> SparseML
+          
+
+          
+            
+            <img src="../../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.3
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/quicktour.html">Quick Tour</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/recipes.html">Sparsification Recipes</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Help</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">SparseML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.pytorch.utils.quantization.helpers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.pytorch.utils.quantization.helpers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions for performing quantization aware training with PyTorch</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">BatchNorm2d</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">,</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ReLU</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">torch.nn.intrinsic</span> <span class="k">as</span> <span class="nn">nni</span>
+    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">quantization</span> <span class="k">as</span> <span class="n">torch_quantization</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">nni</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">torch_quantization</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.nn</span> <span class="kn">import</span> <span class="n">ReLU</span> <span class="k">as</span> <span class="n">ReLU_nm</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;add_quant_dequant&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_qat_qconfig&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fuse_module_conv_bn_relus&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">_QUANTIZABLE_MODULE_TYPES</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="p">{</span>
+        <span class="c1"># Conv based layers</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv1d</span><span class="p">,</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv2d</span><span class="p">,</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Conv3d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBn1d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBn2d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBn3d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvReLU1d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvReLU2d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvReLU3d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBnReLU1d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBnReLU2d</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">ConvBnReLU3d</span><span class="p">,</span>
+        <span class="c1"># Linear Layers</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">,</span>
+        <span class="n">nni</span><span class="o">.</span><span class="n">LinearReLU</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="n">nni</span>  <span class="c1"># nni will always import if torch.quantization is available</span>
+    <span class="k">else</span> <span class="kc">None</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="add_quant_dequant"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.add_quant_dequant">[docs]</a><span class="k">def</span> <span class="nf">add_quant_dequant</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps all Conv and Linear submodule with a qconfig with a QuantWrapper</span>
+<span class="sd">    :param module: the module to modify</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">type</span><span class="p">(</span><span class="n">module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_QUANTIZABLE_MODULE_TYPES</span>
+        <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;qconfig&quot;</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">module</span><span class="o">.</span><span class="n">qconfig</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QuantWrapper</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
+        <span class="nb">setattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">child</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">module</span></div>
+
+
+<div class="viewcode-block" id="get_qat_qconfig"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig">[docs]</a><span class="k">def</span> <span class="nf">get_qat_qconfig</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :return: A QAT fake quantization config for symmetric weight quantization and</span>
+<span class="sd">        asymmetric activation quantization.  The difference between this and</span>
+<span class="sd">        torch.quantization.default_qat_qconfig is that the activation observer</span>
+<span class="sd">        will not have reduce_range enabled.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">activation_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">FakeQuantize</span><span class="o">.</span><span class="n">with_args</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">=</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">MovingAverageMinMaxObserver</span><span class="p">,</span>
+        <span class="n">quant_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+        <span class="n">quant_max</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">quint8</span><span class="p">,</span>
+        <span class="n">qscheme</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_affine</span><span class="p">,</span>
+        <span class="n">reduce_range</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">weight_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">default_weight_fake_quant</span>
+    <span class="k">return</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">(</span>
+        <span class="n">activation</span><span class="o">=</span><span class="n">activation_observer</span><span class="p">,</span>
+        <span class="n">weight</span><span class="o">=</span><span class="n">weight_observer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="fuse_module_conv_bn_relus"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.fuse_module_conv_bn_relus">[docs]</a><span class="k">def</span> <span class="nf">fuse_module_conv_bn_relus</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">override_bn_subclasses_forward</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Performs fusion of Conv2d, BatchNorm2d, and ReLU layers found in the</span>
+<span class="sd">    given module. To be fused, these layers must appear sequentially in</span>
+<span class="sd">    module.named_modules() and be in the same submodule.</span>
+<span class="sd">    Fuses either Conv2d -&gt; BatchNorm2d or Conv2d -&gt; BatchNorm2d -&gt; ReLU blocks</span>
+
+<span class="sd">    If this function does not fuse the model in the desired way, implement an</span>
+<span class="sd">    in place fusing function for the model.</span>
+
+<span class="sd">    :param module: the module to fuse</span>
+<span class="sd">    :param inplace: set True to perform fusions in-place. default is True</span>
+<span class="sd">    :param override_bn_subclasses_forward: if True, modules that are subclasses of</span>
+<span class="sd">        BatchNorm2d will be modified to be BatchNorm2d but with the forward</span>
+<span class="sd">        pass and state variables copied from the subclass. This is so these</span>
+<span class="sd">        BN modules can pass PyTorch type checking when fusing. Can set to</span>
+<span class="sd">        &quot;override-only&quot; and only parameters will be overwritten, not the</span>
+<span class="sd">        forward pass. Default is True</span>
+<span class="sd">    :return: the fused module</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Unable to import package torch.quantization. &quot;</span>
+            <span class="s2">&quot;Try upgrading your PyTorch version.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">inplace</span><span class="p">:</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+    <span class="n">conv_blocks</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current_block</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current_block_submodule_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+        <span class="n">submodule_name</span> <span class="o">=</span> <span class="s2">&quot;.&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>  <span class="c1"># [Conv2d]</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">BatchNorm2d</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">submodule_name</span> <span class="o">==</span> <span class="n">current_block_submodule_name</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>  <span class="c1"># [Conv2d, BatchNorm2d]</span>
+            <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">submodule_name</span> <span class="o">==</span> <span class="n">current_block_submodule_name</span>
+        <span class="p">):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">ReLU_nm</span><span class="p">):</span>
+                <span class="n">_set_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="n">layer</span><span class="o">.</span><span class="n">inplace</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">BatchNorm2d</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">type</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span> <span class="ow">is</span> <span class="n">BatchNorm2d</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">override_bn_subclasses_forward</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                        <span class="s2">&quot;Detected a Conv-BN block that uses a subclass of BatchNorm2d. &quot;</span>
+                        <span class="s2">&quot;This will cause a type error when fusing with PyTorch, &quot;</span>
+                        <span class="s2">&quot;set override_bn_subclasses_forward to True or &#39;override-only &quot;</span>
+                        <span class="s2">&quot;to modify this BN subclass to be a BatchNorm2d object&quot;</span>
+                    <span class="p">)</span>
+                <span class="c1"># swap BN subclass with overwritten BN class that will pass torch</span>
+                <span class="c1"># type checking</span>
+                <span class="n">overwritten_bn</span> <span class="o">=</span> <span class="n">_wrap_bn_sub_class</span><span class="p">(</span>
+                    <span class="n">layer</span><span class="p">,</span>
+                    <span class="n">override_forward</span><span class="o">=</span><span class="n">override_bn_subclasses_forward</span> <span class="o">!=</span> <span class="s2">&quot;override-only&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="n">_set_submodule</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">overwritten_bn</span><span class="p">),</span>
+            <span class="n">current_block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">current_block</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># cannot fuse single module</span>
+                    <span class="n">conv_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span>
+                <span class="n">current_block</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">current_block_submodule_name</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">):</span>
+                <span class="n">current_block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="n">current_block_submodule_name</span> <span class="o">=</span> <span class="n">submodule_name</span>
+    <span class="k">if</span> <span class="n">conv_blocks</span><span class="p">:</span>
+        <span class="n">torch_quantization</span><span class="o">.</span><span class="n">fuse_modules</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">conv_blocks</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">module</span></div>
+
+
+<span class="k">def</span> <span class="nf">_set_submodule</span><span class="p">(</span><span class="n">root_module</span><span class="p">,</span> <span class="n">sub_module_path</span><span class="p">,</span> <span class="n">sub_module</span><span class="p">):</span>
+    <span class="n">current_module</span> <span class="o">=</span> <span class="n">root_module</span>
+    <span class="n">sub_module_path</span> <span class="o">=</span> <span class="n">sub_module_path</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">child_module</span> <span class="ow">in</span> <span class="n">sub_module_path</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">current_module</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">current_module</span><span class="p">,</span> <span class="n">child_module</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">current_module</span><span class="p">,</span> <span class="n">sub_module_path</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">sub_module</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_wrap_bn_sub_class</span><span class="p">(</span><span class="n">bn_subclass</span><span class="p">,</span> <span class="n">override_forward</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+    <span class="n">batch_norm</span> <span class="o">=</span> <span class="n">BatchNorm2d</span><span class="p">(</span><span class="n">bn_subclass</span><span class="o">.</span><span class="n">num_features</span><span class="p">)</span>
+    <span class="n">batch_norm</span><span class="o">.</span><span class="vm">__dict__</span> <span class="o">=</span> <span class="n">bn_subclass</span><span class="o">.</span><span class="vm">__dict__</span>
+    <span class="k">if</span> <span class="n">override_forward</span><span class="p">:</span>
+        <span class="n">batch_norm</span><span class="o">.</span><span class="n">forward</span> <span class="o">=</span> <span class="n">bn_subclass</span><span class="o">.</span><span class="n">forward</span>
+    <span class="k">del</span> <span class="n">bn_subclass</span>
+    <span class="k">return</span> <span class="n">batch_norm</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.3.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="helpers.html">v0.3.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-128364174-1', 'auto');
+    
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.onnx.utils.graph_optimizer &mdash; SparseML 0.2.0 documentation</title>
+  <title>sparseml.onnx.utils.graph_optimizer &mdash; SparseML 0.3.0.20210503 documentation</title>
   
 
   
@@ -70,7 +70,7 @@
             
             
               <div class="version">
-                0.2
+                0.3
               </div>
             
           
@@ -211,7 +211,6 @@
     <span class="n">NodeParam</span><span class="p">,</span>
     <span class="n">conv_node_params</span><span class="p">,</span>
     <span class="n">get_batch_norm_params</span><span class="p">,</span>
-    <span class="n">get_node_input_nodes</span><span class="p">,</span>
     <span class="n">get_quantize_parent_for_dequantize_node</span><span class="p">,</span>
 <span class="p">)</span>
 
@@ -327,7 +326,10 @@
     <span class="n">add_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">quantized_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Add&quot;</span><span class="p">]</span>
     <span class="n">optimization_made</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="k">for</span> <span class="n">add_node</span> <span class="ow">in</span> <span class="n">add_nodes</span><span class="p">:</span>
-        <span class="n">add_inputs</span> <span class="o">=</span> <span class="n">get_node_input_nodes</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">add_node</span><span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">)</span>
+        <span class="n">add_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_parents</span><span class="p">(</span><span class="n">add_node</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">)</span>
+        <span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">add_inputs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="c1"># extract dequantize input and relu/add input</span>
@@ -505,6 +507,10 @@
     <span class="fa fa-caret-down"></span>
   </span>
   <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+    </dl>
     <dl>
       <dt>Branches</dt>
       <dd><a href="graph_optimizer.html">main</a></dd>
