@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.2.0 documentation</title>
+  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.3.0.20210503 documentation</title>
   
 
   
@@ -70,7 +70,7 @@
             
             
               <div class="version">
-                0.2
+                0.3
               </div>
             
           
@@ -200,6 +200,7 @@
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
 <span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
+<span class="kn">from</span> <span class="nn">toposort</span> <span class="kn">import</span> <span class="n">toposort_flatten</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils.helpers</span> <span class="kn">import</span> <span class="n">get_node_params</span>
 
@@ -265,7 +266,7 @@
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param node: node to get the input objects for</span>
-<span class="sd">        :return: input nodes or tensors of this node in order. if an input doesn&#39;t</span>
+<span class="sd">        :return: input nodes or tensors of this node in order. if an input does not</span>
 <span class="sd">            exist, None will be returned in its place</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
@@ -278,6 +279,19 @@
             <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">inputs</span></div>
 
+<div class="viewcode-block" id="ONNXGraph.get_node_single_parent"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_single_parent">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_single_parent</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">index</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node: the node to get the parent node of</span>
+<span class="sd">        :param index: choose which input to search</span>
+<span class="sd">        :return: parent of node if it only has one parent, otherwise None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">input_id</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">input_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">input_id</span><span class="p">]</span></div>
+
 <div class="viewcode-block" id="ONNXGraph.get_node_children"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_children">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_children</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param node: the node to get the children node of</span>
@@ -287,6 +301,14 @@
         <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
             <span class="n">children</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">output_id</span><span class="p">])</span>
         <span class="k">return</span> <span class="n">children</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.get_node_single_child"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_single_child">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_single_child</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param node: the node to get the child node of</span>
+<span class="sd">        :return: child of node if it only has one child, otherwise None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">children</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="ONNXGraph.add_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.add_node">[docs]</a>    <span class="k">def</span> <span class="nf">add_node</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -372,6 +394,35 @@
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
             <span class="p">]</span>
         <span class="p">)</span>  <span class="c1"># delete inits that have no edge</span></div>
+
+<div class="viewcode-block" id="ONNXGraph.sort_nodes_topologically"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.sort_nodes_topologically">[docs]</a>    <span class="k">def</span> <span class="nf">sort_nodes_topologically</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sorts the order of the graph Node repeated field in place in topological</span>
+<span class="sd">        order as per the ONNX Model proto specifications</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># build toposort DAG input and sort</span>
+        <span class="n">model_dag</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>  <span class="c1"># node_id -&gt; dependencies</span>
+        <span class="k">for</span> <span class="n">parent_node_id</span><span class="p">,</span> <span class="n">child_nodes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">parent_node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># parent is an initializer, not node</span>
+            <span class="k">for</span> <span class="n">child_node</span> <span class="ow">in</span> <span class="n">child_nodes</span><span class="p">:</span>
+                <span class="n">model_dag</span><span class="p">[</span><span class="n">child_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">parent_node_id</span><span class="p">)</span>
+        <span class="n">sorted_node_ids</span> <span class="o">=</span> <span class="n">toposort_flatten</span><span class="p">(</span><span class="n">model_dag</span><span class="p">)</span>
+
+        <span class="c1"># deduplicate any nodes from the sorted list</span>
+        <span class="n">updated_node_list</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">seen_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">sorted_node_ids</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node_id</span> <span class="ow">in</span> <span class="n">seen_ids</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># a node could have multiple ids, all ids will be updated</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
+            <span class="n">updated_node_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="n">seen_ids</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="c1"># update model node list with topo sorted list</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">updated_node_list</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">ClearField</span><span class="p">(</span><span class="s2">&quot;node&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">updated_node_list</span><span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_store_node_edges</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
@@ -594,6 +645,10 @@
     <span class="fa fa-caret-down"></span>
   </span>
   <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+    </dl>
     <dl>
       <dt>Branches</dt>
       <dd><a href="graph_editor.html">main</a></dd>

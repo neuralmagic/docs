@@ -46,7 +46,7 @@ Our inference engine supports all versions of TensorFlow 1.x.; support for Tenso
 
 **Do you run on AMD hardware?**
 
-The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later)  and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/hardware.html).
+The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later)  and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
 
 We are open to opportunities to expand our support footprint for different CPU-based processor architectures, based on market adoption and deep learning use cases.
 

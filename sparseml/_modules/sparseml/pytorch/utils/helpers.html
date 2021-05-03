@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.utils.helpers — SparseML 0.2.0 documentation
+   sparseml.pytorch.utils.helpers — SparseML 0.3.0.20210503 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../../../_static/icon-sparseml.png"/>
       </a>
       <div class="version">
-       0.2
+       0.3
       </div>
       <div role="search">
        <form action="../../../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -181,6 +181,12 @@
 <span class="kn">from</span> <span class="nn">torch.nn.modules.conv</span> <span class="kn">import</span> <span class="n">_ConvNd</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 <span class="kn">from</span> <span class="nn">torch.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torch.quantization</span> <span class="kn">import</span> <span class="n">QuantWrapper</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">QuantWrapper</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">create_dirs</span><span class="p">,</span> <span class="n">save_numpy</span>
 
@@ -874,6 +880,7 @@
 <span class="sd">        module match one of the given regex patterns or parameter names</span>
 <span class="sd">    """</span>
     <span class="n">named_layers_and_params</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">found_param_names</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
         <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">layer</span><span class="o">.</span><span class="n">named_parameters</span><span class="p">():</span>
             <span class="k">if</span> <span class="s2">"."</span> <span class="ow">in</span> <span class="n">param_name</span><span class="p">:</span>  <span class="c1"># skip parameters of nested layers</span>
@@ -883,8 +890,25 @@
                 <span class="n">named_layers_and_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">NamedLayerParam</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
                 <span class="p">)</span>
+                <span class="n">found_param_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">full_param_name</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">layer_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">".module"</span><span class="p">):</span>
+                <span class="c1"># unwrap layers wrapped with a QuantWrapper and check if they match</span>
+                <span class="n">parent_layer_name</span> <span class="o">=</span> <span class="s2">"."</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">layer_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[:</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+                <span class="n">parent_layer</span> <span class="o">=</span> <span class="n">get_layer</span><span class="p">(</span><span class="n">parent_layer_name</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
+                <span class="n">skip_wrapper_name</span> <span class="o">=</span> <span class="s2">"</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">parent_layer_name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">)</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">QuantWrapper</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_layer</span><span class="p">,</span> <span class="n">QuantWrapper</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">any_str_or_regex_matches_param_name</span><span class="p">(</span>
+                        <span class="n">skip_wrapper_name</span><span class="p">,</span> <span class="n">param_names</span>
+                    <span class="p">)</span>
+                <span class="p">):</span>
+                    <span class="n">named_layers_and_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="n">NamedLayerParam</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">found_param_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">skip_wrapper_name</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">params_strict</span><span class="p">:</span>
-        <span class="n">validate_all_params_found</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">named_layers_and_params</span><span class="p">)</span>
+        <span class="n">validate_all_params_found</span><span class="p">(</span><span class="n">param_names</span><span class="p">,</span> <span class="n">found_param_names</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">named_layers_and_params</span></div>
 
@@ -912,31 +936,27 @@
 
 <span class="k">def</span> <span class="nf">validate_all_params_found</span><span class="p">(</span>
     <span class="n">name_or_regex_patterns</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
-    <span class="n">named_layers_and_params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NamedLayerParam</span><span class="p">],</span>
+    <span class="n">found_param_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
 <span class="p">):</span>
     <span class="sd">"""</span>
 <span class="sd">    :param name_or_regex_patterns: List of full param names or regex patterns of them</span>
-<span class="sd">        to check for matches in named_layers_and_params names</span>
-<span class="sd">    :param named_layers_and_params: List of NamedLayerParam objects to check for matches</span>
+<span class="sd">        to check for matches in found_param_names names</span>
+<span class="sd">    :param found_param_names: List of NamedLayerParam objects to check for matches</span>
 <span class="sd">    :raise RuntimeError: If there is a name or regex pattern that does not have a</span>
-<span class="sd">        match in named_layers_and_params</span>
+<span class="sd">        match in found_param_names</span>
 <span class="sd">    """</span>
-    <span class="n">full_parameter_names</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="s2">"</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">named_layer_param</span><span class="o">.</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">named_layer_param</span><span class="o">.</span><span class="n">param_name</span><span class="p">)</span>
-        <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-    <span class="p">]</span>
     <span class="k">for</span> <span class="n">name_or_regex</span> <span class="ow">in</span> <span class="n">name_or_regex_patterns</span><span class="p">:</span>
-        <span class="k">if</span> <span class="s2">"re:"</span> <span class="o">!=</span> <span class="n">name_or_regex</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="ow">and</span> <span class="n">name_or_regex</span> <span class="ow">in</span> <span class="n">full_parameter_names</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">"re:"</span> <span class="o">!=</span> <span class="n">name_or_regex</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="ow">and</span> <span class="n">name_or_regex</span> <span class="ow">in</span> <span class="n">found_param_names</span><span class="p">:</span>
             <span class="k">continue</span>  <span class="c1"># name found in list of full parameter names</span>
         <span class="k">if</span> <span class="s2">"re:"</span> <span class="o">==</span> <span class="n">name_or_regex</span><span class="p">[:</span><span class="mi">3</span><span class="p">]</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name_or_regex</span><span class="p">[</span><span class="mi">3</span><span class="p">:],</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">full_parameter_names</span>
+            <span class="n">re</span><span class="o">.</span><span class="n">match</span><span class="p">(</span><span class="n">name_or_regex</span><span class="p">[</span><span class="mi">3</span><span class="p">:],</span> <span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">found_param_names</span>
         <span class="p">):</span>
             <span class="k">continue</span>  <span class="c1"># regex pattern matches at least one full parameter name</span>
 
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
             <span class="s2">"All supplied parameter names or regex patterns not found."</span>
             <span class="s2">"No match for </span><span class="si">{}</span><span class="s2"> in found parameters </span><span class="si">{}</span><span class="s2">.  Supplied </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                <span class="n">name_or_regex</span><span class="p">,</span> <span class="n">full_parameter_names</span><span class="p">,</span> <span class="n">name_or_regex_patterns</span>
+                <span class="n">name_or_regex</span><span class="p">,</span> <span class="n">found_param_names</span><span class="p">,</span> <span class="n">name_or_regex_patterns</span>
             <span class="p">)</span>
         <span class="p">)</span>
 
@@ -999,17 +1019,27 @@
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: main
+    v: v0.3.0
     <span class="fa fa-caret-down">
     </span>
    </span>
    <div class="rst-other-versions">
     <dl>
      <dt>
-      Branches
+      Tags
      </dt>
      <dd>
       <a href="helpers.html">
+       v0.3.0
+      </a>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      Branches
+     </dt>
+     <dd>
+      <a href="../../../../main/index.html">
        main
       </a>
      </dd>

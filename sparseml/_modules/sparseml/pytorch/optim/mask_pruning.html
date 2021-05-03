@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim.mask_pruning — SparseML 0.2.0 documentation
+   sparseml.pytorch.optim.mask_pruning — SparseML 0.3.0.20210503 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../../../_static/icon-sparseml.png"/>
       </a>
       <div class="version">
-       0.2
+       0.3
       </div>
       <div role="search">
        <form action="../../../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -168,6 +168,7 @@
 <span class="sd">aka model pruning</span>
 <span class="sd">"""</span>
 
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">partial</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
@@ -586,12 +587,12 @@
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">param</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)):</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_forward_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">register_forward_pre_hook</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_param_mask_forward_hook</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hook_mask_forward</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
                 <span class="p">)</span>
 
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">param</span><span class="o">.</span><span class="n">register_hook</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_get_param_mask_gradient_hook</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+                    <span class="n">partial</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_hook_mask_gradient</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
                 <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_delete_hooks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
@@ -604,22 +605,18 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">remove</span><span class="p">()</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
 
-    <span class="k">def</span> <span class="nf">_get_param_mask_forward_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">hook_mask_forward</span><span class="p">(</span><span class="n">mod</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">_hook_mask_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">mod</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">inp</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">hook_mask_forward</span>
+    <span class="k">def</span> <span class="nf">_hook_mask_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">,</span> <span class="n">grad</span><span class="p">):</span>
+        <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span>
+                <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad</span>
+            <span class="p">)</span>
 
-    <span class="k">def</span> <span class="nf">_get_param_mask_gradient_hook</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">param_idx</span><span class="p">):</span>
-        <span class="k">def</span> <span class="nf">hook_mask_gradient</span><span class="p">(</span><span class="n">grad</span><span class="p">):</span>
-            <span class="k">if</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span> <span class="o">&lt;</span> <span class="mf">1.0</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span><span class="p">[</span><span class="n">param_idx</span><span class="p">]</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span><span class="o">.</span><span class="n">add_</span><span class="p">(</span>
-                    <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_track_grad_mom</span><span class="p">)</span> <span class="o">*</span> <span class="n">grad</span>
-                <span class="p">)</span>
-
-            <span class="k">return</span> <span class="n">grad</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">param_idx</span><span class="p">])</span>
-
-        <span class="k">return</span> <span class="n">hook_mask_gradient</span>
+        <span class="k">return</span> <span class="n">grad</span><span class="o">.</span><span class="n">mul_</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">param_idx</span><span class="p">])</span>
 
     <span class="k">def</span> <span class="nf">_setup_params_init</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">):</span>
@@ -687,17 +684,27 @@
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: main
+    v: v0.3.0
     <span class="fa fa-caret-down">
     </span>
    </span>
    <div class="rst-other-versions">
     <dl>
      <dt>
-      Branches
+      Tags
      </dt>
      <dd>
       <a href="mask_pruning.html">
+       v0.3.0
+      </a>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      Branches
+     </dt>
+     <dd>
+      <a href="../../../../main/index.html">
        main
       </a>
      </dd>
