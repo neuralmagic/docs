@@ -38,7 +38,7 @@ To file a docs issue for a specific software component, use its repo issue track
 | [SparseZoo](https://docs.neuralmagic.com/sparsezoo/)          | [Repo](https://github.com/neuralmagic/sparsezoo/)  | [Queue](https://github.com/neuralmagic/sparsezoo/issues/)  | [Index](https://github.com/neuralmagic/sparsezoo/releases/)  | Apache 2.0          |
 | [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | Neural Magic Engine |
 
-We also have a **Deep Sparse Community** [Discourse Forum](https://https://discuss.neuralmagic.com/) and [Slack](https://discuss-neuralmagic.slack.com/).</br>
+We also have a **Deep Sparse Community** [Discourse Forum](https://https://discuss.neuralmagic.com/) and [Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ).</br>
 We are growing the community member by member and happy to see you there; simply sign up and log in!
 
 To contribute to Neural Magic documentation, please:</br>
