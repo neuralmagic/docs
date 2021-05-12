@@ -53,7 +53,7 @@ To file a docs issue for a specific software component, use its repo issue track
 | `DeepSparse Engine <https://docs.neuralmagic.com/deepsparse />`_  | `Repo <https://github.com/neuralmagic/deepsparse />`_  | `Queue <https://github.com/neuralmagic/deepsparse/issues />`_  | `Index <https://github.com/neuralmagic/deepsparse/releases />`_  | Neural Magic Engine |
 +-------------------------------------------------------------------+--------------------------------------------------------+----------------------------------------------------------------+------------------------------------------------------------------+---------------------+
 
-We also have a Deep Sparse Community `SparseML Forum <https://discuss.neuralmagic.com />`_ and `Slack <https://discuss-neuralmagic.slack.com />`_. We are growing the community member by member and happy to see you there.
+We also have a Deep Sparse Community `Discourse Forum <https://discuss.neuralmagic.com />`_ and `Slack <https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ />`_. We are growing the community member by member and happy to see you there.
 
 To contribute to Neural Magic documentation, please:
 
@@ -85,6 +85,6 @@ To learn more about Neural Magic, `check our website <https://www.neuralmagic.co
 
     Bugs, Feature Requests <https://github.com/neuralmagic/docs/issues>
     Support, General Q&A Forums <https://discuss.neuralmagic.com/>
-    Deep Sparse Slack Community <https://discuss-neuralmagic.slack.com/>
+    Deep Sparse Community <https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ/>
     Neural Magic Docs <https://docs.neuralmagic.com>
   
