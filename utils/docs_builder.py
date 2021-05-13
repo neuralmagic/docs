@@ -115,7 +115,7 @@ def _get_latest_folder(folders: List[str]) -> str:
     versioned_folders = [
         (folder, version.parse(folder[1:]))
         for folder in folders
-        if re.match(r"^v[0-9]+\.[0-9]+\.[0-9]+$", folder)
+        if re.match(r"^v\.?[0-9]+\.[0-9]+\.[0-9]+$", folder)
     ]
     versioned_folders.sort(key=lambda ver: ver[1])
 
