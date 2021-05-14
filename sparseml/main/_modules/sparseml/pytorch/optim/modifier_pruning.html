@@ -7,12 +7,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.3.0.20210503 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.4.0.20210514 documentation</title>
   
 
   
   <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" />
 
@@ -33,6 +35,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
         <script src="../../../../_static/jquery.js"></script>
         <script src="../../../../_static/underscore.js"></script>
         <script src="../../../../_static/doctools.js"></script>
@@ -70,7 +73,7 @@
             
             
               <div class="version">
-                0.3
+                0.4
               </div>
             
           
@@ -105,10 +108,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help</span></p>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
@@ -195,8 +199,9 @@
 <span class="sd">on models while pruning.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
@@ -215,11 +220,12 @@
     <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">NamedLayerParam</span><span class="p">,</span>
     <span class="n">get_named_layers_and_params_by_regex</span><span class="p">,</span>
     <span class="n">get_prunable_layers</span><span class="p">,</span>
     <span class="n">tensor_sparsity</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.logger</span> <span class="kn">import</span> <span class="n">PyTorchLogger</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.logger</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">,</span>
     <span class="n">ALL_TOKEN</span><span class="p">,</span>
@@ -240,7 +246,7 @@
 
 <span class="k">def</span> <span class="nf">_log_sparsity</span><span class="p">(</span>
     <span class="n">analyzers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ModulePruningAnalyzer</span><span class="p">],</span>
-    <span class="n">loggers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">PyTorchLogger</span><span class="p">],</span>
+    <span class="n">loggers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">],</span>
     <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
 <span class="p">):</span>
@@ -255,8 +261,291 @@
             <span class="p">)</span>
 
 
+<span class="k">class</span> <span class="nc">_PruningParamsModifier</span><span class="p">(</span><span class="n">ScheduledUpdateModifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for pruning modifiers that create masks for given params</span>
+
+<span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
+<span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
+<span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
+<span class="sd">        and Linear layers&#39; weights</span>
+<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
+<span class="sd">    :param min_start: The minimum acceptable value for start_epoch, default -1</span>
+<span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
+<span class="sd">    :param min_end: The minimum acceptable value for end_epoch, default 0</span>
+<span class="sd">    :param end_comparator: integer value representing how the end_epoch should be</span>
+<span class="sd">        compared to start_epoch.</span>
+<span class="sd">        if == None, then end_epoch can only be set to what its initial value was.</span>
+<span class="sd">        if == -1, then end_epoch can be less than, equal, or greater than start_epoch.</span>
+<span class="sd">        if == 0, then end_epoch can be equal to or greater than start_epoch.</span>
+<span class="sd">        if == 1, then end_epoch can only be greater than start_epoch.</span>
+<span class="sd">    :param update_frequency: The number of epochs or fraction of epochs to</span>
+<span class="sd">            update at between start and end</span>
+<span class="sd">    :param min_frequency: The minimum acceptable value for update_frequency,</span>
+<span class="sd">        default -1</span>
+<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
+<span class="sd">        default is __ALL__</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">min_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">min_end</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">end_comparator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">min_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
+            <span class="n">min_start</span><span class="o">=</span><span class="n">min_start</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
+            <span class="n">min_end</span><span class="o">=</span><span class="n">min_end</span><span class="p">,</span>
+            <span class="n">end_comparator</span><span class="o">=</span><span class="n">end_comparator</span><span class="p">,</span>
+            <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
+            <span class="n">min_frequency</span><span class="o">=</span><span class="n">min_frequency</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
+            <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Optional[ModuleParamPruningMask]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Optional[List[ModulePruningAnalyzer]]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: PyTorch state dictionary to store any variables from this modifier.</span>
+<span class="sd">            The mapping is param_name -&gt; mask</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">param_masks</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads the given state dict into this object&#39;s modifiers</span>
+
+<span class="sd">        :param state_dict: dictionary object as generated by this object&#39;s state_dict</span>
+<span class="sd">            function</span>
+<span class="sd">        :param strict: Ignored for this modifier, everything is treated as strict</span>
+<span class="sd">        :raises IndexError: If any keys in the state dict do not correspond to a valid</span>
+<span class="sd">            index for this manager and strict=True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot load state dict for an uninitialized modifier&quot;</span><span class="p">)</span>
+
+        <span class="n">mask_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">}</span>
+        <span class="n">state_dict_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()}</span>
+        <span class="n">diff</span> <span class="o">=</span> <span class="n">mask_names</span><span class="o">.</span><span class="n">symmetric_difference</span><span class="p">(</span><span class="n">state_dict_keys</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">diff</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Found extra keys: </span><span class="si">{</span><span class="n">state_dict_keys</span> <span class="o">-</span> <span class="n">mask_names</span><span class="si">}</span><span class="s2"> &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;and missing keys: </span><span class="si">{</span><span class="n">mask_names</span> <span class="o">-</span> <span class="n">state_dict_keys</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
+<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
+<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
+<span class="sd">            and Linear layers&#39; weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
+
+    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: A list of full parameter names or regex patterns of names to</span>
+<span class="sd">            apply pruning to.</span>
+<span class="sd">            Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
+<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
+<span class="sd">            and Linear layers&#39; weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
+            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">module_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModuleParamPruningMask</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The mask instances corresponding to the desired params passed in</span>
+<span class="sd">            to the current pruning modifier that contain the masking information</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">analyzers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ModulePruningAnalyzer</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The analyzer instances corresponding to the desired params passed in</span>
+<span class="sd">            to the current pruning modifier that contain the analyzing information</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span>
+
+    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab the params and apply if epoch in range to control pruning for.</span>
+
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
+<span class="sd">            Defaults to 0 (start of the training process)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">named_layers_and_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_named_layers_and_params</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">layer</span> <span class="k">for</span> <span class="n">nlp</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span><span class="p">]</span>
+        <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">param_name</span> <span class="k">for</span> <span class="n">nlp</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span><span class="p">]</span>
+        <span class="n">layer_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">nlp</span><span class="o">.</span><span class="n">layer_name</span> <span class="k">for</span> <span class="n">nlp</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_pruning_mask</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">layer_names</span><span class="p">,</span> <span class="n">param_names</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_create_analyzers</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">layer_names</span><span class="p">,</span> <span class="n">param_names</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Could not find any params matching </span><span class="si">{}</span><span class="s2"> in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_mask_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cleans up any remaining hooks</span>
+
+<span class="sd">        :param module: The model/module to finalize the modifier for.</span>
+<span class="sd">            Marked optional so state can still be cleaned up on delete,</span>
+<span class="sd">            but generally should always be passed in.</span>
+<span class="sd">        :param reset_loggers: True to remove any currently attached loggers (default),</span>
+<span class="sd">            False to keep the loggers attached.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update to enable and disable the mask when chosen.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_mask_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether to log an update for the learning rate of the modifier.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_log</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="n">_log_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Reapply the mask after the optimizer step in case the optimizer</span>
+<span class="sd">        has momentum that may have moved weights from 0.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">optimizer_post_step</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+        <span class="c1"># be sure to apply mask again after optimizer update because</span>
+        <span class="c1"># weights may have changed (optimizer with momentum, not masking gradient)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_should_log</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_params_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="ow">or</span> <span class="n">token</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="ow">in</span> <span class="n">token</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_create_named_layers_and_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NamedLayerParam</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_params_match</span><span class="p">(</span><span class="n">ALL_TOKEN</span><span class="p">):</span>
+            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;re:.*&quot;</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_params_match</span><span class="p">(</span><span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">):</span>
+            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.weight&quot;</span> <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">get_prunable_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">param_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
+
+        <span class="k">return</span> <span class="n">get_named_layers_and_params_by_regex</span><span class="p">(</span>
+            <span class="n">module</span><span class="p">,</span>
+            <span class="n">param_names</span><span class="p">,</span>
+            <span class="n">params_strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_pruning_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">],</span> <span class="n">layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">param_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleParamPruningMask</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ModuleParamPruningMask</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">layer_names</span><span class="o">=</span><span class="n">layer_names</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_analyzers</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">],</span> <span class="n">layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">param_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="n">ModulePruningAnalyzer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layers</span><span class="p">,</span> <span class="n">layer_names</span><span class="p">,</span> <span class="n">param_names</span><span class="p">)</span>
+        <span class="p">]</span>
+
+
 <div class="viewcode-block" id="ConstantPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Holds the sparsity level and shape for a given parameter(s) constant while training.</span>
 <span class="sd">    Useful for transfer learning use cases.</span>
@@ -270,6 +559,7 @@
 
 <span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
 <span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
+<span class="sd">    :param update_frequency: Ignored for this modifier</span>
 <span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
 <span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
 <span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
@@ -295,7 +585,7 @@
             <span class="n">weight</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">)</span>
             <span class="n">sparsity</span> <span class="o">=</span> <span class="n">tensor_sparsity</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
 
-            <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&gt;</span> <span class="mf">0.4</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>  <span class="c1"># set at 10% sparsity to be threshold for intentional</span>
                 <span class="n">modifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
                     <span class="n">ConstantPruningModifier</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">)])</span>
                 <span class="p">)</span>
@@ -307,146 +597,19 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
             <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ModuleParamPruningMask</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
-
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span>
-
-<div class="viewcode-block" id="ConstantPruningModifier.state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: Dictionary to store the masks currently created by this object. The</span>
-<span class="sd">            mapping is param_name -&gt; mask</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(</span>
-            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">param_masks</span><span class="p">)</span>
-        <span class="p">)</span></div>
-
-<div class="viewcode-block" id="ConstantPruningModifier.load_state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Loads the given state dict into this object&#39;s modifiers</span>
-
-<span class="sd">        :param state_dict: dictionary object as generated by this object&#39;s state_dict</span>
-<span class="sd">            function</span>
-<span class="sd">        :raises RuntimeError: If any keys in the state dict do not correspond to a valid</span>
-<span class="sd">            parameter in this modifier or if this modifier has not been initialized</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot load state dict for an uninitialized modifier&quot;</span><span class="p">)</span>
-
-        <span class="n">mask_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;State dict key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not found in ConstantPruningModifier params&quot;</span>
-                <span class="p">)</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Mask parameter name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found in state dict&quot;</span>
-                <span class="p">)</span>
-
-        <span class="n">masks_disabled</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">masks_disabled</span><span class="p">:</span>
-            <span class="c1"># enable mask object so that the laoded mask will apply</span>
-            <span class="n">masks_disabled</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">([</span><span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">masks_disabled</span><span class="p">:</span>
-            <span class="c1"># set mask object back to disabled</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span></div>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :params value: A list of full parameter names or regex patterns of names to</span>
-<span class="sd">            apply pruning to.</span>
-<span class="sd">            Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="n">update_frequency</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="ConstantPruningModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Grab the params to control kernel sparsity for.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">==</span> <span class="n">ALL_TOKEN</span> <span class="ow">or</span> <span class="n">ALL_TOKEN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;re:.*&quot;</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">==</span> <span class="n">ALL_PRUNABLE_TOKEN</span> <span class="ow">or</span> <span class="n">ALL_PRUNABLE_TOKEN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.weight&quot;</span> <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">get_prunable_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-        <span class="n">named_layers_and_params</span> <span class="o">=</span> <span class="n">get_named_layers_and_params_by_regex</span><span class="p">(</span>
-            <span class="n">module</span><span class="p">,</span>
-            <span class="n">param_names</span><span class="p">,</span>
-            <span class="n">params_strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">layer</span> <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">param_name</span>
-            <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="n">layer_names</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">layer_name</span>
-            <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="p">(</span>
-            <span class="n">layers</span><span class="p">,</span> <span class="n">param_names</span><span class="p">,</span> <span class="n">layer_names</span><span class="o">=</span><span class="n">layer_names</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ModulePruningAnalyzer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">))</span></div>
-
-<div class="viewcode-block" id="ConstantPruningModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update to enable and disable the mask when chosen.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
+    <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_weights</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
@@ -455,46 +618,9 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_weights</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span></div>
 
-<div class="viewcode-block" id="ConstantPruningModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check whether to log an update for the learning rate of the modifier.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
-            <span class="n">_log_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="ConstantPruningModifier.optimizer_post_step"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.optimizer_post_step">[docs]</a>    <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reapply the mask after the optimizer step in case the optimizer</span>
-<span class="sd">        has momentum that may have moved weights from 0.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">optimizer_post_step</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-        <span class="c1"># be sure to apply mask again after optimizer update because</span>
-        <span class="c1"># weights may have changed (optimizer with momentum, not masking gradient)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span></div></div>
-
 
 <div class="viewcode-block" id="GMPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">GMPruningModifier</span><span class="p">(</span><span class="n">ScheduledUpdateModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">GMPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
 <span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
@@ -556,79 +682,30 @@
         <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
+            <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
-            <span class="n">min_end</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
-            <span class="n">end_comparator</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span> <span class="o">=</span> <span class="n">init_sparsity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span> <span class="o">=</span> <span class="n">final_sparsity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">leave_enabled</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">inter_func</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="n">mask_type</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">mask_type</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mask_type</span><span class="p">,</span> <span class="n">PruningMaskCreator</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="n">mask_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mask_type</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mask_type</span><span class="p">,</span> <span class="n">PruningMaskCreator</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="n">mask_type</span><span class="p">)</span>
+        <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span> <span class="o">=</span> <span class="n">global_sparsity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ModuleParamPruningMask</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="kc">None</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_non_serializable_props</span> <span class="o">=</span> <span class="p">{}</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span>
-
-<div class="viewcode-block" id="GMPruningModifier.state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: Dictionary to store the masks currently created by this object. The</span>
-<span class="sd">            mapping is param_name -&gt; mask</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="n">OrderedDict</span><span class="p">(</span>
-            <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">param_masks</span><span class="p">)</span>
-        <span class="p">)</span></div>
-
-<div class="viewcode-block" id="GMPruningModifier.load_state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Loads the given state dict into this object&#39;s modifiers</span>
-
-<span class="sd">        :param state_dict: dictionary object as generated by this object&#39;s state_dict</span>
-<span class="sd">            function</span>
-<span class="sd">        :raises RuntimeError: If any keys in the state dict do not correspond to a valid</span>
-<span class="sd">            parameter in this modifier or if this modifier has not been initialized</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Cannot load state dict for an uninitialized modifier&quot;</span><span class="p">)</span>
-
-        <span class="n">mask_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span>
-        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;State dict key </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> not found in ConstantPruningModifier params&quot;</span>
-                <span class="p">)</span>
-        <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">:</span>
-            <span class="k">if</span> <span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;Mask parameter name </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> not found in state dict&quot;</span>
-                <span class="p">)</span>
-
-        <span class="n">masks_disabled</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">masks_disabled</span><span class="p">:</span>
-            <span class="c1"># enable mask object so that the laoded mask will apply</span>
-            <span class="n">masks_disabled</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">([</span><span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">mask_names</span><span class="p">])</span>
-        <span class="k">if</span> <span class="n">masks_disabled</span><span class="p">:</span>
-            <span class="c1"># set mask object back to disabled</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span></div>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">init_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
@@ -659,28 +736,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="p">)</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">leave_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -747,134 +802,6 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span>
 
-<div class="viewcode-block" id="GMPruningModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Grab the params to control kernel sparsity for</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">==</span> <span class="n">ALL_TOKEN</span> <span class="ow">or</span> <span class="n">ALL_TOKEN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;re:.*&quot;</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">==</span> <span class="n">ALL_PRUNABLE_TOKEN</span> <span class="ow">or</span> <span class="n">ALL_PRUNABLE_TOKEN</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.weight&quot;</span> <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">_</span><span class="p">)</span> <span class="ow">in</span> <span class="n">get_prunable_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
-            <span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">param_names</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-        <span class="n">named_layers_and_params</span> <span class="o">=</span> <span class="n">get_named_layers_and_params_by_regex</span><span class="p">(</span>
-            <span class="n">module</span><span class="p">,</span>
-            <span class="n">param_names</span><span class="p">,</span>
-            <span class="n">params_strict</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="n">layers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">layer</span> <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="n">param_names</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">param_name</span>
-            <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="n">layer_names</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">named_layer_param</span><span class="o">.</span><span class="n">layer_name</span>
-            <span class="k">for</span> <span class="n">named_layer_param</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span>
-        <span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="p">(</span>
-            <span class="n">layers</span><span class="p">,</span>
-            <span class="n">param_names</span><span class="p">,</span>
-            <span class="n">layer_names</span><span class="o">=</span><span class="n">layer_names</span><span class="p">,</span>
-            <span class="n">global_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">named_layers_and_params</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ModulePruningAnalyzer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">))</span>
-
-        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not find any params matching </span><span class="si">{}</span><span class="s2"> in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-                <span class="p">)</span>
-            <span class="p">)</span></div>
-
-<div class="viewcode-block" id="GMPruningModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Update the sparsity mask for the selected parameters.</span>
-<span class="sd">        If start, enables the masks.</span>
-<span class="sd">        If end, disables the masks if leave_enabled is False.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
-
-        <span class="c1"># set the mask tensors according to the new sparsity</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">=</span> <span class="n">interpolate</span><span class="p">(</span>
-            <span class="n">epoch</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">end_epoch</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="GMPruningModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Check whether to log an update for the learning rate of the modifier.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span>
-            <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span>
-        <span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
-            <span class="n">_log_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
-
-<div class="viewcode-block" id="GMPruningModifier.optimizer_post_step"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.optimizer_post_step">[docs]</a>    <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
-    <span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Reapply the mask after the optimizer step in case the optimizer has momentum</span>
-<span class="sd">        that may have moved weights from 0.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
-<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
-<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
-<span class="sd">            (calculate batch number using this and epoch)</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">optimizer_post_step</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-        <span class="c1"># be sure to apply mask again after optimizer update because weights may</span>
-        <span class="c1"># have changed (optimizer with momentum, not masking gradient)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span></div>
-
 <div class="viewcode-block" id="GMPruningModifier.validate"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Validate the values of the params for the current instance are valid</span>
@@ -916,7 +843,71 @@
                     <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a supported inter_func in layers_settings,&quot;</span>
                     <span class="s2">&quot; available are </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span> <span class="n">INTERPOLATION_FUNCS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="p">)</span></div></div>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check for updating the pruning masks at the given epoch.</span>
+<span class="sd">        Called from both initialize and update.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">started</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">started</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">started</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">started</span><span class="p">:</span>
+            <span class="c1"># set the mask tensors according to the new sparsity</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">=</span> <span class="n">interpolate</span><span class="p">(</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">end_epoch</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_should_log</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Log on applied sparsity change or epoch change.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        :return: True if the sparsity should be logged for the pruning modifier,</span>
+<span class="sd">            False otherwise.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span>
+            <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_create_pruning_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">],</span> <span class="n">layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">param_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleParamPruningMask</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">ModuleParamPruningMask</span><span class="p">(</span>
+            <span class="n">layers</span><span class="p">,</span>
+            <span class="n">param_names</span><span class="p">,</span>
+            <span class="n">layer_names</span><span class="o">=</span><span class="n">layer_names</span><span class="p">,</span>
+            <span class="n">mask_creator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span>
+            <span class="n">global_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MagnitudePruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.MagnitudePruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
@@ -1122,6 +1113,7 @@
     <dl>
       <dt>Tags</dt>
       <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>
