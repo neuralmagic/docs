@@ -10,8 +10,8 @@ MDCHECKFILES := CODE_OF_CONDUCT.md CONTRIBUTING.md DEVELOPING.md README.md
 # run checks on all files for the repo
 quality:
 	@echo "Running copyright checks";
-	python3 utils/copyright.py quality $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
-	@echo "Running python3 quality checks";
+	python utils/copyright.py quality $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
+	@echo "Running python quality checks";
 	black --check $(PYCHECKDIRS);
 	isort --check-only $(PYCHECKDIRS);
 	flake8 $(PYCHECKDIRS);
@@ -19,15 +19,15 @@ quality:
 # style the code according to accepted standards for the repo
 style:
 	@echo "Running copyrighting";
-	python3 utils/copyright.py style $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
-	@echo "Running python3 styling";
+	python utils/copyright.py style $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
+	@echo "Running python styling";
 	black $(PYCHECKDIRS);
 	isort $(PYCHECKDIRS);
 
 # create docs
 docs:
 	@echo "Running docs creation";
-	python3 utils/docs_builder.py --src $(DOCDIR) --dest $(DOCDIR)/build/html;
+	python utils/docs_builder.py --src $(DOCDIR) --dest $(DOCDIR)/build/html;
 
 # formats docs source build for github pages
 build:
