@@ -4,10 +4,12 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim.modifier_as — SparseML 0.3.0.20210503 documentation
+   sparseml.pytorch.optim.modifier_as — SparseML 0.3.1.20210514 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/copybutton.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/css/nm-theme-adjustment.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/favicon.ico" rel="shortcut icon"/>
@@ -15,6 +17,8 @@
     <script src="../../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js" type="text/javascript">
+  </script>
+  <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js">
   </script>
   <script src="../../../../_static/jquery.js">
   </script>
@@ -88,7 +92,7 @@
       </ul>
       <p class="caption">
        <span class="caption-text">
-        Help
+        Connect Online
        </span>
       </p>
       <ul>
@@ -98,8 +102,13 @@
         </a>
        </li>
        <li class="toctree-l1">
-        <a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">
-         Support, General Q&amp;A
+        <a class="reference external" href="https://discuss.neuralmagic.com/">
+         Support, General Q&amp;A Forums
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">
+         Deep Sparse Community Slack
         </a>
        </li>
        <li class="toctree-l1">
@@ -167,7 +176,7 @@
 <span class="sd">Modifiers for increasing / enforcing activation sparsity on models while training.</span>
 <span class="sd">"""</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch.nn.functional</span> <span class="k">as</span> <span class="nn">TF</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -176,7 +185,7 @@
 
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="n">ModifierProp</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.sensitivity_as</span> <span class="kn">import</span> <span class="n">ASLayerTracker</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">get_layer</span><span class="p">,</span> <span class="n">get_terminal_layers</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">get_layer</span><span class="p">,</span> <span class="n">get_terminal_layers</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">convert_to_bool</span><span class="p">,</span> <span class="n">validate_str_iterable</span>
 
 
@@ -242,9 +251,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_trackers</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[ASLayerTracker]</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trackers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
@@ -329,14 +335,24 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_reg_tens</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
-<div class="viewcode-block" id="ASRegModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_as.ASRegModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">):</span>
+<div class="viewcode-block" id="ASRegModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_as.ASRegModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        Grab the layer's to control activation sparsity for</span>
+<span class="sd">        Grabs the layers to control the activation sparsity for</span>
 
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
+<span class="sd">            Defaults to 0 (start of the training process)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
 <span class="sd">        """</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ASRegModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ASRegModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="n">layers</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">get_terminal_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">==</span> <span class="n">ALL_TOKEN</span>
@@ -353,6 +369,22 @@
                     <span class="n">output_func</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_regularize_tracked</span><span class="p">,</span>
                 <span class="p">)</span>
             <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ASRegModifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_as.ASRegModifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        Clean up any state for tracking activation sparsity</span>
+
+<span class="sd">        :param module: The model/module to finalize the modifier for.</span>
+<span class="sd">            Marked optional so state can still be cleaned up on delete,</span>
+<span class="sd">            but generally should always be passed in.</span>
+<span class="sd">        :param reset_loggers: True to remove any currently attached loggers (default),</span>
+<span class="sd">            False to keep the loggers attached.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_trackers</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span></div>
 
 <div class="viewcode-block" id="ASRegModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_as.ASRegModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
@@ -533,7 +565,7 @@
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.3.0
+    v: v0.3.1
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -543,8 +575,13 @@
       Tags
      </dt>
      <dd>
-      <a href="modifier_as.html">
+      <a href="../../../../v0.3.0/index.html">
        v0.3.0
+      </a>
+     </dd>
+     <dd>
+      <a href="modifier_as.html">
+       v0.3.1
       </a>
      </dd>
     </dl>
