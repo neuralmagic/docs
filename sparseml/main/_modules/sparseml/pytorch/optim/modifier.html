@@ -7,12 +7,14 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier &mdash; SparseML 0.3.0.20210503 documentation</title>
+  <title>sparseml.pytorch.optim.modifier &mdash; SparseML 0.4.0.20210514 documentation</title>
   
 
   
   <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" />
 
@@ -33,6 +35,7 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script data-url_root="../../../../" id="documentation_options" src="../../../../_static/documentation_options.js"></script>
         <script src="../../../../_static/jquery.js"></script>
         <script src="../../../../_static/underscore.js"></script>
         <script src="../../../../_static/doctools.js"></script>
@@ -70,7 +73,7 @@
             
             
               <div class="version">
-                0.3
+                0.4
               </div>
             
           
@@ -105,10 +108,11 @@
 <ul>
 <li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
 </ul>
-<p class="caption"><span class="caption-text">Help</span></p>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
 <ul>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
-<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">Support, General Q&amp;A</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
@@ -197,7 +201,8 @@
 <span class="sd">are implemented as modifiers.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">import</span> <span class="nn">math</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
@@ -210,7 +215,7 @@
     <span class="n">ModifierProp</span><span class="p">,</span>
     <span class="n">ModifierYAML</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">PyTorchLogger</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">PYTORCH_FRAMEWORK</span>
 
 
@@ -250,6 +255,8 @@
 <span class="sd">    |       - loss_update</span>
 <span class="sd">    |       - optimizer_pre_step</span>
 <span class="sd">    |       - optimizer_post_step</span>
+<span class="sd">    |</span>
+<span class="sd">    |   - finalize</span>
 
 <span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
@@ -278,6 +285,14 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="o">=</span> <span class="kc">None</span>
 
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">initialized</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">()</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">loggers_initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -293,18 +308,81 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
 
-<div class="viewcode-block" id="Modifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">):</span>
+<div class="viewcode-block" id="Modifier.state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Handles initializing and setting up the modifier.</span>
-<span class="sd">        Called once on construction of the scheduled optimizer.</span>
-
-<span class="sd">        :param module: module to modify</span>
-<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :return: PyTorch state dictionary to store any variables from this modifier</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span></div>
+        <span class="k">return</span> <span class="p">{}</span></div>
 
-<div class="viewcode-block" id="Modifier.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">PyTorchLogger</span><span class="p">]]):</span>
+<div class="viewcode-block" id="Modifier.load_state_dict"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.load_state_dict">[docs]</a>    <span class="k">def</span> <span class="nf">load_state_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span> <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Loads the given state dict into this modifier</span>
+
+<span class="sd">        :param state_dict: dictionary object as generated by this object&#39;s state_dict</span>
+<span class="sd">            function</span>
+<span class="sd">        :param strict: True to raise a KeyError for any missing or extra information in</span>
+<span class="sd">            the state dict, False to ignore</span>
+<span class="sd">        :raises IndexError: If any keys in the state dict do not correspond to a valid</span>
+<span class="sd">            index for this manager and strict=True</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">strict</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">state_dict</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">IndexError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;found extra keys in state_dict </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">state_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="Modifier.apply"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.apply">[docs]</a>    <span class="k">def</span> <span class="nf">apply</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">finalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply the modifier for a given model/module (one shot application).</span>
+<span class="sd">        Calls into initialize(module, epoch, loggers, **kwargs) and then</span>
+<span class="sd">        finalize(module, **kwargs) immediately after if finalize=True.</span>
+
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: the epoch to apply the modifier at, defaults to math.inf (end)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param finalize: True to invoke finalize after initialize, False otherwise.</span>
+<span class="sd">            If training after one shot, set finalize=False to keep modifiers applied.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers (passed to initialize and finalize).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">finalize</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Modifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles any initialization of the modifier for the given model/module.</span>
+<span class="sd">        epoch and steps_per_epoch can optionally be passed in to initialize the modifier</span>
+<span class="sd">        and module at a specific point in the training process.</span>
+<span class="sd">        If loggers is not None, will additionally call initialize_loggers.</span>
+
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
+<span class="sd">            Defaults to 0 (start of the training process)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize_loggers</span><span class="p">(</span><span class="n">loggers</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="Modifier.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles initializing and setting up the loggers for the modifier.</span>
+
 <span class="sd">        :param loggers: the loggers to setup this modifier with for logging important</span>
 <span class="sd">            info and milestones to</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -318,6 +396,30 @@
             <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">loggers</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span> <span class="o">==</span> <span class="n">ALL_TOKEN</span> <span class="ow">or</span> <span class="n">log</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span>
         <span class="p">]</span></div>
+
+<div class="viewcode-block" id="Modifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Handles any finalization of the modifier for the given model/module.</span>
+<span class="sd">        Applies any remaining logic and cleans up any hooks or attachments to the model.</span>
+
+<span class="sd">        :param module: The model/module to finalize the modifier for.</span>
+<span class="sd">            Marked optional so state can still be cleaned up on delete,</span>
+<span class="sd">            but generally should always be passed in.</span>
+<span class="sd">        :param reset_loggers: True to remove any currently attached loggers (default),</span>
+<span class="sd">            False to keep the loggers attached.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;modifier must be initialized first&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">reset_loggers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="Modifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
@@ -825,6 +927,7 @@
     <dl>
       <dt>Tags</dt>
       <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>

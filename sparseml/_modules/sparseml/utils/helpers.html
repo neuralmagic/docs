@@ -4,10 +4,12 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.utils.helpers — SparseML 0.3.0.20210503 documentation
+   sparseml.utils.helpers — SparseML 0.3.1.20210514 documentation
   </title>
   <link href="../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/copybutton.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/css/nm-theme-adjustment.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/favicon.ico" rel="shortcut icon"/>
@@ -15,6 +17,8 @@
     <script src="../../../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js" type="text/javascript">
+  </script>
+  <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js">
   </script>
   <script src="../../../_static/jquery.js">
   </script>
@@ -88,7 +92,7 @@
       </ul>
       <p class="caption">
        <span class="caption-text">
-        Help
+        Connect Online
        </span>
       </p>
       <ul>
@@ -98,8 +102,13 @@
         </a>
        </li>
        <li class="toctree-l1">
-        <a class="reference external" href="https://github.com/neuralmagic/sparseml/discussions">
-         Support, General Q&amp;A
+        <a class="reference external" href="https://discuss.neuralmagic.com/">
+         Support, General Q&amp;A Forums
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">
+         Deep Sparse Community Slack
         </a>
        </li>
        <li class="toctree-l1">
@@ -940,34 +949,50 @@
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">):</span>
         <span class="c1"># download and unwrap Recipe object</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
-    <span class="k">elif</span> <span class="n">file_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"zoo:"</span><span class="p">):</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"file_path must be a str, given </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"zoo:"</span><span class="p">):</span>
         <span class="c1"># download from zoo stub</span>
         <span class="n">recipe</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">download_recipe_from_stub</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
 
-    <span class="n">extension</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-    <span class="k">if</span> <span class="n">extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"md"</span><span class="p">,</span> <span class="s2">"yaml"</span><span class="p">]:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-            <span class="s2">"Unsupported file extension for recipe. Excepted '.md' or '.yaml'. "</span>
-            <span class="s2">"Received </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="p">)</span>
-    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
-        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">yaml_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">"md"</span><span class="p">:</span>
-            <span class="c1"># extract YAML front matter from markdown recipe card</span>
-            <span class="c1"># adapted from</span>
-            <span class="c1"># https://github.com/jonbeebe/frontmatter/blob/master/frontmatter</span>
-            <span class="n">yaml_delim</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(?:---|\+\+\+)"</span>
-            <span class="n">yaml</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(.*?)"</span>
-            <span class="n">re_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^\s*"</span> <span class="o">+</span> <span class="n">yaml_delim</span> <span class="o">+</span> <span class="n">yaml</span> <span class="o">+</span> <span class="n">yaml_delim</span>
-            <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">re_pattern</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">S</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">M</span><span class="p">)</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">"Could not extract YAML front matter from recipe card:"</span>
-                    <span class="s2">" </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-                <span class="p">)</span>
+    <span class="c1"># load the yaml string</span>
+    <span class="k">if</span> <span class="s2">"</span><span class="se">\n</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">file_path</span> <span class="ow">or</span> <span class="s2">"</span><span class="se">\r</span><span class="s2">"</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">:</span>
+        <span class="c1"># treat as raw yaml passed in</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">file_path</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="s2">"unknown"</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># load yaml from file_path</span>
+        <span class="n">extension</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"md"</span><span class="p">,</span> <span class="s2">"yaml"</span><span class="p">]:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">"Unsupported file extension for recipe. Excepted '.md' or '.yaml'. "</span>
+                <span class="s2">"Received </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">"r"</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
+            <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">yaml_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">"md"</span> <span class="ow">or</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">"unknown"</span><span class="p">:</span>
+        <span class="c1"># extract YAML front matter from markdown recipe card</span>
+        <span class="c1"># adapted from</span>
+        <span class="c1"># https://github.com/jonbeebe/frontmatter/blob/master/frontmatter</span>
+        <span class="n">yaml_delim</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(?:---|\+\+\+)"</span>
+        <span class="n">yaml</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"(.*?)"</span>
+        <span class="n">re_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">"^\s*"</span> <span class="o">+</span> <span class="n">yaml_delim</span> <span class="o">+</span> <span class="n">yaml</span> <span class="o">+</span> <span class="n">yaml_delim</span>
+        <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">re_pattern</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">S</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">M</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
             <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">"md"</span><span class="p">:</span>
+            <span class="c1"># fail if we know whe should have extracted front matter out</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">"Could not extract YAML front matter from recipe card:"</span>
+                <span class="s2">" </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+            <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">yaml_str</span></div>
 
 
@@ -1019,7 +1044,7 @@
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.3.0
+    v: v0.3.1
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -1029,8 +1054,13 @@
       Tags
      </dt>
      <dd>
-      <a href="helpers.html">
+      <a href="../../../v0.3.0/index.html">
        v0.3.0
+      </a>
+     </dd>
+     <dd>
+      <a href="helpers.html">
+       v0.3.1
       </a>
      </dd>
     </dl>
