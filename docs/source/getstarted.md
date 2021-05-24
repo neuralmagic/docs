@@ -20,7 +20,10 @@ limitations under the License.
 
 Neural Magic’s novel algorithms enable convolutional neural networks to run on commodity CPUs – at GPU speeds and better – data scientists no longer have to compromise on model design and input size, or deal with scarce and costly GPU resources. Neural Magic is making the power of deep learning simple, accessible, and affordable for anyone. 
 
-To deliver on this vision, there are several components to the Deep Sparse Platform that take advantage of sparsification.
+Neural Magic’s Deep Sparse architecture is designed to mimic, on commodity hardware, the way brains compute. It uses neural network sparsity combined with locality of communication by utilizing the CPU’s large fast caches and its very large memory.
+
+Sparsification through pruning is a broadly studied ML technique, allowing reductions of 10x or more in the size and the theoretical compute needed to execute a neural network, without losing much accuracy. So, while a GPU runs networks faster using more FLOPs, Neural Magic runs them faster via a reduction in the necessary FLOPs. 
+
 
 ## Sparsification
  
@@ -35,7 +38,7 @@ The Deep Sparse product suite builds on top of sparsification enabling you to ea
 - Apply your recipe with only a few lines of code using [SparseML](https://github.com/neuralmagic/sparseml).
 - Finally, for GPU-level performance on CPUs, deploy your sparse-quantized model with the [DeepSparse Engine](https://github.com/neuralmagic/deepsparse).
 
-Our inference engine and model optimization technologies enable companies to use ubiquitous and unconstrained CPU resources to achieve performance breakthroughs, at scale, with all the flexibility of software.
+Our Sparsify and SparseML tools allow us to easily reach industry leading levels of sparsity while preserving baseline accuracy, and the DeepSparse Engine’s breakthrough sparse kernels execute this computation effectively.
 
 **Full Deep Sparse Platform flow:**  
 
