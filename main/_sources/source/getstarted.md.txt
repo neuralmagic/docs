@@ -18,16 +18,31 @@ limitations under the License.
 
 ## Overview
 
-Neural Magic’s vision is no-hardware AI, shattering the hardware barriers that hold back the field of machine learning. With Neural Magic’s novel algorithms that enable convolutional neural networks to run on commodity CPUs – at GPU speeds and better – data scientists no longer have to compromise on model design and input size, or deal with scarce and costly GPU resources. Neural Magic is making the power of deep learning simple, accessible, and affordable for anyone. As a part of this next great unlock of machine learning, data scientists will ask bigger questions, challenge norms, and unleash a new class of AI applications that live at the edge of imagination.
+Neural Magic’s novel algorithms enable convolutional neural networks to run on commodity CPUs – at GPU speeds and better. Data scientists no longer have to compromise on model design and input size, or deal with scarce and costly GPU resources. Neural Magic is making the power of deep learning simple, accessible, and affordable for anyone. 
 
-To deliver on this vision, there are several components to the Deep Sparse Platform:
+Neural Magic’s Deep Sparse architecture is designed to mimic, on commodity hardware, the way brains compute. It uses neural network sparsity combined with locality of communication by utilizing the CPU’s large fast caches and its very large memory.
 
-1. [Sparsify](https://docs.neuralmagic.com/sparsify): Easy-to-use UI for automatically sparsifying neural networks and creating sparsification recipes for better inference performance and a smaller footprint
-2. [SparseML](https://docs.neuralmagic.com/sparseml): Libraries for applying sparsification recipes to neural networks with a few lines of code, enabling faster and smaller models
-3. [SparseZoo](https://docs.neuralmagic.com/sparsezoo): Neural network model repository for highly sparse and sparse-quantized models with matching sparsification recipes
-4. [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse): Neural network inference engine that delivers GPU-class performance for sparsified models on CPUs
+Sparsification through pruning is a broadly studied ML technique, allowing reductions of 10x or more in the size and the theoretical compute needed to execute a neural network, without losing much accuracy. So, while a GPU runs networks faster using more FLOPs, Neural Magic runs them faster via a reduction in the necessary FLOPs. 
 
-Our inference engine and model optimization technologies enable companies to use ubiquitous and unconstrained CPU resources to achieve performance breakthroughs, at scale, with all the flexibility of software.
+
+## Sparsification
+ 
+Sparsification is the process of taking a trained deep learning model and removing redundant information from the overprecise and over-parameterized network resulting in a faster and smaller model. Techniques for sparsification are all encompassing including everything from inducing sparsity using [pruning](https://neuralmagic.com/blog/pruning-overview/) and [quantization](https://arxiv.org/abs/1609.07061) to enabling naturally occurring sparsity using [activation sparsity](http://proceedings.mlr.press/v119/kurtz20a.html) or [winograd/FFT](https://arxiv.org/abs/1509.09308). When implemented correctly, these techniques result in significantly more performant and smaller models with limited to no effect on the baseline metrics.
+
+## Software Components
+
+The Deep Sparse product suite builds on top of sparsification enabling you to easily apply the techniques to your datasets and models using recipe-driven approaches. Recipes encode the directions for how to sparsify a model into a simple, easily editable format.
+ 
+- Download a sparsification recipe and sparsified model from the [SparseZoo](https://github.com/neuralmagic/sparsezoo).
+- Alternatively, create a recipe for your model using [Sparsify](https://github.com/neuralmagic/sparsify).
+- Apply your recipe with only a few lines of code using [SparseML](https://github.com/neuralmagic/sparseml).
+- Finally, for GPU-level performance on CPUs, deploy your sparse-quantized model with the [DeepSparse Engine](https://github.com/neuralmagic/deepsparse).
+
+Our Sparsify and SparseML tools allow us to easily reach industry leading levels of sparsity while preserving baseline accuracy, and the DeepSparse Engine’s breakthrough sparse kernels execute this computation effectively.
+
+**Full Deep Sparse Platform flow:**  
+
+<img src="https://docs.neuralmagic.com/docs/source/sparsification/flow-overview.svg" width="960px">
 
 ## Supported Architectures & Frameworks
 
@@ -41,7 +56,7 @@ Our inference engine and model optimization technologies enable companies to use
   <tr>
    <td><strong>Sample Models</strong>
    </td>
-   <td>ResNets, MobileNets, EfficientNets, Single-Shot Detectors (SSDs)
+   <td>YOLOs, ResNets, MobileNets, EfficientNets, Single-Shot Detectors (SSDs)
    </td>
   </tr>
   <tr>
