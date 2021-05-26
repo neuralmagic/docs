@@ -4,12 +4,10 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   Using the numactl Utility to Control Resource Utilization with the DeepSparse Engine — DeepSparse 0.3.1 documentation
+   Using the numactl Utility to Control Resource Utilization with the DeepSparse Engine — DeepSparse 0.4.0.20210526 documentation
   </title>
   <link href="../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/pygments.css" rel="stylesheet" type="text/css"/>
-  <link href="../_static/pygments.css" rel="stylesheet" type="text/css"/>
-  <link href="../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/copybutton.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/css/nm-theme-adjustment.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/favicon.ico" rel="shortcut icon"/>
@@ -17,8 +15,6 @@
     <script src="../_static/js/html5shiv.min.js"></script>
   <![endif]-->
   <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js" type="text/javascript">
-  </script>
-  <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js">
   </script>
   <script src="../_static/jquery.js">
   </script>
@@ -47,7 +43,7 @@
        <img alt="Logo" class="logo" src="../_static/icon-deepsparse.png"/>
       </a>
       <div class="version">
-       0.3
+       0.4
       </div>
       <div role="search">
        <form action="../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -246,7 +242,7 @@ limitations under the License.
          </p>
          <div class="highlight-bash notranslate">
           <div class="highlight">
-           <pre><span></span>    numactl --cpunodebind N &lt;deepsparseengine-process&gt;
+           <pre><span></span>numactl --cpunodebind N &lt;deepsparseengine-process&gt;
 </pre>
           </div>
          </div>
@@ -255,7 +251,7 @@ limitations under the License.
          </p>
          <div class="highlight-bash notranslate">
           <div class="highlight">
-           <pre><span></span>    numactl --cpunodebind N,M &lt;deepsparseengine-process&gt;
+           <pre><span></span>numactl --cpunodebind N,M &lt;deepsparseengine-process&gt;
 </pre>
           </div>
          </div>
@@ -282,9 +278,9 @@ limitations under the License.
          </p>
          <div class="highlight-bash notranslate">
           <div class="highlight">
-           <pre><span></span>    numactl --cpunodebind N --preferred N &lt;deepsparseengine-process&gt;
-    or
-    numactl --cpunodebind N --membind N &lt;deepsparseengine-process&gt;
+           <pre><span></span>numactl --cpunodebind N --preferred N &lt;deepsparseengine-process&gt;
+or
+numactl --cpunodebind N --membind N &lt;deepsparseengine-process&gt;
 </pre>
           </div>
          </div>
@@ -326,25 +322,25 @@ limitations under the License.
             --physcpubind
            </span>
           </code>
-          . CPUs are numbered from 0-N, where N is the maximum number of logical cores available on the system. On systems with hyper-threading (or SMT), there may be more than one logical thread per physical CPU. Usually, the logical CPUs/threads are numbered after all the physical CPUs/threads. For example, in a system with two threads per CPU and N physical CPUs, the threads for a particular CPU (K) will be K and K+N for all 0&lt;=K&lt;N. The DeepSparse Engine currently works best with hyper-threading/SMT disabled, so only one set of threads should be selected using
+          . CPUs are numbered from 0-N, where N is the maximum number of logical cores available on the system. On systems with hyper-threading (or SMT), there may be more than one logical thread per physical CPU. Usually, the logical CPUs/threads are numbered after all the physical CPUs/threads. For example, in a system with two threads per CPU and N physical CPUs, the threads for a particular CPU (K) will be K and K+N for all 0&amp;lt;=K&amp;lt;N. The DeepSparse Engine currently works best with hyper-threading/SMT disabled, so only one set of threads should be selected using
           <strong>
            numactl
           </strong>
           , i.e., 0 through (N-1) or N through (N-1).
          </p>
          <p>
-          Similarly, for a multi-socket system with N sockets and C physical CPUs per socket, the CPUs located on a single socket will range from K*C to ((K+1)
+          Similarly, for a multi-socket system with N sockets and C physical CPUs per socket, the CPUs located on a single socket will range from K
           <em>
-           C)-1 where 0&lt;=K&lt;N. For multi-socket, multi-thread systems, the logical threads are separated by N
+           C to ((K+1)
           </em>
-          C. For example, for a two socket, two thread per CPU system with 8 cores per CPU, the logical threads for socket 0 would be numbered 0-7 and 16-23, and the threads for socket 1 would be numbered 8-15 and 24-31.
+          C)-1 where 0&amp;lt;=K&amp;lt;N. For multi-socket, multi-thread systems, the logical threads are separated by N*C. For example, for a two socket, two thread per CPU system with 8 cores per CPU, the logical threads for socket 0 would be numbered 0-7 and 16-23, and the threads for socket 1 would be numbered 8-15 and 24-31.
          </p>
          <p>
           Given the architecture above, to run the DeepSparse Engine on the first four CPUs on the second socket, you would use the following:
          </p>
          <div class="highlight-bash notranslate">
           <div class="highlight">
-           <pre><span></span>    numactl --physcpubind <span class="m">8</span>-11 --preferred <span class="m">1</span> &lt;deepsparseengine-process&gt;
+           <pre><span></span>numactl --physcpubind <span class="m">8</span>-11 --preferred <span class="m">1</span> &lt;deepsparseengine-process&gt;
 </pre>
           </div>
          </div>
@@ -388,9 +384,9 @@ limitations under the License.
           </p>
           <div class="highlight-bash notranslate">
            <div class="highlight">
-            <pre><span></span>    <span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span> &lt;deepsparseengine-process&gt;
-    or
-    <span class="nb">export</span> <span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span> &lt;deepsparseengine-process&gt;
+            <pre><span></span><span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span> &lt;deepsparseengine-process&gt;
+or
+<span class="nb">export</span> <span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span> &lt;deepsparseengine-process&gt;
 </pre>
            </div>
           </div>
@@ -410,7 +406,11 @@ limitations under the License.
            <em>
             K and 2
            </em>
-           K+1.  The mapping of cores to sockets is also straightforward, for a N socket system with C cores per socket, the cores for a particular socket S are numbered S*C to ((S+1)*C)-1.
+           K+1.  The mapping of cores to sockets is also straightforward, for a N socket system with C cores per socket, the cores for a particular socket S are numbered S
+           <em>
+            C to ((S+1)
+           </em>
+           C)-1.
           </p>
          </div>
          <div class="section" id="additional-notes">
@@ -429,7 +429,8 @@ limitations under the License.
              --hardware
             </span>
            </code>
-           Displays the inventory of available sockets/CPUs on a system.
+           &lt;/br&gt;
+Displays the inventory of available sockets/CPUs on a system.
           </p>
           <p>
            <code class="docutils literal notranslate">
@@ -440,7 +441,8 @@ limitations under the License.
              --show
             </span>
            </code>
-           Displays the resources available to the current process.
+           &lt;/br&gt;
+Displays the resources available to the current process.
           </p>
           <p>
            For further details about these and other parameters, see the man page on
@@ -451,7 +453,7 @@ limitations under the License.
           </p>
           <div class="highlight-bash notranslate">
            <div class="highlight">
-            <pre><span></span>    man numactl
+            <pre><span></span>man numactl
 </pre>
            </div>
           </div>
