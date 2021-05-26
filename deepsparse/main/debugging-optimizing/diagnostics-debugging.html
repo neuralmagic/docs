@@ -7,14 +7,12 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Logging Guidance for Diagnostics and Debugging &mdash; DeepSparse 0.4.0 documentation</title>
+  <title>Logging Guidance for Diagnostics and Debugging &mdash; DeepSparse 0.4.0.20210526 documentation</title>
   
 
   
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
   <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" />
 
@@ -35,7 +33,6 @@
   
     
       <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
-        <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
         <script src="../_static/jquery.js"></script>
         <script src="../_static/underscore.js"></script>
         <script src="../_static/doctools.js"></script>
@@ -102,8 +99,6 @@
             
               <p class="caption"><span class="caption-text">General</span></p>
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="../source/quicktour.html">Quick Tour</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../source/installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../source/hardware.html">Hardware Support</a></li>
 </ul>
 <p class="caption"><span class="caption-text">Performance</span></p>
@@ -138,6 +133,7 @@
 <li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">Bugs, Feature Requests</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
 </ul>
 
@@ -230,7 +226,7 @@ limitations under the License.
 <div class="section" id="performance-tuning">
 <h2>Performance Tuning<a class="headerlink" href="#performance-tuning" title="Permalink to this headline">¶</a></h2>
 <p>An initial decision point to make in troubleshooting performance issues before enabling logs is whether to prevent threads from migrating from their cores. The default behavior is to disable thread binding (or pinning), allowing your OS to manage the allocation of threads to cores. There is a performance hit associated with this if the DeepSparseEngine is the main process running on your machine. If you want to enable thread binding for the possible performance benefit, set:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NM_BIND_THREADS_TO_CORES</span><span class="o">=</span><span class="m">1</span>
 </pre></div>
 </div>
 <p><strong>Note 1:</strong> If the DeepSparse Engine is not the only major process running on your machine, binding threads may hurt performance of the other major process(es) by monopolizing system resources.</p>
@@ -241,72 +237,72 @@ limitations under the License.
 <p>Logs are controlled by setting the <code class="docutils literal notranslate"><span class="pre">NM_LOGGING_LEVEL</span></code> environment variable.</p>
 <p>Specify within your shell one of the following verbosity levels (in increasing order of verbosity:</p>
 <p><code class="docutils literal notranslate"><span class="pre">fatal,</span> <span class="pre">error,</span> <span class="pre">warn,</span></code> and <code class="docutils literal notranslate"><span class="pre">diagnose</span></code> with <code class="docutils literal notranslate"><span class="pre">diagnose</span></code> as a common default for all logs that will output to stderr:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose 
-    <span class="nb">export</span> NM_LOGGING_LEVEL
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose
+<span class="nb">export</span> NM_LOGGING_LEVEL
 </pre></div>
 </div>
 <p>Alternatively, you can output the logging level by</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose &lt;some command&gt;
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose &lt;some command&gt;
 </pre></div>
 </div>
 <p>To enable diagnostic logs on a per-run basis, specify it manually before each script execution. For example, if you normally run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    python run_model.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python run_model.py
 </pre></div>
 </div>
 <p>Then, to enable diagnostic logs, run:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose python run_model.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose python run_model.py
 </pre></div>
 </div>
 <p>To enable logging for your entire shell instance, execute within your shell:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="nb">export</span> <span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span> <span class="nv">NM_LOGGING_LEVEL</span><span class="o">=</span>diagnose
 </pre></div>
 </div>
 <p>By default, logs will print out to the stderr of your process. If you would like to output to a file, add <code class="docutils literal notranslate"><span class="pre">2&gt;</span> <span class="pre">&lt;name_of_log&gt;.txt</span></code> to the end of your command.</p>
 </div>
 <div class="section" id="parsing-an-example-log">
 <h2>Parsing an Example Log<a class="headerlink" href="#parsing-an-example-log" title="Permalink to this headline">¶</a></h2>
-<p>If you want to see an example log with <code class="docutils literal notranslate"><span class="pre">NM_LOGGING_LEVEL=diagnose</span></code>, a <a class="reference internal" href="example-log.html"><span class="doc">truncated sample output</span></a> is provided at the end of this guide. It will show a super_resolution network, where Neural Magic only supports running 70% of it.</p>
+<p>If you want to see an example log with <code class="docutils literal notranslate"><span class="pre">NM_LOGGING_LEVEL=diagnose</span></code>, a <a class="reference external" href="example-log.md">truncated sample output</a> is provided at the end of this guide. It will show a super_resolution network, where Neural Magic only supports running 70% of it.</p>
 <p><em>Different portions of the log are explained below.</em></p>
 <div class="section" id="viewing-the-whole-graph">
 <h3>Viewing the Whole Graph<a class="headerlink" href="#viewing-the-whole-graph" title="Permalink to this headline">¶</a></h3>
 <p>Once a model is in our system, it is parsed to determine what operations it contains. Each operation is made a node and assigned a unique number Its operation type is displayed:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    Printing GraphViewer torch-jit-export:
-    Node <span class="m">0</span>: Conv
-    Node <span class="m">1</span>: Relu
-    Node <span class="m">2</span>: Conv
-    Node <span class="m">3</span>: Relu
-    Node <span class="m">4</span>: Conv
-    Node <span class="m">5</span>: Relu
-    Node <span class="m">6</span>: Conv
-    Node <span class="m">7</span>: Reshape
-    Node <span class="m">8</span>: Transpose
-    Node <span class="m">9</span>: Reshape
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Printing GraphViewer torch-jit-export:
+Node <span class="m">0</span>: Conv
+Node <span class="m">1</span>: Relu
+Node <span class="m">2</span>: Conv
+Node <span class="m">3</span>: Relu
+Node <span class="m">4</span>: Conv
+Node <span class="m">5</span>: Relu
+Node <span class="m">6</span>: Conv
+Node <span class="m">7</span>: Reshape
+Node <span class="m">8</span>: Transpose
+Node <span class="m">9</span>: Reshape
 </pre></div>
 </div>
 </div>
 <div class="section" id="finding-supported-nodes-for-our-optimized-engine">
 <h3>Finding Supported Nodes for Our Optimized Engine<a class="headerlink" href="#finding-supported-nodes-for-our-optimized-engine" title="Permalink to this headline">¶</a></h3>
 <p>After the whole graph is loaded in, nodes are analyzed to determine whether they are supported by our optimized runtime engine. Notable “unsupported” operators are indicated by looking for <code class="docutils literal notranslate"><span class="pre">Unsupported</span> <span class="pre">[type</span> <span class="pre">of</span> <span class="pre">node]</span></code> in the log. For example, this is an unsupported Reshape node that produces a 6D tensor:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    <span class="o">[</span>nm_ort 7f4fbbd3f740 &gt;DIAGNOSE&lt; unsupported /home/jdoe/code/nyann/src/onnxruntime_neuralmagic/supported/ops.cc:60<span class="o">]</span> Unsupported Reshape , const shape greater than 5D
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>nm_ort 7f4fbbd3f740 &gt;DIAGNOSE&lt; unsupported /home/jdoe/code/nyann/src/onnxruntime_neuralmagic/supported/ops.cc:60<span class="o">]</span> Unsupported Reshape , const shape greater than 5D
 </pre></div>
 </div>
 </div>
 <div class="section" id="compiling-each-subgraph">
 <h3>Compiling Each Subgraph<a class="headerlink" href="#compiling-each-subgraph" title="Permalink to this headline">¶</a></h3>
 <p>Once all the nodes are located that are supported within the optimized engine, the graphs are split into maximal subgraphs and each one is compiled. ​To find the start of each subgraph compilation, look for <code class="docutils literal notranslate"><span class="pre">==</span> <span class="pre">Beginning</span> <span class="pre">new</span> <span class="pre">subgraph</span> <span class="pre">==</span></code>. First, the nodes are displayed in the subgraph: ​</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>    Printing subgraph:
-    Node <span class="m">0</span>: Conv 
-    Node <span class="m">1</span>: Relu 
-    Node <span class="m">2</span>: Conv 
-    Node <span class="m">3</span>: Relu 
-    Node <span class="m">4</span>: Conv 
-    Node <span class="m">5</span>: Relu 
-    Node <span class="m">6</span>: Conv
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Printing subgraph:
+Node <span class="m">0</span>: Conv
+Node <span class="m">1</span>: Relu
+Node <span class="m">2</span>: Conv
+Node <span class="m">3</span>: Relu
+Node <span class="m">4</span>: Conv
+Node <span class="m">5</span>: Relu
+Node <span class="m">6</span>: Conv
 </pre></div>
 </div>
 <p>Simplifications are then performed on the graph to get it in an ideal state for complex optimizations, which are logged:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="o">[</span>nm_ort 7f4fbbd3f740 &gt;DIAGNOSE&lt; supported_subgraphs /home/jdoe/code/nyann/src/onnxruntime_neuralmagic/supported/subgraphs.cc:706<span class="o">]</span> <span class="o">==</span> Translating subgraph NM_Subgraph_1 to NM intake graph.
-<span class="o">[</span>nm_ort 7f4fbbd3f740 &gt;DIAGNOSE&lt; supported_subgraphs /home/jdoe/code/nyann/src/onnxruntime_neuralmagic/supported/subgraphs.cc:715<span class="o">]</span> <span class="o">(</span> L1 graph 
+<span class="o">[</span>nm_ort 7f4fbbd3f740 &gt;DIAGNOSE&lt; supported_subgraphs /home/jdoe/code/nyann/src/onnxruntime_neuralmagic/supported/subgraphs.cc:715<span class="o">]</span> <span class="o">(</span> L1 graph
     <span class="o">(</span> values:
       <span class="o">(</span><span class="m">10</span> float <span class="o">[</span> <span class="m">1</span>, <span class="m">64</span>, <span class="m">224</span>, <span class="m">224</span> <span class="o">])</span>
       <span class="o">(</span><span class="m">11</span> float <span class="o">[</span> <span class="m">1</span>, <span class="m">64</span>, <span class="m">224</span>, <span class="m">224</span> <span class="o">])</span>
