@@ -87,4 +87,19 @@ Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. P
 
 Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
 
-Model inferences are executed as a single stream; concurrent execution is unsupported at this time.
+Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy](https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html). 
+
+## Try it Out
+
+Not sure where to start? Here are several hands-on experiences you can work through, from benchmarking to deployment.
+
+### 1. Benchmarking Performance
+A number of pre-trained, performant deep learning models are available via our API in the SparseZoo. Included are both baseline
+and recalibrated models for higher performance with the DeepSparse Engine on CPUs.
+
+- [YOLOv3](https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/) or [ResNet-50](https://neuralmagic.com/blog/benchmark-resnet50-with-deepsparse/)
+
+### 2. Transfer Learn or Train from Scratch
+
+Use our YOLOv3 with your data using transfer learning:
+- [Sparsifying YOLOv3 Using Recipes](https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md)
