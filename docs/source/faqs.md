@@ -68,7 +68,7 @@ Dynamic shape is currently not supported; be sure to use models with fixed input
 
 **Can multiple model inferences be executed?**
 
-Model inferences are executed as a single stream; concurrent execution is unsupported at this time.
+Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy](https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html). 
 
 ___
 
