@@ -1,0 +1,609 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>sparseml.pytorch.utils.yolo_helpers &mdash; SparseML 0.4.0.20210604 documentation</title>
+  
+
+  
+  <link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+  <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" />
+
+  
+  
+    <link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  
+
+  
+  
+
+  
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../../_static/js/theme.js"></script>
+
+    
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../../index.html" class="icon icon-home"> SparseML
+          
+
+          
+            
+            <img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.4
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+        
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+        
+      <li>sparseml.pytorch.utils.yolo_helpers</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for sparseml.pytorch.utils.yolo_helpers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions and classes for creating and training PyTorch Yolo models</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torchvision.ops.boxes</span> <span class="kn">import</span> <span class="n">batched_nms</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">batched_nms</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="nb">all</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;get_output_grid_shapes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;yolo_v3_anchor_groups&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;build_targets&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;box_giou&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;YoloGrids&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;postprocess_yolo&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_output_grid_shapes"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.get_output_grid_shapes">[docs]</a><span class="k">def</span> <span class="nf">get_output_grid_shapes</span><span class="p">(</span><span class="n">outputs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param outputs: List of Yolo model outputs</span>
+<span class="sd">    :return: A list of the grid dimensions for each of the Yolo outputs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">Tensor</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]))</span> <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="yolo_v3_anchor_groups"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.yolo_v3_anchor_groups">[docs]</a><span class="k">def</span> <span class="nf">yolo_v3_anchor_groups</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :return: List of the default anchor coordinate groups for Yolo V3 outputs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">Tensor</span><span class="p">([[</span><span class="mi">116</span><span class="p">,</span> <span class="mi">90</span><span class="p">],</span> <span class="p">[</span><span class="mi">156</span><span class="p">,</span> <span class="mi">198</span><span class="p">],</span> <span class="p">[</span><span class="mi">373</span><span class="p">,</span> <span class="mi">326</span><span class="p">]]),</span>
+        <span class="n">Tensor</span><span class="p">([[</span><span class="mi">30</span><span class="p">,</span> <span class="mi">61</span><span class="p">],</span> <span class="p">[</span><span class="mi">62</span><span class="p">,</span> <span class="mi">45</span><span class="p">],</span> <span class="p">[</span><span class="mi">59</span><span class="p">,</span> <span class="mi">119</span><span class="p">]]),</span>
+        <span class="n">Tensor</span><span class="p">([[</span><span class="mi">10</span><span class="p">,</span> <span class="mi">13</span><span class="p">],</span> <span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">30</span><span class="p">],</span> <span class="p">[</span><span class="mi">33</span><span class="p">,</span> <span class="mi">23</span><span class="p">]]),</span>
+    <span class="p">]</span></div>
+
+
+<span class="k">def</span> <span class="nf">_width_height_iou</span><span class="p">(</span><span class="n">wh_a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">wh_b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="c1"># [n,2], [m,2] -&gt; [n,m]</span>
+    <span class="n">wh_a</span> <span class="o">=</span> <span class="n">wh_a</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">wh_b</span> <span class="o">=</span> <span class="n">wh_b</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+    <span class="n">area_a</span> <span class="o">=</span> <span class="n">wh_a</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="n">area_b</span> <span class="o">=</span> <span class="n">wh_b</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+    <span class="n">intersection</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">wh_a</span><span class="p">,</span> <span class="n">wh_b</span><span class="p">)</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">intersection</span> <span class="o">/</span> <span class="p">(</span><span class="n">area_a</span> <span class="o">+</span> <span class="n">area_b</span> <span class="o">-</span> <span class="n">intersection</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="build_targets"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.build_targets">[docs]</a><span class="k">def</span> <span class="nf">build_targets</span><span class="p">(</span>
+    <span class="n">targets</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">anchors_groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">grid_shapes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">iou_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns a representation of the image targets according to the given</span>
+<span class="sd">    anchor groups and grid shapes.</span>
+
+<span class="sd">    :param targets: Yolo data targets tensor of shape n,6 with columns image number,</span>
+<span class="sd">        class, center_x, center_y, width, height</span>
+<span class="sd">    :param anchors_groups: List of n,2 Tensors of anchor point coordinates for</span>
+<span class="sd">        each of the Yolo model&#39;s detectors</span>
+<span class="sd">    :param grid_shapes: List of n,2 Tensors of the Yolo models output grid shapes</span>
+<span class="sd">        for a particular input shape</span>
+<span class="sd">    :param iou_threshold: the minimum IoU value to consider an object box to match</span>
+<span class="sd">        to an anchor point. Default is 0.2</span>
+<span class="sd">    :return:</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">num_targets</span> <span class="o">=</span> <span class="n">targets</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">num_anchors</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">anchors_groups</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">classes</span><span class="p">,</span> <span class="n">boxes</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">target_anchors</span> <span class="o">=</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[],</span> <span class="p">[]</span>
+
+    <span class="c1"># copy targets for each anchor</span>
+    <span class="n">anchor_indices</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">num_anchors</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">targets</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">num_anchors</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_targets</span><span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">targets</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">num_anchors</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">anchor_indices</span><span class="p">[:,</span> <span class="p">:,</span> <span class="kc">None</span><span class="p">]),</span> <span class="mi">2</span>
+    <span class="p">)</span>
+
+    <span class="n">offset_bias</span> <span class="o">=</span> <span class="mf">0.5</span>
+    <span class="n">offset_values</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span>
+            <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span>  <span class="c1"># None, j,k,l,m</span>
+            <span class="n">device</span><span class="o">=</span><span class="n">targets</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">float</span><span class="p">()</span>
+        <span class="o">*</span> <span class="n">offset_bias</span>
+    <span class="p">)</span>  <span class="c1"># offsets</span>
+
+    <span class="n">grid_scale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="n">targets</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>  <span class="c1"># tensor for grid space scaling</span>
+
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">anchors</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">anchors_groups</span><span class="p">):</span>
+        <span class="c1"># scale targets to current grid</span>
+        <span class="n">anchors</span> <span class="o">=</span> <span class="n">anchors</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">targets</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">grid_scale</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">tensor</span><span class="p">(</span><span class="n">grid_shapes</span><span class="p">[</span><span class="n">idx</span><span class="p">])[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]]</span>
+        <span class="n">scaled_targets</span> <span class="o">=</span> <span class="n">targets</span> <span class="o">*</span> <span class="n">grid_scale</span>
+
+        <span class="k">if</span> <span class="n">num_targets</span><span class="p">:</span>
+            <span class="c1"># mask non-matches</span>
+            <span class="n">wh_iou_mask</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_width_height_iou</span><span class="p">(</span><span class="n">anchors</span><span class="p">,</span> <span class="n">scaled_targets</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">iou_threshold</span>
+            <span class="p">)</span>
+            <span class="n">scaled_targets</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[</span><span class="n">wh_iou_mask</span><span class="p">]</span>
+
+            <span class="c1"># adjust for offsets for grid index rounding</span>
+            <span class="n">targets_xy</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+            <span class="n">targets_xy_inv</span> <span class="o">=</span> <span class="n">grid_scale</span><span class="p">[[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span> <span class="o">-</span> <span class="n">targets_xy</span>
+            <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <span class="p">((</span><span class="n">targets_xy</span> <span class="o">%</span> <span class="mf">1.0</span> <span class="o">&lt;</span> <span class="n">offset_bias</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">targets_xy</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">))</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+            <span class="n">l</span><span class="p">,</span> <span class="n">m</span> <span class="o">=</span> <span class="p">((</span><span class="n">targets_xy_inv</span> <span class="o">%</span> <span class="mf">1.0</span> <span class="o">&lt;</span> <span class="n">offset_bias</span><span class="p">)</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">targets_xy_inv</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">))</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+            <span class="n">offset_filter</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="n">j</span><span class="p">),</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+            <span class="n">scaled_targets</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="o">.</span><span class="n">repeat</span><span class="p">((</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">))[</span><span class="n">offset_filter</span><span class="p">]</span>
+            <span class="n">offsets</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">targets_xy</span><span class="p">)[</span><span class="kc">None</span><span class="p">]</span> <span class="o">+</span> <span class="n">offset_values</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">])[</span>
+                <span class="n">offset_filter</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scaled_targets</span> <span class="o">=</span> <span class="n">targets</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">offsets</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="c1"># extract fields</span>
+        <span class="n">image</span><span class="p">,</span> <span class="n">clazz</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">2</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="n">targets_xy</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">targets_wh</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:</span><span class="mi">6</span><span class="p">]</span>
+        <span class="n">grid_indices</span> <span class="o">=</span> <span class="p">(</span><span class="n">targets_xy</span> <span class="o">-</span> <span class="n">offsets</span><span class="p">)</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+        <span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span> <span class="o">=</span> <span class="n">grid_indices</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="n">anchor_idxs</span> <span class="o">=</span> <span class="n">scaled_targets</span><span class="p">[:,</span> <span class="mi">6</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+
+        <span class="n">indices</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">image</span><span class="p">,</span> <span class="n">anchor_idxs</span><span class="p">,</span> <span class="n">grid_x</span><span class="p">,</span> <span class="n">grid_y</span><span class="p">))</span>
+        <span class="n">boxes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">((</span><span class="n">targets_xy</span> <span class="o">-</span> <span class="n">grid_indices</span><span class="o">.</span><span class="n">float</span><span class="p">(),</span> <span class="n">targets_wh</span><span class="p">),</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="n">target_anchors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">anchors</span><span class="p">[</span><span class="n">anchor_idxs</span><span class="p">])</span>
+        <span class="n">classes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">classes</span><span class="p">,</span> <span class="n">boxes</span><span class="p">,</span> <span class="n">indices</span><span class="p">,</span> <span class="n">target_anchors</span></div>
+
+
+<div class="viewcode-block" id="box_giou"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.box_giou">[docs]</a><span class="k">def</span> <span class="nf">box_giou</span><span class="p">(</span><span class="n">boxes_a</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">boxes_b</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param boxes_a: 4,N Tensor of xywh bounding boxes</span>
+<span class="sd">    :param boxes_b: 4,N Tensor of xywh bounding boxes</span>
+<span class="sd">    :return: Shape N Tensor of GIoU values between boxes in the input tensors</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># get ltrb coordinates</span>
+    <span class="n">lt_x_a</span> <span class="o">=</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">lt_y_a</span> <span class="o">=</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">rb_x_a</span> <span class="o">=</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">rb_y_a</span> <span class="o">=</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">lt_x_b</span> <span class="o">=</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">lt_y_b</span> <span class="o">=</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">rb_x_b</span> <span class="o">=</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+    <span class="n">rb_y_b</span> <span class="o">=</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span>
+
+    <span class="c1"># base IoU</span>
+    <span class="n">inter</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">rb_x_a</span><span class="p">,</span> <span class="n">rb_x_b</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lt_x_a</span><span class="p">,</span> <span class="n">lt_x_b</span><span class="p">))</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">rb_y_a</span><span class="p">,</span> <span class="n">rb_y_b</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">lt_y_a</span><span class="p">,</span> <span class="n">lt_y_b</span><span class="p">)</span>
+    <span class="p">)</span><span class="o">.</span><span class="n">clamp</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+    <span class="n">area_a</span> <span class="o">=</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">boxes_a</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">area_b</span> <span class="o">=</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">boxes_b</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span>
+    <span class="n">union</span> <span class="o">=</span> <span class="n">area_a</span> <span class="o">+</span> <span class="n">area_b</span> <span class="o">-</span> <span class="n">inter</span> <span class="o">+</span> <span class="mf">1e-9</span>
+    <span class="n">iou</span> <span class="o">=</span> <span class="n">inter</span> <span class="o">/</span> <span class="n">union</span>
+
+    <span class="c1"># convex area</span>
+    <span class="n">convex_w</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rb_x_a</span><span class="p">,</span> <span class="n">rb_x_b</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lt_x_a</span><span class="p">,</span> <span class="n">lt_x_b</span><span class="p">)</span>
+    <span class="n">convex_h</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">rb_y_a</span><span class="p">,</span> <span class="n">rb_y_b</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">lt_y_a</span><span class="p">,</span> <span class="n">lt_y_b</span><span class="p">)</span>
+    <span class="n">convex_area</span> <span class="o">=</span> <span class="n">convex_w</span> <span class="o">*</span> <span class="n">convex_h</span> <span class="o">+</span> <span class="mf">1e-9</span>  <span class="c1"># convex area</span>
+
+    <span class="k">return</span> <span class="n">iou</span> <span class="o">-</span> <span class="p">(</span><span class="n">convex_area</span> <span class="o">-</span> <span class="n">union</span><span class="p">)</span> <span class="o">/</span> <span class="n">convex_area</span>  <span class="c1"># GIoU</span></div>
+
+
+<div class="viewcode-block" id="YoloGrids"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.YoloGrids">[docs]</a><span class="k">class</span> <span class="nc">YoloGrids</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Helper class to compute and store Yolo output and anchor box grids</span>
+
+<span class="sd">    :param anchor_groups: List of n,2 tensors of the Yolo model&#39;s anchor points</span>
+<span class="sd">        for each output group. Defaults to yolo_v3_anchor_groups</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">anchor_groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grids</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">anchor_groups</span> <span class="o">=</span> <span class="n">anchor_groups</span> <span class="ow">or</span> <span class="n">yolo_v3_anchor_groups</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_anchor_grids</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">t</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">t</span> <span class="ow">in</span> <span class="n">yolo_v3_anchor_groups</span><span class="p">()</span>
+        <span class="p">]</span>
+
+<div class="viewcode-block" id="YoloGrids.get_grid"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.YoloGrids.get_grid">[docs]</a>    <span class="k">def</span> <span class="nf">get_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">size_x</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">size_y</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param size_x: grid size x</span>
+<span class="sd">        :param size_y: grid size y</span>
+<span class="sd">        :return: Yolo output box grid for size x,y to be used for model output decoding.</span>
+<span class="sd">            will have shape (1, 1, size_y, size_x, 2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">grid_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">size_x</span><span class="p">,</span> <span class="n">size_y</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">grid_shape</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grids</span><span class="p">:</span>
+            <span class="n">coords_y</span><span class="p">,</span> <span class="n">coords_x</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">size_y</span><span class="p">),</span> <span class="n">torch</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">size_x</span><span class="p">)]</span>
+            <span class="p">)</span>
+            <span class="n">grid</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">((</span><span class="n">coords_x</span><span class="p">,</span> <span class="n">coords_y</span><span class="p">),</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_grids</span><span class="p">[</span><span class="n">grid_shape</span><span class="p">]</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">size_y</span><span class="p">,</span> <span class="n">size_x</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grids</span><span class="p">[</span><span class="n">grid_shape</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="YoloGrids.get_anchor_grid"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.YoloGrids.get_anchor_grid">[docs]</a>    <span class="k">def</span> <span class="nf">get_anchor_grid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">group_idx</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param group_idx: Index of output group for this anchor grid</span>
+<span class="sd">        :return: grid tensor of shape 1, num_anchors, 1, 1, 2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_anchor_grids</span><span class="p">[</span><span class="n">group_idx</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="YoloGrids.num_anchor_grids"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.YoloGrids.num_anchor_grids">[docs]</a>    <span class="k">def</span> <span class="nf">num_anchor_grids</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The number of anchor grids available (number of yolo model outputs)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_anchor_grids</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_xywh_to_ltrb</span><span class="p">(</span><span class="n">boxes</span><span class="p">,</span> <span class="n">in_place</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">in_place</span><span class="p">:</span>
+        <span class="n">boxes</span> <span class="o">=</span> <span class="n">boxes</span><span class="o">.</span><span class="n">clone</span><span class="p">()</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># ltrb x</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>  <span class="c1"># ltrb y</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">boxes</span><span class="p">[:,</span> <span class="mi">3</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">boxes</span>
+
+
+<div class="viewcode-block" id="postprocess_yolo"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.yolo_helpers.postprocess_yolo">[docs]</a><span class="k">def</span> <span class="nf">postprocess_yolo</span><span class="p">(</span>
+    <span class="n">preds</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+    <span class="n">yolo_grids</span><span class="p">:</span> <span class="n">YoloGrids</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">confidence_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">iou_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+    <span class="n">max_detections</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">300</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Decode the outputs of a Yolo model and perform non maximum suppression</span>
+<span class="sd">    on the predicted boxes.</span>
+
+<span class="sd">    :param preds: list of Yolo model output tensors</span>
+<span class="sd">    :param input_shape: shape of input image to model. Default is [640, 640]</span>
+<span class="sd">    :param yolo_grids: optional YoloGrids object for caching previously used grid shapes</span>
+<span class="sd">    :param confidence_threshold: minimum confidence score for a prediction to be</span>
+<span class="sd">        considered a detection. Default is 0.1</span>
+<span class="sd">    :param iou_threshold: IoU threshold for non maximum suppression. Default is 0.6</span>
+<span class="sd">    :param max_detections: maximum number of detections after nms. Default is 300</span>
+<span class="sd">    :return: List of predicted bounding boxes (n,4), labels, and scores for each output</span>
+<span class="sd">        in the batch</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">batched_nms</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+            <span class="s2">&quot;Unable to import batched_nms from torchvision.ops try upgrading your&quot;</span>
+            <span class="s2">&quot; torch and torchvision versions&quot;</span>
+        <span class="p">)</span>
+    <span class="n">yolo_grids</span> <span class="o">=</span> <span class="n">yolo_grids</span> <span class="ow">or</span> <span class="n">YoloGrids</span><span class="p">()</span>
+
+    <span class="c1"># decode each of the model output grids then concatenate</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">preds</span><span class="p">):</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">()</span>
+
+        <span class="c1"># build grid and calculate stride</span>
+        <span class="n">grid_shape</span> <span class="o">=</span> <span class="n">pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">grid</span> <span class="o">=</span> <span class="n">yolo_grids</span><span class="o">.</span><span class="n">get_grid</span><span class="p">(</span><span class="o">*</span><span class="n">grid_shape</span><span class="p">)</span>
+        <span class="n">anchor_grid</span> <span class="o">=</span> <span class="n">yolo_grids</span><span class="o">.</span><span class="n">get_anchor_grid</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span>
+        <span class="n">stride</span> <span class="o">=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">grid_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># decode xywh box values</span>
+        <span class="n">pred</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pred</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">0</span><span class="p">:</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="mf">2.0</span> <span class="o">-</span> <span class="mf">0.5</span> <span class="o">+</span> <span class="n">grid</span><span class="p">)</span> <span class="o">*</span> <span class="n">stride</span>
+        <span class="n">pred</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">pred</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span><span class="mi">4</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">anchor_grid</span>
+        <span class="c1"># flatten anchor and grid dimensions -&gt; (bs, num_predictions, num_classes + 5)</span>
+        <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="n">pred</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">pred</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="c1"># perform nms on each image in batch</span>
+    <span class="n">nms_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">image_idx</span><span class="p">,</span> <span class="n">output</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="p">):</span>
+        <span class="c1"># filter out low confidence predictions</span>
+        <span class="n">confidence_mask</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">confidence_threshold</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">confidence_mask</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># no predictions, return empty tensor</span>
+            <span class="n">nms_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># scale class confidences by object confidence, convert to ltrb</span>
+        <span class="n">output</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span> <span class="o">*=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">:</span><span class="mi">5</span><span class="p">]</span>
+        <span class="n">_xywh_to_ltrb</span><span class="p">(</span><span class="n">output</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">in_place</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># attach labels of all positive predictions</span>
+        <span class="n">class_confidence_mask</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">:]</span> <span class="o">&gt;</span> <span class="n">confidence_threshold</span>
+        <span class="n">pred_idxs</span><span class="p">,</span> <span class="n">class_idxs</span> <span class="o">=</span> <span class="n">class_confidence_mask</span><span class="o">.</span><span class="n">nonzero</span><span class="p">(</span><span class="n">as_tuple</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">t</span><span class="p">()</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cat</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">output</span><span class="p">[</span><span class="n">pred_idxs</span><span class="p">,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span>
+                <span class="n">output</span><span class="p">[</span><span class="n">pred_idxs</span><span class="p">,</span> <span class="n">class_idxs</span> <span class="o">+</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">class_idxs</span><span class="o">.</span><span class="n">float</span><span class="p">()</span><span class="o">.</span><span class="n">unsqueeze</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="p">],</span>
+            <span class="mi">1</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">output</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># no predictions, return empty tensor</span>
+            <span class="n">nms_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">empty</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># run nms</span>
+        <span class="n">nms_filter</span> <span class="o">=</span> <span class="n">batched_nms</span><span class="p">(</span>  <span class="c1"># boxes, scores, labels, threshold</span>
+            <span class="n">output</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">],</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">],</span> <span class="n">iou_threshold</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">nms_filter</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">max_detections</span><span class="p">:</span>
+            <span class="n">nms_filter</span> <span class="o">=</span> <span class="n">nms_filter</span><span class="p">[:</span><span class="n">max_detections</span><span class="p">]</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">output</span><span class="p">[</span><span class="n">nms_filter</span><span class="p">]</span>
+
+        <span class="c1"># extract outputs, rescale boxes to [0, 1]</span>
+        <span class="n">boxes</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="p">:</span><span class="mi">4</span><span class="p">]</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]]</span> <span class="o">/=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># scale x</span>
+        <span class="n">boxes</span><span class="p">[:,</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">]]</span> <span class="o">/=</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># scale y</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">5</span><span class="p">]</span><span class="o">.</span><span class="n">long</span><span class="p">()</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">output</span><span class="p">[:,</span> <span class="mi">4</span><span class="p">]</span>
+
+        <span class="n">nms_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">boxes</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">scores</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">nms_outputs</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).
+
+    </p>
+  </div>
+    
+    
+    
+    Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    
+    provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.4.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="yolo_helpers.html">v0.4.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div>
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+    <!-- Theme Analytics -->
+    <script>
+    (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-128364174-1', 'auto');
+    
+    ga('send', 'pageview');
+    </script>
+
+    
+   
+
+</body>
+</html>
