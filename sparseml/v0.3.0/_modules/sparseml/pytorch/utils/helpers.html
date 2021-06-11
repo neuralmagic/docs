@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.helpers &mdash; SparseML 0.3.0.20210610 documentation</title>
+  <title>sparseml.pytorch.utils.helpers &mdash; SparseML 0.3.0.20210611 documentation</title>
   
 
   
@@ -235,6 +235,7 @@
     <span class="s2">&quot;tensor_sample&quot;</span><span class="p">,</span>
     <span class="s2">&quot;mask_difference&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_layer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;replace_layer&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_terminal_layers&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_conv_layers&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_linear_layers&quot;</span><span class="p">,</span>
@@ -812,6 +813,31 @@
         <span class="n">layer</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">layer</span></div>
+
+
+<div class="viewcode-block" id="replace_layer"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.helpers.replace_layer">[docs]</a><span class="k">def</span> <span class="nf">replace_layer</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">replace</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    General function to replace a layer in a module with the given new one.</span>
+
+<span class="sd">    :param module: the module to replace the layer in</span>
+<span class="sd">    :param name: the name of the layer to replace the activation for</span>
+<span class="sd">    :param replace: the module to replace the layer with</span>
+<span class="sd">    :return: the original layer that was replaced</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">parent</span> <span class="o">=</span> <span class="n">module</span>
+    <span class="n">sections</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">sec</span> <span class="ow">in</span> <span class="n">sections</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">parent</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">sec</span><span class="p">)</span>
+
+    <span class="n">cur</span> <span class="o">=</span> <span class="n">parent</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">parent</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">sections</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">replace</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">cur</span></div>
 
 
 <div class="viewcode-block" id="get_terminal_layers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.helpers.get_terminal_layers">[docs]</a><span class="k">def</span> <span class="nf">get_terminal_layers</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Module</span><span class="p">]:</span>

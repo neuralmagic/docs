@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.3.0.20210610 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.3.0.20210611 documentation</title>
   
 
   
@@ -197,12 +197,13 @@
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.nn</span> <span class="kn">import</span> <span class="n">Identity</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.analyzer_pruning</span> <span class="kn">import</span> <span class="n">ModulePruningAnalyzer</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.mask_creator_pruning</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">PruningMaskCreator</span><span class="p">,</span>
@@ -221,8 +222,10 @@
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">MFACOptions</span><span class="p">,</span>
     <span class="n">NamedLayerParam</span><span class="p">,</span>
+    <span class="n">get_layer</span><span class="p">,</span>
     <span class="n">get_named_layers_and_params_by_regex</span><span class="p">,</span>
     <span class="n">get_prunable_layers</span><span class="p">,</span>
+    <span class="n">replace_layer</span><span class="p">,</span>
     <span class="n">tensor_sparsity</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.logger</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
@@ -243,11 +246,13 @@
     <span class="s2">&quot;MFACPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MovementPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;GlobalMagnitudePruningModifier&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LayerPruningModifier&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
 <span class="k">def</span> <span class="nf">_log_sparsity</span><span class="p">(</span>
-    <span class="n">analyzers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ModulePruningAnalyzer</span><span class="p">],</span>
+    <span class="n">tag_prefix</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">layer_sparsities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">ModulePruningAnalyzer</span><span class="p">]],</span>
     <span class="n">loggers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">],</span>
     <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
     <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
@@ -255,10 +260,16 @@
     <span class="n">step</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="k">if</span> <span class="n">steps_per_epoch</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">epoch</span> <span class="o">*</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
 
     <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">analyzer</span> <span class="ow">in</span> <span class="n">analyzers</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">layer_sparsity</span> <span class="ow">in</span> <span class="n">layer_sparsities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer_sparsity</span><span class="p">,</span> <span class="n">ModulePruningAnalyzer</span><span class="p">):</span>
+                <span class="n">layer_sparsity</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">layer_sparsity</span><span class="o">.</span><span class="n">tag</span><span class="p">,</span>
+                    <span class="n">layer_sparsity</span><span class="o">.</span><span class="n">param_sparsity</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">)</span>
+
             <span class="n">logger</span><span class="o">.</span><span class="n">log_scalar</span><span class="p">(</span>
-                <span class="s2">&quot;Modifier KS/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">analyzer</span><span class="o">.</span><span class="n">tag</span><span class="p">),</span>
-                <span class="n">analyzer</span><span class="o">.</span><span class="n">param_sparsity</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">tag_prefix</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">layer_sparsity</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">layer_sparsity</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
                 <span class="n">step</span><span class="p">,</span>
             <span class="p">)</span>
 
@@ -477,7 +488,9 @@
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_log</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
-            <span class="n">_log_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+            <span class="n">_log_sparsity</span><span class="p">(</span>
+                <span class="s2">&quot;ParamPruning&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyzers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span>
+            <span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
@@ -1368,6 +1381,196 @@
             <span class="n">mask_creator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span><span class="p">,</span>
             <span class="n">score_type</span><span class="o">=</span><span class="n">MFACOptions</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_mfac_options</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="LayerPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LayerPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">LayerPruningModifier</span><span class="p">(</span><span class="n">ScheduledUpdateModifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for pruning away layers within a module</span>
+<span class="sd">    (replaces with sparseml.pytorch.nn.Identity).</span>
+
+<span class="sd">    | Sample yaml:</span>
+<span class="sd">    |   !LayerPruningModifier</span>
+<span class="sd">    |       layers: [&#39;bert.encoder.layer.6&#39;, &#39;bert.encoder.layer.7&#39;]</span>
+<span class="sd">    |</span>
+
+<span class="sd">    :param layers: A list of full layer names to apply pruning to.</span>
+<span class="sd">        __ALL_ will match to all layers. __ALL_PRUNABLE__ will match to all ConvNd</span>
+<span class="sd">        and Linear layers</span>
+<span class="sd">    :param start_epoch: The epoch the modifier will prune layers away layers at</span>
+<span class="sd">    :param end_epoch: The epoch, if set and positive,</span>
+<span class="sd">        the modifier will reintroduce the pruned layers at</span>
+<span class="sd">    :param update_frequency: Unused for this modifier</span>
+<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
+<span class="sd">        default is __ALL__</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
+        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
+            <span class="n">update_frequency</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
+            <span class="n">layers</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for layers&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: Dict[str, Module]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_layers_replaced</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the layers to prune from the module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span>
+
+    <span class="nd">@layers</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: the layers to prune from the module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
+            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for layers&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="LayerPruningModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LayerPruningModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab the layers and apply if epoch in range to control pruning for.</span>
+
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
+<span class="sd">            Defaults to 0 (start of the training process)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">layers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_named_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">layer_module</span><span class="p">)</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="p">[</span><span class="n">layer_name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_update_pruning</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LayerPruningModifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LayerPruningModifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cleans up any remaining hooks</span>
+
+<span class="sd">        :param module: The model/module to finalize the modifier for.</span>
+<span class="sd">            Marked optional so state can still be cleaned up on delete,</span>
+<span class="sd">            but generally should always be passed in.</span>
+<span class="sd">        :param reset_loggers: True to remove any currently attached loggers (default),</span>
+<span class="sd">            False to keep the loggers attached.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_update_pruning</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_layers_replaced</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="LayerPruningModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LayerPruningModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update to enable and disable the layers when chosen.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_update_pruning</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="LayerPruningModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LayerPruningModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check whether to log an update for the state of the modifier.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_should_log</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_layers_replaced</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span>
+            <span class="n">_log_sparsity</span><span class="p">(</span>
+                <span class="s2">&quot;LayerPruning&quot;</span><span class="p">,</span>
+                <span class="p">[</span>
+                    <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_layers_match</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">token</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">token</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">token</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="ow">or</span> <span class="n">token</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span> <span class="ow">in</span> <span class="n">token</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">token</span><span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)))</span> <span class="o">&gt;</span> <span class="mi">0</span>
+
+    <span class="k">def</span> <span class="nf">_get_named_layers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Module</span><span class="p">]]:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_layers_match</span><span class="p">(</span><span class="n">ALL_TOKEN</span><span class="p">):</span>
+            <span class="n">layers</span> <span class="o">=</span> <span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="n">layer</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">()]</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_layers_match</span><span class="p">(</span><span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">):</span>
+            <span class="n">layers</span> <span class="o">=</span> <span class="n">get_prunable_layers</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layers</span> <span class="o">=</span> <span class="p">[(</span><span class="n">name</span><span class="p">,</span> <span class="n">get_layer</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">module</span><span class="p">))</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">layers</span>
+
+    <span class="k">def</span> <span class="nf">_check_update_pruning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">replace_layer</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">Identity</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="ow">and</span> <span class="p">(</span><span class="n">epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_epoch</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">replaced</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">replace_layer</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">replaced</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_layer_modules</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">def</span> <span class="nf">_should_log</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">!=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_layers_replaced</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layers_replaced</span>
         <span class="p">)</span></div>
 </pre></div>
 
