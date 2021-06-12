@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.0.20210611 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.0.20210612 documentation</title>
   
 
   
@@ -212,10 +212,7 @@
     <span class="n">PruningMaskCreator</span><span class="p">,</span>
     <span class="n">load_mask_creator</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.mask_pruning</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ModuleParamPruningMask</span><span class="p">,</span>
-    <span class="n">PruningScoreTypes</span><span class="p">,</span>
-<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.mask_pruning</span> <span class="kn">import</span> <span class="n">ModuleParamPruningMask</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ModifierProp</span><span class="p">,</span>
     <span class="n">PyTorchModifierYAML</span><span class="p">,</span>
@@ -701,7 +698,7 @@
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
         <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">score_type</span><span class="p">:</span> <span class="n">PruningScoreTypes</span> <span class="o">=</span> <span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MAGNITUDE</span><span class="p">,</span>
+        <span class="n">score_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
@@ -821,7 +818,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningScoreTypes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the the scoring method used for pruning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -934,14 +931,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
             <span class="n">started</span> <span class="o">=</span> <span class="kc">True</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_type</span> <span class="o">==</span> <span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MOVEMENT</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>  <span class="c1"># prune weights to final sparsity</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">disable_reintroduction</span><span class="p">()</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">pre_optim_step_update</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pre_step_completed</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -956,6 +945,9 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span>
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">pruning_end</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_should_log</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
@@ -1064,7 +1056,7 @@
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">score_type</span><span class="o">=</span><span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MAGNITUDE</span><span class="p">,</span>
+            <span class="n">score_type</span><span class="o">=</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1075,7 +1067,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningScoreTypes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the the scoring method used for pruning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1154,7 +1146,7 @@
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">score_type</span><span class="o">=</span><span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MOVEMENT</span><span class="p">,</span>
+            <span class="n">score_type</span><span class="o">=</span><span class="s2">&quot;movement&quot;</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
@@ -1165,7 +1157,7 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningScoreTypes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the the scoring method used for pruning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -1234,7 +1226,7 @@
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubic&quot;</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
-        <span class="n">score_type</span><span class="p">:</span> <span class="n">PruningScoreTypes</span> <span class="o">=</span> <span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MAGNITUDE</span><span class="p">,</span>
+        <span class="n">score_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
@@ -1311,8 +1303,8 @@
 <span class="sd">        channels, or a SparsityMaskCreator object. default is &#39;unstructured&#39;</span>
 <span class="sd">    :param mfac_options: Dictionary of key words specifying arguments for the M-FAC</span>
 <span class="sd">        pruning run. num_grads controls the number of gradient samples that are kept,</span>
-<span class="sd">        fisher_block_size if given enables block approximations of the Fisher matrix</span>
-<span class="sd">        (if not specified, the full matrix is used), available_gpus specifies a list</span>
+<span class="sd">        fisher_block_size specifies the block size to break the M-FAC computation into</span>
+<span class="sd">        (default is 2000, use None for no blocks), available_gpus specifies a list</span>
 <span class="sd">        of device ids that can be used for computation. For a full list of options,</span>
 <span class="sd">        see the MFACOptions dataclass documentation. Default configuration uses</span>
 <span class="sd">        CPU for computation without blocked computation</span>
@@ -1344,7 +1336,7 @@
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">score_type</span><span class="o">=</span><span class="n">PruningScoreTypes</span><span class="o">.</span><span class="n">MFAC</span><span class="p">,</span>
+            <span class="n">score_type</span><span class="o">=</span><span class="s2">&quot;MFAC&quot;</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mfac_options</span> <span class="o">=</span> <span class="n">mfac_options</span> <span class="ow">or</span> <span class="p">{}</span>
 
@@ -1356,19 +1348,19 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningScoreTypes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the the scoring method used for pruning</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_type</span>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">mfac_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningScoreTypes</span><span class="p">:</span>
+    <span class="k">def</span> <span class="nf">mfac_options</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: Dictionary of key words specifying arguments for the M-FAC</span>
 <span class="sd">            pruning run. num_grads controls the number of gradient samples,</span>
-<span class="sd">            fisher_block_size if given enables block approximations of the Fisher matrix</span>
-<span class="sd">            (if not specified, the full matrix is used), available_gpus specifies a list</span>
+<span class="sd">            fisher_block_size is the block size to break the M-FAC computation into</span>
+<span class="sd">            (default is 2000, None means no blocks), available_gpus specifies a list</span>
 <span class="sd">            of device ids that can be used for computation. For a full list of options,</span>
 <span class="sd">            see the MFACOptions dataclass documentation.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
