@@ -18,7 +18,7 @@ limitations under the License.
 
 Neural Magic creates models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of Ultralytics’ robust training pipelines for the popular YOLOv3 object detection network. 
 Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others. 
-This sparsification process results in many benefits for deployment environments, including faster inference and smaller file sizes.
+This sparsification process results in faster inference and smaller file sizes for deployments.
 
 This page walks through the following use cases for trying out the sparsified YOLOv3 models:
 - Run the models for inference in deployment or applications
