@@ -74,7 +74,6 @@ import os
 import sys
 from typing import List, NamedTuple
 
-
 COPYRIGHT_LINES = [
     "Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.",
     "",
