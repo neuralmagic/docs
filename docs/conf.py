@@ -20,14 +20,14 @@ sys.path.insert(0, os.path.abspath("../.."))
 
 project = "Neural Magic"
 copyright = (
-    "2021 - present / Neuralmagic, Inc. All Rights Reserved. "
-    'Refer to various software components for license attribution.'
+    "2021 - present / Neuralmagic, Inc. All Rights Reserved / "
+    '<a href="https://neuralmagic.com/legal">Legal</a>'
 )
 author = "Neural Magic"
 
 # The full version, including alpha/beta/rc tags
-version = "0.2"
-release = "0.2.0"
+version = "0.5"
+release = "0.5.0"
 
 
 # -- General configuration ---------------------------------------------------
