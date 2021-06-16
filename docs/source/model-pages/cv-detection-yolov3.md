@@ -16,7 +16,7 @@ limitations under the License.
 
 # YOLOv3: Sparsifying to Improve Object Detection Performance
 
-Neural Magic created models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of Ultralytics’ robust training pipelines for the popular YOLOv3 Object Detection network. 
+Neural Magic creates models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of Ultralytics’ robust training pipelines for the popular YOLOv3 object detection network. 
 Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others. 
 This sparsification process results in many benefits for deployment environments, including faster inference and smaller file sizes.
 
@@ -26,7 +26,7 @@ This page walks through the following use cases for trying out the sparsified YO
 - Download the models from the SparseZoo
 - Benchmark the models in the DeepSparse Engine
 
-<div style="margin-bottom: 32px; display: flex; flex-direction: column;">
+<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
     <iframe width="640px" height="360px" src="https://www.youtube.com/embed/o5qIYs47MPw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
     <div style="margin-top: 8px;">
         <i>Video not loading? View full video <a href="https://youtu.be/o5qIYs47MPw">here</a>.</i>
@@ -35,7 +35,7 @@ This page walks through the following use cases for trying out the sparsified YO
 
 ## Run
 
-<div style="margin-bottom: 32px; display: flex; flex-direction: row;">
+<div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example" style="padding-right: 8px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="height: 224px" />
     </a>
@@ -46,7 +46,7 @@ This page walks through the following use cases for trying out the sparsified YO
 
 ## Train
 
-<div style="margin-bottom: 32px; display: flex; flex-direction: row;">
+<div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" style="padding-right: 8px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="height: 224px" />
     </a>
@@ -54,7 +54,7 @@ This page walks through the following use cases for trying out the sparsified YO
 
 ## Download
 
-<div style="display: flex; flex-direction: column; width: auto;">
+<div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
     <iframe width="1024px" height="400px" style="max-width: 90%;" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
     <div style="margin-top: 8px;">
         <i>Table not loading? View full table <a href="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics">here</a>.</i>
@@ -75,7 +75,7 @@ print(model.dir_path)
 
 ## Benchmark
 
-<div style="display: flex; flex-direction: column;">
+<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
     <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/" style="padding-right: 8px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png" alt="YOLOv3 Batch Size 1 Performance Comparisons" style="height: 702px" />
     </a>
