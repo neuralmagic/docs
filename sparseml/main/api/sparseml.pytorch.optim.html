@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim package &mdash; SparseML 0.5.0.20210615 documentation</title>
+  <title>sparseml.pytorch.optim package &mdash; SparseML 0.5.0.20210616 documentation</title>
   
 
   
@@ -2636,6 +2636,138 @@ this modifier will not have an effect.</p>
 <p>Modifiers for changing the learning rate while training according to
 certain update formulas or patterns.</p>
 <dl class="py class">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.optim.modifier_lr.</span></code><code class="sig-name descname"><span class="pre">LearningRateFunctionModifier</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lr_func</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">final_lr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_groups</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_frequency</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_types</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'__ALL__'</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#LearningRateFunctionModifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledUpdateModifier" title="sparseml.pytorch.optim.modifier.ScheduledUpdateModifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.optim.modifier.ScheduledUpdateModifier</span></code></a></p>
+<p>Modifier to set the learning rate based on supported math functions scaling between
+an init_lr and a final_lr.
+Any time an update point is reached, the LR is updated for the parameters groups
+in the optimizer.
+Specific parameter groups can be targeted for the optimizer as well.</p>
+<div class="line-block">
+<div class="line">Sample yaml:</div>
+<div class="line-block">
+<div class="line">!LearningRateFunctionModifier</div>
+<div class="line-block">
+<div class="line">start_epoch: 0.0</div>
+<div class="line">end_epoch: 10.0</div>
+<div class="line">lr_func: linear</div>
+<div class="line">init_lr: 0.1</div>
+<div class="line">final_lr: 0.001</div>
+</div>
+</div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lr_func</strong> – The name of the lr function to use: [linear, cosine]</p></li>
+<li><p><strong>init_lr</strong> – The initial learning rate to use once this modifier starts</p></li>
+<li><p><strong>init_lr</strong> – The final learning rate to use once this modifier starts</p></li>
+<li><p><strong>start_epoch</strong> – The epoch to start the modifier at
+(set to -1.0 so it starts immediately)</p></li>
+<li><p><strong>end_epoch</strong> – The epoch to end the modifier at,
+(set to -1.0 so it doesn’t end)</p></li>
+<li><p><strong>update_frequency</strong> – unused and should not be set</p></li>
+<li><p><strong>log_types</strong> – The loggers to allow the learning rate to be logged to,
+default is __ALL__</p></li>
+<li><p><strong>constant_logging</strong> – True to constantly log on every step,
+False to only log on an LR change and min once per epoch, default False</p></li>
+</ul>
+</dd>
+<dt class="field-even">Param_groups</dt>
+<dd class="field-even"><p>The param group indices to set the lr for within the optimizer,
+if not set will set the lr for all param groups</p>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.final_lr">
+<code class="sig-name descname"><span class="pre">final_lr</span></code><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.final_lr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The final learning rate to use once this modifier starts</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.init_lr">
+<code class="sig-name descname"><span class="pre">init_lr</span></code><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.init_lr" title="Permalink to this definition">¶</a></dt>
+<dd><p>The initial learning rate to use once this modifier starts</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.log_update">
+<code class="sig-name descname"><span class="pre">log_update</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.optim.optimizer.Optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_per_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#LearningRateFunctionModifier.log_update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.log_update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether to log an update for the learning rate of the modifier.
+Checks for a change in the LR or epoch before logging</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – module to modify</p></li>
+<li><p><strong>optimizer</strong> – optimizer to modify</p></li>
+<li><p><strong>epoch</strong> – current epoch and progress within the current epoch</p></li>
+<li><p><strong>steps_per_epoch</strong> – number of steps taken within each epoch
+(calculate batch number using this and epoch)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.lr_func">
+<code class="sig-name descname"><span class="pre">lr_func</span></code><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.lr_func" title="Permalink to this definition">¶</a></dt>
+<dd><p>The name of the lr function to use: [linear, cosine]</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.param_groups">
+<code class="sig-name descname"><span class="pre">param_groups</span></code><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.param_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>The param group indices to set the lr for within the optimizer,
+if not set will set the lr for all param groups</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.update">
+<code class="sig-name descname"><span class="pre">update</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimizer</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.optim.optimizer.Optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">steps_per_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#LearningRateFunctionModifier.update"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.update" title="Permalink to this definition">¶</a></dt>
+<dd><p>Updates the LR based on the given epoch for the optimizer</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – module to modify</p></li>
+<li><p><strong>optimizer</strong> – optimizer to modify</p></li>
+<li><p><strong>epoch</strong> – current epoch and progress within the current epoch</p></li>
+<li><p><strong>steps_per_epoch</strong> – number of steps taken within each epoch
+(calculate batch number using this and epoch)</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.validate">
+<code class="sig-name descname"><span class="pre">validate</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#LearningRateFunctionModifier.validate"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.validate" title="Permalink to this definition">¶</a></dt>
+<dd><p>Validate the values of the params for the current instance are valid</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
 <dt id="sparseml.pytorch.optim.modifier_lr.LearningRateModifier">
 <em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.optim.modifier_lr.</span></code><code class="sig-name descname"><span class="pre">LearningRateModifier</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">lr_class</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lr_kwargs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Dict</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">init_lr</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">update_frequency</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_types</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'__ALL__'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_logging</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#LearningRateModifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.LearningRateModifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledUpdateModifier" title="sparseml.pytorch.optim.modifier.ScheduledUpdateModifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.optim.modifier.ScheduledUpdateModifier</span></code></a>, <a class="reference internal" href="sparseml.optim.html#sparseml.optim.learning_rate.LearningRate" title="sparseml.optim.learning_rate.LearningRate"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.optim.learning_rate.LearningRate</span></code></a></p>
@@ -2741,7 +2873,7 @@ Additionally will first set the lr to the init_lr if not set yet</p>
 
 <dl class="py class">
 <dt id="sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.optim.modifier_lr.</span></code><code class="sig-name descname"><span class="pre">SetLearningRateModifier</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_types</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'__ALL__'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_logging</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#SetLearningRateModifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier" title="Permalink to this definition">¶</a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.optim.modifier_lr.</span></code><code class="sig-name descname"><span class="pre">SetLearningRateModifier</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">learning_rate</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">param_groups</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">start_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">end_epoch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">float</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">-</span> <span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">log_types</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">'__ALL__'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">constant_logging</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_lr.html#SetLearningRateModifier"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.optim.modifier.ScheduledModifier</span></code></a>, <a class="reference internal" href="sparseml.optim.html#sparseml.optim.learning_rate.SetLearningRate" title="sparseml.optim.learning_rate.SetLearningRate"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.optim.learning_rate.SetLearningRate</span></code></a></p>
 <p>Modifier to set the learning rate to a specific value at a certain point in the
 training process.
@@ -2805,6 +2937,18 @@ Otherwise checks for a change in the LR before logging</p>
 <li><p><strong>steps_per_epoch</strong> – number of steps taken within each epoch
 (calculate batch number using this and epoch)</p></li>
 </ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier.param_groups">
+<code class="sig-name descname"><span class="pre">param_groups</span></code><a class="headerlink" href="#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier.param_groups" title="Permalink to this definition">¶</a></dt>
+<dd><p>The param group indices to set the lr for within the optimizer,
+if not set will set the lr for all param groups</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>return</p>
 </dd>
 </dl>
 </dd></dl>

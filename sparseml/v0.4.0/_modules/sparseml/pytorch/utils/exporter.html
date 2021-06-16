@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.exporter &mdash; SparseML 0.4.0.20210615 documentation</title>
+  <title>sparseml.pytorch.utils.exporter &mdash; SparseML 0.4.0.20210616 documentation</title>
   
 
   
@@ -366,7 +366,9 @@
         <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">onnx_path</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">tensors_module_forward</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tensors_module_forward</span><span class="p">(</span>
+                <span class="n">sample_batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">check_feat_lab_inp</span><span class="o">=</span><span class="kc">False</span>
+            <span class="p">)</span>
 
         <span class="n">input_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
@@ -375,6 +377,8 @@
             <span class="n">input_names</span> <span class="o">=</span> <span class="p">[</span>
                 <span class="s2">&quot;input_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">))</span>
             <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+                <span class="n">sample_batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">)</span>  <span class="c1"># torch.onnx.export requires tuple</span>
 
         <span class="n">output_names</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
