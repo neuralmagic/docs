@@ -20,48 +20,48 @@ Neural Magic’s ML team created recipes that allow anyone to plug in their data
 Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others. 
 This sparsification process results in many benefits for deployment environments, including faster inference and smaller file sizes.
 
-<div style="display: flex; flex-direction: column; width: auto;">
+<div style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
     <iframe width="560" height="315" src="https://www.youtube.com/embed/o5qIYs47MPw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-    <div style="align-self: center; justify-self: center; text-align: center;">
+    <div style="align-self: center; justify-self: center; text-align: center; margin-top: 8px;">
         Video not loading? View full video <a href="https://youtu.be/o5qIYs47MPw">here</a>.
     </div>
 </div>
 
 ## Pre-Trained Models
 
-<div style="display: flex; flex-direction: column; width: auto;">
-    <iframe width="1024px" height="400px" style="max-width: 90%;" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
-    <div style="align-self: center; justify-self: center; text-align: center;">
+<div style="display: flex; flex-direction: column; width: auto;  justify-content: center; align-items: center;">
+    <iframe style="max-width: 90%; max-height: 75%" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
+    <div style="align-self: center; justify-self: center; text-align: center; margin-top: 8px;">
         Table not loading? View full table <a href="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics">here</a>.
     </div>
 </div>
 
 ## Try It Out
 
-<p>
+<div style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" height="240px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" style="height: 240px" />
     </a>
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#example-yolo-deepsparse-flask-server">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" height="240px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" style="height: 240px" />
     </a>
-</p>
+</div>
 
 ## Train It
 
-<p>
+<div style="display: flex; flex-direction: row; justify-content: center; align-items: center;">
     <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" height="240px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" style="height: 240px" />
     </a>
-</p>
+</div>
 
 ## Benchmark It
 
-<div style="display: flex; flex-direction: column; width: auto;">
+<div style="display: flex; flex-direction: column; width: auto; justify-content: center; align-items: center;">
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png" height="702px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png"  style="height: 702px" />
     </a>
-    <div style="align-self: center; justify-self: center; text-align: center;">
+    <div style="align-self: center; justify-self: center; text-align: center; margin-top: 8px;">
         Comparison of the real-time performance of YOLOv3 (batch size 1) for different CPU implementations to common GPU benchmarks. 
         Click the chart or <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/">here</a> for more detailed information.
     </div>
