@@ -79,7 +79,7 @@ To learn more about Neural Magic, `check our website <https://www.neuralmagic.co
     :maxdepth: 3
     :caption: Sparse Models
 
-    YOLOv3 <model-pages/cv-detection-yolov3>
+    YOLOv3 <source/model-pages/cv-detection-yolov3>
 
 .. toctree::
     :maxdepth: 3
