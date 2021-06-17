@@ -64,7 +64,7 @@ This page walks through the following use cases for trying out the sparsified YO
     </a>
     <a style="pointer-events: none; padding-right: 8px">
         <!-- placeholder for 3 column grid -->
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" style="max-width: 224px; width: 100%; visibility: hidden" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" ****style="max-width: 224px; width: 100%; visibility: hidden" />
     </a>
 </div>
 
