@@ -27,7 +27,11 @@ This page walks through the following use cases for trying out the sparsified YO
 - Benchmark the models in the DeepSparse Engine
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column;">
-    <iframe width="640px" height="360px" src="https://www.youtube.com/embed/o5qIYs47MPw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+    <div style="width: 640px; max-width: 95%; position: relative;">
+        <div style="position: relative; padding-bottom: 56.25%;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/o5qIYs47MPw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
     <div style="margin-top: 8px;">
         <i>Video not loading? View full video <a href="https://youtu.be/o5qIYs47MPw">here</a>.</i>
     </div>
@@ -37,10 +41,14 @@ This page walks through the following use cases for trying out the sparsified YO
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example" style="padding-right: 8px">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="height: 224px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="max-width: 224px; width: 100%" />
     </a>
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#example-yolo-deepsparse-flask-server" style="padding-right: 8px">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="height: 224px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 224px; width: 100%" />
+    </a>
+    <a style="pointer-events: none; padding-right: 8px">
+        <!-- placeholder for 3 column grid -->
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 224px; width: 100%; visibility: hidden" />
     </a>
 </div>
 
@@ -48,14 +56,22 @@ This page walks through the following use cases for trying out the sparsified YO
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" style="padding-right: 8px">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="height: 224px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="max-width: 224px; width: 100%" />
+    </a>
+    <a style="pointer-events: none; padding-right: 8px">
+        <!-- placeholder for 3 column grid -->
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" style="max-width: 224px; width: 100%; visibility: hidden" />
+    </a>
+    <a style="pointer-events: none; padding-right: 8px">
+        <!-- placeholder for 3 column grid -->
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" style="max-width: 224px; width: 100%; visibility: hidden" />
     </a>
 </div>
 
 ## Download
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
-    <iframe width="1024px" height="400px" style="max-width: 90%;" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
+    <iframe style="width: 100%; max-width: 1024px; height: 400px;" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
     <div style="margin-top: 8px;">
         <i>Table not loading? View full table <a href="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics">here</a>.</i>
     </div>
@@ -77,7 +93,7 @@ print(model.dir_path)
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column;">
     <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/" style="padding-right: 8px">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png" alt="YOLOv3 Batch Size 1 Performance Comparisons" style="height: 702px" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png" alt="YOLOv3 Batch Size 1 Performance Comparisons" style="max-width: 900px; width: 100%" />
     </a>
     <div style="margin-top: 8px;">
         <i>
