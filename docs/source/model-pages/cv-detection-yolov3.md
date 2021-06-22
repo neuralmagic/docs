@@ -42,13 +42,13 @@ This page walks through the following use cases for trying out the sparsified YO
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="max-width: 160px; width: 100%;" />
-        <div style="margin-top: 8px; text-align: center;">Example Application</div>
+        <div style="text-align: center;">Example Application</div>
     </a>
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#example-yolo-deepsparse-flask-server" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 160px; width: 100%;" />
-        <div style="margin-top: 8px; text-align: center;">Example Deployment</div>
+        <div style="text-align: center;">Example Deployment</div>
     </a>
-    <a class="model-page-button" style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
+    <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
         <!-- placeholder for 3 column grid -->
     </a>
 </div>
@@ -58,12 +58,12 @@ This page walks through the following use cases for trying out the sparsified YO
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Example Application" style="max-width: 160px; width: 100%;" />
-        <div style="margin-top: 8px; text-align: center;">Applying a Recipe</div>
+        <div style="text-align: center;">Applying a Recipe</div>
     </a>
-    <a class="model-page-button" style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
+    <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
         <!-- placeholder for 3 column grid -->
     </a>
-    <a class="model-page-button" style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
+    <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
         <!-- placeholder for 3 column grid -->
     </a>
 </div>
