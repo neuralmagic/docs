@@ -75,7 +75,7 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
 
 Today, we offer support for convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://docs.neuralmagic.com/sparsezoo/source/models.html).
 
-We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/source/models.html) and SparseZoo including model architectures beyond computer vision. Popular NLP models such as BERT are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
+We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/source/models.html) and SparseZoo including model architectures beyond computer vision and NLP; [Subscribe for updates](http://neuralmagic.com/subscribe).
 
 ### Notes
 
