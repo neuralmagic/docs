@@ -42,11 +42,11 @@ Neural Magic does not support training of deep learning models at this time. We 
 
 **Do you have version compatibility on TensorFlow?**
 
-Our inference engine supports all versions of TensorFlow 1.x.; support for TensorFlow 2.0 is coming soon. We have specific performance improvements for SSD models currently for TensorFlow 1.12.
+Our inference engine supports all versions of TensorFlow <= 2.0; support for the Keras API is through TensorFlow 2.0.
 
 **Do you run on AMD hardware?**
 
-The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later)  and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
+The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
 
 We are open to opportunities to expand our support footprint for different CPU-based processor architectures, based on market adoption and deep learning use cases.
 
@@ -56,11 +56,11 @@ We currently do not support ARM and it’s on the Neural Magic roadmap; however,
 
 **To what use cases is the Deep Sparse Platform best suited?**
 
-We focus on the models and use cases related to computer vision due to cost sensitivity and both real time and throughput constraints. The belief now is GPUs are required for deployment.
+We focus on the models and use cases related to computer vision and NLP due to cost sensitivity and both real time and throughput constraints. The belief now is GPUs are required for deployment.
 
 **What types of models does Neural Magic support?**
 
-Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision such as NLP models like BERT.
+Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision. As of June 2021, NLP models like BERT are now available.
 
 **Is dynamic shape supported?**
 
@@ -76,7 +76,7 @@ ___
 
 **What is the average estimated savings for users??**
 
-This will vary but, in some cases, we are seeing 3x-10x savings. Typically, we offer 5-6x more price performance than hardware accelerators.
+We use CPUS and they are cheaper and more readily accessible than hardware accelerators. While savings will vary on the use case and business outcomes, we encourage you to benchmark our models to and measure cost savings for your specific use case.
 
 **Do you have benchmarks to compare and contrast?**
 
@@ -120,7 +120,7 @@ For example, Neural Magic has been successful in removing 90% of ResNet-50 weigh
 
 **When does sparsification actually happen?**
 
-In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s Sparsify and SparseML tooling.
+In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s [Sparsify](https://docs.neuralmagic.com/sparseml/ and [SparseML](https://docs.neuralmagic.com/sparseml/) tooling.
 
 **What does the sparsification process look like?**
 
