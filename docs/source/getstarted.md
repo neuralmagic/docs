@@ -62,7 +62,7 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
   <tr>
    <td><strong>Use Cases (Domains)</strong>
    </td>
-   <td>Image Classification, Object Detection
+   <td>Image Classification, Object Detection, NLP
    </td>
   </tr>
   <tr>
