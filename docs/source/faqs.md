@@ -74,10 +74,6 @@ ___
 
 ## Benchmarking FAQs
 
-**What is the average estimated savings for users??**
-
-We use CPUS and they are cheaper and more readily accessible than hardware accelerators. While savings will vary on the use case and business outcomes, we encourage you to benchmark our models to and measure cost savings for your specific use case.
-
 **Do you have benchmarks to compare and contrast?**
 
 Yes. Check out our [benchmark demo video](https://neuralmagic.com/blog/neural-magic-demo/) or [contact us](https://neuralmagic.com/contact/) to discuss your particular performance requirements. If you’d rather observe performance for yourself, [head over to the Neural Magic GitHub repo](https://github.com/neuralmagic) to check out our tools and generate your own benchmarks in your environment.
@@ -136,7 +132,7 @@ For transfer learning, our tooling allows you to save the sparse architecture le
 
 **Do you support INT8 and INT16 (quantized) operations?**
 
-Currently, the DeepSparse Engine runs at FP32 and has some support for INT8. With the release of the Intel Cascade Lake generation chips and later, Intel CPUs now include VNNI instructions and support both INT8 and INT16 operations. On machines with VNNI support, the engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, and QLinearMatMul with constant weights. The DeepSparse Engine also supports  8-bit QLinearAdd, an ONNX Runtime custom operator.
+Currently, the DeepSparse Engine runs at FP32 and has some support for INT8. With the release of the Intel Cascade Lake generation chips and later, Intel CPUs now include VNNI instructions and support both INT8 and INT16 operations. On machines with VNNI support, the engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, and QLinearMatMul with constant weights. The DeepSparse Engine also supports 8-bit QLinearAdd, an ONNX Runtime custom operator.
 
 **Do you support FP16 (half precision) operations?**
 
