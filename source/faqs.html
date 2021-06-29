@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   FAQs — Neural Magic 0.2.0 documentation
+   FAQs — Neural Magic 0.5.0 documentation
   </title>
   <link href="../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -31,7 +31,7 @@
   <link href="../genindex.html" rel="index" title="Index"/>
   <link href="../search.html" rel="search" title="Search"/>
   <link href="glossary.html" rel="next" title="Glossary"/>
-  <link href="getstarted.html" rel="prev" title="Get Started"/>
+  <link href="model-pages/cv-detection-yolov3.html" rel="prev" title="YOLOv3: Sparsifying to Improve Object Detection Performance"/>
   <script async="async" src="//script.crazyegg.com/pages/scripts/0092/1055.js" type="text/javascript">
   </script>
  </head>
@@ -45,7 +45,7 @@
        <img alt="Logo" class="logo" src="../_static/icon-neuralmagic.png"/>
       </a>
       <div class="version">
-       0.2
+       0.5
       </div>
       <div role="search">
        <form action="../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -65,6 +65,18 @@
        <li class="toctree-l1">
         <a class="reference internal" href="getstarted.html">
          Get Started
+        </a>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        Sparse Models
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference internal" href="model-pages/cv-detection-yolov3.html">
+         YOLOv3
         </a>
        </li>
       </ul>
@@ -281,7 +293,7 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           Our inference engine supports all versions of TensorFlow 1.x.; support for TensorFlow 2.0 is coming soon. We have specific performance improvements for SSD models currently for TensorFlow 1.12.
+           Our inference engine supports all versions of TensorFlow &lt;= 2.0; support for the Keras API is through TensorFlow 2.0.
           </p>
           <p>
            <strong>
@@ -289,7 +301,7 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later)  and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures
+           The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures
            <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/source/hardware.html">
             is available
            </a>
@@ -316,7 +328,7 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           We focus on the models and use cases related to computer vision due to cost sensitivity and both real time and throughput constraints. The belief now is GPUs are required for deployment.
+           We focus on the models and use cases related to computer vision and NLP due to cost sensitivity and both real time and throughput constraints. The belief now is GPUs are required for deployment.
           </p>
           <p>
            <strong>
@@ -328,7 +340,7 @@ limitations under the License.
            <a class="reference external" href="https://docs.neuralmagic.com/sparsezoo">
             our supported model list and SparseZoo
            </a>
-           . Additionally, we are investigating model architectures beyond computer vision such as NLP models like BERT.
+           . Additionally, we are investigating model architectures beyond computer vision. As of June 2021, NLP models like BERT are now available.
           </p>
           <p>
            <strong>
@@ -348,7 +360,11 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           Model inferences are executed as a single stream; concurrent execution is unsupported at this time.
+           Model inferences are executed as a single stream by default; concurrent execution
+           <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html">
+            can be enabled depending on the engine execution strategy
+           </a>
+           .
           </p>
          </div>
          <hr class="docutils"/>
@@ -359,14 +375,6 @@ limitations under the License.
             ¶
            </a>
           </h2>
-          <p>
-           <strong>
-            What is the average estimated savings for users??
-           </strong>
-          </p>
-          <p>
-           This will vary but, in some cases, we are seeing 3x-10x savings. Typically, we offer 5-6x more price performance than hardware accelerators.
-          </p>
           <p>
            <strong>
             Do you have benchmarks to compare and contrast?
@@ -479,7 +487,11 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s Sparsify and SparseML tooling.
+           In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s [Sparsify](https://docs.neuralmagic.com/sparseml/ and
+           <a class="reference external" href="https://docs.neuralmagic.com/sparseml/">
+            SparseML
+           </a>
+           tooling.
           </p>
           <p>
            <strong>
@@ -523,7 +535,7 @@ limitations under the License.
            </strong>
           </p>
           <p>
-           Currently, the DeepSparse Engine runs at FP32 and has some support for INT8. With the release of the Intel Cascade Lake generation chips and later, Intel CPUs now include VNNI instructions and support both INT8 and INT16 operations. On machines with VNNI support, the engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, and QLinearMatMul with constant weights. The DeepSparse Engine also supports  8-bit QLinearAdd, an ONNX Runtime custom operator.
+           Currently, the DeepSparse Engine runs at FP32 and has some support for INT8. With the release of the Intel Cascade Lake generation chips and later, Intel CPUs now include VNNI instructions and support both INT8 and INT16 operations. On machines with VNNI support, the engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, and QLinearMatMul with constant weights. The DeepSparse Engine also supports 8-bit QLinearAdd, an ONNX Runtime custom operator.
           </p>
           <p>
            <strong>
@@ -608,7 +620,7 @@ limitations under the License.
          <span aria-hidden="true" class="fa fa-arrow-circle-right">
          </span>
         </a>
-        <a accesskey="p" class="btn btn-neutral float-left" href="getstarted.html" rel="prev" title="Get Started">
+        <a accesskey="p" class="btn btn-neutral float-left" href="model-pages/cv-detection-yolov3.html" rel="prev" title="YOLOv3: Sparsifying to Improve Object Detection Performance">
          <span aria-hidden="true" class="fa fa-arrow-circle-left">
          </span>
          Previous
@@ -633,7 +645,7 @@ limitations under the License.
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.4.0
+    v: v0.5.0
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -653,8 +665,13 @@ limitations under the License.
       </a>
      </dd>
      <dd>
-      <a href="faqs.html">
+      <a href="../v0.4.0/source/faqs.html">
        v0.4.0
+      </a>
+     </dd>
+     <dd>
+      <a href="faqs.html">
+       v0.5.0
       </a>
      </dd>
     </dl>

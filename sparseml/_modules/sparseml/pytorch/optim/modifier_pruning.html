@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim.modifier_pruning — SparseML 0.4.0.20210628 documentation
+   sparseml.pytorch.optim.modifier_pruning — SparseML 0.5.0.20210629 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -41,7 +41,7 @@
        <img alt="Logo" class="logo" src="../../../../_static/icon-sparseml.png"/>
       </a>
       <div class="version">
-       0.4
+       0.5
       </div>
       <div role="search">
        <form action="../../../../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -659,6 +659,9 @@
 <span class="sd">        immediately after or doing some other prune</span>
 <span class="sd">    :param inter_func: the type of interpolation function to use:</span>
 <span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
 <span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: ['unstructured',</span>
@@ -680,6 +683,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubic"</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"unstructured"</span><span class="p">,</span>
         <span class="n">global_sparsity</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -697,6 +701,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span> <span class="o">=</span> <span class="n">final_sparsity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">leave_enabled</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">inter_func</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phased</span> <span class="o">=</span> <span class="n">phased</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="n">mask_type</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="p">(</span>
             <span class="n">mask_type</span>
@@ -776,6 +781,24 @@
 <span class="sd">            [linear, cubic, inverse_cubic]</span>
 <span class="sd">        """</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">phased</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">"""</span>
+<span class="sd">        :return: True to enable a phased approach where pruning will</span>
+<span class="sd">            turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">            at start_epoch, off at start_epoch + update_frequency, and so on.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_phased</span>
+
+    <span class="nd">@phased</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">phased</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        :param value: the type of interpolation function to use:</span>
+<span class="sd">            [linear, cubic, inverse_cubic]</span>
+<span class="sd">        """</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_phased</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
@@ -929,6 +952,16 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span>
             <span class="p">)</span>
+
+            <span class="c1"># make sure if phased that the phases end at the final sparsity</span>
+            <span class="c1"># if it doesn't divide evenly</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">phased</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
+                <span class="c1"># adjust for phased pruning: start=on, start+update=off</span>
+                <span class="n">phase</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">((</span><span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_frequency</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">phase</span> <span class="o">%</span> <span class="mi">2</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># odd update phase, turn sparsity off</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">=</span> <span class="mf">0.0</span>
+
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
@@ -1009,6 +1042,9 @@
 <span class="sd">        immediately after or doing some other prune</span>
 <span class="sd">    :param inter_func: the type of interpolation function to use:</span>
 <span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
 <span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: ['unstructured',</span>
@@ -1026,6 +1062,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubic"</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"unstructured"</span><span class="p">,</span>
     <span class="p">):</span>
@@ -1038,6 +1075,7 @@
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
             <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -1099,6 +1137,9 @@
 <span class="sd">        immediately after or doing some other prune</span>
 <span class="sd">    :param inter_func: the type of interpolation function to use:</span>
 <span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
 <span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: ['unstructured',</span>
@@ -1116,6 +1157,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubic"</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"unstructured"</span><span class="p">,</span>
     <span class="p">):</span>
@@ -1128,6 +1170,7 @@
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
             <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
@@ -1190,6 +1233,9 @@
 <span class="sd">        immediately after or doing some other prune</span>
 <span class="sd">    :param inter_func: the type of interpolation function to use:</span>
 <span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
 <span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: ['unstructured',</span>
@@ -1209,6 +1255,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">,</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubic"</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"unstructured"</span><span class="p">,</span>
         <span class="n">score_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"magnitude"</span><span class="p">,</span>
@@ -1222,6 +1269,7 @@
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
             <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1281,6 +1329,9 @@
 <span class="sd">        immediately after or doing some other prune</span>
 <span class="sd">    :param inter_func: the type of interpolation function to use:</span>
 <span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
 <span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
 <span class="sd">        default is __ALL__</span>
 <span class="sd">    :param mask_type: String to define type of sparsity (options: ['unstructured',</span>
@@ -1305,6 +1356,7 @@
         <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
         <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">"cubic"</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"unstructured"</span><span class="p">,</span>
         <span class="n">mfac_options</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
@@ -1318,6 +1370,7 @@
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
             <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
             <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -1586,7 +1639,7 @@
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.4.0
+    v: v0.5.0
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -1606,8 +1659,13 @@
       </a>
      </dd>
      <dd>
-      <a href="modifier_pruning.html">
+      <a href="../../../../v0.4.0/index.html">
        v0.4.0
+      </a>
+     </dd>
+     <dd>
+      <a href="modifier_pruning.html">
+       v0.5.0
       </a>
      </dd>
     </dl>
