@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.0.20210708 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.0.20210709 documentation</title>
   
 
   
@@ -694,6 +694,133 @@
         <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">gemm_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="n">params_to_keep</span><span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">_convert_quantizable_matmul</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A pass for converting a MatMul into a quantized representation</span>
+<span class="sd">    This MatMul is the result of quantizing native torch.matmul using QATMatMul</span>
+
+<span class="sd">    | Starting with:</span>
+<span class="sd">    |          INPUT_0           INPUT_1</span>
+<span class="sd">    |            |               |</span>
+<span class="sd">    |     QuantizeLinear     QuantizeLinear</span>
+<span class="sd">    |            |               |</span>
+<span class="sd">    |     DequantizeLinear   DequantizeLinear</span>
+<span class="sd">    |                  |      |</span>
+<span class="sd">    |                   MatMul</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |               QuantizeLinear</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |              DequantizeLinear</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |                  OUTPUT</span>
+<span class="sd">    | We end up converting to:</span>
+<span class="sd">    |          INPUT_0           INPUT_1</span>
+<span class="sd">    |            |               |</span>
+<span class="sd">    |     QuantizeLinear     QuantizeLinear</span>
+<span class="sd">    |                  |      |</span>
+<span class="sd">    |                  |      |</span>
+<span class="sd">    |                   QLinearMatMul</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |              DequantizeLinear</span>
+<span class="sd">    |                     |</span>
+<span class="sd">    |                  OUTPUT</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">conversion_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">matmul_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;MatMul&quot;</span><span class="p">]]</span>
+    <span class="k">for</span> <span class="n">matmul_node</span> <span class="ow">in</span> <span class="n">matmul_nodes</span><span class="p">:</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="c1">#############</span>
+        <span class="c1"># Matching</span>
+        <span class="c1">#############</span>
+
+        <span class="n">input_dequantize_nodes</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_parent</span><span class="p">(</span><span class="n">matmul_node</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="p">]</span>
+
+        <span class="c1"># Make sure these input nodes are DequantizeLinear</span>
+        <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;DequantizeLinear&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">input_dequantize_nodes</span>
+            <span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Make sure their parents are QuantizeLinear</span>
+        <span class="n">parents</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_parent</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">input_dequantize_nodes</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span><span class="n">parent</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">parent</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parents</span>
+            <span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">output_quantize_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">matmul_node</span><span class="p">)</span>
+
+        <span class="c1"># Make sure the output node is QuantizeLinear</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">output_quantize_node</span> <span class="ow">is</span> <span class="kc">None</span>
+            <span class="ow">or</span> <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;QuantizeLinear&quot;</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># Make sure the output node&#39;s child is DequantizeLinear</span>
+        <span class="n">child</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">output_quantize_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">child</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">child</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;DequantizeLinear&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Matched quantizable MatMul: </span><span class="si">{</span><span class="n">matmul_node</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1">#############</span>
+        <span class="c1"># Conversion</span>
+        <span class="c1">#############</span>
+
+        <span class="c1"># QLinearMatMul</span>
+        <span class="c1"># get qmatmul inputs and outputs</span>
+        <span class="n">node_0</span><span class="p">,</span> <span class="n">node_1</span> <span class="o">=</span> <span class="n">input_dequantize_nodes</span>
+        <span class="n">qmatmul_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node_0</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># a</span>
+            <span class="n">node_0</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># a_scale</span>
+            <span class="n">node_0</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># a_zero_point</span>
+            <span class="n">node_1</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># b</span>
+            <span class="n">node_1</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># b_scale</span>
+            <span class="n">node_1</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># b_zero_point</span>
+            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># y_scale</span>
+            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># y_zero_point</span>
+        <span class="p">]</span>
+
+        <span class="n">qmatmul_output</span> <span class="o">=</span> <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">qmatmul_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_quant&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matmul_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># create qmatmul node and add it to graph</span>
+        <span class="n">qmatmul_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
+            <span class="s2">&quot;QLinearMatMul&quot;</span><span class="p">,</span>
+            <span class="n">qmatmul_inputs</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">qmatmul_output</span><span class="p">],</span>
+            <span class="n">qmatmul_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qmatmul_node</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">input_dequantize_nodes</span><span class="p">:</span>
+            <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># delete original Gemm node</span>
+        <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">matmul_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+        <span class="n">conversion_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="k">if</span> <span class="n">matmul_nodes</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Converted </span><span class="si">{</span><span class="n">conversion_count</span><span class="si">}</span><span class="s2"> quantizable MatMul ops &quot;</span> <span class="s2">&quot;to QLinearMatMul&quot;</span>
+        <span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">_convert_quantizable_matmul_and_add</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    A pass for converting a MatMul with kernel and bias into a quantized representation</span>
@@ -1022,6 +1149,7 @@
     <span class="n">_fold_relu_quants</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_single_constants_to_initializers</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_delete_repeated_qat_blocks</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">_convert_quantizable_matmul</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_quantizable_matmul_and_add</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
