@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.0.20210716 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.0.20210717 documentation</title>
   
 
   
@@ -199,7 +199,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
@@ -307,29 +307,22 @@
     <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_get_single_node_child</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="c1"># return child of input node if it only has one child, otherwise return None</span>
-    <span class="n">children</span> <span class="o">=</span> <span class="n">get_node_output_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">children</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">children</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
-
-
-<span class="k">def</span> <span class="nf">_get_single_node_parent</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">input_idx</span><span class="p">:</span> <span class="nb">int</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
-    <span class="c1"># return parent of input node if it only has one parent, otherwise return None</span>
-    <span class="n">parent</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">input_idx</span><span class="p">])</span>
-    <span class="k">return</span> <span class="n">parent</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">parent</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="kc">None</span>
-
-
 <span class="k">def</span> <span class="nf">_fold_conv_bn_bias</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">conv_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">):</span>
-    <span class="c1"># fold bias into conv from bn then delete bn node</span>
+    <span class="c1"># get bn params</span>
     <span class="n">bn_params</span> <span class="o">=</span> <span class="n">get_batch_norm_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">)</span>
+
+    <span class="c1"># get conv bias or initialize to zeros</span>
+    <span class="n">conv_bias</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">conv_bias_init</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">conv_bias_init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conv_bias</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">conv_bias_init</span><span class="p">)</span>
+    <span class="n">conv_bias</span> <span class="o">=</span> <span class="n">conv_bias</span> <span class="ow">or</span> <span class="n">numpy</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">bn_params</span><span class="o">.</span><span class="n">mean</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+
+    <span class="c1"># fold bias into conv from bn then delete bn node</span>
     <span class="n">variance_term</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">bn_params</span><span class="o">.</span><span class="n">var</span> <span class="o">+</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">epsilon</span><span class="p">)</span>
-    <span class="n">folded_bias</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="o">-</span><span class="mf">1.0</span> <span class="o">*</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">mean</span> <span class="o">*</span> <span class="n">variance_term</span> <span class="o">*</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">scale</span> <span class="o">+</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">bias</span>
-    <span class="p">)</span>
+    <span class="n">normalized_bias</span> <span class="o">=</span> <span class="p">(</span><span class="n">conv_bias</span> <span class="o">-</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">mean</span><span class="p">)</span> <span class="o">*</span> <span class="n">variance_term</span>
+    <span class="n">folded_bias</span> <span class="o">=</span> <span class="n">normalized_bias</span> <span class="o">*</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">scale</span> <span class="o">+</span> <span class="n">bn_params</span><span class="o">.</span><span class="n">bias</span>
     <span class="n">folded_bias</span> <span class="o">=</span> <span class="n">folded_bias</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
 
     <span class="n">bias_name</span> <span class="o">=</span> <span class="n">conv_node</span><span class="o">.</span><span class="n">name</span> <span class="o">+</span> <span class="s2">&quot;.bias&quot;</span>
@@ -348,13 +341,14 @@
     <span class="c1"># fold bn into conv bias and remove bn node</span>
     <span class="c1"># (Conv -&gt; Div -&gt; BN) -&gt; Conv</span>
     <span class="k">for</span> <span class="n">conv_node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">conv_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;Conv&quot;</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">conv_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;Conv&quot;</span><span class="p">:</span>
             <span class="c1"># not conv node or conv node already has bias</span>
             <span class="k">continue</span>
-        <span class="n">div_node</span> <span class="o">=</span> <span class="n">_get_single_node_child</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">div_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">conv_node</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">div_node</span> <span class="ow">or</span> <span class="n">div_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;Div&quot;</span><span class="p">:</span>
             <span class="k">continue</span>
-        <span class="n">bn_node</span> <span class="o">=</span> <span class="n">_get_single_node_child</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">div_node</span><span class="p">)</span>
+        <span class="n">bn_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">div_node</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">bn_node</span> <span class="ow">or</span> <span class="n">bn_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;BatchNormalization&quot;</span><span class="p">:</span>
             <span class="k">continue</span>
 
@@ -1164,6 +1158,34 @@
     <span class="k">return</span> <span class="n">model</span></div>
 
 
+<span class="k">def</span> <span class="nf">_delete_quantize_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">:</span> <span class="n">ONNXGraph</span><span class="p">,</span> <span class="n">quantize_nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]):</span>
+    <span class="c1"># delete given quantize nodes and forward their inputs to the next graph layer</span>
+    <span class="k">for</span> <span class="n">quantize_node</span> <span class="ow">in</span> <span class="n">quantize_nodes</span><span class="p">:</span>
+        <span class="n">quantize_children</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">quantize_node</span><span class="p">)</span>
+        <span class="n">quantize_node_id</span> <span class="o">=</span> <span class="n">quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">child_node</span> <span class="ow">in</span> <span class="n">quantize_children</span><span class="p">:</span>
+            <span class="n">input_idx</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">idx</span>
+                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">child_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="n">quantize_node_id</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">input_idx</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">input_idx</span> <span class="o">=</span> <span class="n">input_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">update_node_input</span><span class="p">(</span><span class="n">child_node</span><span class="p">,</span> <span class="n">quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">input_idx</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;set node with output id </span><span class="si">{</span><span class="n">child_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> as initial node in &quot;</span>
+                <span class="s2">&quot;graph&quot;</span>
+            <span class="p">)</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+        <span class="sa">f</span><span class="s2">&quot;deleting QuantizeLinear node(s) with output id(s): &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">quantize_nodes</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="p">)</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_nodes</span><span class="p">(</span><span class="n">quantize_nodes</span><span class="p">)</span>  <span class="c1"># only contains references to the Quantize nodes</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>  <span class="c1"># cleanup</span>
+
+
 <span class="k">def</span> <span class="nf">_skip_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
     <span class="k">if</span> <span class="p">(</span>
         <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
@@ -1185,35 +1207,52 @@
             <span class="s2">&quot;the FP32 input tensor in original graph, prior to converting to uint8&quot;</span>
         <span class="p">)</span>
 
-    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">quantize_node</span> <span class="ow">in</span> <span class="n">input_children</span><span class="p">:</span>
-        <span class="n">quantize_children</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">quantize_node</span><span class="p">)</span>
-        <span class="n">quantize_node_id</span> <span class="o">=</span> <span class="n">quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="k">for</span> <span class="n">child_node</span> <span class="ow">in</span> <span class="n">quantize_children</span><span class="p">:</span>
-            <span class="n">input_idx</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="n">idx</span>
-                <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">child_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span>
-                <span class="k">if</span> <span class="n">inp</span> <span class="o">==</span> <span class="n">quantize_node_id</span>
-            <span class="p">]</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">input_idx</span><span class="p">:</span>
-                <span class="k">continue</span>
-            <span class="n">input_idx</span> <span class="o">=</span> <span class="n">input_idx</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">graph</span><span class="o">.</span><span class="n">update_node_input</span><span class="p">(</span><span class="n">child_node</span><span class="p">,</span> <span class="n">input_node</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">input_idx</span><span class="p">)</span>
-            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">&quot;set node with output id </span><span class="si">{</span><span class="n">child_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2"> as initial node in &quot;</span>
-                <span class="s2">&quot;graph&quot;</span>
-            <span class="p">)</span>
-
-    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;deleting QuantizeLinear node(s) with output id(s): &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">[</span><span class="n">n</span><span class="o">.</span><span class="n">output</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">input_children</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
-    <span class="p">)</span>
-    <span class="n">graph</span><span class="o">.</span><span class="n">delete_nodes</span><span class="p">(</span><span class="n">input_children</span><span class="p">)</span>  <span class="c1"># only contains references to the Quantize nodes</span>
-    <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>  <span class="c1"># cleanup</span>
+    <span class="n">_delete_quantize_nodes</span><span class="p">(</span><span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">),</span> <span class="n">input_children</span><span class="p">)</span>
     <span class="n">input_node</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># fp32 -&gt; uint8</span>
     <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model initial QuantizeLinear node(s) deleted and inputs set to uint8&quot;</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_skip_trivially_nested_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="c1"># converts: input -&gt; (some series of slices and concats) -&gt; QuantizeLinear -&gt; Any</span>
+    <span class="c1"># to: input[uint8] -&gt; (some series of slices and concats) -&gt; Any</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="nb">len</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
+        <span class="ow">or</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span> <span class="o">!=</span> <span class="mi">1</span>
+    <span class="p">):</span>
+        <span class="c1"># more than 1 input or input is not FP32</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">input_node</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">node_queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">input_node</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">]</span>
+    <span class="n">_trivial_node_types</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Concat&quot;</span><span class="p">,</span> <span class="s2">&quot;Slice&quot;</span><span class="p">}</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">found_quantize_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">while</span> <span class="n">node_queue</span><span class="p">:</span>
+        <span class="n">current_node</span> <span class="o">=</span> <span class="n">node_queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">current_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">:</span>
+            <span class="n">found_quantize_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_node</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">current_node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_trivial_node_types</span><span class="p">:</span>
+            <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">node_queue</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">current_node</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">node_queue</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="n">found_quantize_nodes</span>
+        <span class="ow">or</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">node</span> <span class="o">==</span> <span class="n">found_quantize_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">found_quantize_nodes</span><span class="p">)</span>
+    <span class="p">):</span>
+        <span class="c1"># loop exited because non-trivial node found before QuantizeLinear,</span>
+        <span class="c1"># no QuantizeLinear node found, or different QuantizeLinear nodes found</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="n">_delete_quantize_nodes</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="p">[</span><span class="n">found_quantize_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]])</span>
+    <span class="n">input_node</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># fp32 -&gt; uint8</span>
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Model initial QuantizeLinear node(s) deleted and inputs set to uint8&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="kc">True</span>
 
 
 <div class="viewcode-block" id="skip_onnx_input_quantize"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.quantize_qat_export.skip_onnx_input_quantize">[docs]</a><span class="k">def</span> <span class="nf">skip_onnx_input_quantize</span><span class="p">(</span>
@@ -1235,7 +1274,7 @@
 
     <span class="n">optim_error_message</span> <span class="o">=</span> <span class="n">_skip_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">optim_error_message</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">optim_error_message</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_skip_trivially_nested_input_quantize</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
         <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="n">optim_error_message</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">output_file_path</span><span class="p">:</span>
