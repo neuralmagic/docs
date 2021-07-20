@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.onnx.utils.graph_editor — SparseML 0.5.1.20210717 documentation
+   sparseml.onnx.utils.graph_editor — SparseML 0.5.1.20210720 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -393,6 +393,8 @@
         <span class="k">for</span> <span class="n">parent_node_id</span><span class="p">,</span> <span class="n">child_nodes</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="k">if</span> <span class="n">parent_node_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">:</span>
                 <span class="k">continue</span>  <span class="c1"># parent is an initializer, not node</span>
+            <span class="c1"># standardize all references to nodes by their first output id</span>
+            <span class="n">parent_node_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="p">[</span><span class="n">parent_node_id</span><span class="p">]</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">for</span> <span class="n">child_node</span> <span class="ow">in</span> <span class="n">child_nodes</span><span class="p">:</span>
                 <span class="n">model_dag</span><span class="p">[</span><span class="n">child_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">parent_node_id</span><span class="p">)</span>
         <span class="n">sorted_node_ids</span> <span class="o">=</span> <span class="n">toposort_flatten</span><span class="p">(</span><span class="n">model_dag</span><span class="p">)</span>
