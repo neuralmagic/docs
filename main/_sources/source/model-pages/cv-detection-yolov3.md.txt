@@ -80,7 +80,7 @@ This page walks through the following use cases for trying out the sparsified YO
     <a class="model-page-button disabled" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-create-recipe.png" alt="Creating a Recipe" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Creating a Recipe</div>
-        <div class="tooltiptext">Currently unavailable for this model</div>
+        <div class="tooltip">Currently unavailable for this model</div>
     </a>
     <a style="pointer-events: none; margin-right: 8px; width: 100%; max-width: 196px;">
         <!-- placeholder for 4 column grid -->
