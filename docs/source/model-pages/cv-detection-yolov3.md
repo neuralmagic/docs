@@ -69,7 +69,7 @@ This page walks through the following use cases for trying out the sparsified YO
 ## Sparse Training
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
-    <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/yolov3_sparse_transfer_learning.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-transfer-learn.png" alt="Sparse Transfer Learning" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Sparse Transfer Learning</div>
     </a>
@@ -77,7 +77,7 @@ This page walks through the following use cases for trying out the sparsified YO
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Applying a Recipe</div>
     </a>
-    <a class="model-page-button disabled" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-create-recipe.png" alt="Creating a Recipe" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Creating a Recipe</div>
         <div class="tooltip">Currently unavailable for this model</div>
