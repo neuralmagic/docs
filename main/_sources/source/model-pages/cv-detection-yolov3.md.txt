@@ -23,8 +23,6 @@ This sparsification process results in faster inference and smaller file sizes f
 This page walks through the following use cases for trying out the sparsified YOLOv3 models:
 - Run the models for inference in deployment or applications
 - Train the models on new datasets
-- Download the models from the SparseZoo
-- Benchmark the models in the DeepSparse Engine
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column;">
     <div style="width: 640px; max-width: 95%; position: relative;">
@@ -37,9 +35,20 @@ This page walks through the following use cases for trying out the sparsified YO
     </div>
 </div>
 
+<div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
+    <iframe style="width: 100%; max-width: 1024px; height: 256px;" src="https://sparsezoo.neuralmagic.com/widgets/models/model-card/cv%2Fdetection%2Fyolo_v3-spp%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none" title="SparseZoo Available Models" frameborder="0" ></iframe>
+    <div style="margin-top: 8px;">
+        <i>Table not loading? View full table <a href="https://sparsezoo.neuralmagic.com/widgets/models/model-card/cv%2Fdetection%2Fyolo_v3-spp%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none">here</a>.</i>
+    </div>
+</div>
+
 ## Run
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
+    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#benchmarking-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-benchmark.png" alt="Benchmark" style="max-width: 160px; width: 100%;" />
+        <div style="text-align: center;">Benchmark</div>
+    </a>
     <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Example Application</div>
@@ -48,8 +57,9 @@ This page walks through the following use cases for trying out the sparsified YO
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Example Deployment</div>
     </a>
-    <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
-        <!-- placeholder for 3 column grid -->
+    <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-comparison.png" alt="Performance Comparisons" style="max-width: 160px; width: 100%;" />
+        <div style="text-align: center;">Performance Comparisons</div>
     </a>
 </div>
 
@@ -57,66 +67,19 @@ This page walks through the following use cases for trying out the sparsified YO
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
     <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Example Application" style="max-width: 160px; width: 100%;" />
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-transfer-learn.png" alt="Sparse Transfer Learning" style="max-width: 160px; width: 100%;" />
+        <div style="text-align: center;">Sparse Transfer Learning</div>
+    </a>
+    <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Applying a Recipe</div>
     </a>
-    <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
-        <!-- placeholder for 3 column grid -->
+    <a class="model-page-button disabled" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center;">
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-create-recipe.png" alt="Creating a Recipe" style="max-width: 160px; width: 100%;" />
+        <div style="text-align: center;">Creating a Recipe</div>
+        <div class="tooltiptext">Currently unavailable for this model</div>
     </a>
     <a style="pointer-events: none; margin-right: 8px; max-width: 160px; width: 100%;">
-        <!-- placeholder for 3 column grid -->
+        <!-- placeholder for 4 column grid -->
     </a>
 </div>
-
-## Download
-
-<div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
-    <iframe style="width: 100%; max-width: 1024px; height: 400px;" src="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics" title="SparseZoo Available Models" frameborder="0" ></iframe>
-    <div style="margin-top: 8px;">
-        <i>Table not loading? View full table <a href="https://sparsezoo.neuralmagic.com/tables/models/cv/detection?repo=ultralytics">here</a>.</i>
-    </div>
-</div>
-
-The model stubs from the above table can be used with the SparseZoo Python API for downloading:
-```python
-from sparsezoo.models import Zoo
- 
-# change out the stub variable from the above table to download the desired model
-stub = "zoo:cv/detection/yolo_v3-spp/pytorch/ultralytics/coco/pruned_quant-aggressive_94"
-model = Zoo.download_model_from_stub(stub, override_parent_path="downloads")
-
-# Prints the download path of the model
-print(model.dir_path)
-```
-
-## Benchmark
-
-<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
-    <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/" style="padding-right: 8px">
-        <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-detection-yolov3-bs1.png" alt="YOLOv3 Batch Size 1 Performance Comparisons" style="max-width: 900px; width: 100%" />
-    </a>
-    <div style="margin-top: 8px;">
-        <i>
-            Batch size 1 performance comparisons for YOLOv3 on common deployments.
-            Click the chart or <a href="https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/">here</a> for more detailed information.
-        </i>
-    </div>
-</div>
-
-Benchmarks within the [DeepSparse Engine](https://github.com/neuralmagic/deepsparse) can be run by using the appropriate stub for each model with the following code:
-```python
-from sparsezoo.models import Zoo
-from deepsparse import compile_model
-
-batch_size = 1
-stub = "zoo:cv/detection/yolo_v3-spp/pytorch/ultralytics/coco/pruned_quant-aggressive_94"
-
-# Download model and compile as optimized executable for your machine
-model = Zoo.download_model_from_stub(stub, override_parent_path="downloads")
-engine = compile_model(model, batch_size=batch_size)
-
-# Fetch sample input and run a benchmark
-inputs = model.data_inputs.sample_batch(batch_size=batch_size)
-benchmarks = engine.benchmark(inputs)
-print(benchmarks)
-```
