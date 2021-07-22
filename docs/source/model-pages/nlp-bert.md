@@ -16,7 +16,7 @@ limitations under the License.
 
 # BERT: Sparsifying to Improve NLP Performance
 
-Neural Magic creates models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of HuggingFace’s robust training pipelines for the popular BERT NLP network. 
+Neural Magic creates models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of Hugging Face’s robust training pipelines for the popular BERT NLP network. 
 Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others. 
 This sparsification process results in faster inference and smaller file sizes for deployments.
 
@@ -24,17 +24,6 @@ This page walks through the following use cases for trying out the sparsified BE
 - Compare the differences between the models for both accuracy and inference performance
 - Run the models for inference in deployment or applications
 - Train the models on new datasets
-
-<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
-    <div style="width: 640px; max-width: 95%; position: relative;">
-        <div style="position: relative; padding-bottom: 56.25%;">
-            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/o5qIYs47MPw" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-        </div>
-    </div>
-    <div style="margin-top: 8px;">
-        <i>Video not loading? View full video <a href="https://youtu.be/o5qIYs47MPw">here</a>.</i>
-    </div>
-</div>
 
 ## Sparse Models
 
