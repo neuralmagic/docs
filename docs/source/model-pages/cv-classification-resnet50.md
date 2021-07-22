@@ -25,6 +25,15 @@ This page walks through the following use cases for trying out the sparsified Re
 - Run the models for inference in deployment or applications
 - Train the models on new datasets
 
+<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
+    <img src="https://docs.neuralmagic.com/docs/source/model-pages/charts/cv-classification-resnet50-bs64.svg" alt="ResNet-50 Batch Size 64 Performance Comparisons" style="max-width: 900px; width: 100%; padding-right: 8px;" />
+    <div style="margin-top: 8px;">
+        <i>
+            ResNet-50 v1 | Batch = 64 | AWS c5.12xlarge CPU
+        </i>
+    </div>
+</div>
+
 ## Sparse Models
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
