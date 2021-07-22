@@ -91,15 +91,9 @@ Model inferences are executed as a single stream by default; concurrent executio
 
 ## Try it Out
 
-Not sure where to start? Here are several hands-on experiences you can work through, from benchmarking to deployment.
+Not sure where to start? Here are several sparsified models with hands-on experiences you can work through, from deployment to training.
 
-### 1. Benchmarking Performance
-A number of pre-trained, performant deep learning models are available via our API in the SparseZoo. Included are both baseline
-and recalibrated models for higher performance with the DeepSparse Engine on CPUs.
-
-- [YOLOv3](https://neuralmagic.com/blog/benchmark-yolov3-on-cpus-with-deepsparse/) or [ResNet-50](https://neuralmagic.com/blog/benchmark-resnet50-with-deepsparse/)
-
-### 2. Transfer Learn or Train from Scratch
-
-Use our YOLOv3 with your data using transfer learning:
-- [Sparsifying YOLOv3 Using Recipes](https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov3/tutorials/sparsifying_yolov3_using_recipes.md)
+- [ResNet-50](https://docs.neuralmagic.com/main/source/model-pages/cv-classification-resnet50.html) - a popular image classification network.
+- [MobileNetV1](https://docs.neuralmagic.com/main/source/model-pages/cv-classification-mobilenet.html) - a popular image classification network for edge deployments.
+- [YOLOv3](https://docs.neuralmagic.com/main/source/model-pages/cv-detection-yolov3.html) - a popular object detection network.
+- [BERT](https://docs.neuralmagic.com/main/source/model-pages/nlp-bert.html) - a popular NLP model.
