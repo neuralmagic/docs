@@ -39,7 +39,7 @@ This page walks through the following use cases for trying out the sparsified BE
 ## Sparse Models
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
-    <iframe style="width: 100%; max-width: 1024px; height: 256px;" src="https://sparsezoo.neuralmagic.com/widgets/models/model-card/nlp%2Fquestion_answering%2Fbert-base%2Fpytorch%2Fhuggingface%2Fsquad%2Fbase-none" title="SparseZoo Available Models" frameborder="0" ></iframe>
+    <iframe style="width: 100%; max-width: 1024px; height: 512px;" src="https://sparsezoo.neuralmagic.com/widgets/models/model-card/nlp%2Fquestion_answering%2Fbert-base%2Fpytorch%2Fhuggingface%2Fsquad%2Fbase-none" title="SparseZoo Available Models" frameborder="0" ></iframe>
     <div style="margin-top: 8px;">
         <i>Card not loading? View card <a href="https://sparsezoo.neuralmagic.com/widgets/models/model-card/nlp%2Fquestion_answering%2Fbert-base%2Fpytorch%2Fhuggingface%2Fsquad%2Fbase-none">here</a>.</i>
     </div>

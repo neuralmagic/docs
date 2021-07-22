@@ -63,8 +63,8 @@ This page walks through the following use cases for trying out the sparsified Re
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-transfer-learn.png" alt="Sparse Transfer Learning" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Sparse Transfer Learning</div>
     </a>
-    <a href="https://github.com/neuralmagic/sparseml/tree/main/integrations/pytorch" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
-        <img src="https://github.com/neuralmagic/sparseml/blob/main/integrations/pytorch/tutorials/sparsifying_pytorch_models_using_recipes.md" alt="Applying a Recipe" style="max-width: 160px; width: 100%;" />
+    <a href="https://github.com/neuralmagic/sparseml/blob/main/integrations/pytorch/tutorials/sparsifying_pytorch_models_using_recipes.md" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+        <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" alt="Applying a Recipe" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Applying a Recipe</div>
     </a>
     <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
