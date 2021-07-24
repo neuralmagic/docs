@@ -46,7 +46,7 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
 
 ## Supported Architectures & Frameworks
 
-<table border="1">
+<table cellspacing="3" cellpadding="3" border="1">
   <tr>
    <td>
    </td>
@@ -56,7 +56,7 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
   <tr>
    <td><strong>Sample Models</strong>
    </td>
-   <td>YOLOs, ResNets, MobileNets, EfficientNets, Single-Shot Detectors (SSDs)
+   <td>BERT, YOLO, ResNet, MobileNet, EfficientNet, Single-Shot Detectors (SSDs)
    </td>
   </tr>
   <tr>
@@ -72,10 +72,11 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
    </td>
   </tr>
 </table>
+<p></p>
 
-Today, we offer support for convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://docs.neuralmagic.com/sparsezoo/source/models.html).
+Today, we offer support for NLP and convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://sparsezoo.neuralmagic.com).
 
-We are continuously exploring models to add to our supported [model list](https://docs.neuralmagic.com/sparsezoo/source/models.html) and SparseZoo including model architectures beyond computer vision and NLP; [Subscribe for updates](http://neuralmagic.com/subscribe).
+We are continuously exploring models to add to the SparseZoo including model architectures beyond computer vision and NLP; [Subscribe for updates](http://neuralmagic.com/subscribe).
 
 ### Notes
 
