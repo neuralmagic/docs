@@ -48,15 +48,15 @@ This page walks through the following use cases for trying out the sparsified YO
 ## Sparse Inference
 
 <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
-    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#benchmarking-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolo#benchmarking-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-benchmark.png" alt="Benchmark" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Benchmark</div>
     </a>
-    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#annotation-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolo#annotation-example" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" alt="Example Application" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Example Application</div>
     </a>
-    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolov3#example-yolo-deepsparse-flask-server" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a href="https://github.com/neuralmagic/deepsparse/tree/main/examples/ultralytics-yolo#example-yolo-deepsparse-flask-server" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Example Deployment</div>
     </a>
