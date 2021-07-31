@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>
+   BERT: Sparsifying to Improve NLP Performance — Neural Magic 0.6.0 documentation
+  </title>
+  <link href="../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/pygments.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/copybutton.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/css/nm-theme-adjustment.css" rel="stylesheet" type="text/css"/>
+  <link href="../../_static/favicon.ico" rel="shortcut icon"/>
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js" type="text/javascript">
+  </script>
+  <script src="../../_static/jquery.js">
+  </script>
+  <script src="../../_static/underscore.js">
+  </script>
+  <script src="../../_static/doctools.js">
+  </script>
+  <script src="../../_static/clipboard.min.js">
+  </script>
+  <script src="../../_static/copybutton.js">
+  </script>
+  <script src="../../_static/js/theme.js" type="text/javascript">
+  </script>
+  <link href="../../genindex.html" rel="index" title="Index"/>
+  <link href="../../search.html" rel="search" title="Search"/>
+  <link href="../faqs.html" rel="next" title="FAQs"/>
+  <link href="cv-detection-yolov3.html" rel="prev" title="YOLOv3: Sparsifying to Improve Object Detection Performance"/>
+  <script async="async" src="//script.crazyegg.com/pages/scripts/0092/1055.js" type="text/javascript">
+  </script>
+ </head>
+ <body class="wy-body-for-nav">
+  <div class="wy-grid-for-nav">
+   <nav class="wy-nav-side" data-toggle="wy-nav-shift">
+    <div class="wy-side-scroll">
+     <div class="wy-side-nav-search">
+      <a class="icon icon-home" href="../../index.html">
+       Neural Magic
+       <img alt="Logo" class="logo" src="../../_static/icon-neuralmagic.png"/>
+      </a>
+      <div class="version">
+       0.6
+      </div>
+      <div role="search">
+       <form action="../../search.html" class="wy-form" id="rtd-search-form" method="get">
+        <input name="q" placeholder="Search docs" type="text"/>
+        <input name="check_keywords" type="hidden" value="yes"/>
+        <input name="area" type="hidden" value="default"/>
+       </form>
+      </div>
+     </div>
+     <div aria-label="main navigation" class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation">
+      <p class="caption">
+       <span class="caption-text">
+        Get Started
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../getstarted.html">
+         Get Started
+        </a>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        Sparse Models
+       </span>
+      </p>
+      <ul class="current">
+       <li class="toctree-l1">
+        <a class="reference internal" href="cv-classification-resnet50.html">
+         ResNet-50
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="cv-classification-mobilenet.html">
+         MobileNetV1
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="cv-detection-yolov5.html">
+         YOLOv5
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="cv-detection-yolov3.html">
+         YOLOv3
+        </a>
+       </li>
+       <li class="toctree-l1 current">
+        <a class="current reference internal" href="#">
+         BERT
+        </a>
+        <ul>
+         <li class="toctree-l2">
+          <a class="reference internal" href="#sparse-models">
+           Sparse Models
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="#sparse-inference">
+           Sparse Inference
+          </a>
+         </li>
+         <li class="toctree-l2">
+          <a class="reference internal" href="#sparse-training">
+           Sparse Training
+          </a>
+         </li>
+        </ul>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        Details
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://neuralmagic.com/resources/technical-papers">
+         Technical Papers
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../faqs.html">
+         FAQs
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference internal" href="../glossary.html">
+         Glossary
+        </a>
+       </li>
+      </ul>
+      <p class="caption">
+       <span class="caption-text">
+        Connect Online
+       </span>
+      </p>
+      <ul>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://github.com/neuralmagic/docs/issues">
+         Bugs, Feature Requests
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://discuss.neuralmagic.com/">
+         Support, General Q&amp;A Forums
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ/">
+         Deep Sparse Community
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://github.com/neuralmagic">
+         Neural Magic GitHub
+        </a>
+       </li>
+       <li class="toctree-l1">
+        <a class="reference external" href="https://docs.neuralmagic.com">
+         Neural Magic Docs
+        </a>
+       </li>
+      </ul>
+     </div>
+    </div>
+   </nav>
+   <section class="wy-nav-content-wrap" data-toggle="wy-nav-shift">
+    <nav aria-label="top navigation" class="wy-nav-top">
+     <i class="fa fa-bars" data-toggle="wy-nav-top">
+     </i>
+     <a href="../../index.html">
+      Neural Magic
+     </a>
+    </nav>
+    <div class="wy-nav-content">
+     <div class="rst-content">
+      <div aria-label="breadcrumbs navigation" role="navigation">
+       <ul class="wy-breadcrumbs">
+        <li>
+         <a class="icon icon-home" href="../../index.html">
+         </a>
+         »
+        </li>
+        <li>
+         BERT: Sparsifying to Improve NLP Performance
+        </li>
+        <li class="wy-breadcrumbs-aside">
+         <a href="../../_sources/source/model-pages/nlp-bert.md.txt" rel="nofollow">
+          View page source
+         </a>
+        </li>
+       </ul>
+       <hr/>
+      </div>
+      <div class="document" itemscope="itemscope" itemtype="http://schema.org/Article" role="main">
+       <div itemprop="articleBody">
+        <!--
+Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+-->
+        <div class="section" id="bert-sparsifying-to-improve-nlp-performance">
+         <h1>
+          BERT: Sparsifying to Improve NLP Performance
+          <a class="headerlink" href="#bert-sparsifying-to-improve-nlp-performance" title="Permalink to this headline">
+           ¶
+          </a>
+         </h1>
+         <p>
+          Neural Magic creates models and recipes that allow anyone to plug in their data and leverage SparseML’s recipe-driven approach on top of Hugging Face’s robust training pipelines for the popular BERT NLP network.
+Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others.
+This sparsification process results in faster inference and smaller file sizes for deployments.
+         </p>
+         <p>
+          This page walks through the following use cases for trying out the sparsified BERT models:
+         </p>
+         <ul class="simple">
+          <li>
+           <p>
+            Compare the differences between the models for both accuracy and inference performance
+           </p>
+          </li>
+          <li>
+           <p>
+            Run the models for inference in deployment or applications
+           </p>
+          </li>
+          <li>
+           <p>
+            Train the models on new datasets
+           </p>
+          </li>
+         </ul>
+         <div class="section" id="sparse-models">
+          <h2>
+           Sparse Models
+           <a class="headerlink" href="#sparse-models" title="Permalink to this headline">
+            ¶
+           </a>
+          </h2>
+          <div style="margin-bottom: 24px; display: flex; flex-direction: column; width: auto;">
+           <iframe frameborder="0" src="https://sparsezoo.neuralmagic.com/widgets/models/model-card/nlp%2Fquestion_answering%2Fbert-base%2Fpytorch%2Fhuggingface%2Fsquad%2Fbase-none" style="width: 100%; max-width: 1024px; height: 512px;" title="SparseZoo Available Models">
+           </iframe>
+           <div style="margin-top: 8px;">
+            <i>
+             Card not loading? View card
+             <a href="https://sparsezoo.neuralmagic.com/widgets/models/model-card/nlp%2Fquestion_answering%2Fbert-base%2Fpytorch%2Fhuggingface%2Fsquad%2Fbase-none">
+              here
+             </a>
+             .
+            </i>
+           </div>
+          </div>
+         </div>
+         <div class="section" id="sparse-inference">
+          <h2>
+           Sparse Inference
+           <a class="headerlink" href="#sparse-inference" title="Permalink to this headline">
+            ¶
+           </a>
+          </h2>
+          <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
+           <a class="model-page-button" href="https://github.com/neuralmagic/deepsparse/tree/main/examples/huggingface-transformers#benchmarking-example" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Benchmark" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-benchmark.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Benchmark
+            </div>
+           </a>
+           <a class="model-page-button" href="https://github.com/neuralmagic/deepsparse/tree/main/examples/huggingface-transformers#deepsparse-pipeline-example" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Example Application" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-application.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Example Application
+            </div>
+           </a>
+           <a class="model-page-button" href="https://github.com/neuralmagic/deepsparse/tree/main/examples/huggingface-transformers#example-transformers-deepsparse-flask-deployment" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Example Deployment" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Example Deployment
+            </div>
+           </a>
+           <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Performance Comparisons" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-comparison.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Performance Comparisons
+            </div>
+            <div class="tooltip">
+             Coming soon!
+            </div>
+           </a>
+          </div>
+         </div>
+         <div class="section" id="sparse-training">
+          <h2>
+           Sparse Training
+           <a class="headerlink" href="#sparse-training" title="Permalink to this headline">
+            ¶
+           </a>
+          </h2>
+          <div style="margin-bottom: 24px; display: flex; flex-direction: row;">
+           <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Sparse Transfer Learning" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-transfer-learn.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Sparse Transfer Learning
+            </div>
+            <div class="tooltip">
+             Coming soon!
+            </div>
+           </a>
+           <a class="model-page-button" href="https://github.com/neuralmagic/sparseml/blob/main/integrations/huggingface-transformers/tutorials/sparsifying_bert_using_recipes.md" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Applying a Recipe" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-apply-recipe.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Applying a Recipe
+            </div>
+           </a>
+           <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+            <img alt="Creating a Recipe" src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-train-create-recipe.png" style="max-width: 160px; width: 100%;"/>
+            <div style="text-align: center;">
+             Creating a Recipe
+            </div>
+            <div class="tooltip">
+             Coming soon!
+            </div>
+           </a>
+           <a style="pointer-events: none; margin-right: 8px; width: 100%; max-width: 196px;">
+            <!-- placeholder for 4 column grid -->
+           </a>
+          </div>
+         </div>
+        </div>
+       </div>
+      </div>
+      <footer>
+       <div aria-label="footer navigation" class="rst-footer-buttons" role="navigation">
+        <a accesskey="n" class="btn btn-neutral float-right" href="../faqs.html" rel="next" title="FAQs">
+         Next
+         <span aria-hidden="true" class="fa fa-arrow-circle-right">
+         </span>
+        </a>
+        <a accesskey="p" class="btn btn-neutral float-left" href="cv-detection-yolov3.html" rel="prev" title="YOLOv3: Sparsifying to Improve Object Detection Performance">
+         <span aria-hidden="true" class="fa fa-arrow-circle-left">
+         </span>
+         Previous
+        </a>
+       </div>
+       <hr/>
+       <div role="contentinfo">
+        <p>
+         © Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved /
+         <a href="https://neuralmagic.com/legal">
+          Legal
+         </a>
+        </p>
+       </div>
+      </footer>
+     </div>
+    </div>
+   </section>
+  </div>
+  <div aria-label="versions" class="rst-versions" data-toggle="rst-versions" role="note">
+   <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book">
+     Other Versions
+    </span>
+    v: v0.6.0
+    <span class="fa fa-caret-down">
+    </span>
+   </span>
+   <div class="rst-other-versions">
+    <dl>
+     <dt>
+      Tags
+     </dt>
+     <dd>
+      <a href="../../v.0.3.0/index.html">
+       v.0.3.0
+      </a>
+     </dd>
+     <dd>
+      <a href="../../v0.3.1/index.html">
+       v0.3.1
+      </a>
+     </dd>
+     <dd>
+      <a href="../../v0.4.0/index.html">
+       v0.4.0
+      </a>
+     </dd>
+     <dd>
+      <a href="../../v0.5.0/index.html">
+       v0.5.0
+      </a>
+     </dd>
+     <dd>
+      <a href="../../v0.5.1/index.html">
+       v0.5.1
+      </a>
+     </dd>
+     <dd>
+      <a href="nlp-bert.html">
+       v0.6.0
+      </a>
+     </dd>
+    </dl>
+    <dl>
+     <dt>
+      Branches
+     </dt>
+     <dd>
+      <a href="../../main/source/model-pages/nlp-bert.html">
+       main
+      </a>
+     </dd>
+    </dl>
+   </div>
+  </div>
+  <script type="text/javascript">
+   jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+  <!-- Theme Analytics -->
+  <script>
+   (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+    })(window,document,'script','https://www.google-analytics.com/analytics.js','ga');
+
+    ga('create', 'UA-128364174-1', 'auto');
+    
+    ga('send', 'pageview');
+  </script>
+ </body>
+</html>
