@@ -20,10 +20,23 @@ Neural Magic creates models and recipes that allow anyone to plug in their data 
 Sparsifying involves removing redundant information from neural networks using algorithms such as pruning and quantization, among others. 
 This sparsification process results in faster inference and smaller file sizes for deployments.
 
+To dive deeper into how we used sparsification and proprietary advancements in the DeepSparse Engine to enable GPU-level performance for YOLOv5 click through to our blog post -- [YOLOv5 on CPUs: Sparsifying to Achieve GPU-Level Performance and a Smaller Footprint](https://neuralmagic.com/blog/benchmark-yolov5-on-cpus-with-deepsparse/).
+
 This page walks through the following use cases for trying out the sparsified YOLOv5 models:
 - Compare the differences between the models for both accuracy and inference performance
 - Run the models for inference in deployment or applications
 - Train the models on new datasets
+
+<div style="margin-bottom: 24px; display: flex; flex-direction: column;">
+    <div style="width: 640px; max-width: 95%; position: relative;">
+        <div style="position: relative; padding-bottom: 56.25%;">
+            <iframe style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" src="https://www.youtube.com/embed/gGErxSqf05o" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+        </div>
+    </div>
+    <div style="margin-top: 8px;">
+        <i>Video not loading? View full video <a href="https://youtu.be/gGErxSqf05o">here</a>.</i>
+    </div>
+</div>
 
 ## Sparse Models
 
@@ -56,10 +69,9 @@ This page walks through the following use cases for trying out the sparsified YO
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-example-deployment.png" alt="Example Deployment" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Example Deployment</div>
     </a>
-    <a class="model-page-button disable-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
+    <a href="https://neuralmagic.com/blog/benchmark-yolov5-on-cpus-with-deepsparse#performancecomparisons" class="model-page-button" style="display: flex; flex-direction: column; margin-right: 8px; align-items: center; max-width: 196px">
         <img src="https://docs.neuralmagic.com/docs/source/model-pages/images/icon-comparison.png" alt="Performance Comparisons" style="max-width: 160px; width: 100%;" />
         <div style="text-align: center;">Performance Comparisons</div>
-        <div class="tooltip">Coming soon!</div>
     </a>
 </div>
 
