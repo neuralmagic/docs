@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.3.0.20210812 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.3.0.20210813 documentation</title>
   
 
   
@@ -215,6 +215,8 @@
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.quantization</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">add_quant_dequant</span><span class="p">,</span>
+    <span class="n">configure_module_default_qconfigs</span><span class="p">,</span>
+    <span class="n">configure_module_qat_wrappers</span><span class="p">,</span>
     <span class="n">fuse_module_conv_bn_relus</span><span class="p">,</span>
     <span class="n">get_qat_qconfig</span><span class="p">,</span>
 <span class="p">)</span>
@@ -516,10 +518,13 @@
         <span class="c1"># prepare each module / submodule for quantization</span>
         <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
         <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+            <span class="c1"># wrap any modules with wrap_qat set to True as QATWrapper(s)</span>
+            <span class="n">configure_module_qat_wrappers</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="c1"># set quantization config (asymmetric activations, symmetric weights)</span>
             <span class="n">quant_module</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span>
             <span class="c1"># wrap all conv / linear blocks in with quantization observers</span>
             <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="n">configure_module_default_qconfigs</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="c1"># set model to QAT mode</span>
             <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

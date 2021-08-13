@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.3.1.20210812 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.3.1.20210813 documentation</title>
   
 
   
@@ -196,7 +196,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">BatchNorm2d</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">,</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ReLU</span>
@@ -213,6 +213,9 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;QATWrapper&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;configure_module_qat_wrappers&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;configure_module_default_qconfigs&quot;</span><span class="p">,</span>
     <span class="s2">&quot;add_quant_dequant&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_qat_qconfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;fuse_module_conv_bn_relus&quot;</span><span class="p">,</span>
@@ -243,6 +246,235 @@
 <span class="p">)</span>
 
 
+<div class="viewcode-block" id="QATWrapper"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.QATWrapper">[docs]</a><span class="k">class</span> <span class="nc">QATWrapper</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Wraps inputs and outputs of a Module or function with QuantStubs for</span>
+<span class="sd">    Quantization-Aware-Training (QAT)</span>
+
+<span class="sd">    :param forward_fn: function to be wrapped, should generally accept and return</span>
+<span class="sd">        torch Tensor(s)</span>
+<span class="sd">    :param num_inputs: number of inputs of the forward function to add a QuantStub</span>
+<span class="sd">        to. Will wrap the first num_inputs ordered inputs of the function. Default</span>
+<span class="sd">        is 1</span>
+<span class="sd">    :param kwarg_input_names: list of names of key word arguments to the forward pass</span>
+<span class="sd">        that should be wrapped with a fake quantize operation. Defaults to empty</span>
+<span class="sd">    :param num_outputs: number of outputs of the forward function to add a QuantStub</span>
+<span class="sd">        to. Will wrap the first num_inputs ordered outputs of the function. Default</span>
+<span class="sd">        is 1. Will also add a DeQuantStub for FP32 conversion if</span>
+<span class="sd">        torch.quantization.convert is invoked</span>
+<span class="sd">    :param input_qconfigs: QConfig to use for calibrating the input QuantStubs. Can</span>
+<span class="sd">        be a single QConfig that will be copied to each QuantStub or a list of one</span>
+<span class="sd">        QConfig for each input. Instead of a QConfig objects, the string &#39;asymmetric&#39;</span>
+<span class="sd">        or &#39;symmetric&#39; may be used to use default UINT8 asymmetric and symmetric</span>
+<span class="sd">        quantization respectively</span>
+<span class="sd">    :param output_qconfigs: QConfig to use for calibrating the output QuantStubs. Can</span>
+<span class="sd">        be a single QConfig that will be copied to each QuantStub or a list of one</span>
+<span class="sd">        QConfig for each output. Instead of a QConfig objects, the string &#39;asymmetric&#39;</span>
+<span class="sd">        or &#39;symmetric&#39; may be used to use default UINT8 asymmetric and symmetric</span>
+<span class="sd">        quantization respectively</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QATWrapper.from_module"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.QATWrapper.from_module">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">from_module</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;QATWrapper&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param module: torch Module to create a QATWrapper for</span>
+<span class="sd">        :return: QATWrapper object created using the given Module as the forward</span>
+<span class="sd">            function. Will attempt to find any other named parameter of the QATWrapper</span>
+<span class="sd">            constructor from the attributes of the given Module</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">qat_wrapper_kwargs</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">module</span><span class="o">.</span><span class="n">qat_wrapper_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="s2">&quot;qat_wrapper_kwargs&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="p">{}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">QATWrapper</span><span class="p">(</span><span class="n">forward_fn</span><span class="o">=</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="n">qat_wrapper_kwargs</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">forward_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Any</span><span class="p">],</span> <span class="n">Any</span><span class="p">],</span>
+        <span class="n">num_inputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">kwarg_input_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_outputs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">input_qconfigs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">,</span>
+        <span class="n">output_qconfigs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">]</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;asymmetric&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Unable to import package torch.quantization. &quot;</span>
+                <span class="s2">&quot;Try upgrading your PyTorch version to &gt;= 1.7.0.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">forward_fn</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;forward_fn of QATWrapper must be callable. &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Received </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">forward_fn</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span> <span class="o">=</span> <span class="n">kwarg_input_names</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">num_input_quant_stubs</span> <span class="o">=</span> <span class="n">num_inputs</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">forward_fn</span> <span class="o">=</span> <span class="n">forward_fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_qconfigs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_qconfigs</span><span class="p">(</span>
+            <span class="s2">&quot;input_qconfigs&quot;</span><span class="p">,</span> <span class="n">num_input_quant_stubs</span><span class="p">,</span> <span class="n">input_qconfigs</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_qconfigs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_qconfigs</span><span class="p">(</span>
+            <span class="s2">&quot;output_qconfigs&quot;</span><span class="p">,</span> <span class="n">num_outputs</span><span class="p">,</span> <span class="n">output_qconfigs</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_quant_stubs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">QuantStub</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_input_quant_stubs</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">QuantStub</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_dequant_stubs</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">ModuleList</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">DeQuantStub</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_outputs</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="QATWrapper.forward"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.QATWrapper.forward">[docs]</a>    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param args: arguments to forward function; the first num_inputs of these args</span>
+<span class="sd">            will be wrapped by a QuantStub</span>
+<span class="sd">        :param kwargs: key word arguments to pass to the wrapped forward function</span>
+<span class="sd">        :return: outputs of the forward function with a QuantStub applied to the first</span>
+<span class="sd">            num_outputs outputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">kwarg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span> <span class="k">for</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;QATWrapper expected kwargs </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span><span class="si">}</span><span class="s2"> to be included &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;in forward function kwargs. Found </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span><span class="si">}</span><span class="s2">. missing &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="p">[</span><span class="n">kwarg</span> <span class="k">for</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span> <span class="k">if</span> <span class="n">kwarg</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">qat_args</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># fake quantize positional arguments</span>
+        <span class="n">num_args_stubs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_quant_stubs</span><span class="p">)</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">arg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="n">num_args_stubs</span><span class="p">:</span>
+                <span class="n">arg</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_quant_stubs</span><span class="p">[</span><span class="n">idx</span><span class="p">](</span><span class="n">arg</span><span class="p">)</span>
+            <span class="n">qat_args</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span>
+
+        <span class="c1"># fake quantize key word arguments</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">kwarg_input_names</span><span class="p">):</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="n">kwarg</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_quant_stubs</span><span class="p">[</span><span class="n">num_args_stubs</span> <span class="o">+</span> <span class="n">idx</span><span class="p">](</span><span class="n">kwargs</span><span class="p">[</span><span class="n">kwarg</span><span class="p">])</span>
+
+        <span class="c1"># wrapped forward pass</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">forward_fn</span><span class="p">(</span><span class="o">*</span><span class="n">qat_args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># no output wrapping</span>
+            <span class="k">return</span> <span class="n">outputs</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;QATWrapper expected </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">)</span><span class="si">}</span><span class="s2"> outputs in &quot;</span>
+                    <span class="s2">&quot;forward pass. Found one output&quot;</span>
+                <span class="p">)</span>
+            <span class="c1"># output is a single Tensor</span>
+            <span class="n">qat_output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">outputs</span><span class="p">)</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_dequant_stubs</span><span class="p">[</span><span class="mi">0</span><span class="p">](</span><span class="n">qat_output</span><span class="p">)</span>
+
+        <span class="n">qat_outputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">output</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">outputs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">):</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">[</span><span class="n">idx</span><span class="p">](</span><span class="n">output</span><span class="p">)</span>
+                <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_deuant_stubs</span><span class="p">[</span><span class="n">idx</span><span class="p">](</span><span class="n">output</span><span class="p">)</span>
+            <span class="n">qat_outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qat_outputs</span></div>
+
+<div class="viewcode-block" id="QATWrapper.configure_qconfig"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.QATWrapper.configure_qconfig">[docs]</a>    <span class="k">def</span> <span class="nf">configure_qconfig</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the qconfigs of the quant stubs to the pre-initialized QConfigs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">quant_stub</span><span class="p">,</span> <span class="n">qconfig</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">input_quant_stubs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_qconfigs</span><span class="p">):</span>
+            <span class="n">quant_stub</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span>
+
+        <span class="k">for</span> <span class="n">quant_stub</span><span class="p">,</span> <span class="n">qconfig</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">output_quant_stubs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_qconfigs</span><span class="p">):</span>
+            <span class="n">quant_stub</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_load_qconfigs</span><span class="p">(</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">expected_len</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">qconfigs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="s2">&quot;QConfig&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="s2">&quot;QConfig&quot;</span><span class="p">]],</span>  <span class="c1"># noqa: F821</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">,</span> <span class="n">List</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;QATWrapper </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> must be a string, torch.quantization.QConfig, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;or a List of them. Received a </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">)):</span>
+            <span class="n">qconfigs</span> <span class="o">=</span> <span class="p">[</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">expected_len</span><span class="p">)]</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">expected_len</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;QATWrapper </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> should have exactly one qconfig or one for every &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;argument (</span><span class="si">{</span><span class="n">expected_len</span><span class="si">}</span><span class="s2">). Given </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">valid_qconfig_strs</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;asymmetric&quot;</span><span class="p">,</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">qconfig</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">qconfigs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qconfig</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">qconfig</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">valid_qconfig_strs</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;QATWrapper qconfig names can either be &quot;</span>
+                    <span class="s2">&quot;torch.quantization.QConfig objects or a string &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;in </span><span class="si">{</span><span class="n">valid_qconfig_strs</span><span class="si">}</span><span class="s2"> that will be converted to a QConfig. &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;Found string with value </span><span class="si">{</span><span class="n">qconfig</span><span class="si">}</span><span class="s2"> in </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="n">qconfigs</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">(</span>
+                <span class="n">symmetric_activations</span><span class="o">=</span><span class="p">(</span><span class="n">qconfig</span> <span class="o">==</span> <span class="s2">&quot;symmetric&quot;</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qconfigs</span></div>
+
+
+<div class="viewcode-block" id="configure_module_qat_wrappers"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.configure_module_qat_wrappers">[docs]</a><span class="k">def</span> <span class="nf">configure_module_qat_wrappers</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    if any submodule of the given module has the attribute wrap_qat == True,</span>
+<span class="sd">    then it will be replaced by a QATWrapper of it created by QATWrapper.from_module.</span>
+<span class="sd">    Other named kwargs to the QATWrapper constructor must be contained in a dictionary</span>
+<span class="sd">    under an attributed named `qat_wrapper_kwargs`</span>
+
+<span class="sd">    :param module: module to potentially wrap the submodules of</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">child_module</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">child_module</span><span class="p">,</span> <span class="s2">&quot;wrap_qat&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child_module</span><span class="o">.</span><span class="n">wrap_qat</span><span class="p">:</span>
+                <span class="nb">setattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="n">child_name</span><span class="p">,</span> <span class="n">QATWrapper</span><span class="o">.</span><span class="n">from_module</span><span class="p">(</span><span class="n">child_module</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="configure_module_default_qconfigs"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.configure_module_default_qconfigs">[docs]</a><span class="k">def</span> <span class="nf">configure_module_default_qconfigs</span><span class="p">(</span><span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    if any submodule of the given module has a configure_qconfig function,</span>
+<span class="sd">    configure_qconfig will be called on that submodule to set the qconfig(s) of that</span>
+<span class="sd">    module to its default</span>
+
+<span class="sd">    :param module: module to set qconfigs for</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">&quot;configure_qconfig&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">callable</span><span class="p">(</span>
+            <span class="nb">getattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">&quot;configure_qconfig&quot;</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">submodule</span><span class="o">.</span><span class="n">configure_qconfig</span><span class="p">()</span></div>
+
+
 <div class="viewcode-block" id="add_quant_dequant"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.add_quant_dequant">[docs]</a><span class="k">def</span> <span class="nf">add_quant_dequant</span><span class="p">(</span><span class="n">module</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Wraps all Conv and Linear submodule with a qconfig with a QuantWrapper</span>
@@ -261,19 +493,27 @@
     <span class="k">return</span> <span class="n">module</span></div>
 
 
-<div class="viewcode-block" id="get_qat_qconfig"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig">[docs]</a><span class="k">def</span> <span class="nf">get_qat_qconfig</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">:</span>
+<div class="viewcode-block" id="get_qat_qconfig"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig">[docs]</a><span class="k">def</span> <span class="nf">get_qat_qconfig</span><span class="p">(</span>
+    <span class="n">symmetric_activations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param symmetric_activations: if True, activations will have a symmetric</span>
+<span class="sd">        quantization range with zero point set to 128. Otherwise activations</span>
+<span class="sd">        will use asymmetric quantization with any zero point. Default is False</span>
 <span class="sd">    :return: A QAT fake quantization config for symmetric weight quantization and</span>
 <span class="sd">        asymmetric activation quantization.  The difference between this and</span>
 <span class="sd">        torch.quantization.default_qat_qconfig is that the activation observer</span>
 <span class="sd">        will not have reduce_range enabled.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">activation_qscheme</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_symmetric</span> <span class="k">if</span> <span class="n">symmetric_activations</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_affine</span>
+    <span class="p">)</span>
     <span class="n">activation_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">FakeQuantize</span><span class="o">.</span><span class="n">with_args</span><span class="p">(</span>
         <span class="n">observer</span><span class="o">=</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">MovingAverageMinMaxObserver</span><span class="p">,</span>
         <span class="n">quant_min</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
         <span class="n">quant_max</span><span class="o">=</span><span class="mi">255</span><span class="p">,</span>
         <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">quint8</span><span class="p">,</span>
-        <span class="n">qscheme</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_affine</span><span class="p">,</span>
+        <span class="n">qscheme</span><span class="o">=</span><span class="n">activation_qscheme</span><span class="p">,</span>
         <span class="n">reduce_range</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
     <span class="n">weight_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">default_weight_fake_quant</span>
