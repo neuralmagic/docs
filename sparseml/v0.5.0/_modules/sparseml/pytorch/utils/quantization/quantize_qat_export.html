@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.5.0.20210813 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.5.0.20210814 documentation</title>
   
 
   
@@ -843,11 +843,13 @@
 <span class="sd">    |         |</span>
 <span class="sd">    |     QuantizeLinear</span>
 <span class="sd">    |         |</span>
-<span class="sd">    |     QLinearMatMul (with constant kernel)</span>
+<span class="sd">    |     MatMulInteger (with constant uint8 kernel)</span>
 <span class="sd">    |         |</span>
-<span class="sd">    |     QLinearAdd (with constant bias)</span>
+<span class="sd">    |     Add (constant bias + zero point correction)</span>
 <span class="sd">    |         |</span>
-<span class="sd">    |     DequantizeLinear</span>
+<span class="sd">    |     Cast (INT32 -&gt; FP32)</span>
+<span class="sd">    |         |</span>
+<span class="sd">    |     Mul (Rescale from bias scale)</span>
 <span class="sd">    |         |</span>
 <span class="sd">    |       OUTPUT</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -889,6 +891,13 @@
         <span class="p">):</span>
             <span class="k">continue</span>
 
+        <span class="n">output_dequantize_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">output_quantize_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="ow">not</span> <span class="n">output_dequantize_node</span>
+            <span class="ow">or</span> <span class="n">output_dequantize_node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_QUANTIZE_OP_NAMES</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+
         <span class="n">input_quantize_params</span> <span class="o">=</span> <span class="n">get_quantization_params</span><span class="p">(</span>
             <span class="n">model</span><span class="p">,</span> <span class="n">input_quantize_node</span><span class="p">,</span> <span class="n">include_target</span><span class="o">=</span><span class="kc">False</span>
         <span class="p">)</span>
@@ -924,37 +933,35 @@
         <span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantized_weight_initializer</span><span class="p">)</span>
 
-        <span class="c1"># QLinearMatMul</span>
-        <span class="c1"># get qmatmul inputs and outputs</span>
-        <span class="n">qmatmul_input</span> <span class="o">=</span> <span class="n">input_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">qmatmul_inputs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">qmatmul_input</span><span class="p">,</span>  <span class="c1"># x</span>
-            <span class="n">input_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># x_scale</span>
-            <span class="n">input_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># x_zero_point</span>
-            <span class="n">quantized_weight_name</span><span class="p">,</span>  <span class="c1"># w</span>
-            <span class="n">weight_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># w_scale</span>
-            <span class="n">weight_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># w_zero_point</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># y_scale</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># y_zero_point</span>
+        <span class="c1"># MatMulInteger</span>
+        <span class="c1"># get matmulinteger inputs and outputs</span>
+        <span class="n">matmul_integer_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">input_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>  <span class="c1"># A matrix (replaces previous dequant node)</span>
+            <span class="n">quantized_weight_name</span><span class="p">,</span>  <span class="c1"># B matrix (quantized weight)</span>
+            <span class="n">input_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># a_zero_point</span>
+            <span class="n">weight_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># b_zero_point</span>
         <span class="p">]</span>
-        <span class="n">qmatmul_output</span> <span class="o">=</span> <span class="n">matmul_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">qmatmul_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_quant&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matmul_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">matmul_integer_output</span> <span class="o">=</span> <span class="n">matmul_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">matmul_integer_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_quant&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">matmul_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
 
         <span class="c1"># create qmatmul node and add it to graph</span>
-        <span class="n">qmatmul_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
-            <span class="s2">&quot;QLinearMatMul&quot;</span><span class="p">,</span>
-            <span class="n">qmatmul_inputs</span><span class="p">,</span>
-            <span class="p">[</span><span class="n">qmatmul_output</span><span class="p">],</span>
-            <span class="n">qmatmul_name</span><span class="p">,</span>
+        <span class="n">matmul_integer_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
+            <span class="s2">&quot;MatMulInteger&quot;</span><span class="p">,</span>
+            <span class="n">matmul_integer_inputs</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">matmul_integer_output</span><span class="p">],</span>
+            <span class="n">matmul_integer_name</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qmatmul_node</span><span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">matmul_integer_node</span><span class="p">)</span>
 
-        <span class="c1"># QLinearAdd</span>
+        <span class="c1"># Add bias + zero point correction</span>
         <span class="c1"># quantize bias</span>
         <span class="n">bias_initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">bias_initializer</span><span class="p">)</span>
         <span class="n">bias_scale</span> <span class="o">=</span> <span class="n">input_quantize_params</span><span class="o">.</span><span class="n">scale</span> <span class="o">*</span> <span class="n">weight_quantize_params</span><span class="o">.</span><span class="n">scale</span>
         <span class="n">bias_zero_point</span> <span class="o">=</span> <span class="mi">0</span>
-        <span class="n">quantized_bias</span> <span class="o">=</span> <span class="n">_quantize_array</span><span class="p">(</span><span class="n">bias_initializer</span><span class="p">,</span> <span class="n">bias_scale</span><span class="p">,</span> <span class="n">bias_zero_point</span><span class="p">)</span>
+        <span class="n">quantized_bias</span> <span class="o">=</span> <span class="n">_quantize_array</span><span class="p">(</span>
+            <span class="n">bias_initializer</span><span class="p">,</span> <span class="n">bias_scale</span><span class="p">,</span> <span class="n">bias_zero_point</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">numpy</span><span class="o">.</span><span class="n">int32</span>
+        <span class="p">)</span>
+
         <span class="n">quantized_bias_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.bias_quantized&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bias_add_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
         <span class="n">quantized_bias_initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span>
             <span class="n">quantized_bias</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">quantized_bias_name</span>
@@ -974,30 +981,48 @@
             <span class="p">)</span>
         <span class="p">)</span>
 
-        <span class="c1"># get qadd inputs and outputs</span>
-        <span class="n">qadd_input</span> <span class="o">=</span> <span class="n">qmatmul_output</span>
-        <span class="n">qadd_inputs</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">qadd_input</span><span class="p">,</span>  <span class="c1"># x</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># x_scale</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># x_zero_point</span>
-            <span class="n">quantized_bias_name</span><span class="p">,</span>  <span class="c1"># b</span>
-            <span class="n">quantized_bias_scale_name</span><span class="p">,</span>  <span class="c1"># b_scale</span>
-            <span class="n">quantized_bias_zero_point_name</span><span class="p">,</span>  <span class="c1"># b_zero_point</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>  <span class="c1"># y_scale</span>
-            <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># y_zero_point</span>
+        <span class="c1"># get INT32 Add inputs and outputs</span>
+        <span class="n">quant_add_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">matmul_integer_output</span><span class="p">,</span>  <span class="c1"># MatMul integer outputs (INT32)</span>
+            <span class="n">quantized_bias_name</span><span class="p">,</span>  <span class="c1"># Quantized bias (INT32)</span>
         <span class="p">]</span>
-        <span class="n">qadd_output</span> <span class="o">=</span> <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-        <span class="n">qadd_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_quant&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bias_add_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-        <span class="n">kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;domain&quot;</span><span class="p">:</span> <span class="s2">&quot;com.microsoft&quot;</span><span class="p">}</span>
-        <span class="c1"># create qlinearadd node and add it to graph</span>
+        <span class="n">quant_add_output</span> <span class="o">=</span> <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">quant_add_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_quant&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bias_add_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+
+        <span class="c1"># create Add node and add it to graph</span>
         <span class="n">qadd_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
-            <span class="s2">&quot;QLinearAdd&quot;</span><span class="p">,</span>
-            <span class="n">qadd_inputs</span><span class="p">,</span>
-            <span class="p">[</span><span class="n">qadd_output</span><span class="p">],</span>
-            <span class="n">qadd_name</span><span class="p">,</span>
-            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+            <span class="s2">&quot;Add&quot;</span><span class="p">,</span>
+            <span class="n">quant_add_inputs</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">quant_add_output</span><span class="p">],</span>
+            <span class="n">quant_add_name</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qadd_node</span><span class="p">)</span>
+
+        <span class="c1"># create Cast node and add it to graph</span>
+        <span class="n">cast_node_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_cast&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bias_add_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">cast_node_output</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_cast&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">quant_add_output</span><span class="p">)</span>
+        <span class="n">cast_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
+            <span class="s2">&quot;Cast&quot;</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">quant_add_output</span><span class="p">],</span>
+            <span class="p">[</span><span class="n">cast_node_output</span><span class="p">],</span>
+            <span class="n">cast_node_name</span><span class="p">,</span>
+            <span class="n">to</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="p">,</span> <span class="s2">&quot;FLOAT&quot;</span><span class="p">),</span>  <span class="c1"># get Float32 enum id</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cast_node</span><span class="p">)</span>
+
+        <span class="c1"># create Mul node for rescale</span>
+        <span class="n">mul_node_inputs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">cast_node_output</span><span class="p">,</span>  <span class="c1"># a</span>
+            <span class="n">quantized_bias_scale_name</span><span class="p">,</span>  <span class="c1"># b -&gt; rescale factor</span>
+        <span class="p">]</span>
+        <span class="n">mul_node_name</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_rescale_mul&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">bias_add_node</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="n">mul_node</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_node</span><span class="p">(</span>
+            <span class="s2">&quot;Mul&quot;</span><span class="p">,</span>
+            <span class="n">mul_node_inputs</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">output_dequantize_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]],</span>
+            <span class="n">mul_node_name</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">mul_node</span><span class="p">)</span>
 
         <span class="c1"># Cleanup</span>
         <span class="c1"># delete folded quantization ops</span>
@@ -1006,6 +1031,7 @@
         <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_transpose_node</span><span class="p">)</span>
         <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_dequantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
         <span class="c1"># delete original Gemm node</span>
         <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">matmul_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
@@ -1019,6 +1045,8 @@
             <span class="sa">f</span><span class="s2">&quot;Converted </span><span class="si">{</span><span class="n">conversion_count</span><span class="si">}</span><span class="s2"> quantizable MatMul ops with weight and bias &quot;</span>
             <span class="s2">&quot;to QLinearMatMul and QLinearAdd&quot;</span>
         <span class="p">)</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
