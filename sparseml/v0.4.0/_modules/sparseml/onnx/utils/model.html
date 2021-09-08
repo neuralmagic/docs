@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.onnx.utils.model &mdash; SparseML 0.4.0.20210907 documentation</title>
+  <title>sparseml.onnx.utils.model &mdash; SparseML 0.4.0.20210908 documentation</title>
   
 
   
@@ -212,6 +212,7 @@
 <span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span>
 <span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">auto</span>
 
+<span class="kn">from</span> <span class="nn">sparseml.onnx.base</span> <span class="kn">import</span> <span class="n">require_onnxruntime</span>
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils.graph_editor</span> <span class="kn">import</span> <span class="n">override_model_batch_size</span>
 <span class="kn">from</span> <span class="nn">sparseml.onnx.utils.helpers</span> <span class="kn">import</span> <span class="p">(</span>
@@ -221,6 +222,7 @@
     <span class="n">get_prunable_node_from_foldable</span><span class="p">,</span>
     <span class="n">is_foldable_node</span><span class="p">,</span>
 <span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">Model</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -232,6 +234,7 @@
     <span class="n">compile_model</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">analyze_model</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">cpu_details</span> <span class="o">=</span> <span class="kc">None</span>
+
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">from</span> <span class="nn">openvino.inference_engine</span> <span class="kn">import</span> <span class="n">IECore</span><span class="p">,</span> <span class="n">IENetwork</span><span class="p">,</span> <span class="n">StatusCode</span><span class="p">,</span> <span class="n">get_version</span>
@@ -627,6 +630,7 @@
 <span class="sd">        ort.get_available_providers()</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+    <span class="nd">@require_onnxruntime</span><span class="p">()</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
@@ -637,6 +641,7 @@
         <span class="n">nthreads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">providers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
@@ -749,7 +754,7 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
         <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
@@ -768,7 +773,11 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">num_cores</span>
 
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">File</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">Model</span><span class="p">)</span>
+        <span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">())</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
@@ -795,7 +804,6 @@
 <div class="viewcode-block" id="DeepSparseModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseModelRunner">[docs]</a><span class="k">class</span> <span class="nc">DeepSparseModelRunner</span><span class="p">(</span><span class="n">_DeepSparseBaseModelRunner</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Class for handling running inference for an ONNX model through Neural Magic</span>
-
 <span class="sd">    :param model: the path to the ONNX model file or the loaded onnx.ModelProto</span>
 <span class="sd">    :param batch_size: the size of the batch to create the model for</span>
 <span class="sd">    :param num_cores: the number of physical cores to run the model on. Defaults</span>
@@ -841,7 +849,6 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Run inference for a model for the data given in the data_loader iterator</span>
 <span class="sd">        through neural magic inference engine.</span>
-
 <span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
 <span class="sd">            run through the model</span>
 <span class="sd">        :param desc: str to display if show_progress is True</span>
