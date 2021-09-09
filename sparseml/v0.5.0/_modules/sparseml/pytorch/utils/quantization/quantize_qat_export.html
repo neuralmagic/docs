@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.5.0.20210908 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.5.0.20210909 documentation</title>
   
 
   
@@ -1090,6 +1090,100 @@
             <span class="p">)</span>
 
 
+<span class="k">def</span> <span class="nf">_quantize_qat_embedding</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A pass for quantizing qat embeddings</span>
+
+<span class="sd">    Starting with:</span>
+<span class="sd">    |    INPUT    QuantizeLinear (with constant embedding)</span>
+<span class="sd">    |      |          |</span>
+<span class="sd">    |      |     DequantizeLinear</span>
+<span class="sd">    |      |         |</span>
+<span class="sd">    |         Gather</span>
+<span class="sd">    |           |</span>
+<span class="sd">    |       QuantizeLinear</span>
+<span class="sd">    |           |</span>
+<span class="sd">    |       DequantizeLinear</span>
+<span class="sd">    |           |</span>
+<span class="sd">    |         OUTPUT</span>
+
+<span class="sd">    Converts to:</span>
+<span class="sd">    |   INPUT</span>
+<span class="sd">    |     |</span>
+<span class="sd">    |   Gather(UINT8 data initializer)</span>
+<span class="sd">    |     |</span>
+<span class="sd">    |   DequantizeLinear</span>
+<span class="sd">    |     |</span>
+<span class="sd">    |   OUTPUT</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">gather_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Gather&quot;</span><span class="p">]</span>
+
+    <span class="n">converted_nodes</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="k">for</span> <span class="n">gather_node</span> <span class="ow">in</span> <span class="n">gather_nodes</span><span class="p">:</span>
+        <span class="c1"># find input quant and dequant nodes</span>
+        <span class="n">input_dequant_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_parent</span><span class="p">(</span><span class="n">gather_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">input_dequant_node</span> <span class="ow">or</span> <span class="n">input_dequant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;DequantizeLinear&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">input_quant_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_parent</span><span class="p">(</span><span class="n">input_dequant_node</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">input_quant_node</span> <span class="ow">or</span> <span class="n">input_quant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="c1"># find embedding weights, sclae, and zero point</span>
+        <span class="n">embedding_initializer</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">input_quant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">scale_initializer</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">input_quant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">zp_initializer</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">input_quant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">embedding_initializer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">scale_initializer</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">zp_initializer</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="c1"># quantize embedding</span>
+        <span class="n">embedding</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">embedding_initializer</span><span class="p">)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">scale_initializer</span><span class="p">)</span>
+        <span class="n">zero_point</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">zp_initializer</span><span class="p">)</span>
+        <span class="n">embedding_quant</span> <span class="o">=</span> <span class="n">_quantize_array</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zero_point</span><span class="p">)</span>
+        <span class="n">embedding_quant_initializer</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span>
+            <span class="n">embedding_quant</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">embedding_initializer</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2">_quant&quot;</span>
+        <span class="p">)</span>
+
+        <span class="c1"># update graph</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">embedding_quant_initializer</span><span class="p">)</span>
+        <span class="n">gather_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">embedding_quant_initializer</span><span class="o">.</span><span class="n">name</span>
+
+        <span class="c1"># detect QDQ block on output</span>
+        <span class="n">output_quant_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">gather_node</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">output_quant_node</span> <span class="ow">and</span> <span class="n">output_quant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">:</span>
+            <span class="n">output_dequant_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">output_quant_node</span><span class="p">)</span>
+            <span class="n">qdq_output</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">output_dequant_node</span>
+                <span class="ow">and</span> <span class="n">output_dequant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;DequantizeLinear&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">qdq_output</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">qdq_output</span><span class="p">:</span>
+            <span class="c1"># delete unnecessary quantize and dequantize ops</span>
+            <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quant_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_dequant_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_quant_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1"># forward gather output to dequant input</span>
+            <span class="n">output_dequant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">gather_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># use input dequant to dequantize output</span>
+            <span class="n">embedding_quant_output_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">gather_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">_quant&quot;</span>
+            <span class="n">input_dequant_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">embedding_quant_output_id</span>
+            <span class="n">input_dequant_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">gather_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">gather_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">embedding_quant_output_id</span>
+
+            <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quant_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+        <span class="n">converted_nodes</span> <span class="o">+=</span> <span class="mi">1</span>
+
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">converted_nodes</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Converted </span><span class="si">{</span><span class="n">converted_nodes</span><span class="si">}</span><span class="s2"> QAT embedding ops to UINT8&quot;</span><span class="p">)</span>
+
+
 <span class="k">def</span> <span class="nf">_replace_input_id_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">old_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
     <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
         <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">):</span>
@@ -1177,6 +1271,7 @@
     <span class="n">_convert_quantizable_matmul</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_quantizable_matmul_and_add</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">_quantize_qat_embedding</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">quantized_residual_add_optim</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">_remove_duplicate_quantize_ops</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>

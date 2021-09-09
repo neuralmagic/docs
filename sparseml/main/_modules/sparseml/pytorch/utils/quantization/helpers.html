@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.7.0.20210908 documentation</title>
+  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.7.0.20210909 documentation</title>
   
 
   
@@ -201,7 +201,7 @@
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
-<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">BatchNorm2d</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">,</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ReLU</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">BatchNorm2d</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">,</span> <span class="n">Embedding</span><span class="p">,</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ReLU</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -221,6 +221,7 @@
     <span class="s2">&quot;add_quant_dequant&quot;</span><span class="p">,</span>
     <span class="s2">&quot;get_qat_qconfig&quot;</span><span class="p">,</span>
     <span class="s2">&quot;fuse_module_conv_bn_relus&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;prepare_embeddings_qat&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -499,11 +500,15 @@
 
 <div class="viewcode-block" id="get_qat_qconfig"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig">[docs]</a><span class="k">def</span> <span class="nf">get_qat_qconfig</span><span class="p">(</span>
     <span class="n">symmetric_activations</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">symmetric_weights</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :param symmetric_activations: if True, activations will have a symmetric</span>
-<span class="sd">        quantization range with zero point set to 128. Otherwise activations</span>
+<span class="sd">        UINT8 quantization range with zero point set to 128. Otherwise activations</span>
 <span class="sd">        will use asymmetric quantization with any zero point. Default is False</span>
+<span class="sd">    :param symmetric_weights: if True, weights will have a symmetric</span>
+<span class="sd">        INT8 quantization range with zero point set to 0. Otherwise activations</span>
+<span class="sd">        will use asymmetric quantization with any zero point. Default is True</span>
 <span class="sd">    :return: A QAT fake quantization config for symmetric weight quantization and</span>
 <span class="sd">        asymmetric activation quantization.  The difference between this and</span>
 <span class="sd">        torch.quantization.default_qat_qconfig is that the activation observer</span>
@@ -520,7 +525,17 @@
         <span class="n">qscheme</span><span class="o">=</span><span class="n">activation_qscheme</span><span class="p">,</span>
         <span class="n">reduce_range</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="p">)</span>
-    <span class="n">weight_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">default_weight_fake_quant</span>
+    <span class="n">weight_qscheme</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_symmetric</span> <span class="k">if</span> <span class="n">symmetric_weights</span> <span class="k">else</span> <span class="n">torch</span><span class="o">.</span><span class="n">per_tensor_affine</span>
+    <span class="p">)</span>
+    <span class="n">weight_observer</span> <span class="o">=</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">FakeQuantize</span><span class="o">.</span><span class="n">with_args</span><span class="p">(</span>
+        <span class="n">observer</span><span class="o">=</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">MovingAverageMinMaxObserver</span><span class="p">,</span>
+        <span class="n">quant_min</span><span class="o">=-</span><span class="mi">128</span><span class="p">,</span>
+        <span class="n">quant_max</span><span class="o">=</span><span class="mi">127</span><span class="p">,</span>
+        <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">qint8</span><span class="p">,</span>
+        <span class="n">qscheme</span><span class="o">=</span><span class="n">weight_qscheme</span><span class="p">,</span>
+        <span class="n">reduce_range</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span>
     <span class="k">return</span> <span class="n">torch_quantization</span><span class="o">.</span><span class="n">QConfig</span><span class="p">(</span>
         <span class="n">activation</span><span class="o">=</span><span class="n">activation_observer</span><span class="p">,</span>
         <span class="n">weight</span><span class="o">=</span><span class="n">weight_observer</span><span class="p">,</span>
@@ -602,6 +617,44 @@
     <span class="k">if</span> <span class="n">conv_blocks</span><span class="p">:</span>
         <span class="n">torch_quantization</span><span class="o">.</span><span class="n">fuse_modules</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">conv_blocks</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">module</span></div>
+
+
+<div class="viewcode-block" id="prepare_embeddings_qat"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.helpers.prepare_embeddings_qat">[docs]</a><span class="k">def</span> <span class="nf">prepare_embeddings_qat</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">qconfig</span><span class="p">:</span> <span class="s2">&quot;torch.quantization.QConfig&quot;</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    adds a fake quantize call to the weights of any Embedding modules in the given</span>
+<span class="sd">    module</span>
+
+<span class="sd">    :param module: module to run QAT for the embeddings of</span>
+<span class="sd">    :param qconfig: qconfig to generate the fake quantize ops from. Default uses INT8</span>
+<span class="sd">        asymmetric range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">qconfig</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">(</span><span class="n">symmetric_weights</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">submodule</span><span class="p">)</span> <span class="ow">is</span> <span class="n">Embedding</span><span class="p">:</span>
+            <span class="n">_prepare_qat_embedding</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="n">qconfig</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_prepare_qat_embedding</span><span class="p">(</span><span class="n">embedding</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">qconfig</span><span class="p">:</span> <span class="s2">&quot;torch.quantization.QConfig&quot;</span><span class="p">):</span>
+    <span class="n">embedding</span><span class="o">.</span><span class="n">weight_fake_quant</span> <span class="o">=</span> <span class="n">qconfig</span><span class="o">.</span><span class="n">weight</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_qat_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">embedding</span><span class="p">(</span>
+            <span class="nb">input</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weight_fake_quant</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">),</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">padding_idx</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_norm</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">norm_type</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">scale_grad_by_freq</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sparse</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># bind qat forward to embedding</span>
+    <span class="n">qat_forward_bound</span> <span class="o">=</span> <span class="n">_qat_forward</span><span class="o">.</span><span class="fm">__get__</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="n">embedding</span><span class="o">.</span><span class="vm">__class__</span><span class="p">)</span>
+    <span class="nb">setattr</span><span class="p">(</span><span class="n">embedding</span><span class="p">,</span> <span class="s2">&quot;forward&quot;</span><span class="p">,</span> <span class="n">qat_forward_bound</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_set_submodule</span><span class="p">(</span><span class="n">root_module</span><span class="p">,</span> <span class="n">sub_module_path</span><span class="p">,</span> <span class="n">sub_module</span><span class="p">):</span>

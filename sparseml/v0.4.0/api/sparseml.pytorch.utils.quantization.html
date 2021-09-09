@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.utils.quantization package &mdash; SparseML 0.4.0.20210908 documentation</title>
+  <title>sparseml.pytorch.utils.quantization package &mdash; SparseML 0.4.0.20210909 documentation</title>
   
 
   
@@ -364,18 +364,39 @@ forward pass. Default is True</p></li>
 
 <dl class="py function">
 <dt id="sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig">
-<code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.quantization.helpers.</span></code><code class="sig-name descname"><span class="pre">get_qat_qconfig</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symmetric_activations</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">torch.quantization.qconfig.QConfig</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/quantization/helpers.html#get_qat_qconfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.quantization.helpers.</span></code><code class="sig-name descname"><span class="pre">get_qat_qconfig</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">symmetric_activations</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">symmetric_weights</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">torch.quantization.qconfig.QConfig</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/quantization/helpers.html#get_qat_qconfig"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.quantization.helpers.get_qat_qconfig" title="Permalink to this definition">¶</a></dt>
 <dd><dl class="field-list simple">
 <dt class="field-odd">Parameters</dt>
-<dd class="field-odd"><p><strong>symmetric_activations</strong> – if True, activations will have a symmetric
-quantization range with zero point set to 128. Otherwise activations
-will use asymmetric quantization with any zero point. Default is False</p>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>symmetric_activations</strong> – if True, activations will have a symmetric
+UINT8 quantization range with zero point set to 128. Otherwise activations
+will use asymmetric quantization with any zero point. Default is False</p></li>
+<li><p><strong>symmetric_weights</strong> – if True, weights will have a symmetric
+INT8 quantization range with zero point set to 0. Otherwise activations
+will use asymmetric quantization with any zero point. Default is True</p></li>
+</ul>
 </dd>
 <dt class="field-even">Returns</dt>
 <dd class="field-even"><p>A QAT fake quantization config for symmetric weight quantization and
 asymmetric activation quantization.  The difference between this and
 torch.quantization.default_qat_qconfig is that the activation observer
 will not have reduce_range enabled.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt id="sparseml.pytorch.utils.quantization.helpers.prepare_embeddings_qat">
+<code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.quantization.helpers.</span></code><code class="sig-name descname"><span class="pre">prepare_embeddings_qat</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">qconfig</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.quantization.qconfig.QConfig</span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/quantization/helpers.html#prepare_embeddings_qat"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.quantization.helpers.prepare_embeddings_qat" title="Permalink to this definition">¶</a></dt>
+<dd><p>adds a fake quantize call to the weights of any Embedding modules in the given
+module</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – module to run QAT for the embeddings of</p></li>
+<li><p><strong>qconfig</strong> – qconfig to generate the fake quantize ops from. Default uses INT8
+asymmetric range</p></li>
+</ul>
 </dd>
 </dl>
 </dd></dl>

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.7.0.20210908 documentation</title>
+  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.7.0.20210909 documentation</title>
   
 
   
@@ -222,6 +222,7 @@
     <span class="n">configure_module_qat_wrappers</span><span class="p">,</span>
     <span class="n">fuse_module_conv_bn_relus</span><span class="p">,</span>
     <span class="n">get_qat_qconfig</span><span class="p">,</span>
+    <span class="n">prepare_embeddings_qat</span><span class="p">,</span>
 <span class="p">)</span>
 
 
@@ -261,6 +262,10 @@
 <span class="sd">        exception. For compatibility with YAML serialization only.</span>
 <span class="sd">    :param model_fuse_fn_kwargs: dictionary of keyword argument values to be passed</span>
 <span class="sd">        to the model fusing function</span>
+<span class="sd">    :param quantize_embeddings: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">        using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">        quantize embedding weights. Default is True. Models without embedding layers</span>
+<span class="sd">        will be unaffected</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -272,6 +277,7 @@
         <span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">model_fuse_fn_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">quantize_embeddings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch_intrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -293,6 +299,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span> <span class="o">=</span> <span class="n">model_fuse_fn_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">disable_quantization_observer_epoch</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">freeze_bn_stats_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span> <span class="o">=</span> <span class="n">quantize_embeddings</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">False</span>
@@ -321,7 +328,7 @@
     <span class="k">def</span> <span class="nf">submodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :params value: List of submodule names to perform QAT on. Set None to quantize</span>
-<span class="sd">        entire model</span>
+<span class="sd">            entire model</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
@@ -332,8 +339,8 @@
     <span class="k">def</span> <span class="nf">model_fuse_fn_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: Name of model function to fuse the model in place prior</span>
-<span class="sd">        to performing QAT. None to uses the default function</span>
-<span class="sd">        `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.</span>
+<span class="sd">            to performing QAT. None to uses the default function</span>
+<span class="sd">            `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
 
@@ -341,9 +348,9 @@
     <span class="k">def</span> <span class="nf">model_fuse_fn_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :params value: Name of model function to fuse the model in place prior</span>
-<span class="sd">        to performing QAT. Set None to use the default function</span>
-<span class="sd">        `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.  Set as &#39;no_fuse&#39;</span>
-<span class="sd">        to skip module fusing.</span>
+<span class="sd">            to performing QAT. Set None to use the default function</span>
+<span class="sd">            `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.  Set as &#39;no_fuse&#39;</span>
+<span class="sd">            to skip module fusing.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="n">value</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -357,8 +364,8 @@
     <span class="k">def</span> <span class="nf">disable_quantization_observer_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: Epoch to disable updates to the module&#39;s</span>
-<span class="sd">        quantization observers. After this point, quantized weights and zero points will</span>
-<span class="sd">        not be updated. When None, observers never disabled during QAT</span>
+<span class="sd">            quantization observers. After this point, quantized weights and zero points</span>
+<span class="sd">            will not be updated. When None, observers never disabled during QAT</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span>
 
@@ -366,8 +373,8 @@
     <span class="k">def</span> <span class="nf">disable_quantization_observer_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :params value: Epoch to disable updates to the module&#39;s</span>
-<span class="sd">        quantization observers. After this point, quantized weights and zero points will</span>
-<span class="sd">        not be updated. Set None to not disable observers during QAT</span>
+<span class="sd">            quantization observers. After this point, quantized weights and zero points</span>
+<span class="sd">            will not be updated. Set None to not disable observers during QAT</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
@@ -376,7 +383,7 @@
     <span class="k">def</span> <span class="nf">freeze_bn_stats_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: Epoch to stop the tracking of batch norm stats. When</span>
-<span class="sd">        None, batch norm stats are track for all of training</span>
+<span class="sd">            None, batch norm stats are track for all of training</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span>
 
@@ -384,10 +391,28 @@
     <span class="k">def</span> <span class="nf">freeze_bn_stats_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :params value: Epoch to stop the tracking of batch norm stats. Set</span>
-<span class="sd">        None to not stop tracking batch norm stats during QAT</span>
+<span class="sd">            None to not stop tracking batch norm stats during QAT</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">quantize_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">            using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">            quantize embedding weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span>
+
+    <span class="nd">@quantize_embeddings</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">quantize_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">            using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">            quantize embedding weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="QuantizationModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -531,6 +556,8 @@
             <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="c1"># set model to QAT mode</span>
             <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span><span class="p">:</span>
+                <span class="n">prepare_embeddings_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
