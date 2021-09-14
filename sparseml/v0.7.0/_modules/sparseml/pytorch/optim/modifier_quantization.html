@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.7.0.20210914 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.7
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.pytorch.optim.modifier_quantization</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.pytorch.optim.modifier_quantization</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Modifier for models through quantization aware training.</span>
+
+<span class="sd">PyTorch version must support quantization (&gt;=1.2, ONNX export support introduced in 1.7)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">quantization</span> <span class="k">as</span> <span class="n">torch_quantization</span>
+    <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">intrinsic</span> <span class="k">as</span> <span class="n">torch_intrinsic</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">torch_quantization</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">torch_intrinsic</span> <span class="o">=</span> <span class="kc">None</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">ModifierProp</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="n">PyTorchModifierYAML</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.quantization</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">add_quant_dequant</span><span class="p">,</span>
+    <span class="n">configure_module_default_qconfigs</span><span class="p">,</span>
+    <span class="n">configure_module_qat_wrappers</span><span class="p">,</span>
+    <span class="n">fuse_module_conv_bn_relus</span><span class="p">,</span>
+    <span class="n">get_qat_qconfig</span><span class="p">,</span>
+    <span class="n">prepare_embeddings_qat</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;QuantizationModifier&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="QuantizationModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">QuantizationModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Enables quantization aware training (QAT) for a given module or its submodules</span>
+<span class="sd">    After the start epoch, the specified module(s)&#39; forward pass will emulate</span>
+<span class="sd">    quantized execution and the modifier will be enabled until training is completed.</span>
+
+<span class="sd">    | Sample yaml:</span>
+<span class="sd">    |   !QuantizationModifier</span>
+<span class="sd">    |       start_epoch: 0.0</span>
+<span class="sd">    |       submodules: [&#39;blocks.0&#39;, &#39;blocks.2&#39;]</span>
+<span class="sd">    |       model_fuse_fn_name: &#39;fuse_module&#39;</span>
+<span class="sd">    |       disable_quantization_observer_epoch: 2.0</span>
+<span class="sd">    |       freeze_bn_stats_epoch: 3.0</span>
+
+<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
+<span class="sd">    :param submodules: List of submodule names to perform QAT on. Leave None to quantize</span>
+<span class="sd">        entire model. Default is None</span>
+<span class="sd">    :param model_fuse_fn_name: Name of model function to fuse the model in place prior</span>
+<span class="sd">        to performing QAT.  Set as &#39;no_fuse&#39; to skip module fusing. Leave None to use</span>
+<span class="sd">        the default function `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.</span>
+<span class="sd">        Default is None</span>
+<span class="sd">    :param disable_quantization_observer_epoch: Epoch to disable updates to the module&#39;s</span>
+<span class="sd">        quantization observers. After this point, quantized weights and zero points will</span>
+<span class="sd">        not be updated. Leave None to not disable observers during QAT. Default is None</span>
+<span class="sd">    :param freeze_bn_stats_epoch: Epoch to stop the tracking of batch norm stats. Leave</span>
+<span class="sd">        None to not stop tracking batch norm stats during QAT. Default is None</span>
+<span class="sd">    :param end_epoch: Disabled, setting to anything other than -1 will raise an</span>
+<span class="sd">        exception. For compatibility with YAML serialization only.</span>
+<span class="sd">    :param model_fuse_fn_kwargs: dictionary of keyword argument values to be passed</span>
+<span class="sd">        to the model fusing function</span>
+<span class="sd">    :param quantize_embeddings: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">        using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">        quantize embedding weights. Default is True. Models without embedding layers</span>
+<span class="sd">        will be unaffected</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">submodules</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">model_fuse_fn_name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">disable_quantization_observer_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">freeze_bn_stats_epoch</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">model_fuse_fn_kwargs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">quantize_embeddings</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="n">torch_quantization</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">torch_intrinsic</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Unable to import package torch.quantization and/or &quot;</span>
+                <span class="s2">&quot;torch.nn.intrinsic. &quot;</span>
+                <span class="s2">&quot;Try upgrading your PyTorch version to use the QuantizationModifier.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">end_epoch</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;end_epoch is disabled for QuantizationModifier and can only be set to&quot;</span>
+                <span class="s2">&quot; -1. Given </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">end_epoch</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span> <span class="n">end_epoch</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">=</span> <span class="n">start_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="n">submodules</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="n">model_fuse_fn_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span> <span class="o">=</span> <span class="n">model_fuse_fn_kwargs</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">disable_quantization_observer_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">freeze_bn_stats_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span> <span class="o">=</span> <span class="n">quantize_embeddings</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantization_observer_disabled</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">submodules</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: List of submodule names to perform QAT on. None quantizes the entire</span>
+<span class="sd">            model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="nd">@submodules</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">submodules</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: List of submodule names to perform QAT on. Set None to quantize</span>
+<span class="sd">            entire model</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">model_fuse_fn_name</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: Name of model function to fuse the model in place prior</span>
+<span class="sd">            to performing QAT. None to uses the default function</span>
+<span class="sd">            `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
+
+    <span class="nd">@model_fuse_fn_name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">model_fuse_fn_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: Name of model function to fuse the model in place prior</span>
+<span class="sd">            to performing QAT. Set None to use the default function</span>
+<span class="sd">            `sparseml.pytorch.utils.fuse_module_conv_bn_relus`.  Set as &#39;no_fuse&#39;</span>
+<span class="sd">            to skip module fusing.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;none&quot;</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">disable_quantization_observer_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: Epoch to disable updates to the module&#39;s</span>
+<span class="sd">            quantization observers. After this point, quantized weights and zero points</span>
+<span class="sd">            will not be updated. When None, observers never disabled during QAT</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span>
+
+    <span class="nd">@disable_quantization_observer_epoch</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">disable_quantization_observer_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: Epoch to disable updates to the module&#39;s</span>
+<span class="sd">            quantization observers. After this point, quantized weights and zero points</span>
+<span class="sd">            will not be updated. Set None to not disable observers during QAT</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">freeze_bn_stats_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: Epoch to stop the tracking of batch norm stats. When</span>
+<span class="sd">            None, batch norm stats are track for all of training</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span>
+
+    <span class="nd">@freeze_bn_stats_epoch</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">freeze_bn_stats_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: Epoch to stop the tracking of batch norm stats. Set</span>
+<span class="sd">            None to not stop tracking batch norm stats during QAT</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">quantize_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">            using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">            quantize embedding weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span>
+
+    <span class="nd">@quantize_embeddings</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">quantize_embeddings</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :params value: if True, will perform QAT on torch.nn.Embedding layers</span>
+<span class="sd">            using sparseml.pytorch.utils.quantization.prepare_embeddings_qat to fake</span>
+<span class="sd">            quantize embedding weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span> <span class="o">=</span> <span class="n">value</span>
+
+<div class="viewcode-block" id="QuantizationModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Grab the module / submodule to perform QAT on</span>
+
+<span class="sd">        :param module: the PyTorch model/module to modify</span>
+<span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
+<span class="sd">            Defaults to 0 (start of the training process)</span>
+<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">found_submodules</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">submodule</span><span class="p">)</span>
+                    <span class="n">found_submodules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_submodules</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                    <span class="s2">&quot;Could not find all provided submodules to quantize&quot;</span>
+                    <span class="s2">&quot;given: </span><span class="si">{}</span><span class="s2">, found: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">),</span> <span class="n">found_submodules</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_quantization_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuantizationModifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cleans up any state</span>
+
+<span class="sd">        :param module: The model/module to finalize the modifier for.</span>
+<span class="sd">            Marked optional so state can still be cleaned up on delete,</span>
+<span class="sd">            but generally should always be passed in.</span>
+<span class="sd">        :param reset_loggers: True to remove any currently attached loggers (default),</span>
+<span class="sd">            False to keep the loggers attached.</span>
+<span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
+<span class="sd">            for individual modifiers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="QuantizationModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        If start_pending(), fuses the model, sets the model quantization config,</span>
+<span class="sd">        calls torch.quantization.prepare_qat on the model to begin QAT</span>
+<span class="sd">        If end_pending(), updates the modules layers params to their original</span>
+<span class="sd">        trainable state.</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_quantization_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="QuantizationModifier.update_ready"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier.update_ready">[docs]</a>    <span class="k">def</span> <span class="nf">update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        :return: True if the modifier is pending an update and update() should be called</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;modifier must be initialized first&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">pending</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">pending</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_quantization_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_enable_module_qat</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+                <span class="n">quant_module</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">disable_observer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_quantization_observer_disabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+                <span class="n">quant_module</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">torch_intrinsic</span><span class="o">.</span><span class="n">qat</span><span class="o">.</span><span class="n">freeze_bn_stats</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_enable_module_qat</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">):</span>
+        <span class="c1"># fuse module Conv-BNs</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="o">!=</span> <span class="s2">&quot;no_fuse&quot;</span>
+        <span class="p">):</span>  <span class="c1"># module class fn</span>
+            <span class="n">module_fuse_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">module_fuse_fn</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">callable</span><span class="p">(</span><span class="n">module_fuse_fn</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;Invalid model_fuse_fn_name. &quot;</span>
+                    <span class="s2">&quot;Module has no callable function </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="n">module_fuse_fn</span><span class="p">(</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>  <span class="c1"># default auto fn</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">[</span><span class="s2">&quot;inplace&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="n">fuse_module_conv_bn_relus</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_model_fuse_fn_kwargs</span><span class="p">)</span>
+
+        <span class="c1"># prepare each module / submodule for quantization</span>
+        <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+            <span class="c1"># wrap any modules with wrap_qat set to True as QATWrapper(s)</span>
+            <span class="n">configure_module_qat_wrappers</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="c1"># set quantization config (asymmetric activations, symmetric weights)</span>
+            <span class="n">quant_module</span><span class="o">.</span><span class="n">qconfig</span> <span class="o">=</span> <span class="n">qconfig</span>
+            <span class="c1"># wrap all conv / linear blocks in with quantization observers</span>
+            <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="n">configure_module_default_qconfigs</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+            <span class="c1"># set model to QAT mode</span>
+            <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span><span class="p">:</span>
+                <span class="n">prepare_embeddings_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="nf">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantization_observer_disabled</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_freeze_bn_stats_update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;disable_quantization_observer_epoch may not be greater than &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;start_epoch for QuantizationModifier, received: &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_epoch</span><span class="si">}</span><span class="s2"> with start_epoch &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;freeze_bn_stats_epoch may not be greater than start_epoch&quot;</span>
+                <span class="s2">&quot; for QuantizationModifier, received: </span><span class="si">{}</span><span class="s2"> with start_epoch </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.7.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="modifier_quantization.html">v0.7.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

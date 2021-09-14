@@ -1,0 +1,917 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.optim.modifier &mdash; SparseML 0.7.0.20210914 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> SparseML<img src="../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.7
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.optim.modifier</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.optim.modifier</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code related to modifiers that is shared across frameworks.</span>
+<span class="sd">Modifiers allow modifying the training process of a model; ex to perform model pruning.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">hashlib</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">validate_str_iterable</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;BaseProp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ModifierProp&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseObject&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseModifier&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseScheduled&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseUpdate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ModifierYAML&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="BaseProp"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseProp">[docs]</a><span class="k">class</span> <span class="nc">BaseProp</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    BaseProp class meant to be implemented by any property decorators</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">obj_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param obj: the object to get the attribute from</span>
+<span class="sd">        :param obj_type: unused</span>
+<span class="sd">        :return: The retrieved value from the obj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param obj: the object to get the attribute from</span>
+<span class="sd">        :param value: the value to set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="fm">__delete__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Override to not allow deletes for modifier properties</span>
+
+<span class="sd">        :param obj: the object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;can&#39;t delete attribute&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseProp.getter"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseProp.getter">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">getter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_get</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param func_get: the getter function</span>
+<span class="sd">        :return: the recreated instance with the new getter function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="BaseProp.setter"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseProp.setter">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_set</span><span class="p">:</span> <span class="n">Callable</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param func_set: the setter function</span>
+<span class="sd">        :return: the recreated instance with the new setter function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div></div>
+
+
+<div class="viewcode-block" id="ModifierProp"><a class="viewcode-back" href="../../../api/sparseml.tensorflow_v1.optim.html#sparseml.keras.optim.modifier.ModifierProp">[docs]</a><span class="k">class</span> <span class="nc">ModifierProp</span><span class="p">(</span><span class="n">BaseProp</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Property used to decorate a modifier.</span>
+<span class="sd">    Use for creating getters and setters in a modifier.</span>
+<span class="sd">    Handles making sure props cannot be changed after a certain point;</span>
+<span class="sd">    ex after initialized.</span>
+<span class="sd">    Also, marks the properties so they can be easily collected and serialized later.</span>
+
+<span class="sd">    :param serializable: True if the property should be serialized (ex in yaml),</span>
+<span class="sd">        False otherwise. Default True</span>
+<span class="sd">    :param restrict_initialized: True to keep the property from being set after</span>
+<span class="sd">        initialized, False otherwise. Default True</span>
+<span class="sd">    :param restrict_enabled: True to keep the property from being set after enabled,</span>
+<span class="sd">        False otherwise. Default False</span>
+<span class="sd">    :param restrict_extras: extra attributes to check, if any are truthy then keep</span>
+<span class="sd">        from being set. Default None</span>
+<span class="sd">    :param no_serialize_val: If prop is equal to this value, will not serialize the prop</span>
+<span class="sd">    :param func_get: The function getter</span>
+<span class="sd">    :param func_set: The function setter</span>
+<span class="sd">    :param doc: The docs function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">serializable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">restrict_initialized</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">restrict_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">restrict_extras</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">no_serialize_val</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">func_get</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">func_set</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">doc</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span> <span class="o">=</span> <span class="n">func_get</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func_set</span> <span class="o">=</span> <span class="n">func_set</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_serializable</span> <span class="o">=</span> <span class="n">serializable</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_no_serialize_val</span> <span class="o">=</span> <span class="n">no_serialize_val</span>
+
+        <span class="k">if</span> <span class="n">restrict_initialized</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;_initialized&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">restrict_enabled</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;_enabled&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">restrict_extras</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">restrict_extras</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">doc</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span><span class="o">.</span><span class="vm">__doc__</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span> <span class="o">=</span> <span class="n">doc</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">getter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseProp</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param getter: the annotated getter to use to get the attribute</span>
+<span class="sd">        :return: the current property instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span> <span class="o">=</span> <span class="n">getter</span>
+
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="fm">__get__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">obj_type</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the attribute from the current given object for the current modifier</span>
+
+<span class="sd">        :param obj: the object to get the attribute from</span>
+<span class="sd">        :param obj_type: unused</span>
+<span class="sd">        :return: The retrieved value from the obj</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">obj</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;unreadable attribute&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span><span class="p">(</span><span class="n">obj</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__set__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">obj</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the attribute in the current given object for the current modifier.</span>
+<span class="sd">        If the attribute can&#39;t be set because of the current modifiers state,</span>
+<span class="sd">        (ex: initialized) then will raise a AttributeError</span>
+
+<span class="sd">        :param obj: the object to get the attribute from</span>
+<span class="sd">        :param value: the value to set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_func_set</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span><span class="s2">&quot;can&#39;t set attribute&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">rest</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">restrictions</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">rest</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">rest</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
+                        <span class="s2">&quot;Cannot change </span><span class="si">{}</span><span class="s2"> after initializing </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span> <span class="n">obj</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                        <span class="p">)</span>
+                    <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_func_set</span><span class="p">(</span><span class="n">obj</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">serializable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if the property should be serialized (ex in yaml), False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializable</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">restrictions</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The attributes to check for restricting when the attribute can be set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">no_serialize_val</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: a value that if the prop is equal to, will not serialize the prop</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_no_serialize_val</span>
+
+<div class="viewcode-block" id="ModifierProp.getter"><a class="viewcode-back" href="../../../api/sparseml.tensorflow_v1.optim.html#sparseml.keras.optim.modifier.ModifierProp.getter">[docs]</a>    <span class="k">def</span> <span class="nf">getter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_get</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseProp</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a ModifierProp based off the current instance with the getter function</span>
+
+<span class="sd">        :param func_get: the getter function</span>
+<span class="sd">        :return: the recreated instance with the new getter function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_creator_kwargs</span><span class="p">(),</span>
+            <span class="n">func_get</span><span class="o">=</span><span class="n">func_get</span><span class="p">,</span>
+            <span class="n">func_set</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_func_set</span><span class="p">,</span>
+            <span class="n">doc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ModifierProp.setter"><a class="viewcode-back" href="../../../api/sparseml.tensorflow_v1.optim.html#sparseml.keras.optim.modifier.ModifierProp.setter">[docs]</a>    <span class="k">def</span> <span class="nf">setter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">func_set</span><span class="p">:</span> <span class="n">Callable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseProp</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a ModifierProp based off the current instance with the setter function</span>
+
+<span class="sd">        :param func_set: the setter function</span>
+<span class="sd">        :return: the recreated instance with the new setter function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)(</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_creator_kwargs</span><span class="p">(),</span>
+            <span class="n">func_get</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_func_get</span><span class="p">,</span>
+            <span class="n">func_set</span><span class="o">=</span><span class="n">func_set</span><span class="p">,</span>
+            <span class="n">doc</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__doc__</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_creator_kwargs</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;serializable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_serializable</span><span class="p">,</span>
+            <span class="s2">&quot;restrict_initialized&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;restrict_enabled&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="s2">&quot;restrict_extras&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_restrictions</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="BaseObject"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseObject">[docs]</a><span class="k">class</span> <span class="nc">BaseObject</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    BaseObject to accept kwargs so multiple inheritance will work with</span>
+<span class="sd">    the modifier classes.</span>
+<span class="sd">    kwargs param must be empty by the time this class is called.</span>
+
+<span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;kwargs must be empty at _BaseObject, &quot;</span>
+                    <span class="s2">&quot;extras passed in of </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kwargs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseModifier"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier">[docs]</a><span class="k">class</span> <span class="nc">BaseModifier</span><span class="p">(</span><span class="n">BaseObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Parent class meant to be used for all modifiers.</span>
+<span class="sd">    Handles base implementations for properties and methods.</span>
+
+<span class="sd">    :param log_types: the loggers that can be used by the modifier instance</span>
+<span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_convert_to_framework_modifiers</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="n">pattern</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;!(?P&lt;mod_class&gt;(?!.*\.)[a-zA-Z_][a-zA-Z^._0-9]+)&quot;</span><span class="p">)</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">pattern</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;!</span><span class="si">{}</span><span class="s2">.\g&lt;mod_class&gt;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">framework</span><span class="p">),</span> <span class="n">yaml_str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">yaml_str</span>
+
+<div class="viewcode-block" id="BaseModifier.load_framework_list"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.load_framework_list">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_framework_list</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param yaml_str: a string representation of the yaml syntax to load modifiers</span>
+<span class="sd">        :param framework: the framework to load the modifiers for</span>
+<span class="sd">        :return: the loaded modifiers list</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">BaseModifier</span><span class="o">.</span><span class="n">_convert_to_framework_modifiers</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">,</span> <span class="n">framework</span><span class="p">)</span>
+        <span class="n">container</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">BaseModifier</span><span class="p">):</span>
+            <span class="n">modifiers</span> <span class="o">=</span> <span class="p">[</span><span class="n">container</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="n">modifiers</span> <span class="o">=</span> <span class="n">container</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Dict</span>
+            <span class="n">modifiers</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="s2">&quot;modifiers&quot;</span> <span class="ow">in</span> <span class="n">name</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+                    <span class="n">modifiers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">BaseModifier</span><span class="p">):</span>
+                    <span class="n">modifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
+                    <span class="nb">isinstance</span><span class="p">(</span><span class="n">element</span><span class="p">,</span> <span class="n">BaseModifier</span><span class="p">)</span> <span class="k">for</span> <span class="n">element</span> <span class="ow">in</span> <span class="n">item</span>
+                <span class="p">):</span>
+                    <span class="n">modifier_type</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span>
+                        <span class="p">[</span><span class="n">mod</span> <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">item</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mod</span><span class="p">,</span> <span class="n">BaseModifier</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span>
+                    <span class="p">)</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Invalid modifier location. Grouped modifiers in recipes must &quot;</span>
+                        <span class="s2">&quot;be listed in lists with &#39;modifiers&#39; in its name. A modifier &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;of type </span><span class="si">{</span><span class="n">modifier_type</span><span class="si">}</span><span class="s2"> was found in recipe list </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">modifiers</span></div>
+
+<div class="viewcode-block" id="BaseModifier.load_framework_obj"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.load_framework_obj">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">load_framework_obj</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param yaml_str:  a string representation of the yaml syntax to load a modifier</span>
+<span class="sd">        :param framework: the framework to load the modifier for</span>
+<span class="sd">        :return: the loaded modifier object</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">BaseModifier</span><span class="o">.</span><span class="n">_convert_to_framework_modifiers</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">,</span> <span class="n">framework</span><span class="p">)</span>
+        <span class="n">modifier</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">safe_load</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">modifier</span></div>
+
+<div class="viewcode-block" id="BaseModifier.yaml_key"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.yaml_key">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">yaml_key</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="n">framework</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        create a key for loading in yaml from the class and the framework</span>
+
+<span class="sd">        :param clazz: the class representation to create the key for</span>
+<span class="sd">        :param framework: the string representing the ML framework the modifier class</span>
+<span class="sd">            is for. Default is None.</span>
+<span class="sd">        :return: the formatted key; ex: !{framework}.{clazz.__name__}</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">framework</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;!</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;!</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">framework</span><span class="p">,</span> <span class="n">clazz</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="BaseModifier.comparator"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.comparator">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">comparator</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comparator implementation for Modifiers.</span>
+<span class="sd">        Compares first on end_epoch, next on start_epoch, and finally on identifier.</span>
+
+<span class="sd">        :param one: first modifier to compare</span>
+<span class="sd">        :param two: second modifier to compare</span>
+<span class="sd">        :return: int representing where one is in relation to two</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compare first on end epoch</span>
+        <span class="n">compare</span> <span class="o">=</span> <span class="n">BaseModifier</span><span class="o">.</span><span class="n">comparator_ends</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">compare</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># if ends equal, compare next on start</span>
+            <span class="n">compare</span> <span class="o">=</span> <span class="n">BaseModifier</span><span class="o">.</span><span class="n">comparator_starts</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">compare</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># if still equal, compare on identifier</span>
+            <span class="n">compare</span> <span class="o">=</span> <span class="n">BaseModifier</span><span class="o">.</span><span class="n">comparator_identifiers</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">compare</span></div>
+
+<div class="viewcode-block" id="BaseModifier.comparator_ends"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.comparator_ends">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">comparator_ends</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comparator implementation for Modifiers based on end_epoch.</span>
+<span class="sd">        Modifiers with ends greater than another will come out higher.</span>
+
+<span class="sd">        :param one: first modifier to compare</span>
+<span class="sd">        :param two: second modifier to compare</span>
+<span class="sd">        :return: int representing where one is in relation to two</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one_end</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">two_end</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">one_end</span> <span class="o">==</span> <span class="n">two_end</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">one_end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">two_end</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># if no end for one and two has one or two never ends, return one before two</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">two_end</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">one_end</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># if no end for two and one has one or one never ends, return one after two</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">one_end</span> <span class="o">&lt;</span> <span class="n">two_end</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">1</span></div>
+
+<div class="viewcode-block" id="BaseModifier.comparator_starts"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.comparator_starts">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">comparator_starts</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comparator implementation for Modifiers based on start_epoch.</span>
+<span class="sd">        Modifiers with starts greater than another will come out higher.</span>
+
+<span class="sd">        :param one: first modifier to compare</span>
+<span class="sd">        :param two: second modifier to compare</span>
+<span class="sd">        :return: int representing where one is in relation to two</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one_start</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="n">two_start</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">two</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">one_start</span> <span class="o">==</span> <span class="n">two_start</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">one_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># if no start for one and two has one, return one before two</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">two_start</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># if no start for two and one has one, return one after two</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">if</span> <span class="n">one_start</span> <span class="o">&gt;</span> <span class="n">two_start</span><span class="p">:</span>
+            <span class="c1"># if one starts after two, return after</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span></div>
+
+<div class="viewcode-block" id="BaseModifier.comparator_identifiers"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.comparator_identifiers">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">comparator_identifiers</span><span class="p">(</span><span class="n">one</span><span class="p">,</span> <span class="n">two</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Comparator implementation for Modifiers based on identifier.</span>
+<span class="sd">        Modifiers with ends greater than another will come out higher.</span>
+
+<span class="sd">        :param one: first modifier to compare</span>
+<span class="sd">        :param two: second modifier to compare</span>
+<span class="sd">        :return: int representing where one is in relation to two</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">one_id</span> <span class="o">=</span> <span class="n">one</span><span class="o">.</span><span class="n">identifier</span><span class="p">()</span>
+        <span class="n">two_id</span> <span class="o">=</span> <span class="n">two</span><span class="o">.</span><span class="n">identifier</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">one_id</span> <span class="o">&lt;</span> <span class="n">two_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="n">one_id</span> <span class="o">&gt;</span> <span class="n">two_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="mi">0</span></div>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">validate_str_iterable</span><span class="p">(</span>
+                <span class="n">log_types</span><span class="p">,</span> <span class="s2">&quot;log_types for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">log_types</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">formatted</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;    </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">only_serializable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">BaseModifier</span><span class="o">.</span><span class="n">yaml_key</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">),</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">formatted</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">only_serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">format_repr</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="BaseModifier.log_types"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.log_types">[docs]</a>    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">log_types</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the loggers that can be used by the modifier instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span></div>
+
+<div class="viewcode-block" id="BaseModifier.initialized"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.initialized">[docs]</a>    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">restrict_initialized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">initialized</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if the modifier has gone through the initialized life cycle,</span>
+<span class="sd">            False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span></div>
+
+    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">restrict_initialized</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if the modifier is currently enabled and making updates,</span>
+<span class="sd">            False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span>
+
+<div class="viewcode-block" id="BaseModifier.enabled"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.enabled">[docs]</a>    <span class="nd">@enabled</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: True to allow the modifier to make updates, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span> <span class="o">=</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="BaseModifier.identifier"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.identifier">[docs]</a>    <span class="k">def</span> <span class="nf">identifier</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">extra</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param extra: any extra identifier to append to the end of the string</span>
+<span class="sd">        :return: generate an identifier for the current modifier based on its</span>
+<span class="sd">            class name and params</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">props</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">props</span><span class="p">(</span><span class="n">only_serializable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">format_str</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="n">props_list</span> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">:</span><span class="si">{</span><span class="n">val</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">props</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="n">props_list</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>  <span class="c1"># convert to list and sort to make deterministic</span>
+        <span class="n">hash_str</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">props_list</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">())</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">-</span><span class="si">{</span><span class="n">hash_str</span><span class="si">}{</span><span class="sa">f</span><span class="s1">&#39;-</span><span class="si">{</span><span class="n">extra</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">if</span> <span class="n">extra</span> <span class="k">else</span> <span class="s1">&#39;&#39;</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+<div class="viewcode-block" id="BaseModifier.props"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseModifier.props">[docs]</a>    <span class="k">def</span> <span class="nf">props</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">only_serializable</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">format_str</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">format_repr</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Gather all the ModifierProps for the current instance into a dictionary</span>
+<span class="sd">        collection.</span>
+
+<span class="sd">        :param only_serializable: True if only props marked as serializable should</span>
+<span class="sd">            be collected, False otherwise</span>
+<span class="sd">        :param format_str: True to format the values properly for a str.</span>
+<span class="sd">            Ex: None values are formatted to null and otherwise str is called</span>
+<span class="sd">        :param format_repr: True to format the values properly for a repr.</span>
+<span class="sd">        :return: the collected properties with names mapping to values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">format_str</span> <span class="ow">and</span> <span class="n">format_repr</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;only format_str or format_repr can be True, both are currently True&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">props</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">attr</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="n">ModifierProp</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+                <span class="n">only_serializable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">func</span><span class="o">.</span><span class="n">serializable</span>
+            <span class="p">):</span>
+                <span class="k">continue</span>
+
+            <span class="n">val</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="n">no_serialize_val</span> <span class="o">=</span> <span class="n">func</span><span class="o">.</span><span class="n">no_serialize_val</span>
+
+            <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="n">no_serialize_val</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">format_str</span><span class="p">:</span>
+                <span class="n">props</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span> <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="s2">&quot;null&quot;</span>
+            <span class="k">elif</span> <span class="n">format_repr</span><span class="p">:</span>
+                <span class="n">props</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">props</span><span class="p">[</span><span class="n">attr</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+
+        <span class="k">return</span> <span class="n">props</span></div></div>
+
+
+<div class="viewcode-block" id="BaseScheduled"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseScheduled">[docs]</a><span class="k">class</span> <span class="nc">BaseScheduled</span><span class="p">(</span><span class="n">BaseObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class meant to be used for all scheduled modifiers.</span>
+<span class="sd">    :py:func `~Modifier` is also meant to be inherited alongside this class.</span>
+<span class="sd">    Handles base implementations for scheduled properties and methods to allow</span>
+<span class="sd">    a schedule to be enforced.</span>
+
+<span class="sd">    :param start_epoch: the epoch to start the scheduled modifier at</span>
+<span class="sd">    :param min_start: the minimum value start_epoch can be,</span>
+<span class="sd">        otherwise will raise a ValueError</span>
+<span class="sd">    :param end_epoch: the epoch to end the scheduled modifier at</span>
+<span class="sd">    :param min_end: the minimum value end_epoch can be,</span>
+<span class="sd">     otherwise will raise a ValueError</span>
+<span class="sd">    :param end_comparator: integer value representing how the end_epoch should be</span>
+<span class="sd">        compared to start_epoch.</span>
+<span class="sd">        if == None, then end_epoch can only be set to what its initial value was.</span>
+<span class="sd">        if == -1, then end_epoch can be less than, equal, or greater than start_epoch.</span>
+<span class="sd">        if == 0, then end_epoch can be equal to or greater than start_epoch.</span>
+<span class="sd">        if == 1, then end_epoch can only be greater than start_epoch.</span>
+<span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">min_start</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">min_end</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">end_comparator</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">=</span> <span class="n">start_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_start</span> <span class="o">=</span> <span class="n">start_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_start</span> <span class="o">=</span> <span class="n">min_start</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span> <span class="o">=</span> <span class="n">end_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_init_end</span> <span class="o">=</span> <span class="n">end_epoch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_end</span> <span class="o">=</span> <span class="n">min_end</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_comparator</span> <span class="o">=</span> <span class="n">end_comparator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_schedule</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">start_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The epoch to start the modifier at</span>
+<span class="sd">            (set to -1.0 so it starts immediately)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span>
+
+<div class="viewcode-block" id="BaseScheduled.start_epoch"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseScheduled.start_epoch">[docs]</a>    <span class="nd">@start_epoch</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">start_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: The epoch to start the modifier at</span>
+<span class="sd">            (set to -1.0 so it starts immediately)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_schedule</span><span class="p">()</span></div>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">end_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The epoch to end the modifier at</span>
+<span class="sd">            (set to -1.0 so it never ends)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span>
+
+<div class="viewcode-block" id="BaseScheduled.end_epoch"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseScheduled.end_epoch">[docs]</a>    <span class="nd">@end_epoch</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">end_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: The epoch to end the modifier at (set to -1.0 so it never ends)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_schedule</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseScheduled.validate_schedule"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseScheduled.validate_schedule">[docs]</a>    <span class="k">def</span> <span class="nf">validate_schedule</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate the schedule values of the params for the current instance are valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_start</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;start_epoch of </span><span class="si">{}</span><span class="s2"> must be greater than or equal to </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_start</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_end</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;end_epoch of </span><span class="si">{}</span><span class="s2"> must be greater than or equal to </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_comparator</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_end</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;end_epoch of </span><span class="si">{}</span><span class="s2"> must be equal the init value of </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_end</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_comparator</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;end_epoch of </span><span class="si">{}</span><span class="s2"> must be greater than&quot;</span>
+                    <span class="s2">&quot; or equal to start_epoch of </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_comparator</span> <span class="o">==</span> <span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;end_epoch of </span><span class="si">{}</span><span class="s2"> must be greater than start_epoch of </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_end_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BaseUpdate"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseUpdate">[docs]</a><span class="k">class</span> <span class="nc">BaseUpdate</span><span class="p">(</span><span class="n">BaseObject</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class meant to be used for all update modifiers.</span>
+<span class="sd">    :py:func `~Modifier` and :py:func `~ScheduledModifier` are also meant</span>
+<span class="sd">    to be inherited alongside this class.</span>
+<span class="sd">    Handles base implementations for scheduled properties and methods</span>
+<span class="sd">    to allow updates to be enforced.</span>
+
+<span class="sd">    :param update_frequency: The number of epochs or fraction of epochs to</span>
+<span class="sd">            update at between start and end</span>
+<span class="sd">    :param min_frequency: The minimum acceptable value for update_frequency,</span>
+<span class="sd">        default -1</span>
+<span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">min_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency</span> <span class="o">=</span> <span class="n">update_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_min_frequency</span> <span class="o">=</span> <span class="n">min_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_update</span><span class="p">()</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">update_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The number of epochs or fraction of epochs to update at between</span>
+<span class="sd">            start and end</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency</span>
+
+<div class="viewcode-block" id="BaseUpdate.update_frequency"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseUpdate.update_frequency">[docs]</a>    <span class="nd">@update_frequency</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">update_frequency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param value: The number of epochs or fraction of epochs to update at between</span>
+<span class="sd">            start and end</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">validate_update</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="BaseUpdate.validate_update"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.BaseUpdate.validate_update">[docs]</a>    <span class="k">def</span> <span class="nf">validate_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validate the update schedule values of the params for the current instance</span>
+<span class="sd">        are valid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_frequency</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;update_frequency of </span><span class="si">{}</span><span class="s2"> must be greater than or &quot;</span>
+                    <span class="s2">&quot;equal to </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_update_frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_min_frequency</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+                <span class="p">)</span>
+            <span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ModifierYAML"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.keras.optim.modifier.ModifierYAML">[docs]</a><span class="k">class</span> <span class="nc">ModifierYAML</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A decorator to handle making a modifier class YAML ready.</span>
+<span class="sd">    IE it can be loaded in through the yaml plugin easily.</span>
+
+<span class="sd">    :param framework: the string representing the ML framework the modifier should</span>
+<span class="sd">        be stored under</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">framework</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">framework</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;a framework is required&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_framework</span> <span class="o">=</span> <span class="n">framework</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">clazz</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param clazz: the class to create yaml constructors for</span>
+<span class="sd">        :return: the class after yaml constructors have been added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">yaml_key</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">BaseModifier</span><span class="o">.</span><span class="n">yaml_key</span><span class="p">(</span><span class="n">clazz</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_framework</span><span class="p">))</span>
+
+        <span class="k">def</span> <span class="nf">constructor</span><span class="p">(</span><span class="n">loader</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+            <span class="n">instance</span> <span class="o">=</span> <span class="n">clazz</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="n">clazz</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">instance</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">loader</span><span class="o">.</span><span class="n">construct_mapping</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="n">deep</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">instance</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="n">yaml</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span><span class="n">yaml_key</span><span class="p">,</span> <span class="n">constructor</span><span class="p">)</span>
+        <span class="n">yaml</span><span class="o">.</span><span class="n">add_constructor</span><span class="p">(</span>
+            <span class="n">yaml_key</span><span class="p">,</span>
+            <span class="n">constructor</span><span class="p">,</span>
+            <span class="n">yaml</span><span class="o">.</span><span class="n">SafeLoader</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">clazz</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.7.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="modifier.html">v0.7.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
