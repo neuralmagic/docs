@@ -79,11 +79,11 @@ To learn more about Neural Magic, `check our website <https://www.neuralmagic.co
     :maxdepth: 3
     :caption: Sparse Models
 
-    ResNet-50 <source/model-pages/cv-classification-resnet50>
-    MobileNetV1 <source/model-pages/cv-classification-mobilenet>
-    YOLOv5 <source/model-pages/cv-detection-yolov5>
-    YOLOv3 <source/model-pages/cv-detection-yolov3>
-    BERT <source/model-pages/nlp-bert>
+    ResNet-50 <https://sparsezoo.neuralmagic.com/getting-started/resnet_v1-50>
+    MobileNetV1 <https://sparsezoo.neuralmagic.com/getting-started/mobilenet_v1-1.0>
+    YOLOv5 <https://sparsezoo.neuralmagic.com/getting-started/yolov5>
+    YOLOv3 <https://sparsezoo.neuralmagic.com/getting-started/yolov3>
+    BERT <https://sparsezoo.neuralmagic.com/getting-started/bert>
 
 .. toctree::
     :maxdepth: 3

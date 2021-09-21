@@ -113,7 +113,7 @@ def _get_docs_folders(dest: str) -> List[str]:
 
 def _get_latest_folder(folders: List[str]) -> str:
     versioned_folders = [
-        (folder, version.parse(folder[1:]))
+        (folder, version.parse(folder.replace("v.", "v")[1:]))
         for folder in folders
         if re.match(r"^v\.?[0-9]+\.[0-9]+\.[0-9]+$", folder)
     ]
