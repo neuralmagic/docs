@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.utils.helpers &mdash; SparseML 0.5.1.20211007 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.utils.helpers &mdash; SparseML 0.5.1.20211008 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
@@ -107,7 +107,6 @@
 <span class="kn">import</span> <span class="nn">fnmatch</span>
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
@@ -115,8 +114,6 @@
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 
-<span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
-<span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">load_numpy_list</span>
 
 
@@ -145,7 +142,6 @@
     <span class="s2">&quot;NumpyArrayBatcher&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tensor_export&quot;</span><span class="p">,</span>
     <span class="s2">&quot;tensors_export&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;load_recipe_yaml_str&quot;</span><span class="p">,</span>
     <span class="s2">&quot;parse_optimization_str&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -852,74 +848,6 @@
     <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
         <span class="s2">&quot;unrecognized type for tensors given of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tensors</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
     <span class="p">)</span>
-
-
-<div class="viewcode-block" id="load_recipe_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.utils.html#sparseml.utils.helpers.load_recipe_yaml_str">[docs]</a><span class="k">def</span> <span class="nf">load_recipe_yaml_str</span><span class="p">(</span><span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Loads a YAML recipe file to a string or</span>
-<span class="sd">    extracts recipe from YAML front matter in a sparsezoo markdown recipe card.</span>
-<span class="sd">    Recipes can also be provided as SparseZoo model stubs or Recipe</span>
-<span class="sd">    objects.</span>
-
-<span class="sd">    YAML front matter: https://jekyllrb.com/docs/front-matter/</span>
-
-<span class="sd">    :param file_path: file path to recipe YAML file or markdown recipe card or</span>
-<span class="sd">        stub to a SparseZoo model whose recipe will be downloaded and loaded.</span>
-<span class="sd">        SparseZoo stubs should be preceded by &#39;zoo:&#39;, and can contain an optional</span>
-<span class="sd">        &#39;?recipe_type=&lt;type&gt;&#39; parameter or include a `/&lt;type&gt;` subpath. Can also</span>
-<span class="sd">        be a SparseZoo Recipe object. i.e. &#39;/path/to/local/recipe.yaml&#39;,</span>
-<span class="sd">        &#39;zoo:model/stub/path&#39;, &#39;zoo:model/stub/path?recipe_type=transfer_learn&#39;,</span>
-<span class="sd">        &#39;zoo:model/stub/path/transfer_learn&#39;</span>
-<span class="sd">    :return: the recipe YAML configuration loaded as a string</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">):</span>
-        <span class="c1"># download and unwrap Recipe object</span>
-        <span class="n">file_path</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;file_path must be a str, given </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-
-    <span class="k">if</span> <span class="n">file_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;zoo:&quot;</span><span class="p">):</span>
-        <span class="c1"># download from zoo stub</span>
-        <span class="n">recipe</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">download_recipe_from_stub</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-        <span class="n">file_path</span> <span class="o">=</span> <span class="n">recipe</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
-
-    <span class="c1"># load the yaml string</span>
-    <span class="k">if</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">file_path</span> <span class="ow">or</span> <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">&quot;</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">:</span>
-        <span class="c1"># treat as raw yaml passed in</span>
-        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">file_path</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="s2">&quot;unknown&quot;</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="c1"># load yaml from file_path</span>
-        <span class="n">extension</span> <span class="o">=</span> <span class="n">file_path</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
-        <span class="k">if</span> <span class="n">extension</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;md&quot;</span><span class="p">,</span> <span class="s2">&quot;yaml&quot;</span><span class="p">]:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Unsupported file extension for recipe. Excepted &#39;.md&#39; or &#39;.yaml&#39;. &quot;</span>
-                <span class="s2">&quot;Received </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-            <span class="p">)</span>
-        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
-            <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">yaml_file</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-
-    <span class="k">if</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;md&quot;</span> <span class="ow">or</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;unknown&quot;</span><span class="p">:</span>
-        <span class="c1"># extract YAML front matter from markdown recipe card</span>
-        <span class="c1"># adapted from</span>
-        <span class="c1"># https://github.com/jonbeebe/frontmatter/blob/master/frontmatter</span>
-        <span class="n">yaml_delim</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(?:---|\+\+\+)&quot;</span>
-        <span class="n">yaml</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;(.*?)&quot;</span>
-        <span class="n">re_pattern</span> <span class="o">=</span> <span class="sa">r</span><span class="s2">&quot;^\s*&quot;</span> <span class="o">+</span> <span class="n">yaml_delim</span> <span class="o">+</span> <span class="n">yaml</span> <span class="o">+</span> <span class="n">yaml_delim</span>
-        <span class="n">regex</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">re_pattern</span><span class="p">,</span> <span class="n">re</span><span class="o">.</span><span class="n">S</span> <span class="o">|</span> <span class="n">re</span><span class="o">.</span><span class="n">M</span><span class="p">)</span>
-        <span class="n">result</span> <span class="o">=</span> <span class="n">regex</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">result</span><span class="p">:</span>
-            <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">result</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="n">extension</span> <span class="o">==</span> <span class="s2">&quot;md&quot;</span><span class="p">:</span>
-            <span class="c1"># fail if we know whe should have extracted front matter out</span>
-            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                <span class="s2">&quot;Could not extract YAML front matter from recipe card:&quot;</span>
-                <span class="s2">&quot; </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
-            <span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">yaml_str</span></div>
 
 
 <div class="viewcode-block" id="parse_optimization_str"><a class="viewcode-back" href="../../../api/sparseml.utils.html#sparseml.utils.helpers.parse_optimization_str">[docs]</a><span class="k">def</span> <span class="nf">parse_optimization_str</span><span class="p">(</span><span class="n">optim_full_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>

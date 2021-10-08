@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.onnx.optim.quantization.quantize — SparseML 0.7.0.20211007 documentation
+   sparseml.onnx.optim.quantization.quantize — SparseML 0.7.0.20211008 documentation
   </title>
   <link href="../../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -174,9 +174,6 @@
 
 <span class="c1"># neuralmagic: no copyright</span>
 <span class="c1"># flake8: noqa</span>
-
-<span class="kn">import</span> <span class="nn">os</span>
-<span class="kn">import</span> <span class="nn">struct</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
@@ -1252,6 +1249,10 @@
         <span class="n">bias_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">find_weight_data</span><span class="p">(</span><span class="n">bias_initializer</span><span class="p">)</span>
         <span class="n">quantized_bias_name</span> <span class="o">=</span> <span class="n">bias_name</span> <span class="o">+</span> <span class="s2">"_quantized"</span>
 
+        <span class="k">if</span> <span class="n">bias_name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantized_value_map</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"WARNING: </span><span class="si">{</span><span class="n">bias_name</span><span class="si">}</span><span class="s2"> already has a quantization value."</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">quantized_bias_name</span>
+
         <span class="c1"># input scale is not provided and this input is dynamically quantized so it is not pre-computed at this point</span>
         <span class="c1"># so resort to dynamic quantization for bias</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -1318,7 +1319,6 @@
             <span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_quantized_weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">quantized_bias_entry</span><span class="p">)</span>
 
-            <span class="k">assert</span> <span class="n">bias_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">quantized_value_map</span>
             <span class="n">quantized_value</span> <span class="o">=</span> <span class="n">QuantizedValue</span><span class="p">(</span>
                 <span class="n">bias_name</span><span class="p">,</span>
                 <span class="n">quantized_bias_name</span><span class="p">,</span>

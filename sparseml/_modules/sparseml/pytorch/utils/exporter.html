@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.utils.exporter — SparseML 0.7.0.20211007 documentation
+   sparseml.pytorch.utils.exporter — SparseML 0.7.0.20211008 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -186,7 +186,7 @@
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
@@ -208,7 +208,10 @@
     <span class="n">script_model</span><span class="p">,</span>
     <span class="n">trace_model</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.quantization</span> <span class="kn">import</span> <span class="n">quantize_torch_qat_export</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.quantization</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">quantize_torch_qat_export</span><span class="p">,</span>
+    <span class="n">skip_onnx_input_quantize</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">clean_path</span><span class="p">,</span> <span class="n">create_parent_dirs</span>
 
 
@@ -318,23 +321,6 @@
             <span class="n">sample_originals</span><span class="o">=</span><span class="n">sample_originals</span><span class="p">,</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="ModuleExporter.get_output_names"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.get_output_names">[docs]</a>    <span class="nd">@classmethod</span>
-    <span class="k">def</span> <span class="nf">get_output_names</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">out</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
-        <span class="sd">"""</span>
-<span class="sd">        Get name of output tensors</span>
-
-<span class="sd">        :param out: outputs of the model</span>
-<span class="sd">        :return: list of names</span>
-<span class="sd">        """</span>
-        <span class="n">output_names</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-            <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"output"</span><span class="p">]</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-            <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span>
-                <span class="s2">"output_</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">out</span><span class="p">))</span>
-            <span class="p">]</span>
-        <span class="k">return</span> <span class="n">output_names</span></div>
-
 <div class="viewcode-block" id="ModuleExporter.export_onnx"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_onnx">[docs]</a>    <span class="k">def</span> <span class="nf">export_onnx</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
@@ -369,95 +355,15 @@
 <span class="sd">            See more on the torch.onnx.export api spec in the PyTorch docs:</span>
 <span class="sd">            https://pytorch.org/docs/stable/onnx.html</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="n">export_kwargs</span><span class="p">:</span>
-            <span class="n">export_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Dict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="n">sample_batch</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span>
-        <span class="p">):</span>
-            <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
-                <span class="s2">"Sample inputs passed into the ONNX exporter should be in "</span>
-                <span class="s2">"the same order defined in the model forward function. "</span>
-                <span class="s2">"Consider using OrderedDict for this purpose."</span><span class="p">,</span>
-                <span class="ne">UserWarning</span><span class="p">,</span>
-            <span class="p">)</span>
-
-        <span class="n">sample_batch</span> <span class="o">=</span> <span class="n">tensors_to_device</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="s2">"cpu"</span><span class="p">)</span>
-        <span class="n">onnx_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
-        <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">onnx_path</span><span class="p">)</span>
-
-        <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="n">tensors_module_forward</span><span class="p">(</span>
-                <span class="n">sample_batch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span> <span class="n">check_feat_lab_inp</span><span class="o">=</span><span class="kc">False</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="s2">"input_names"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">:</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
-                <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"input"</span><span class="p">]</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
-                <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sample_batch</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-                <span class="n">sample_batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                    <span class="p">[</span><span class="n">sample_batch</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]]</span>
-                <span class="p">)</span>
-            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
-                <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
-                    <span class="s2">"input_</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">)</span>
-                    <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">))</span>
-                <span class="p">]</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
-                    <span class="n">sample_batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
-                        <span class="n">sample_batch</span>
-                    <span class="p">)</span>  <span class="c1"># torch.onnx.export requires tuple</span>
-
-        <span class="k">if</span> <span class="s2">"output_names"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">:</span>
-            <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"output_names"</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_output_names</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
-
-        <span class="c1"># disable active quantization observers because they cannot be exported</span>
-        <span class="n">disabled_observers</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
-            <span class="k">if</span> <span class="p">(</span>
-                <span class="nb">hasattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">"observer_enabled"</span><span class="p">)</span>
-                <span class="ow">and</span> <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
-            <span class="p">):</span>
-                <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
-                <span class="n">disabled_observers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">submodule</span><span class="p">)</span>
-
-        <span class="n">is_quant_module</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
-            <span class="nb">hasattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">"qconfig"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">submodule</span><span class="o">.</span><span class="n">qconfig</span>
-            <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="o">.</span><span class="n">modules</span><span class="p">()</span>
-        <span class="p">)</span>
-        <span class="n">batch_norms_wrapped</span> <span class="o">=</span> <span class="kc">False</span>
-        <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&gt;=</span> <span class="s2">"1.7"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_quant_module</span> <span class="ow">and</span> <span class="n">disable_bn_fusing</span><span class="p">:</span>
-            <span class="c1"># prevent batch norm fusing by adding a trivial operation before every</span>
-            <span class="c1"># batch norm layer</span>
-            <span class="n">export_module</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">)</span>
-            <span class="n">batch_norms_wrapped</span> <span class="o">=</span> <span class="n">_wrap_batch_norms</span><span class="p">(</span><span class="n">export_module</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">export_module</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module</span>
-
-        <span class="n">torch</span><span class="o">.</span><span class="n">onnx</span><span class="o">.</span><span class="n">export</span><span class="p">(</span>
-            <span class="n">export_module</span><span class="p">,</span>
-            <span class="n">sample_batch</span><span class="p">,</span>
-            <span class="n">onnx_path</span><span class="p">,</span>
-            <span class="n">strip_doc_string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">opset_version</span><span class="o">=</span><span class="n">opset</span><span class="p">,</span>
+        <span class="n">export_onnx</span><span class="p">(</span>
+            <span class="n">module</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_module</span><span class="p">,</span>
+            <span class="n">sample_batch</span><span class="o">=</span><span class="n">sample_batch</span><span class="p">,</span>
+            <span class="n">file_path</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_output_dir</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span>
+            <span class="n">opset</span><span class="o">=</span><span class="n">opset</span><span class="p">,</span>
+            <span class="n">disable_bn_fusing</span><span class="o">=</span><span class="n">disable_bn_fusing</span><span class="p">,</span>
+            <span class="n">convert_qat</span><span class="o">=</span><span class="n">convert_qat</span><span class="p">,</span>
             <span class="o">**</span><span class="n">export_kwargs</span><span class="p">,</span>
-        <span class="p">)</span>
-
-        <span class="c1"># re-enable disabled quantization observers</span>
-        <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">disabled_observers</span><span class="p">:</span>
-            <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-
-        <span class="c1"># clean up graph from any injected / wrapped operations</span>
-        <span class="k">if</span> <span class="n">batch_norms_wrapped</span><span class="p">:</span>
-            <span class="n">onnx_model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">onnx_path</span><span class="p">)</span>
-            <span class="n">_delete_trivial_onnx_adds</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">)</span>
-            <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> <span class="n">onnx_path</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">convert_qat</span> <span class="ow">and</span> <span class="n">is_quant_module</span><span class="p">:</span>
-            <span class="c1"># overwrite exported model with fully quantized version</span>
-            <span class="n">quantize_torch_qat_export</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">onnx_path</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="n">onnx_path</span><span class="p">)</span></div>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="ModuleExporter.export_torchscript"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.exporter.ModuleExporter.export_torchscript">[docs]</a>    <span class="k">def</span> <span class="nf">export_torchscript</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -589,6 +495,166 @@
 
                 <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">exported_input</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">exported_output</span><span class="p">)</span>
                 <span class="n">exp_counter</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">exported_input</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">export_onnx</span><span class="p">(</span>
+    <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">opset</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">DEFAULT_ONNX_OPSET</span><span class="p">,</span>
+    <span class="n">disable_bn_fusing</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">convert_qat</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">dynamic_axes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">skip_input_quantize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="o">**</span><span class="n">export_kwargs</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Export an onnx file for the current module and for a sample batch.</span>
+<span class="sd">    Sample batch used to feed through the model to freeze the graph for a</span>
+<span class="sd">    particular execution.</span>
+
+<span class="sd">    :param module: torch Module object to export</span>
+<span class="sd">    :param sample_batch: the batch to export an onnx for, handles creating the</span>
+<span class="sd">        static graph for onnx as well as setting dimensions</span>
+<span class="sd">    :param file_path: path to the onnx file to save</span>
+<span class="sd">    :param opset: onnx opset to use for exported model. Default is 11, if torch</span>
+<span class="sd">        version is 1.2 or below, default is 9</span>
+<span class="sd">    :param disable_bn_fusing: torch &gt;= 1.7.0 only. Set True to disable batch norm</span>
+<span class="sd">        fusing during torch export. Default and suggested setting is True. Batch</span>
+<span class="sd">        norm fusing will change the exported parameter names as well as affect</span>
+<span class="sd">        sensitivity analyses of the exported graph.  Additionally, the DeepSparse</span>
+<span class="sd">        inference engine, and other engines, perform batch norm fusing at model</span>
+<span class="sd">        compilation.</span>
+<span class="sd">    :param convert_qat: if True and quantization aware training is detected in</span>
+<span class="sd">        the module being exported, the resulting QAT ONNX model will be converted</span>
+<span class="sd">        to a fully quantized ONNX model using `quantize_torch_qat_export`. Default</span>
+<span class="sd">        is False.</span>
+<span class="sd">    :param dynamic_axes: dictionary of input or output names to list of dimensions</span>
+<span class="sd">        of those tensors that should be exported as dynamic. May input 'batch'</span>
+<span class="sd">        to set the first dimension of all inputs and outputs to dynamic. Default</span>
+<span class="sd">        is an empty dict</span>
+<span class="sd">    :param skip_input_quantize: if True, the export flow will attempt to delete</span>
+<span class="sd">        the first Quantize Linear Nodes(s) immediately after model input and set</span>
+<span class="sd">        the model input type to UINT8. Default is False</span>
+<span class="sd">    :param export_kwargs: kwargs to be passed as is to the torch.onnx.export api</span>
+<span class="sd">        call. Useful to pass in dyanmic_axes, input_names, output_names, etc.</span>
+<span class="sd">        See more on the torch.onnx.export api spec in the PyTorch docs:</span>
+<span class="sd">        https://pytorch.org/docs/stable/onnx.html</span>
+<span class="sd">    """</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">export_kwargs</span><span class="p">:</span>
+        <span class="n">export_kwargs</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Dict</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+        <span class="n">sample_batch</span><span class="p">,</span> <span class="n">collections</span><span class="o">.</span><span class="n">OrderedDict</span>
+    <span class="p">):</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">"Sample inputs passed into the ONNX exporter should be in "</span>
+            <span class="s2">"the same order defined in the model forward function. "</span>
+            <span class="s2">"Consider using OrderedDict for this purpose."</span><span class="p">,</span>
+            <span class="ne">UserWarning</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">sample_batch</span> <span class="o">=</span> <span class="n">tensors_to_device</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="s2">"cpu"</span><span class="p">)</span>
+    <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+
+    <span class="n">module</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">module</span><span class="p">)</span><span class="o">.</span><span class="n">cpu</span><span class="p">()</span><span class="o">.</span><span class="n">eval</span><span class="p">()</span>
+
+    <span class="k">with</span> <span class="n">torch</span><span class="o">.</span><span class="n">no_grad</span><span class="p">():</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">tensors_module_forward</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">check_feat_lab_inp</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">"input_names"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+            <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"input"</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
+            <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sample_batch</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">sample_batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">sample_batch</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]]</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+            <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="s2">"input_</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">))</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+                <span class="n">sample_batch</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">sample_batch</span><span class="p">)</span>  <span class="c1"># torch.onnx.export requires tuple</span>
+
+    <span class="k">if</span> <span class="s2">"output_names"</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">export_kwargs</span><span class="p">:</span>
+        <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"output_names"</span><span class="p">]</span> <span class="o">=</span> <span class="n">_get_output_names</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">dynamic_axes</span> <span class="o">==</span> <span class="s2">"batch"</span><span class="p">:</span>
+        <span class="n">dynamic_axes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">tensor_name</span><span class="p">:</span> <span class="p">{</span><span class="mi">0</span><span class="p">:</span> <span class="s2">"batch"</span><span class="p">}</span>
+            <span class="k">for</span> <span class="n">tensor_name</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"input_names"</span><span class="p">]</span> <span class="o">+</span> <span class="n">export_kwargs</span><span class="p">[</span><span class="s2">"output_names"</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">}</span>
+
+    <span class="c1"># disable active quantization observers because they cannot be exported</span>
+    <span class="n">disabled_observers</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">():</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">hasattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">"observer_enabled"</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">disabled_observers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">submodule</span><span class="p">)</span>
+
+    <span class="n">is_quant_module</span> <span class="o">=</span> <span class="nb">any</span><span class="p">(</span>
+        <span class="nb">hasattr</span><span class="p">(</span><span class="n">submodule</span><span class="p">,</span> <span class="s2">"qconfig"</span><span class="p">)</span> <span class="ow">and</span> <span class="n">submodule</span><span class="o">.</span><span class="n">qconfig</span>
+        <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">modules</span><span class="p">()</span>
+    <span class="p">)</span>
+    <span class="n">batch_norms_wrapped</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&gt;=</span> <span class="s2">"1.7"</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_quant_module</span> <span class="ow">and</span> <span class="n">disable_bn_fusing</span><span class="p">:</span>
+        <span class="c1"># prevent batch norm fusing by adding a trivial operation before every</span>
+        <span class="c1"># batch norm layer</span>
+        <span class="n">batch_norms_wrapped</span> <span class="o">=</span> <span class="n">_wrap_batch_norms</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+
+    <span class="n">torch</span><span class="o">.</span><span class="n">onnx</span><span class="o">.</span><span class="n">export</span><span class="p">(</span>
+        <span class="n">module</span><span class="p">,</span>
+        <span class="n">sample_batch</span><span class="p">,</span>
+        <span class="n">file_path</span><span class="p">,</span>
+        <span class="n">strip_doc_string</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">opset_version</span><span class="o">=</span><span class="n">opset</span><span class="p">,</span>
+        <span class="n">dynamic_axes</span><span class="o">=</span><span class="n">dynamic_axes</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">export_kwargs</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="c1"># re-enable disabled quantization observers</span>
+    <span class="k">for</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">disabled_observers</span><span class="p">:</span>
+        <span class="n">submodule</span><span class="o">.</span><span class="n">observer_enabled</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+    <span class="c1"># clean up graph from any injected / wrapped operations</span>
+    <span class="k">if</span> <span class="n">batch_norms_wrapped</span><span class="p">:</span>
+        <span class="n">onnx_model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="n">_delete_trivial_onnx_adds</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">)</span>
+        <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">onnx_model</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">convert_qat</span> <span class="ow">and</span> <span class="n">is_quant_module</span><span class="p">:</span>
+        <span class="c1"># overwrite exported model with fully quantized version</span>
+        <span class="n">quantize_torch_qat_export</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">file_path</span><span class="p">,</span> <span class="n">output_file_path</span><span class="o">=</span><span class="n">file_path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">skip_input_quantize</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">skip_onnx_input_quantize</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Unable to skip input QuantizeLinear op with exception </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_output_names</span><span class="p">(</span><span class="n">out</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Get name of output tensors</span>
+
+<span class="sd">    :param out: outputs of the model</span>
+<span class="sd">    :return: list of names</span>
+<span class="sd">    """</span>
+    <span class="n">output_names</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">):</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"output"</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">"output_</span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">iter</span><span class="p">(</span><span class="n">out</span><span class="p">))]</span>
+    <span class="k">return</span> <span class="n">output_names</span>
 
 
 <span class="k">class</span> <span class="nc">_AddNoOpWrapper</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>

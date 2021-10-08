@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.tensorflow_v1.optim.manager &mdash; SparseML 0.4.0.20211007 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.tensorflow_v1.optim.manager &mdash; SparseML 0.4.0.20211008 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -107,10 +107,9 @@
 <span class="kn">import</span> <span class="nn">itertools</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">BaseScheduled</span>
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">BaseScheduled</span><span class="p">,</span> <span class="n">load_recipe_yaml_str</span>
 <span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim.modifier</span> <span class="kn">import</span> <span class="n">NM_RECAL</span><span class="p">,</span> <span class="n">Modifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
 <span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">load_recipe_yaml_str</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 
 
@@ -164,6 +163,7 @@
     <span class="k">def</span> <span class="nf">from_yaml</span><span class="p">(</span>
         <span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">],</span>
         <span class="n">add_modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Modifier</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">recipe_variables</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience function used to create the manager of multiple modifiers from a</span>
@@ -177,9 +177,11 @@
 <span class="sd">            &#39;zoo:model/stub/path?recipe_type=transfer&#39;</span>
 <span class="sd">        :param add_modifiers: additional modifiers that should be added to the</span>
 <span class="sd">            returned manager alongside the ones loaded from the recipe file</span>
+<span class="sd">        :param recipe_variables: additional variable values to override the recipe</span>
+<span class="sd">            with (i.e. num_epochs, init_lr)</span>
 <span class="sd">        :return: ScheduledModifierManager() created from the recipe file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">load_recipe_yaml_str</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">load_recipe_yaml_str</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="o">**</span><span class="n">recipe_variables</span><span class="p">)</span>
         <span class="n">modifiers</span> <span class="o">=</span> <span class="n">Modifier</span><span class="o">.</span><span class="n">load_list</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">add_modifiers</span><span class="p">:</span>
             <span class="n">modifiers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">add_modifiers</span><span class="p">)</span>
