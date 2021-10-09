@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.tensorflow_v1.optim.modifier_lr &mdash; SparseML 0.8.0.20211008 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.tensorflow_v1.optim.modifier_lr &mdash; SparseML 0.8.0.20211009 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -104,7 +104,10 @@
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
-<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">LearningRate</span><span class="p">,</span> <span class="n">SetLearningRate</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">LearningRateModifier</span> <span class="k">as</span> <span class="n">BaseLearningRateModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SetLearningRateModifier</span> <span class="k">as</span> <span class="n">BaseSetLearningRateModifier</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">EXTRAS_KEY_LEARNING_RATE</span><span class="p">,</span>
     <span class="n">EXTRAS_KEY_SUMMARIES</span><span class="p">,</span>
@@ -217,7 +220,7 @@
 
 
 <div class="viewcode-block" id="SetLearningRateModifier"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.modifier_lr.SetLearningRateModifier">[docs]</a><span class="nd">@TensorFlowModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">SetLearningRateModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">,</span> <span class="n">SetLearningRate</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">SetLearningRateModifier</span><span class="p">(</span><span class="n">BaseSetLearningRateModifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modifier to set the learning rate to a specific value at a certain point</span>
 <span class="sd">    in the training process. Once that point is reached, will update the optimizer&#39;s</span>
@@ -243,7 +246,7 @@
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">SetLearningRateModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
@@ -288,7 +291,7 @@
 
 
 <div class="viewcode-block" id="LearningRateModifier"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.modifier_lr.LearningRateModifier">[docs]</a><span class="nd">@TensorFlowModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">LearningRateModifier</span><span class="p">(</span><span class="n">ScheduledUpdateModifier</span><span class="p">,</span> <span class="n">LearningRate</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">LearningRateModifier</span><span class="p">(</span><span class="n">BaseLearningRateModifier</span><span class="p">,</span> <span class="n">ScheduledUpdateModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modifier to set the learning rate to follow specific schedulers</span>
 <span class="sd">    within a period of epochs.</span>
@@ -330,7 +333,7 @@
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">LearningRateModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">lr_class</span><span class="o">=</span><span class="n">lr_class</span><span class="p">,</span>
             <span class="n">lr_kwargs</span><span class="o">=</span><span class="n">lr_kwargs</span><span class="p">,</span>
             <span class="n">init_lr</span><span class="o">=</span><span class="n">init_lr</span><span class="p">,</span>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.1.20211008 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.1.20211009 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -135,10 +135,13 @@
     <span class="n">tensor_sparsity</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.logger</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstantPruningModifier</span> <span class="k">as</span> <span class="n">BaseConstantPruningModifier</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">GMPruningModifier</span> <span class="k">as</span> <span class="n">BaseGMPruningModifier</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">,</span>
     <span class="n">ALL_TOKEN</span><span class="p">,</span>
-    <span class="n">INTERPOLATION_FUNCS</span><span class="p">,</span>
     <span class="n">convert_to_bool</span><span class="p">,</span>
     <span class="n">interpolate</span><span class="p">,</span>
     <span class="n">validate_str_iterable</span><span class="p">,</span>
@@ -218,8 +221,10 @@
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">min_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">min_start</span><span class="o">=</span><span class="n">min_start</span><span class="p">,</span>
@@ -228,6 +233,7 @@
             <span class="n">end_comparator</span><span class="o">=</span><span class="n">end_comparator</span><span class="p">,</span>
             <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
             <span class="n">min_frequency</span><span class="o">=</span><span class="n">min_frequency</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
             <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
@@ -269,29 +275,6 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks</span><span class="p">(</span>
             <span class="p">[</span><span class="n">state_dict</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">names</span><span class="p">]</span>
-        <span class="p">)</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :params value: A list of full parameter names or regex patterns of names to</span>
-<span class="sd">            apply pruning to.</span>
-<span class="sd">            Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">            and Linear layers&#39; weights</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -469,7 +452,7 @@
 
 
 <div class="viewcode-block" id="ConstantPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">,</span> <span class="n">BaseConstantPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Holds the sparsity level and shape for a given parameter(s) constant while training.</span>
 <span class="sd">    Useful for transfer learning use cases.</span>
@@ -524,7 +507,7 @@
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ConstantPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
@@ -546,7 +529,7 @@
 
 
 <div class="viewcode-block" id="GMPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">GMPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">GMPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">,</span> <span class="n">BaseGMPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
 <span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
@@ -624,13 +607,18 @@
         <span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_params_and_final_sparsity</span><span class="p">(</span>
             <span class="n">params</span><span class="p">,</span> <span class="n">final_sparsity</span>
         <span class="p">)</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
+            <span class="n">final_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
-            <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
+            <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
             <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
+            <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
+            <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span> <span class="o">=</span> <span class="n">init_sparsity</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">leave_enabled</span><span class="p">)</span>
@@ -680,21 +668,6 @@
         <span class="p">)</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">init_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the initial sparsity for the param to start with at start_epoch</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span>
-
-    <span class="nd">@init_sparsity</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">init_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: the initial sparsity for the param to start with at start_epoch</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">final_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the final sparsity for the param to end with at end_epoch</span>
@@ -716,41 +689,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">leave_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True to continue masking the weights after end_epoch,</span>
-<span class="sd">            False to stop masking. Note, if set as False, sparsity will not be enforced</span>
-<span class="sd">            and the model will likely deviate from the sparse solution</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span>
-
-    <span class="nd">@leave_enabled</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">leave_enabled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: True to continue masking the weights after end_epoch,</span>
-<span class="sd">            False to stop masking. Note, if set as False, sparsity will not be enforced</span>
-<span class="sd">            and the model will likely deviate from the sparse solution</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">inter_func</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the type of interpolation function to use:</span>
-<span class="sd">            [linear, cubic, inverse_cubic]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span>
-
-    <span class="nd">@inter_func</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">inter_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: the type of interpolation function to use:</span>
-<span class="sd">            [linear, cubic, inverse_cubic]</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">phased</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: True to enable a phased approach where pruning will</span>
@@ -769,9 +707,9 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]:</span>
+    <span class="k">def</span> <span class="nf">mask_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the SparsityMaskCreator object used</span>
+<span class="sd">        :return: the mask type used</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span>
 
@@ -847,56 +785,6 @@
             <span class="c1"># be sure to apply mask again after optimizer update because weights may</span>
             <span class="c1"># have changed (optimizer with momentum, not masking gradient)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span></div>
-
-<div class="viewcode-block" id="GMPruningModifier.validate"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Validate the values of the params for the current instance are valid</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s2">&quot;init_sparsity must be of float type for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span> <span class="o">&lt;</span> <span class="mf">0.0</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;init_sparsity value must be in the range [0.0, 1.0],&quot;</span>
-                    <span class="s2">&quot; given </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_init_sparsity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity_orig</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity_orig</span><span class="p">,</span> <span class="n">Dict</span>
-        <span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
-                <span class="s2">&quot;final_sparsity must be of float or Dict type for </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
-                <span class="p">)</span>
-            <span class="p">)</span>
-
-        <span class="n">final_sparsities</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span>
-            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span>
-            <span class="k">else</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">]</span>
-        <span class="p">)</span>
-        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="mf">0.0</span> <span class="o">&lt;</span> <span class="n">sparsity</span> <span class="o">&lt;</span> <span class="mf">1.0</span> <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">final_sparsities</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;final_sparsity value(s) must be in the range (0.0, 1.0),&quot;</span>
-                    <span class="s2">&quot; given </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="p">)</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">INTERPOLATION_FUNCS</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="p">(</span>
-                    <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> is not a supported inter_func in layers_settings,&quot;</span>
-                    <span class="s2">&quot; available are </span><span class="si">{}</span><span class="s2"> for </span><span class="si">{}</span><span class="s2">&quot;</span>
-                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_inter_func</span><span class="p">,</span> <span class="n">INTERPOLATION_FUNCS</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-            <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>

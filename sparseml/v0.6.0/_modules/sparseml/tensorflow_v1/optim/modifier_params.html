@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.tensorflow_v1.optim.modifier_params &mdash; SparseML 0.6.0.20211008 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.tensorflow_v1.optim.modifier_params &mdash; SparseML 0.6.0.20211009 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -105,21 +105,23 @@
 
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TrainableParamsModifier</span> <span class="k">as</span> <span class="n">BaseTrainableParamsModifier</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">EXTRAS_KEY_VAR_LIST</span><span class="p">,</span>
-    <span class="n">ModifierProp</span><span class="p">,</span>
     <span class="n">ScheduledModifier</span><span class="p">,</span>
     <span class="n">TensorFlowModifierYAML</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">any_str_or_regex_matches_tensor_name</span><span class="p">,</span> <span class="n">tf_compat</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">convert_to_bool</span><span class="p">,</span> <span class="n">flatten_iterable</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">flatten_iterable</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;TrainableParamsModifier&quot;</span><span class="p">]</span>
 
 
 <div class="viewcode-block" id="TrainableParamsModifier"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.modifier_params.TrainableParamsModifier">[docs]</a><span class="nd">@TensorFlowModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">TrainableParamsModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">TrainableParamsModifier</span><span class="p">(</span><span class="n">BaseTrainableParamsModifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modifier to control the params for a given list of parameters.</span>
 <span class="sd">    Applies the trainability over all epochs.</span>
@@ -150,15 +152,15 @@
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">TrainableParamsModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">start_epoch</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">end_epoch</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">(</span><span class="n">params</span><span class="p">),</span>
+            <span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">,</span>
+            <span class="n">params_strict</span><span class="o">=</span><span class="n">params_strict</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
             <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">trainable</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">params_strict</span><span class="p">)</span>
+
         <span class="bp">self</span><span class="o">.</span><span class="n">_vars_to_trainable_orig</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="k">def</span> <span class="nf">_validate_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
@@ -173,62 +175,6 @@
                 <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for layers&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="p">)</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. Can also use the token __ALL__ to specify all</span>
-<span class="sd">            params</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters. Can also use the token __ALL__ to specify all</span>
-<span class="sd">            params</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_params</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if the param(s) should be made trainable,</span>
-<span class="sd">            False to make them non-trainable</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span>
-
-    <span class="nd">@trainable</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: True if the param(s) should be made trainable,</span>
-<span class="sd">            False to make them non-trainable</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">value</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if the given param(s) must be found in each layer and</span>
-<span class="sd">            will raise an err if not found,</span>
-<span class="sd">            False if missing params are ok and will not raise an err</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span>
-
-    <span class="nd">@params_strict</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: True if the given param(s) must be found in each layer and</span>
-<span class="sd">            will raise an err if not found,</span>
-<span class="sd">            False if missing params are ok and will not raise an err</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="TrainableParamsModifier.create_ops"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.modifier_params.TrainableParamsModifier.create_ops">[docs]</a>    <span class="k">def</span> <span class="nf">create_ops</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>

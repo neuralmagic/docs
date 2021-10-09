@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_params &mdash; SparseML 0.3.0.20211008 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_params &mdash; SparseML 0.3.0.20211009 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -113,10 +113,12 @@
     <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">get_named_layers_and_params_by_regex</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">TrainableParamsModifier</span> <span class="k">as</span> <span class="n">BaseTrainableParamsModifier</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="n">INTERPOLATION_FUNCS</span><span class="p">,</span>
-    <span class="n">convert_to_bool</span><span class="p">,</span>
     <span class="n">interpolate</span><span class="p">,</span>
     <span class="n">validate_str_iterable</span><span class="p">,</span>
 <span class="p">)</span>
@@ -126,7 +128,7 @@
 
 
 <div class="viewcode-block" id="TrainableParamsModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_params.TrainableParamsModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">TrainableParamsModifier</span><span class="p">(</span><span class="n">ScheduledModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">TrainableParamsModifier</span><span class="p">(</span><span class="n">BaseTrainableParamsModifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Modifier to control the params for a given list of parameter regex patterns.</span>
 <span class="sd">    If end_epoch is supplied and greater than 0, then it will revert to the trainable</span>
@@ -164,72 +166,16 @@
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span> <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span> <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">TrainableParamsModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">trainable</span><span class="o">=</span><span class="n">trainable</span><span class="p">,</span>
+            <span class="n">params_strict</span><span class="o">=</span><span class="n">params_strict</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
+            <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_start_epoch</span> <span class="o">=</span> <span class="n">start_epoch</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">params</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">trainable</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">params_strict</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_module_params</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[Parameter]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_original</span> <span class="o">=</span> <span class="p">[]</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">            pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span>
-
-    <span class="nd">@params</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :params value: A list of full parameter names or regex patterns of names</span>
-<span class="sd">            to apply pruning to.</span>
-<span class="sd">            Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">            will match to all parameters.</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="n">validate_str_iterable</span><span class="p">(</span>
-            <span class="n">value</span><span class="p">,</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> for params&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">)</span>
-        <span class="p">)</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if the param(s) should be made trainable,</span>
-<span class="sd">            False to make them non-trainable</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span>
-
-    <span class="nd">@trainable</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">trainable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: True if the param(s) should be made trainable,</span>
-<span class="sd">            False to make them non-trainable</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_trainable</span> <span class="o">=</span> <span class="n">value</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">()</span>
-    <span class="k">def</span> <span class="nf">params_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if every regex pattern in params must match at least</span>
-<span class="sd">            one parameter name in the module</span>
-<span class="sd">            False if missing params are ok and will not raise an err</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span>
-
-    <span class="nd">@params_strict</span><span class="o">.</span><span class="n">setter</span>
-    <span class="k">def</span> <span class="nf">params_strict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">bool</span><span class="p">):</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :param value: True if every regex pattern in params must match at least</span>
-<span class="sd">            one parameter name in the module</span>
-<span class="sd">            False if missing params are ok and will not raise an err</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_params_strict</span> <span class="o">=</span> <span class="n">value</span>
 
 <div class="viewcode-block" id="TrainableParamsModifier.initialize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_params.TrainableParamsModifier.initialize">[docs]</a>    <span class="k">def</span> <span class="nf">initialize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
