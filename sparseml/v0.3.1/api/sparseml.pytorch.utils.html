@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils package &mdash; SparseML 0.3.1.20211018 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils package &mdash; SparseML 0.3.1.20211019 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../_static/favicon.ico"/>
@@ -505,6 +505,47 @@ using the sample_batch</p></li>
 </dl>
 </dd></dl>
 
+</dd></dl>
+
+<dl class="py function">
+<dt id="sparseml.pytorch.utils.exporter.export_onnx">
+<code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.exporter.</span></code><code class="sig-name descname"><span class="pre">export_onnx</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sample_batch</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">file_path</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opset</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">11</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">disable_bn_fusing</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">convert_qat</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic_axes</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">skip_input_quantize</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">bool</span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">export_kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/exporter.html#export_onnx"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.exporter.export_onnx" title="Permalink to this definition"></a></dt>
+<dd><p>Export an onnx file for the current module and for a sample batch.
+Sample batch used to feed through the model to freeze the graph for a
+particular execution.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – torch Module object to export</p></li>
+<li><p><strong>sample_batch</strong> – the batch to export an onnx for, handles creating the
+static graph for onnx as well as setting dimensions</p></li>
+<li><p><strong>file_path</strong> – path to the onnx file to save</p></li>
+<li><p><strong>opset</strong> – onnx opset to use for exported model. Default is 11, if torch
+version is 1.2 or below, default is 9</p></li>
+<li><p><strong>disable_bn_fusing</strong> – torch &gt;= 1.7.0 only. Set True to disable batch norm
+fusing during torch export. Default and suggested setting is True. Batch
+norm fusing will change the exported parameter names as well as affect
+sensitivity analyses of the exported graph.  Additionally, the DeepSparse
+inference engine, and other engines, perform batch norm fusing at model
+compilation.</p></li>
+<li><p><strong>convert_qat</strong> – if True and quantization aware training is detected in
+the module being exported, the resulting QAT ONNX model will be converted
+to a fully quantized ONNX model using <cite>quantize_torch_qat_export</cite>. Default
+is False.</p></li>
+<li><p><strong>dynamic_axes</strong> – dictionary of input or output names to list of dimensions
+of those tensors that should be exported as dynamic. May input ‘batch’
+to set the first dimension of all inputs and outputs to dynamic. Default
+is an empty dict</p></li>
+<li><p><strong>skip_input_quantize</strong> – if True, the export flow will attempt to delete
+the first Quantize Linear Nodes(s) immediately after model input and set
+the model input type to UINT8. Default is False</p></li>
+<li><p><strong>export_kwargs</strong> – kwargs to be passed as is to the torch.onnx.export api
+call. Useful to pass in dyanmic_axes, input_names, output_names, etc.
+See more on the torch.onnx.export api spec in the PyTorch docs:
+<a class="reference external" href="https://pytorch.org/docs/stable/onnx.html">https://pytorch.org/docs/stable/onnx.html</a></p></li>
+</ul>
+</dd>
+</dl>
 </dd></dl>
 
 </div>
