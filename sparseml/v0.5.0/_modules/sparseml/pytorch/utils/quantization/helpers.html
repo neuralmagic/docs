@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.5.0.20211022 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils.quantization.helpers &mdash; SparseML 0.5.0.20211023 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
@@ -456,7 +456,8 @@
 <span class="sd">    Performs fusion of Conv2d, BatchNorm2d, and ReLU layers found in the</span>
 <span class="sd">    given module. To be fused, these layers must appear sequentially in</span>
 <span class="sd">    module.named_modules() and be in the same submodule.</span>
-<span class="sd">    Fuses either Conv2d -&gt; BatchNorm2d or Conv2d -&gt; BatchNorm2d -&gt; ReLU blocks</span>
+<span class="sd">    Fuses either Conv2d -&gt; BatchNorm2d, Conv2d -&gt; ReLU, or</span>
+<span class="sd">    Conv2d -&gt; BatchNorm2d -&gt; ReLU blocks</span>
 
 <span class="sd">    If this function does not fuse the model in the desired way, implement an</span>
 <span class="sd">    in place fusing function for the model.</span>
@@ -488,8 +489,9 @@
             <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">BatchNorm2d</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">submodule_name</span> <span class="o">==</span> <span class="n">current_block_submodule_name</span>
         <span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
-            <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>  <span class="c1"># [Conv2d, BatchNorm2d]</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># [Conv2d] or [Conv2d, BatchNorm2d]</span>
             <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">ReLU</span><span class="p">)</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_block</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">ReLU</span><span class="p">)</span>
             <span class="ow">and</span> <span class="n">submodule_name</span> <span class="o">==</span> <span class="n">current_block_submodule_name</span>
         <span class="p">):</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">ReLU_nm</span><span class="p">):</span>
@@ -519,6 +521,8 @@
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">Conv2d</span><span class="p">):</span>
                 <span class="n">current_block</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
                 <span class="n">current_block_submodule_name</span> <span class="o">=</span> <span class="n">submodule_name</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">conv_blocks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_block</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">conv_blocks</span><span class="p">:</span>
         <span class="n">torch_quantization</span><span class="o">.</span><span class="n">fuse_modules</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">conv_blocks</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">module</span></div>

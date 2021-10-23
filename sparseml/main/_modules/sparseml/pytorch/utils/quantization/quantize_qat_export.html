@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.8.0.20211022 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.8.0.20211023 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
@@ -107,7 +107,7 @@
 <span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">defaultdict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span>
 <span class="kn">import</span> <span class="nn">onnx</span>
@@ -119,7 +119,6 @@
     <span class="n">get_init_by_name</span><span class="p">,</span>
     <span class="n">get_node_attributes</span><span class="p">,</span>
     <span class="n">get_node_output_nodes</span><span class="p">,</span>
-    <span class="n">get_nodes_by_output_id</span><span class="p">,</span>
     <span class="n">quantize_resnet_identity_add_inputs</span><span class="p">,</span>
     <span class="n">quantized_residual_add_optim</span><span class="p">,</span>
     <span class="n">remove_node_and_params_from_graph</span><span class="p">,</span>
@@ -154,10 +153,12 @@
 
 
 <div class="viewcode-block" id="get_quantization_params"><a class="viewcode-back" href="../../../../../api/sparseml.pytorch.utils.quantization.html#sparseml.pytorch.utils.quantization.quantize_qat_export.get_quantization_params">[docs]</a><span class="k">def</span> <span class="nf">get_quantization_params</span><span class="p">(</span>
-    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_target</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">,</span> <span class="n">ONNXGraph</span><span class="p">],</span>
+    <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
+    <span class="n">include_target</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QuantizationParams</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    :param model: ONNX model to read from</span>
+<span class="sd">    :param model: ONNX model to read from or ONNXGraph object</span>
 <span class="sd">    :param node: A QuantizeLinear or DequantizeLinear Node</span>
 <span class="sd">    :param include_target: Set True include quantization target. If False,</span>
 <span class="sd">        target value will be returned as None. Default is None</span>
@@ -170,18 +171,20 @@
         <span class="n">node</span><span class="o">.</span><span class="n">op_type</span>
     <span class="p">)</span>
 
-    <span class="n">scale</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">model</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ONNXGraph</span><span class="p">)</span> <span class="k">else</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">scale_const</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="n">scale_const</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_by_output_id</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">scale_const</span><span class="p">:</span>
-            <span class="n">scale</span> <span class="o">=</span> <span class="n">scale_const</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">scale_const</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span>
     <span class="k">assert</span> <span class="n">scale</span><span class="p">,</span> <span class="s2">&quot;Quantization scale </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
 
-    <span class="n">zero_point</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="n">zero_point</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
     <span class="k">if</span> <span class="n">zero_point</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">zero_point_const</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">zero_point_const</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_by_output_id</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">zero_point_const</span><span class="p">:</span>
-            <span class="n">zero_point</span> <span class="o">=</span> <span class="n">zero_point_const</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span>
+            <span class="n">zero_point</span> <span class="o">=</span> <span class="n">zero_point_const</span><span class="o">.</span><span class="n">attribute</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">t</span>
     <span class="k">assert</span> <span class="n">zero_point</span><span class="p">,</span> <span class="s2">&quot;Quantization zero point </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 
     <span class="n">scale</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">scale</span><span class="p">)</span>
@@ -189,20 +192,27 @@
 
     <span class="n">target</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="n">include_target</span><span class="p">:</span>
-        <span class="n">target</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">target</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">target</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">target</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">target</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">QuantizationParams</span><span class="p">(</span><span class="n">scale</span><span class="o">=</span><span class="n">scale</span><span class="p">,</span> <span class="n">zero_point</span><span class="o">=</span><span class="n">zero_point</span><span class="p">,</span> <span class="n">target</span><span class="o">=</span><span class="n">target</span><span class="p">)</span></div>
 
 
-<span class="k">def</span> <span class="nf">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">keep_params</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+<span class="k">def</span> <span class="nf">delete_quant_node</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
+    <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
+    <span class="n">keep_params</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">keep_weight</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Deletes a QuantizeLinear or DequantizeLinear and its parameters from the model</span>
 <span class="sd">    :param model: ONNX model to modify</span>
 <span class="sd">    :param node: the QuantizeLinear or DequantizeLinear node to delete</span>
 <span class="sd">    :param keep_params: set true to not delete scale and zero point parameters stored</span>
 <span class="sd">        in the graph</span>
+<span class="sd">    :param keep_weight: set true to not delete the weight param possibly stored as an</span>
+<span class="sd">        initializer to the first input of this node</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span> <span class="p">(</span>
         <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="n">_QUANTIZE_OP_NAMES</span>
@@ -212,6 +222,8 @@
     <span class="k">if</span> <span class="n">keep_params</span><span class="p">:</span>
         <span class="k">del</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>  <span class="c1"># delete reference to zero point</span>
         <span class="k">del</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># delete reference to scale</span>
+    <span class="k">if</span> <span class="n">keep_weight</span><span class="p">:</span>
+        <span class="k">del</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
     <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
 
 
@@ -395,7 +407,7 @@
     <span class="n">weight_dequantize_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
     <span class="n">weight_quantize_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
     <span class="n">output_quantize_node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span>
-<span class="p">):</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NodeProto</span><span class="p">:</span>
     <span class="n">weight_quantize_params</span> <span class="o">=</span> <span class="n">get_quantization_params</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span> <span class="n">weight_quantize_node</span><span class="p">,</span> <span class="n">include_target</span><span class="o">=</span><span class="kc">True</span>
     <span class="p">)</span>
@@ -469,12 +481,13 @@
     <span class="c1"># delete original conv and folded quantization ops</span>
     <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="p">)</span>
     <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_dequantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">keep_weight</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fold_input_quant</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_node_output_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quantize_node</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
         <span class="c1"># fold if this conv is the only node that reads from this quant op</span>
         <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fold_output_quant</span><span class="p">:</span>
         <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">qconv_node</span>
 
 
 <span class="k">def</span> <span class="nf">_convert_quantizable_gemm</span><span class="p">(</span>
@@ -954,8 +967,40 @@
         <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>
 
 
+<span class="k">def</span> <span class="nf">_reduce_qconv_shared_weights</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">orig_qconv_weight_name_to_node_ids</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]]</span>
+<span class="p">):</span>
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">weight_name</span><span class="p">,</span> <span class="n">node_ids</span> <span class="ow">in</span> <span class="n">orig_qconv_weight_name_to_node_ids</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_ids</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">qconv_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">graph</span><span class="o">.</span><span class="n">get_node_by_output_id</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span> <span class="k">for</span> <span class="nb">id</span> <span class="ow">in</span> <span class="n">node_ids</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;QLinearConv&quot;</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">qconv_nodes</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">qconv_nodes</span><span class="p">]</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">weight</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span> <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">]</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">weight</span> <span class="o">==</span> <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="k">for</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">weights</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">shared_weight</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">from_array</span><span class="p">(</span>
+            <span class="n">weights</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">weight_name</span><span class="si">}</span><span class="s2">_quantized&quot;</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">qconv_nodes</span><span class="p">:</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="n">shared_weight</span><span class="o">.</span><span class="n">name</span>
+        <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">shared_weight</span><span class="p">)</span>
+
+    <span class="n">graph</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">delete_unused_initializers</span><span class="p">()</span>
+
+
 <span class="k">def</span> <span class="nf">_convert_quantizable_ops</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
     <span class="n">quantizable_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="s2">&quot;Gemm&quot;</span><span class="p">]]</span>
+    <span class="n">orig_qconv_weight_name_to_node_ids</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="nb">list</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">quantizable_node</span> <span class="ow">in</span> <span class="n">quantizable_nodes</span><span class="p">:</span>
         <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
@@ -975,7 +1020,8 @@
             <span class="k">continue</span>
 
         <span class="k">if</span> <span class="n">quantizable_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Conv&quot;</span><span class="p">:</span>
-            <span class="n">_convert_quantizable_conv</span><span class="p">(</span>
+            <span class="n">weight_name</span> <span class="o">=</span> <span class="n">weight_quant</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">qconv_node</span> <span class="o">=</span> <span class="n">_convert_quantizable_conv</span><span class="p">(</span>
                 <span class="n">model</span><span class="p">,</span>
                 <span class="n">quantizable_node</span><span class="p">,</span>
                 <span class="n">input_quant</span><span class="p">,</span>
@@ -983,6 +1029,7 @@
                 <span class="n">weight_quant</span><span class="p">,</span>
                 <span class="n">output_quant</span><span class="p">,</span>
             <span class="p">)</span>
+            <span class="n">orig_qconv_weight_name_to_node_ids</span><span class="p">[</span><span class="n">weight_name</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qconv_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
         <span class="k">if</span> <span class="n">quantizable_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Gemm&quot;</span><span class="p">:</span>
             <span class="n">_convert_quantizable_gemm</span><span class="p">(</span>
@@ -993,6 +1040,8 @@
                 <span class="n">weight_quant</span><span class="p">,</span>
                 <span class="n">output_quant</span><span class="p">,</span>
             <span class="p">)</span>
+
+    <span class="n">_reduce_qconv_shared_weights</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">orig_qconv_weight_name_to_node_ids</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_quantize_qat_embedding</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>
@@ -1102,14 +1151,21 @@
         <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">:</span>
             <span class="n">quantize_ops_by_input</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
 
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
     <span class="k">for</span> <span class="n">quantize_op_group</span> <span class="ow">in</span> <span class="n">quantize_ops_by_input</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">quantize_op_group</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
             <span class="k">continue</span>
         <span class="n">keep_node</span> <span class="o">=</span> <span class="n">quantize_op_group</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">keep_node_params</span> <span class="o">=</span> <span class="n">get_quantization_params</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">keep_node</span><span class="p">)</span>
         <span class="n">remove_nodes</span> <span class="o">=</span> <span class="n">quantize_op_group</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
         <span class="k">for</span> <span class="n">remove_node</span> <span class="ow">in</span> <span class="n">remove_nodes</span><span class="p">:</span>
-            <span class="n">_replace_input_id_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">keep_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-            <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="p">)</span>
+            <span class="n">remove_node_params</span> <span class="o">=</span> <span class="n">get_quantization_params</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">remove_node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">keep_node_params</span> <span class="o">==</span> <span class="n">remove_node_params</span><span class="p">:</span>
+                <span class="n">_replace_input_id_model</span><span class="p">(</span>
+                    <span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">keep_node</span><span class="o">.</span><span class="n">output</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">remove_node</span><span class="p">)</span>
 
 
 <span class="k">def</span> <span class="nf">_cleanup_unused_quants</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">):</span>

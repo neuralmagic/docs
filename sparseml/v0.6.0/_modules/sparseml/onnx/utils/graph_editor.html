@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.6.0.20211022 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.6.0.20211023 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -169,6 +169,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
 
+<div class="viewcode-block" id="ONNXGraph.get_node_by_output_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_by_output_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_by_output_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param id: name of output id of node</span>
+<span class="sd">        :return: the associated node if it is present in the graph, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_id_to_node</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="nb">id</span><span class="p">)</span></div>
+
 <div class="viewcode-block" id="ONNXGraph.get_node_parents"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_parents">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_parents</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
@@ -293,13 +300,15 @@
 <div class="viewcode-block" id="ONNXGraph.delete_unused_initializers"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.delete_unused_initializers">[docs]</a>    <span class="k">def</span> <span class="nf">delete_unused_initializers</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        deletes tensors in the initializer list that are not listed as inputs to any</span>
-<span class="sd">        node in the current graph state</span>
+<span class="sd">        node in the current graph state or directly passed as model outputs</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">output_names</span> <span class="o">=</span> <span class="p">{</span><span class="n">out</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="p">}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">delete_initializers</span><span class="p">(</span>
             <span class="p">[</span>
                 <span class="n">init</span>
                 <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span>
                 <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_id_to_nodes</span><span class="p">[</span><span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="p">(</span><span class="n">init</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">output_names</span><span class="p">)</span>
             <span class="p">]</span>
         <span class="p">)</span>  <span class="c1"># delete inits that have no edge</span></div>
 
