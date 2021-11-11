@@ -55,18 +55,18 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">C++ API Overview</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#demo-obtaining-building-and-running">Demo: Obtaining, Building, and Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#c-api">C++ API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#compiler">Compiler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#config">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dimensions">Dimensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tensor">Tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#engine">Engine</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#utility-functions">Utility Functions</a></li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="#api">API</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#compiler">Compiler</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#config">Config</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#dimensions">Dimensions</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#tensor">Tensor</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#engine">Engine</a><ul>
-<li class="toctree-l3"><a class="reference internal" href="#utility-functions">Utility Functions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#user-calling-code">User Calling Code</a></li>
 </ul>
 </li>
-<li class="toctree-l2"><a class="reference internal" href="#user-calling-code">User Calling Code</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../api/deepsparse.html">deepsparse package</a></li>
@@ -156,11 +156,9 @@ limitations under the License.
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">ARCH</span><span class="o">=</span><span class="n">avx2</span>
 </pre></div>
 </div>
-<p>#</p>
 </div>
-</div>
-<div class="section" id="api">
-<h1>API<a class="headerlink" href="#api" title="Permalink to this headline"></a></h1>
+<div class="section" id="c-api">
+<h2>C++ API<a class="headerlink" href="#c-api" title="Permalink to this headline"></a></h2>
 <p>This document discusses the high-level overview of the API. For the exact signatures and classes of the API, review the header files under</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">deepsparse_api_demo</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">libdeepsparse</span><span class="o">/</span>
 </pre></div>
@@ -174,21 +172,21 @@ limitations under the License.
 </pre></div>
 </div>
 <div class="section" id="compiler">
-<h2>Compiler<a class="headerlink" href="#compiler" title="Permalink to this headline"></a></h2>
+<h3>Compiler<a class="headerlink" href="#compiler" title="Permalink to this headline"></a></h3>
 <p>Helper header to export the API to a shared object.</p>
 </div>
 <div class="section" id="config">
-<h2>Config<a class="headerlink" href="#config" title="Permalink to this headline"></a></h2>
+<h3>Config<a class="headerlink" href="#config" title="Permalink to this headline"></a></h3>
 <p>This file contains a structure that is used in the call to create the engine. The <strong>engine_config_t</strong> fields are:</p>
 <p><strong>model_file_path</strong> - This should be a file path to the model in the ONNX file format.  See <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> on proper ONNX model files.</p>
 <p><strong>batch_size</strong> - The batch size refers to the process of concatenating input and output tensors into a contiguous batched tensor. See <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> about the performance trade-offs of batching.</p>
 </div>
 <div class="section" id="dimensions">
-<h2>Dimensions<a class="headerlink" href="#dimensions" title="Permalink to this headline"></a></h2>
+<h3>Dimensions<a class="headerlink" href="#dimensions" title="Permalink to this headline"></a></h3>
 <p>Review the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> about expected input and output tensors. The <strong>dimensions_t</strong> object describes the extent or count of elements along each dimension of a tensor_t.</p>
 </div>
 <div class="section" id="tensor">
-<h2>Tensor<a class="headerlink" href="#tensor" title="Permalink to this headline"></a></h2>
+<h3>Tensor<a class="headerlink" href="#tensor" title="Permalink to this headline"></a></h3>
 <p>A tensor is an n-dimensional array of data elements and metadata. An element is a concrete value of a supported primitive type (for example, an element of type float or uint8).</p>
 <p><strong>tensor_t</strong> - members.</p>
 <p><strong>element_type()</strong> - Return an enumeration value of the concrete type of a tensor element.</p>
@@ -260,13 +258,13 @@ limitations under the License.
 </div>
 </div>
 <div class="section" id="engine">
-<h2>Engine<a class="headerlink" href="#engine" title="Permalink to this headline"></a></h2>
+<h3>Engine<a class="headerlink" href="#engine" title="Permalink to this headline"></a></h3>
 <p>The engine API is the primary interface for external code to load and run the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">Neural Magic DeepSparse Engine</a>.</p>
 <p><strong>engine_t()</strong> - Construct an instance of the engine with the configuration struct. The config file path to the model is used to load and compile the model during the constructor. On error, exceptions will be thrown to the calling code.</p>
 <p><strong>execute()</strong> - This is the primary method to run the inference specified in the ONNX model.  The engine executes the model with the input tensors and returns output tensors.</p>
 <p><strong>Input and output getters</strong> - these methods are used to get metadata on the input and output tensors of the loaded model.</p>
 <div class="section" id="utility-functions">
-<h3>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline"></a></h3>
+<h4>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline"></a></h4>
 <p><strong>generate_random_inputs()</strong> - Once the engine is instantiated and has a model loaded, this function can use the model’s definition of input tensors to generate a set of tensors with random values with the correct type and shape. Random input can be used to test the engine or its performance.</p>
 <p><strong>load_inputs()</strong> - Creates a collection of tensor_t from the model input files. The input files are expected to be in the NumPy array format. See the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> for more on input file support.</p>
 <p><strong>max_diff()</strong> - Returns the largest absolute elementwise difference between two tensors. This function is used to compare the output result with the expected output when testing the engine.</p>
@@ -274,12 +272,13 @@ limitations under the License.
 </div>
 </div>
 <div class="section" id="user-calling-code">
-<h2>User Calling Code<a class="headerlink" href="#user-calling-code" title="Permalink to this headline"></a></h2>
+<h3>User Calling Code<a class="headerlink" href="#user-calling-code" title="Permalink to this headline"></a></h3>
 <p>The expected workflow is that the calling code will create one engine per model. The model path will specify an ONNX file. During creation, the engine will load and compile the model from the file.</p>
 <p>The input tensors will be created by the calling code. The tensor dimensions and types must match the corresponding dimensions and types of the model inputs. And, the number of tensors must be the same as the number of model inputs.</p>
 <p>Call engine execute() with the collection of input tensors. During the execute() call, the engine will do the inference over the ONNX model with the input tensors and return the output tensors.</p>
 <p>The output tensors’ data members can then be read to extract values and results.</p>
 <p>For a detailed example of creating, loading, and running an engine, see the code in <code class="docutils literal notranslate"><span class="pre">deepsparse_api_demo/src/demo.cpp</span></code></p>
+</div>
 </div>
 </div>
 
