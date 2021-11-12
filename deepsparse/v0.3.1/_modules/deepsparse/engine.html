@@ -139,7 +139,13 @@
     <span class="p">)</span>
 
 
-<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Engine&quot;</span><span class="p">,</span> <span class="s2">&quot;compile_model&quot;</span><span class="p">,</span> <span class="s2">&quot;benchmark_model&quot;</span><span class="p">,</span> <span class="s2">&quot;analyze_model&quot;</span><span class="p">,</span> <span class="s2">&quot;Scheduler&quot;</span><span class="p">]</span>
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;Engine&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;compile_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;benchmark_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;analyze_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Scheduler&quot;</span><span class="p">,</span>
+<span class="p">]</span>
 
 
 <span class="n">ARCH</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
@@ -223,13 +229,12 @@
 
 
 <span class="k">def</span> <span class="nf">_validate_num_sockets</span><span class="p">(</span><span class="n">num_sockets</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="n">num_sockets</span><span class="p">:</span>
-        <span class="n">num_sockets</span> <span class="o">=</span> <span class="n">NUM_SOCKETS</span>
+    <span class="k">if</span> <span class="n">num_sockets</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;num_sockets is no longer supported. Just specify the total num_cores.&quot;</span>
+        <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">num_sockets</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_sockets must be greater than 0&quot;</span><span class="p">)</span>
-
-    <span class="k">return</span> <span class="n">num_sockets</span>
+    <span class="k">return</span> <span class="mi">0</span>
 
 
 <span class="k">def</span> <span class="nf">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Scheduler</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Scheduler</span><span class="p">:</span>
@@ -263,12 +268,11 @@
 <span class="sd">        prefixed by &#39;zoo:&#39;, a SparseZoo Model object, or a SparseZoo ONNX File</span>
 <span class="sd">        object that defines the neural network</span>
 <span class="sd">    :param batch_size: The batch size of the inputs to be used with the engine</span>
-<span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of cores</span>
-<span class="sd">        in one socket for the current machine, default None</span>
-<span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
-<span class="sd">        current machine, default None</span>
+<span class="sd">    :param num_cores: The number of physical cores to run the model on. If more</span>
+<span class="sd">        cores are requested than are available on a single socket, the engine</span>
+<span class="sd">        will try to distribute them evenly across as few sockets as possible.</span>
+<span class="sd">    :param num_sockets: This parameter no longer functions and will be removed</span>
+<span class="sd">        in a future version.</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -291,7 +295,6 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_sockets</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">)</span>
 
@@ -633,33 +636,36 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_sockets</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Engine</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convenience function to compile a model in the DeepSparse Engine</span>
 <span class="sd">    from an ONNX file for inference.</span>
-<span class="sd">    Gives defaults of batch_size == 1, num_cores == None and num_sockets = None</span>
-<span class="sd">    (will use all physical cores available on all available sockets).</span>
+<span class="sd">    Gives defaults of batch_size == 1, num_cores == None</span>
+<span class="sd">    (will use all physical cores available on the system).</span>
 
 <span class="sd">    :param model: Either a path to the model&#39;s onnx file, a SparseZoo model stub</span>
 <span class="sd">        prefixed by &#39;zoo:&#39;, a SparseZoo Model object, or a SparseZoo ONNX File</span>
 <span class="sd">        object that defines the neural network</span>
 <span class="sd">    :param batch_size: The batch size of the inputs to be used with the model</span>
 <span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of cores</span>
-<span class="sd">        in one socket for the current machine, default None</span>
-<span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
-<span class="sd">        current machine, default None</span>
+<span class="sd">        Pass None or 0 to run on the max number of cores for the current</span>
+<span class="sd">        machine; default None</span>
+<span class="sd">    :param num_sockets: This parameter no longer functions and will be removed</span>
+<span class="sd">        in a future version.</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: The created Engine after compiling the model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">num_sockets</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;num_sockets is no longer supported. Just specify the total num_cores.&quot;</span>
+        <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">Engine</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="p">,</span>
-        <span class="n">num_sockets</span><span class="o">=</span><span class="n">num_sockets</span><span class="p">,</span>
         <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
     <span class="p">)</span></div>
 
@@ -674,7 +680,6 @@
     <span class="n">include_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">include_outputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_sockets</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BenchmarkResults</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -691,7 +696,7 @@
 <span class="sd">    :param batch_size: The batch size of the inputs to be used with the model</span>
 <span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of cores</span>
-<span class="sd">        in one socket for the current machine, default None</span>
+<span class="sd">        for the current machine; default None</span>
 <span class="sd">    :param inp: The list of inputs to pass to the engine for benchmarking.</span>
 <span class="sd">        The expected order is the inputs order as defined in the ONNX graph.</span>
 <span class="sd">    :param num_iterations: The number of iterations to run benchmarking for.</span>
@@ -705,17 +710,20 @@
 <span class="sd">    :param include_outputs: If True, outputs from forward passes during benchmarking</span>
 <span class="sd">        will be added to the results. Default is False</span>
 <span class="sd">    :param show_progress: If True, will display a progress bar. Default is False</span>
-<span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
-<span class="sd">        current machine, default None</span>
+<span class="sd">    :param num_sockets: This parameter no longer functions and will be removed</span>
+<span class="sd">        in a future version.</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: the results of benchmarking</span>
 <span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">num_sockets</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;num_sockets is no longer supported. Just specify the total num_cores.&quot;</span>
+        <span class="p">)</span>
+
     <span class="n">model</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
         <span class="n">model</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="p">,</span>
-        <span class="n">num_sockets</span><span class="o">=</span><span class="n">num_sockets</span><span class="p">,</span>
         <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
     <span class="p">)</span>
 
@@ -758,7 +766,7 @@
 <span class="sd">    :param batch_size: The batch size of the inputs to be used with the model</span>
 <span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of cores</span>
-<span class="sd">        in one socket for the current machine, default None</span>
+<span class="sd">        for the current machine; default None</span>
 <span class="sd">    :param num_iterations: The number of times to repeat execution of the model</span>
 <span class="sd">        while analyzing, default is 20</span>
 <span class="sd">    :param num_warmup_iterations: The number of times to repeat execution of the model</span>
@@ -773,20 +781,17 @@
 <span class="sd">        Will force all prunable layers in the graph to have weights with</span>
 <span class="sd">        this desired sparsity level (percentage of 0&#39;s in the tensor).</span>
 <span class="sd">        Beneficial for seeing how pruning affects the performance of the model.</span>
-<span class="sd">    :param num_sockets: The number of physical sockets to run the model on.</span>
-<span class="sd">        Pass None or 0 to run on the max number of sockets for the</span>
-<span class="sd">        current machine, default None</span>
+<span class="sd">    :param num_sockets: This parameter no longer functions and will be removed</span>
+<span class="sd">        in a future version.</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :return: the analysis structure containing the performance details of each layer</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">_model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
     <span class="n">batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
-    <span class="n">num_sockets</span> <span class="o">=</span> <span class="n">_validate_num_sockets</span><span class="p">(</span><span class="n">num_sockets</span><span class="p">)</span>
+    <span class="n">_validate_num_sockets</span><span class="p">(</span><span class="n">num_sockets</span><span class="p">)</span>
     <span class="n">scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
-    <span class="n">eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
-        <span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">value</span>
-    <span class="p">)</span>
+    <span class="n">eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">eng_net</span><span class="o">.</span><span class="n">benchmark</span><span class="p">(</span>
         <span class="n">inp</span><span class="p">,</span>
