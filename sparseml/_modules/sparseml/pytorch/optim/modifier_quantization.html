@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim.modifier_quantization — SparseML 0.8.0.20211113 documentation
+   sparseml.pytorch.optim.modifier_quantization — SparseML 0.8.0.20211115 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -539,10 +539,11 @@
             <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="n">configure_module_default_qconfigs</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
-            <span class="c1"># set model to QAT mode</span>
-            <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span><span class="p">:</span>
-                <span class="n">prepare_embeddings_qat</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+
+        <span class="c1"># set modules with proper qconfigs to QAT mode</span>
+        <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_quantize_embeddings</span><span class="p">:</span>
+            <span class="n">prepare_embeddings_qat</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_qat_enabled</span> <span class="o">=</span> <span class="kc">True</span>
 
     <span class="k">def</span> <span class="nf">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
