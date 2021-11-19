@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.5.0.20211115 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_quantization &mdash; SparseML 0.5.0.20211119 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -105,7 +105,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
@@ -134,6 +134,10 @@
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;QuantizationModifier&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+<span class="n">_ModuleToQuantize</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;_ModuleToQuantize&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]),</span> <span class="p">(</span><span class="s2">&quot;module&quot;</span><span class="p">,</span> <span class="n">Module</span><span class="p">)]</span>
+<span class="p">)</span>
 
 
 <div class="viewcode-block" id="QuantizationModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_quantization.QuantizationModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
@@ -342,7 +346,7 @@
             <span class="n">found_submodules</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">submodule</span> <span class="ow">in</span> <span class="n">module</span><span class="o">.</span><span class="n">named_modules</span><span class="p">():</span>
                 <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">:</span>
-                    <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">submodule</span><span class="p">)</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ModuleToQuantize</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">submodule</span><span class="p">))</span>
                     <span class="n">found_submodules</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">len</span><span class="p">(</span><span class="n">found_submodules</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_submodules</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
@@ -352,7 +356,7 @@
                     <span class="p">)</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_ModuleToQuantize</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="n">module</span><span class="p">))</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_check_quantization_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span></div>
 
@@ -420,12 +424,12 @@
             <span class="bp">self</span><span class="o">.</span><span class="n">_enable_module_qat</span><span class="p">(</span><span class="n">module</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disable_quantization_observer_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
                 <span class="n">quant_module</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">torch_quantization</span><span class="o">.</span><span class="n">disable_observer</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_quantization_observer_disabled</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_freeze_bn_stats_update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">):</span>
-            <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
                 <span class="n">quant_module</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">torch_intrinsic</span><span class="o">.</span><span class="n">qat</span><span class="o">.</span><span class="n">freeze_bn_stats</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_bn_stats_frozen</span> <span class="o">=</span> <span class="kc">True</span>
 
@@ -450,7 +454,7 @@
 
         <span class="c1"># prepare each module / submodule for quantization</span>
         <span class="n">qconfig</span> <span class="o">=</span> <span class="n">get_qat_qconfig</span><span class="p">()</span>
-        <span class="k">for</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">quant_module</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modules_to_quantize</span><span class="p">:</span>
             <span class="c1"># wrap any modules with wrap_qat set to True as QATWrapper(s)</span>
             <span class="n">configure_module_qat_wrappers</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="c1"># set quantization config (asymmetric activations, symmetric weights)</span>
@@ -458,7 +462,8 @@
             <span class="c1"># wrap all conv / linear blocks in with quantization observers</span>
             <span class="n">torch_quantization</span><span class="o">.</span><span class="n">propagate_qconfig_</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
             <span class="n">configure_module_default_qconfigs</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
-            <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">)</span>
+
+            <span class="n">add_quant_dequant</span><span class="p">(</span><span class="n">quant_module</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">module</span><span class="p">)</span>
 
         <span class="c1"># set modules with proper qconfigs to QAT mode</span>
         <span class="n">torch_quantization</span><span class="o">.</span><span class="n">prepare_qat</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>

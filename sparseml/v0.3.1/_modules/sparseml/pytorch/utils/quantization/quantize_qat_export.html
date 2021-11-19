@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.1.20211115 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils.quantization.quantize_qat_export &mdash; SparseML 0.3.1.20211119 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
@@ -445,9 +445,11 @@
         <span class="n">output_quantize_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span>  <span class="c1"># y_zero_point</span>
     <span class="p">]</span>
 
+    <span class="n">conv_keep_params</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
         <span class="n">bias</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="k">if</span> <span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">conv_keep_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">conv_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span>
             <span class="c1"># quantize bias and add it to the qconv inputs</span>
             <span class="n">bias</span> <span class="o">=</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">bias</span><span class="p">)</span>
             <span class="n">input_quantize_params</span> <span class="o">=</span> <span class="n">get_quantization_params</span><span class="p">(</span>
@@ -477,7 +479,7 @@
     <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qconv_node</span><span class="p">)</span>
 
     <span class="c1"># delete original conv and folded quantization ops</span>
-    <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="p">)</span>
+    <span class="n">remove_node_and_params_from_graph</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conv_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="n">conv_keep_params</span><span class="p">)</span>
     <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_dequantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="n">delete_quant_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_quantize_node</span><span class="p">,</span> <span class="n">keep_params</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">keep_weight</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">fold_input_quant</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">get_node_output_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_quantize_node</span><span class="p">))</span> <span class="o">&lt;=</span> <span class="mi">1</span><span class="p">:</span>
@@ -1178,12 +1180,14 @@
     <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
     <span class="n">nodes_to_delete</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="n">quant_nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">n</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span> <span class="k">if</span> <span class="n">n</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">]</span>
+    <span class="n">output_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
     <span class="k">for</span> <span class="n">quant_node</span> <span class="ow">in</span> <span class="n">quant_nodes</span><span class="p">:</span>
         <span class="n">dequant_node</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_single_child</span><span class="p">(</span><span class="n">quant_node</span><span class="p">)</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="n">dequant_node</span> <span class="ow">or</span> <span class="n">dequant_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;DequantizeLinear&quot;</span><span class="p">:</span>
             <span class="k">continue</span>
-
-        <span class="n">removable</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">removable</span> <span class="o">=</span> <span class="ow">not</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">output_id</span> <span class="ow">in</span> <span class="n">output_names</span> <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">dequant_node</span><span class="o">.</span><span class="n">output</span>
+        <span class="p">)</span>
         <span class="n">dequant_children</span> <span class="o">=</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">dequant_node</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">dequant_children</span><span class="p">:</span>
             <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">)</span> <span class="ow">and</span> <span class="n">child</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="n">_QLINEAR_OP_NAMES</span><span class="p">:</span>

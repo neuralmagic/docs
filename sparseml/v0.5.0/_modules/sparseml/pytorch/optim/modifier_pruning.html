@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.0.20211115 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.5.0.20211119 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -114,6 +114,7 @@
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.nn</span> <span class="kn">import</span> <span class="n">Identity</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.analyzer_pruning</span> <span class="kn">import</span> <span class="n">ModulePruningAnalyzer</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.mask_creator_pruning</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DimensionSparsityMaskCreator</span><span class="p">,</span>
     <span class="n">PruningMaskCreator</span><span class="p">,</span>
     <span class="n">load_mask_creator</span><span class="p">,</span>
 <span class="p">)</span>
@@ -157,6 +158,7 @@
     <span class="s2">&quot;MovementPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;GlobalMagnitudePruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;LayerPruningModifier&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;StructuredPruningModifier&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -635,6 +637,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_pre_step_completed</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_applied</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># set to True after a pruning step occurs</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_non_serializable_props</span> <span class="o">=</span> <span class="p">{}</span>
 
@@ -784,7 +787,9 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">allow_reintroduction</span><span class="p">:</span>
             <span class="c1"># be sure to apply mask again after optimizer update because weights may</span>
             <span class="c1"># have changed (optimizer with momentum, not masking gradient)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_applied</span> <span class="o">=</span> <span class="kc">False</span></div>
 
     <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -845,6 +850,7 @@
                     <span class="p">)</span>
 
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_applied</span> <span class="o">=</span> <span class="kc">True</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">pruning_end</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_leave_enabled</span><span class="p">)</span>
@@ -1219,6 +1225,173 @@
 <span class="sd">        :return: True if global pruning is enabled, False otherwise</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span></div>
+
+
+<div class="viewcode-block" id="StructuredPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.StructuredPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">StructuredPruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Gradually applies structured kernel sparsity to a given parameter or parameters</span>
+<span class="sd">    from init_sparsity until final_sparsity is reached over a given amount of time</span>
+<span class="sd">    and applied with an interpolated function for each step taken. Channel and filter</span>
+<span class="sd">    pruning supported.</span>
+
+<span class="sd">    A param_group_dependency_map must be provided that maps</span>
+<span class="sd">    groups of prunable parameter names that should have their dimensions pruned</span>
+<span class="sd">    together to a list of module parameter names that should be updated accordingly</span>
+<span class="sd">    when those parameters are pruned.</span>
+
+<span class="sd">    | Sample yaml:</span>
+<span class="sd">    |   !StructuredPruningModifier</span>
+<span class="sd">    |       param_groups: [</span>
+<span class="sd">    |           [&quot;param.1.name&quot;,&quot;param.2.name&quot;], [&quot;param.3.name&quot;, &quot;param.4.name&quot;]</span>
+<span class="sd">    |       ]</span>
+<span class="sd">    |       init_sparsity: 0.05</span>
+<span class="sd">    |       final_sparsity: 0.8</span>
+<span class="sd">    |       start_epoch: 0.0</span>
+<span class="sd">    |       end_epoch: 10.0</span>
+<span class="sd">    |       update_frequency: 1.0</span>
+<span class="sd">    |       params: __ALL_PRUNABLE__</span>
+<span class="sd">    |       leave_enabled: True</span>
+<span class="sd">    |       inter_func: cubic</span>
+<span class="sd">    |       log_types: __ALL__</span>
+<span class="sd">    |       mask_type: filter</span>
+<span class="sd">    |       score_type: magnitude</span>
+
+<span class="sd">    :param init_sparsity: the initial sparsity for the param to start with at</span>
+<span class="sd">        start_epoch</span>
+<span class="sd">    :param final_sparsity: the final sparsity for the param to end with at end_epoch</span>
+<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
+<span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
+<span class="sd">    :param update_frequency: The number of epochs or fraction of epochs to update at</span>
+<span class="sd">        between start and end</span>
+<span class="sd">    :param param_groups: list of list of parameter names that should be pruned together</span>
+<span class="sd">        during structured pruning so that their same indices may be removed. May be</span>
+<span class="sd">        useful for structures such as residual blocks or grouped convolutions. Can be</span>
+<span class="sd">        generated from an onnx export of the target module with</span>
+<span class="sd">        sparseml.onnx.optim.get_param_structured_pruning_group_dependencies by</span>
+<span class="sd">        splitting its comma separated keys into lists.</span>
+<span class="sd">        i.e. [[&quot;param.1.name&quot;,&quot;param.2.name&quot;], [&quot;param.3.name&quot;, &quot;param.4.name&quot;]]</span>
+<span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
+<span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
+<span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
+<span class="sd">        and Linear layers&#39; weights. Defualt is __ALL_PRUNABLE__</span>
+<span class="sd">    :param leave_enabled: True to continue masking the weights after end_epoch,</span>
+<span class="sd">        False to stop masking. Should be set to False if exporting the result</span>
+<span class="sd">        immediately after or doing some other prune</span>
+<span class="sd">    :param inter_func: the type of interpolation function to use:</span>
+<span class="sd">        [linear, cubic, inverse_cubic]</span>
+<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
+<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
+<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
+<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
+<span class="sd">        default is __ALL__</span>
+<span class="sd">    :param mask_type: String to define type of structured sparsity (options: [</span>
+<span class="sd">        &#39;channel&#39;, &#39;filter&#39;]), or a DimensionSparsityMaskCreator object.</span>
+<span class="sd">        default is &#39;filter&#39;</span>
+<span class="sd">    :param score_type: Method used to score parameters for masking, i.e.</span>
+<span class="sd">        &#39;magnitude&#39;, &#39;movement&#39;. Default is &#39;magnitude&#39;</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">init_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">final_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">param_groups</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">,</span>
+        <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubic&quot;</span><span class="p">,</span>
+        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
+        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DimensionSparsityMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;filter&quot;</span><span class="p">,</span>
+        <span class="n">score_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mask_type</span><span class="p">,</span> <span class="n">DimensionSparsityMaskCreator</span><span class="p">)</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">mask_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">]</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;StructuredPruningModifier mask_type must be a &quot;</span>
+                <span class="s2">&quot;DimensionSparsityMaskCreator or designate &#39;channel&#39; or &#39;filter&#39; &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;found </span><span class="si">{</span><span class="n">mask_type</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
+            <span class="n">final_sparsity</span><span class="o">=</span><span class="n">final_sparsity</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
+            <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
+            <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
+            <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
+            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
+            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
+            <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
+            <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">score_type</span><span class="o">=</span><span class="n">score_type</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_groups</span> <span class="o">=</span> <span class="n">param_groups</span> <span class="ow">or</span> <span class="p">[]</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">param_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: list of list of parameter names that should be pruned together</span>
+<span class="sd">            during structured pruning so that their same indices may be removed. May be</span>
+<span class="sd">            useful for structures such as residual blocks or grouped convolutions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_groups</span>
+
+    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">def</span> <span class="nf">global_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if global pruning is enabled, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
+
+    <span class="k">def</span> <span class="nf">_create_pruning_mask</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">layers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Module</span><span class="p">],</span> <span class="n">layer_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">param_names</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModuleParamPruningMask</span><span class="p">:</span>
+        <span class="c1"># find and validate parameter groups for structured pruning</span>
+        <span class="n">full_param_names</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">for</span> <span class="n">layer_name</span><span class="p">,</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">layer_names</span><span class="p">,</span> <span class="n">param_names</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">param_name_to_idx</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">full_param_names</span><span class="p">,</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_param_names</span><span class="p">))))</span>
+        <span class="n">param_group_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">added_idxs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">param_group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_groups</span><span class="p">:</span>
+            <span class="n">group_idxs</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">param_group</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">param_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">param_name_to_idx</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;param </span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2"> from param_groups &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;not found in pruning modifier params </span><span class="si">{</span><span class="n">full_param_names</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">param_idx</span> <span class="o">=</span> <span class="n">param_name_to_idx</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">param_idx</span> <span class="ow">in</span> <span class="n">added_idxs</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;found repeated param name in param_groups &quot;</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+                <span class="n">group_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+                <span class="n">added_idxs</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param_idx</span><span class="p">)</span>
+            <span class="n">param_group_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">group_idxs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">full_param_names</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">added_idxs</span><span class="p">:</span>
+                <span class="n">param_group_idxs</span><span class="o">.</span><span class="n">append</span><span class="p">([</span><span class="n">idx</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">set_tensor_group_idxs</span><span class="p">(</span><span class="n">param_group_idxs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">ModuleParamPruningMask</span><span class="p">(</span>
+            <span class="n">layers</span><span class="p">,</span>
+            <span class="n">param_names</span><span class="p">,</span>
+            <span class="n">layer_names</span><span class="o">=</span><span class="n">layer_names</span><span class="p">,</span>
+            <span class="n">mask_creator</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span>
+            <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">score_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_score_type</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="MFACPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.MFACPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>

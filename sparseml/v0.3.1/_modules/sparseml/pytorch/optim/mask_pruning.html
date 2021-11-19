@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.mask_pruning &mdash; SparseML 0.3.1.20211115 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.mask_pruning &mdash; SparseML 0.3.1.20211119 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -180,9 +180,12 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_gradient_hooks</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_params</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[Parameter]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_param_orig_sizes</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[int]</span>
         <span class="k">for</span> <span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_names</span><span class="p">):</span>
             <span class="k">try</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">param_name</span><span class="p">))</span>
+                <span class="n">layer_param</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="n">param_name</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_param</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_param_orig_sizes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer_param</span><span class="o">.</span><span class="n">numel</span><span class="p">())</span>
             <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="sa">f</span><span class="s2">&quot;Error occurred while trying to get param </span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2"> &quot;</span>
@@ -195,6 +198,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_params_unmasked</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_params_grad</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_params_movement</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[Tensor]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_params_applied_thinning</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layers</span><span class="p">)</span>  <span class="c1"># type: List[float]</span>
 
         <span class="c1"># create scorer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scorer</span> <span class="o">=</span> <span class="n">create_pruning_param_scorer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">,</span> <span class="n">score_type</span><span class="p">)</span>
@@ -425,8 +429,7 @@
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience function to set the parameter masks such that the</span>
 <span class="sd">        mask is 1 if a parameter value is non zero and 0 otherwise,</span>
-<span class="sd">        unless otherwise defined by this object&#39;s mask_creator.</span>
-
+<span class="sd">        unless otherwise defined by this object&#39;s mask_creator</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_masks_from_tensor</span><span class="p">(</span>
             <span class="p">[</span><span class="n">param</span><span class="o">.</span><span class="n">data</span> <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">]</span>
@@ -464,6 +467,21 @@
 <span class="sd">            list must be the same</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">param_scores</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scorer</span><span class="o">.</span><span class="n">score_parameters</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">sparsity</span> <span class="o">=</span> <span class="p">[</span><span class="n">sparsity</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">sparsity_val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sparsity</span><span class="p">):</span>
+            <span class="n">applied_thinning</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params_applied_thinning</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">applied_thinning</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+                <span class="c1"># adjust sparsity for thinned (compressed) layer param</span>
+                <span class="c1"># derived from:</span>
+                <span class="c1"># remaining_num_els * (1 - adjusted_sparsity) = \</span>
+                <span class="c1">#   orig_num_els * (1 - sparsity)</span>
+                <span class="c1"># with applied_thinning = 1 - (remaining_num_els / orig_num_els)</span>
+                <span class="n">sparsity</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">sparsity_val</span> <span class="o">-</span> <span class="n">applied_thinning</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span>
+                    <span class="mi">1</span> <span class="o">-</span> <span class="n">applied_thinning</span>
+                <span class="p">)</span>
+
         <span class="n">masks</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_masks</span><span class="p">(</span>
             <span class="n">param_scores</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">global_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
         <span class="p">)</span>
@@ -542,6 +560,13 @@
         <span class="n">indices</span> <span class="o">=</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">))</span> <span class="k">if</span> <span class="n">param_idx</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">param_idx</span><span class="p">]</span>
 
         <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">():</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_params_applied_thinning</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_orig_sizes</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
+                    <span class="n">torch</span><span class="o">.</span><span class="n">ones_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+                <span class="p">)</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">device</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">device</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_param_masks</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">ModuleParamPruningMask</span><span class="o">.</span><span class="n">_detach_tens</span><span class="p">(</span>
                     <span class="n">torch</span><span class="o">.</span><span class="n">empty_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_params</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>

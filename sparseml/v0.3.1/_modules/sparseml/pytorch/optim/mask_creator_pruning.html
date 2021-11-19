@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.mask_creator_pruning &mdash; SparseML 0.3.1.20211115 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.mask_creator_pruning &mdash; SparseML 0.3.1.20211119 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -102,7 +102,7 @@
 
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
@@ -114,6 +114,7 @@
     <span class="s2">&quot;GroupedPruningMaskCreator&quot;</span><span class="p">,</span>
     <span class="s2">&quot;DimensionSparsityMaskCreator&quot;</span><span class="p">,</span>
     <span class="s2">&quot;BlockPruningMaskCreator&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;FourBlockMaskCreator&quot;</span><span class="p">,</span>
     <span class="s2">&quot;load_mask_creator&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
@@ -359,11 +360,14 @@
 <span class="sd">        :param tensor: the tensor to reduce</span>
 <span class="sd">        :param dim: dimension or list of dimension to reduce along</span>
 <span class="sd">        :param reduce_fn_name: function name to reduce tensor with. valid options</span>
-<span class="sd">            are &#39;mean&#39;, &#39;max&#39;, &#39;min&#39;</span>
+<span class="sd">            are &#39;l2&#39;, &#39;mean&#39;, &#39;max&#39;, &#39;min&#39;</span>
 <span class="sd">        :param keepdim: preserves the reduced dimension(s) in returned tensor shape</span>
 <span class="sd">            as shape 1. default is True</span>
 <span class="sd">        :return: Tensor reduced along the given dimension(s)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">reduce_fn_name</span> <span class="o">=</span> <span class="n">reduce_fn_name</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;l2&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;mean&quot;</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="nb">input</span><span class="o">=</span><span class="n">tensor</span><span class="p">,</span> <span class="n">dim</span><span class="o">=</span><span class="n">dim</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="n">keepdim</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">reduce_fn_name</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
@@ -388,11 +392,14 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">grouped_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">original_tensor_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">tensor_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param grouped_mask: A binary mask the size of a tensor from group_tensor</span>
 <span class="sd">        :param original_tensor_shape: Shape of the original tensor grouped_mask</span>
 <span class="sd">            derives from</span>
+<span class="sd">        :param tensor_idx: optional index this tensor was passed into a tensor</span>
+<span class="sd">            list for mask creation</span>
 <span class="sd">        :return: The values from grouped_mask mapped to a tensor of size</span>
 <span class="sd">            original_tensor_shape</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -405,12 +412,12 @@
 <span class="sd">            the group_tensor function.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
-            <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_tensors</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">grouped_tensor</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">grouped_tensors</span><span class="p">)):</span>
             <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks_from_tensor</span><span class="p">([</span><span class="n">grouped_tensor</span><span class="p">])[</span>
                 <span class="mi">0</span>
             <span class="p">]</span>
-            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">masks</span></div>
 
 <div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_masks_from_threshold"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_masks_from_threshold">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks_from_threshold</span><span class="p">(</span>
@@ -424,12 +431,12 @@
 <span class="sd">        :return: list of masks derived from the tensors and the grouped threshold</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">masks</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">:</span>
-            <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span>
+        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_tensors</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">tensor</span><span class="p">,</span> <span class="n">grouped_tensor</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">tensors</span><span class="p">,</span> <span class="n">grouped_tensors</span><span class="p">)):</span>
             <span class="n">grouped_mask</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks_from_threshold</span><span class="p">(</span>
                 <span class="p">[</span><span class="n">grouped_tensor</span><span class="p">],</span> <span class="n">threshold</span>
             <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+            <span class="n">masks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">idx</span><span class="p">))</span>
         <span class="k">return</span> <span class="n">masks</span></div>
 
 <div class="viewcode-block" id="GroupedPruningMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.GroupedPruningMaskCreator.create_sparsity_masks">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
@@ -455,16 +462,19 @@
 <span class="sd">            matches the sparsity and all values mapped to the same group have the same</span>
 <span class="sd">            value</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span>
+        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_group_tensors</span><span class="p">(</span><span class="n">tensors</span><span class="p">)</span>
         <span class="n">grouped_masks</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">create_sparsity_masks</span><span class="p">(</span>
             <span class="n">grouped_tensors</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">global_sparsity</span>
         <span class="p">)</span>
         <span class="n">masks</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="k">for</span> <span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">grouped_masks</span><span class="p">,</span> <span class="n">tensors</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_map_mask_to_tensor</span><span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">idx</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">grouped_mask</span><span class="p">,</span> <span class="n">tensor</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">grouped_masks</span><span class="p">,</span> <span class="n">tensors</span><span class="p">))</span>
         <span class="p">]</span>
 
-        <span class="k">return</span> <span class="n">masks</span></div></div>
+        <span class="k">return</span> <span class="n">masks</span></div>
+
+    <span class="k">def</span> <span class="nf">_group_tensors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span></div>
 
 
 <div class="viewcode-block" id="DimensionSparsityMaskCreator"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator">[docs]</a><span class="k">class</span> <span class="nc">DimensionSparsityMaskCreator</span><span class="p">(</span><span class="n">GroupedPruningMaskCreator</span><span class="p">):</span>
@@ -475,30 +485,55 @@
 <span class="sd">    :param dim: The index or list of indices of dimensions to group the mask by or</span>
 <span class="sd">        the type of dims to prune ([&#39;channel&#39;, &#39;filter&#39;])</span>
 <span class="sd">    :param grouping_fn_name: The name of the torch grouping function to reduce</span>
-<span class="sd">        dimensions by</span>
+<span class="sd">        dimensions by. Default is &#39;l2&#39;</span>
+<span class="sd">    :param tensor_group_idxs: list of lists of input tensor idxs whose given dimensions</span>
+<span class="sd">        should be scored together. If set, all idxs in the range of provided tensors</span>
+<span class="sd">        must be included in exactly one group (tensors in their own group should be a</span>
+<span class="sd">        list of length 1).  If None, no tensor groups will be used</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">dim</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span>
-        <span class="n">grouping_fn_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+        <span class="n">grouping_fn_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;l2&quot;</span><span class="p">,</span>
+        <span class="n">tensor_group_idxs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
-            <span class="n">dim</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span><span class="p">]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span> <span class="o">=</span> <span class="n">grouping_fn_name</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tensor_group_idxs</span> <span class="o">=</span> <span class="n">tensor_group_idxs</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="n">List</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="p">[</span><span class="n">dim</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">dim</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Invalid dimension </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">, valid dimensions: </span><span class="si">{</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+            <span class="n">dim_name</span> <span class="o">=</span> <span class="s2">&quot;channel&quot;</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">else</span> <span class="s2">&quot;filter&quot;</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">dim</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">valid_dim_names</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;channel&quot;</span><span class="p">,</span> <span class="s2">&quot;filter&quot;</span><span class="p">]</span>
             <span class="k">if</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">valid_dim_names</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="o">=</span> <span class="n">dim</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="s2">&quot;channel&quot;</span> <span class="k">else</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+                <span class="n">dim_name</span> <span class="o">=</span> <span class="n">dim</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="s2">&quot;channel&quot;</span> <span class="k">else</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="s2">&quot;Invalid Dimension name: </span><span class="si">{}</span><span class="s2">, valid names: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-                        <span class="n">dim</span><span class="p">,</span> <span class="n">valid_dim_names</span>
-                    <span class="p">)</span>
+                    <span class="sa">f</span><span class="s2">&quot;Invalid Dimension name: </span><span class="si">{</span><span class="n">dim</span><span class="si">}</span><span class="s2">, valid names: </span><span class="si">{</span><span class="n">valid_dim_names</span><span class="si">}</span><span class="s2">&quot;</span>
                 <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span> <span class="o">=</span> <span class="n">dim</span>  <span class="c1"># List[int]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown dim type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span><span class="si">}</span><span class="s2"> expected (str, int, List[int])&quot;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span> <span class="o">=</span> <span class="n">dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="o">=</span> <span class="n">dim_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stride_grouped_tensors</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Dict[int, int]: tensor_idx -&gt; stride</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">structure_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the type of structure pruned masks this mask creator produces must</span>
+<span class="sd">            be either &#39;channel&#39; or &#39;filter&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span>
 
 <div class="viewcode-block" id="DimensionSparsityMaskCreator.create_sparsity_masks"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator.create_sparsity_masks">[docs]</a>    <span class="k">def</span> <span class="nf">create_sparsity_masks</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -533,30 +568,157 @@
 <span class="sd">        :return: The mean values of the tensor grouped by the dimension(s) in self._dim</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">n_dims</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">n_dims</span> <span class="o">&lt;</span> <span class="mi">3</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="o">==</span> <span class="s2">&quot;channel&quot;</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;Channel pruning not supported for fewer than 3 dimensions.&quot;</span>
-                <span class="s2">&quot; Received tensor with shape </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-            <span class="p">)</span>
         <span class="n">reduced_dims</span> <span class="o">=</span> <span class="p">[</span><span class="n">idx</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_dims</span><span class="p">)</span> <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span><span class="p">]</span>
         <span class="n">reduced_tensor</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">reduce_tensor</span><span class="p">(</span>
             <span class="n">tensor</span><span class="p">,</span> <span class="n">reduced_dims</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span>
         <span class="p">)</span>
         <span class="k">return</span> <span class="n">reduced_tensor</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
 
+<div class="viewcode-block" id="DimensionSparsityMaskCreator.set_tensor_group_idxs"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.DimensionSparsityMaskCreator.set_tensor_group_idxs">[docs]</a>    <span class="k">def</span> <span class="nf">set_tensor_group_idxs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor_group_idxs</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param tensor_group_idxs: list of lists of input tensor idxs whose given</span>
+<span class="sd">            dimensions should be scored together. If set, all idxs in the range of</span>
+<span class="sd">            provided tensors must be included in exactly one group (tensors in their</span>
+<span class="sd">            own group should be a list of length 1).  If None, no tensor groups will</span>
+<span class="sd">            be used</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_tensor_group_idxs</span> <span class="o">=</span> <span class="n">tensor_group_idxs</span></div>
+
+    <span class="k">def</span> <span class="nf">_group_tensors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tensor</span><span class="p">]:</span>
+        <span class="n">grouped_tensors</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">group_tensor</span><span class="p">(</span><span class="n">tensor</span><span class="p">)</span> <span class="k">for</span> <span class="n">tensor</span> <span class="ow">in</span> <span class="n">tensors</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensor_group_idxs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">grouped_tensors</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_tensor_group_idxs</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">tensors</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">idx_group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensor_group_idxs</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">idx_group</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># bypass DW Convs in group</span>
+            <span class="n">idx_group</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">idx</span>
+                <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idx_group</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">grouped_tensors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span><span class="p">)</span>
+            <span class="p">]</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">idx_group</span><span class="p">:</span>
+                <span class="c1"># all non-prunable along target dim</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># validate tensors have the same number of dimension elements</span>
+            <span class="n">group_tensors_numel</span> <span class="o">=</span> <span class="p">[</span><span class="n">grouped_tensors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">numel</span><span class="p">()</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idx_group</span><span class="p">]</span>
+            <span class="n">group_base_numel</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">group_tensors_numel</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">group_tensor_idx</span><span class="p">,</span> <span class="n">numel</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">idx_group</span><span class="p">,</span> <span class="n">group_tensors_numel</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">numel</span> <span class="o">==</span> <span class="n">group_base_numel</span><span class="p">:</span>
+                    <span class="c1"># expected number of channels</span>
+                    <span class="k">continue</span>
+                <span class="k">elif</span> <span class="n">numel</span> <span class="o">%</span> <span class="n">group_base_numel</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="c1"># strided conv layer</span>
+                    <span class="n">stride</span> <span class="o">=</span> <span class="n">numel</span> <span class="o">//</span> <span class="n">group_base_numel</span>
+                    <span class="n">grouped_tensor</span> <span class="o">=</span> <span class="n">grouped_tensors</span><span class="p">[</span><span class="n">group_tensor_idx</span><span class="p">]</span>
+                    <span class="n">stride_reduced_shape</span> <span class="o">=</span> <span class="p">[</span>
+                        <span class="n">dim</span> <span class="o">//</span> <span class="n">stride</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">grouped_tensor</span><span class="o">.</span><span class="n">shape</span>
+                    <span class="p">]</span>
+                    <span class="n">stride_grouped_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                        <span class="n">stride_reduced_shape</span><span class="p">,</span>
+                        <span class="n">dtype</span><span class="o">=</span><span class="n">grouped_tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                        <span class="n">device</span><span class="o">=</span><span class="n">grouped_tensor</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">stride_grouped_tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                        <span class="n">grouped_tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="p">)</span>
+                    <span class="n">grouped_tensors</span><span class="p">[</span><span class="n">group_tensor_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">stride_grouped_tensor</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_stride_grouped_tensors</span><span class="p">[</span><span class="n">group_tensor_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">stride</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;Found parameter with </span><span class="si">{numel}</span><span class="s2"> target dimensions in group with &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;a parameter with </span><span class="si">{</span><span class="n">group_base_numel</span><span class="si">}</span><span class="s2">. All parameters in a &quot;</span>
+                        <span class="s2">&quot;group must have a number of elements in the target dimension &quot;</span>
+                        <span class="s2">&quot;divisible by the smallest such dimension in the group&quot;</span>
+                    <span class="p">)</span>
+
+            <span class="c1"># calculate the group score</span>
+            <span class="n">tensors_in_group_flat</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">grouped_tensors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idx_group</span>
+            <span class="p">]</span>
+            <span class="n">group_score</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">stack</span><span class="p">(</span><span class="n">tensors_in_group_flat</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="c1"># set all tensors in group to the group score</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idx_group</span><span class="p">:</span>
+                <span class="n">grouped_tensors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span><span class="o">.</span><span class="n">view</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">group_score</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">grouped_tensors</span>
+
     <span class="k">def</span> <span class="nf">_map_mask_to_tensor</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">grouped_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">original_tensor_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">tensor_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param grouped_mask: A binary mask the size of a tensor from group_tensor</span>
 <span class="sd">        :param original_tensor_shape: Shape of the original tensor grouped_mask</span>
 <span class="sd">            derives from</span>
+<span class="sd">        :param tensor_idx: optional index this tensor was passed into a tensor</span>
+<span class="sd">            list for mask creation</span>
 <span class="sd">        :return: The values from grouped_mask mapped to a tensor of size</span>
 <span class="sd">            original_tensor_shape</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">grouped_mask</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim</span><span class="p">):</span>
+            <span class="c1"># DW Conv</span>
+            <span class="k">return</span> <span class="n">torch</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+                <span class="n">original_tensor_shape</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">grouped_mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">grouped_mask</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">tensor_idx</span> <span class="ow">and</span> <span class="n">tensor_idx</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stride_grouped_tensors</span><span class="p">:</span>
+            <span class="n">stride</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stride_grouped_tensors</span><span class="p">[</span><span class="n">tensor_idx</span><span class="p">]</span>
+            <span class="n">unstrided_mask_shape</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">dim</span> <span class="o">*</span> <span class="n">stride</span> <span class="k">if</span> <span class="n">dim</span> <span class="o">!=</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">1</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">grouped_mask</span><span class="o">.</span><span class="n">shape</span>
+            <span class="p">]</span>
+            <span class="n">unstrided_mask</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="n">unstrided_mask_shape</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">grouped_mask</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">grouped_mask</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">unstrided_mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span>
+                <span class="n">grouped_mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">grouped_mask</span> <span class="o">=</span> <span class="n">unstrided_mask</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_stride_grouped_tensors</span><span class="p">[</span><span class="n">tensor_idx</span><span class="p">]</span>
+
         <span class="k">return</span> <span class="n">grouped_mask</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate_tensor_group_idxs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_tensors</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+        <span class="n">included_idxs</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">idx</span> <span class="k">for</span> <span class="n">idx_group</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tensor_group_idxs</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">idx_group</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">included_idxs</span><span class="p">):</span>
+            <span class="n">types</span> <span class="o">=</span> <span class="p">[</span><span class="nb">type</span><span class="p">(</span><span class="n">idx</span><span class="p">)</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">included_idxs</span><span class="p">]</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;all indices in tensor_group_idxs must be ints found </span><span class="si">{</span><span class="n">types</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">included_idxs</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">included_idxs</span><span class="p">)):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;indices may not be repeated in tensor_group_idxs. Found indices &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">included_idxs</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">included_idxs</span><span class="p">)</span> <span class="o">!=</span> <span class="n">num_tensors</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Expected </span><span class="si">{</span><span class="n">num_tensors</span><span class="si">}</span><span class="s2"> indices in tensor_group_idxs for &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">num_tensors</span><span class="si">}</span><span class="s2">. Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">included_idxs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">expected_idxs</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">num_tensors</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">expected_idxs</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">included_idxs</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;tensor_group_idxs must include indices in range [0, num_tensors] &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot; found indices: </span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">included_idxs</span><span class="p">))</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dim_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
@@ -621,11 +783,14 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">grouped_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">original_tensor_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">tensor_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param grouped_mask: A binary mask the size of a tensor from group_tensor</span>
 <span class="sd">        :param original_tensor_shape: Shape of the original tensor grouped_mask</span>
 <span class="sd">            derives from</span>
+<span class="sd">        :param tensor_idx: optional index this tensor was passed into a tensor</span>
+<span class="sd">            list for mask creation</span>
 <span class="sd">        :return: The values from grouped_mask mapped to a tensor of size</span>
 <span class="sd">            original_tensor_shape</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -685,10 +850,119 @@
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="FourBlockMaskCreator"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.FourBlockMaskCreator">[docs]</a><span class="k">class</span> <span class="nc">FourBlockMaskCreator</span><span class="p">(</span><span class="n">GroupedPruningMaskCreator</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    semi-structured sparsity mask creator that groups sparsity blocks in groups of four</span>
+<span class="sd">    along the input-channel dimension (assumed to be dimension 1 for pytorch)</span>
+
+<span class="sd">    Equivalent to BlockPruningMaskCreator([1, 4]) without restrictions on number</span>
+<span class="sd">    of dimensions, or divisibility</span>
+
+<span class="sd">    :param grouping_fn_name: The name of the torch grouping function to reduce</span>
+<span class="sd">        dimensions by</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">grouping_fn_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span> <span class="o">=</span> <span class="n">grouping_fn_name</span>
+
+<div class="viewcode-block" id="FourBlockMaskCreator.group_tensor"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.mask_creator_pruning.FourBlockMaskCreator.group_tensor">[docs]</a>    <span class="k">def</span> <span class="nf">group_tensor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tensor</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param tensor: The tensor to transform</span>
+<span class="sd">        :return: The mean values of the tensor grouped by blocks of shape</span>
+<span class="sd">            self._block_shape</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># permute input channel dim to last dimension</span>
+            <span class="n">permute_val</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">dim</span><span class="p">()))</span>
+            <span class="k">del</span> <span class="n">permute_val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">permute_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="n">permute_val</span><span class="p">)</span>
+
+        <span class="n">remainder</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">%</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="n">remainder</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># pad with zeros to make masks add to 4</span>
+            <span class="n">pad_num</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">remainder</span>
+            <span class="n">padded_tensor</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="o">*</span><span class="n">tensor</span><span class="o">.</span><span class="n">shape</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+                <span class="n">tensor</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span> <span class="o">+</span> <span class="n">pad_num</span><span class="p">,</span>
+                <span class="n">device</span><span class="o">=</span><span class="n">tensor</span><span class="o">.</span><span class="n">device</span><span class="p">,</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">tensor</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">padded_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">pad_num</span><span class="p">]</span> <span class="o">=</span> <span class="n">tensor</span>
+            <span class="n">padded_tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">pad_num</span><span class="p">:]</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+                <span class="c1"># mean of remainder input channel dims</span>
+                <span class="n">tensor</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="o">-</span><span class="n">remainder</span><span class="p">:],</span>
+                <span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">tensor</span> <span class="o">=</span> <span class="n">padded_tensor</span>
+
+        <span class="n">blocked_tensor</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>
+        <span class="n">reduced_blocks</span> <span class="o">=</span> <span class="n">GroupedPruningMaskCreator</span><span class="o">.</span><span class="n">reduce_tensor</span><span class="p">(</span>
+            <span class="n">blocked_tensor</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_grouping_fn_name</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">reduced_blocks</span><span class="o">.</span><span class="n">type</span><span class="p">(</span><span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="p">())</span></div>
+
+    <span class="k">def</span> <span class="nf">_map_mask_to_tensor</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">grouped_mask</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">original_tensor_shape</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Size</span><span class="p">,</span>
+        <span class="n">tensor_idx</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param grouped_mask: A binary mask the size of a tensor from group_tensor</span>
+<span class="sd">        :param original_tensor_shape: Shape of the original tensor grouped_mask</span>
+<span class="sd">            derives from</span>
+<span class="sd">        :param tensor_idx: optional index this tensor was passed into a tensor</span>
+<span class="sd">            list for mask creation</span>
+<span class="sd">        :return: The values from grouped_mask mapped to a tensor of size</span>
+<span class="sd">            original_tensor_shape</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># expand so every element has a corresponding value in the original tensor</span>
+        <span class="n">block_mask</span> <span class="o">=</span> <span class="n">grouped_mask</span><span class="o">.</span><span class="n">expand</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+
+        <span class="c1"># adjust for permuted shape if necessary</span>
+        <span class="n">original_tensor_shape</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">original_tensor_shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="k">del</span> <span class="n">original_tensor_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># adjust for padding if necessary</span>
+        <span class="n">remainder</span> <span class="o">=</span> <span class="n">original_tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">%</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="n">remainder</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">original_tensor_shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">remainder</span>
+
+        <span class="c1"># set to original shape</span>
+        <span class="n">block_mask</span> <span class="o">=</span> <span class="n">block_mask</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)</span>
+
+        <span class="c1"># remove padding if necessary</span>
+        <span class="k">if</span> <span class="n">remainder</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pad_num</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">-</span> <span class="n">remainder</span>
+            <span class="n">block_mask</span> <span class="o">=</span> <span class="n">block_mask</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="p">:</span><span class="o">-</span><span class="n">pad_num</span><span class="p">]</span>
+
+        <span class="c1"># repermute mask if necessary</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">permute_val</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">original_tensor_shape</span><span class="p">)))</span>
+            <span class="k">del</span> <span class="n">permute_val</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">permute_val</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">permute_val</span><span class="p">))</span>
+            <span class="n">block_mask</span> <span class="o">=</span> <span class="n">block_mask</span><span class="o">.</span><span class="n">permute</span><span class="p">(</span><span class="o">*</span><span class="n">permute_val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">block_mask</span>
+
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="s2">&quot;block&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+
+
 <span class="n">mask_creator_name_to_constructor_lambda</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;unstructured&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">UnstructuredPruningMaskCreator</span><span class="p">(),</span>
     <span class="s2">&quot;channel&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">DimensionSparsityMaskCreator</span><span class="p">(</span><span class="s2">&quot;channel&quot;</span><span class="p">),</span>
     <span class="s2">&quot;filter&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">DimensionSparsityMaskCreator</span><span class="p">(</span><span class="s2">&quot;filter&quot;</span><span class="p">),</span>
+    <span class="s2">&quot;block&quot;</span><span class="p">:</span> <span class="k">lambda</span><span class="p">:</span> <span class="n">FourBlockMaskCreator</span><span class="p">(),</span>
 <span class="p">}</span>
 
 

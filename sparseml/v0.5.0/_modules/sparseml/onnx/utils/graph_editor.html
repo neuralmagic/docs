@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.5.0.20211115 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.onnx.utils.graph_editor &mdash; SparseML 0.5.0.20211119 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -141,6 +141,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">()</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">nodes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: ordered collection of nodes in this graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span>
+
 <div class="viewcode-block" id="ONNXGraph.update"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">ModelProto</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Update the graph state based on the model this graph represents or</span>
@@ -161,13 +168,22 @@
             <span class="n">init</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">init</span> <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span>
         <span class="p">}</span></div>
 
-<div class="viewcode-block" id="ONNXGraph.get_init_by_name"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_init_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_init_by_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">]:</span>
+<div class="viewcode-block" id="ONNXGraph.get_init_by_name"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_init_by_name">[docs]</a>    <span class="k">def</span> <span class="nf">get_init_by_name</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">allow_optional</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param name: name of initializer</span>
+<span class="sd">        :param allow_optional: if True and the given name is not found as an</span>
+<span class="sd">            initializer, None will be returned. Otherwise a KeyError will be raised</span>
 <span class="sd">        :return: tensor of initializer with given name, returns None if the name does</span>
 <span class="sd">            not exist in the cached graph</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+        <span class="n">init</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_name_to_initializer</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">allow_optional</span> <span class="ow">and</span> <span class="n">init</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unable to find initializer </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> in ONNX model&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">init</span></div>
 
 <div class="viewcode-block" id="ONNXGraph.get_node_by_output_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.graph_editor.ONNXGraph.get_node_by_output_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_node_by_output_id</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
