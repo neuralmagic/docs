@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.sparsification.recipe_builder &mdash; SparseML 0.9.0.20211124 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> SparseML<img src="../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.sparsification.recipe_builder</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.sparsification.recipe_builder</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Classes for building YAML SparseML recipes without instantiating specific modifier\</span>
+<span class="sd">implementations</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">textwrap</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">yaml</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseModifier</span><span class="p">,</span> <span class="n">ModifierProp</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification.model_info</span> <span class="kn">import</span> <span class="n">ModelInfo</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification.modifier_epoch</span> <span class="kn">import</span> <span class="n">EpochRangeModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification.modifier_lr</span> <span class="kn">import</span> <span class="n">SetLearningRateModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification.modifier_pruning</span> <span class="kn">import</span> <span class="n">GMPruningModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">create_parent_dirs</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ModifierYAMLBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RecipeYAMLBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PruningRecipeBuilder&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;to_yaml_str&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="ModifierYAMLBuilder"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.ModifierYAMLBuilder">[docs]</a><span class="k">class</span> <span class="nc">ModifierYAMLBuilder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for building a YAML string representation of a modifier by setting</span>
+<span class="sd">    various properties of it. Properties are automatically inferred through the</span>
+<span class="sd">    serializable ModifierProps of the given modifier. They can be accessed through</span>
+<span class="sd">    auto-generated set_{name} and get_{name}.</span>
+
+<span class="sd">    :param modifier_class: reference to the class of modifier this object should create</span>
+<span class="sd">        a YAML representation for</span>
+<span class="sd">    :param kwargs: modifier property kwargs to values to initialize them. each key must</span>
+<span class="sd">        be a valid serializable ModifierProp of the modifier class</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modifier_class</span><span class="p">:</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="k">assert</span> <span class="nb">issubclass</span><span class="p">(</span>
+            <span class="n">modifier_class</span><span class="p">,</span> <span class="n">BaseModifier</span>
+        <span class="p">),</span> <span class="s2">&quot;a subclass of Modifier must be used to instantiate a ModifierYAMLBuilder&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span> <span class="o">=</span> <span class="n">modifier_class</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_property_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_properties</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">modifier_class</span><span class="p">):</span>
+            <span class="n">attr_obj</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">modifier_class</span><span class="p">,</span> <span class="n">attr</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attr_obj</span><span class="p">,</span> <span class="n">ModifierProp</span><span class="p">)</span> <span class="ow">and</span> <span class="n">attr_obj</span><span class="o">.</span><span class="n">serializable</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_property_names</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">attr</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_property_names</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Modifier </span><span class="si">{</span><span class="n">modifier_class</span><span class="si">}</span><span class="s2"> has no serializable &quot;</span> <span class="sa">f</span><span class="s2">&quot;property </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__dict__</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_property_names</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_properties</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">item</span> <span class="o">==</span> <span class="s2">&quot;__name__&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span><span class="si">}</span><span class="s2"> has no &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;property </span><span class="si">{</span><span class="n">item</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;_modifier_class&quot;</span><span class="p">,</span> <span class="s2">&quot;_modifier_property_names&quot;</span><span class="p">,</span> <span class="s2">&quot;_properties&quot;</span><span class="p">]:</span>
+            <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">key</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_property_names</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_properties</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> has no &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;property </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+<div class="viewcode-block" id="ModifierYAMLBuilder.copy"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.ModifierYAMLBuilder.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;ModifierYAMLBuilder&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: newly constructed ModifierYAMLBuilder with the same base class and</span>
+<span class="sd">            properties</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">properties</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_properties</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifier_class</span><span class="p">,</span> <span class="o">**</span><span class="n">properties</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">modifier_class</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Type</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the class of the Modifier for which this object is building a string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span>
+
+<div class="viewcode-block" id="ModifierYAMLBuilder.build_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.ModifierYAMLBuilder.build_yaml_str">[docs]</a>    <span class="k">def</span> <span class="nf">build_yaml_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: string representation of the built Modifier as a YAML list item</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">class_name_yaml</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;- !</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_modifier_class</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="n">properties_yaml</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">to_yaml_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_properties</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="p">)</span>
+        <span class="n">properties_yaml</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">properties_yaml</span><span class="p">,</span> <span class="s2">&quot;  &quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">class_name_yaml</span><span class="si">}</span><span class="se">\n</span><span class="si">{</span><span class="n">properties_yaml</span><span class="si">}</span><span class="s2">&quot;</span></div></div>
+
+
+<div class="viewcode-block" id="RecipeYAMLBuilder"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder">[docs]</a><span class="k">class</span> <span class="nc">RecipeYAMLBuilder</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for building a YAML SparseML recipe with standardized structure</span>
+
+<span class="sd">    :param variables: dict of string initial variable names to non-modifier recipe</span>
+<span class="sd">        variables to be included. Default is an empty dict</span>
+<span class="sd">     :param modifier_groups: dict of string initial modifier group names to a list</span>
+<span class="sd">        of ModifierYAMLBuilder objects of modifiers to be included in that group.</span>
+<span class="sd">        All modifier group names must contain &#39;modifiers&#39; in the string. Default is</span>
+<span class="sd">        an empty dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">variables</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">modifier_groups</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">ModifierYAMLBuilder</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span> <span class="o">=</span> <span class="n">variables</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span> <span class="o">=</span> <span class="n">modifier_groups</span> <span class="ow">or</span> <span class="p">{}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.add_modifier_group"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.add_modifier_group">[docs]</a>    <span class="k">def</span> <span class="nf">add_modifier_group</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">modifier_builders</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ModifierYAMLBuilder</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;RecipeYAMLBuilder&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Adds a modifier group with the given name to this builder</span>
+
+<span class="sd">        :param name: name of new modifier group</span>
+<span class="sd">        :param modifier_builders: list of modifier builder objects to initialize</span>
+<span class="sd">            this group with. Default is an empty list</span>
+<span class="sd">        :return: a reference to this object with the modifier group now added</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_modifier_group_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> is already a modifier group name in this RecipeYAMLBuilder&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">modifier_builders</span> <span class="o">=</span> <span class="n">modifier_builders</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">modifier_builders</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.get_modifier_group"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.get_modifier_group">[docs]</a>    <span class="k">def</span> <span class="nf">get_modifier_group</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">ModifierYAMLBuilder</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: name of the modifier group to retrieve the modifier builders of</span>
+<span class="sd">        :return: reference to the list of modifier builders currently in this</span>
+<span class="sd">            modifier group. if the modifier group does not exist, None will be</span>
+<span class="sd">            returned</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.get_modifier_builders"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.get_modifier_builders">[docs]</a>    <span class="k">def</span> <span class="nf">get_modifier_builders</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">modifier_type</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">modifier_groups</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param modifier_type: optional type of modifier to filter by. Can be</span>
+<span class="sd">            a type reference that will match if the modifier is of that type</span>
+<span class="sd">            or a subclass of it or a string where it will match if the class</span>
+<span class="sd">            is exactly that name. Defaults to None</span>
+<span class="sd">        :param modifier_groups: optional list of modifier group names to match</span>
+<span class="sd">            to. Defaults to None</span>
+<span class="sd">        :return: all modifier builders in this recipe, filtered by type and group</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modifier_groups</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">modifier_groups</span> <span class="o">=</span> <span class="p">[</span><span class="n">modifier_groups</span><span class="p">]</span>
+
+        <span class="n">modifier_builders</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">builders</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">modifier_groups</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">group</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">modifier_groups</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">for</span> <span class="n">builder</span> <span class="ow">in</span> <span class="n">builders</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">modifier_type</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_builder_is_instance</span><span class="p">(</span>
+                    <span class="n">builder</span><span class="p">,</span> <span class="n">modifier_type</span>
+                <span class="p">):</span>
+                    <span class="k">continue</span>
+                <span class="n">modifier_builders</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">builder</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">modifier_builders</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.get_variable"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.get_variable">[docs]</a>    <span class="k">def</span> <span class="nf">get_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">default</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: name of the recipe variable to return</span>
+<span class="sd">        :param default: default value that should be returned if the given</span>
+<span class="sd">            name is not a current variable</span>
+<span class="sd">        :return: current value of the given variable, or the default if</span>
+<span class="sd">            the variable is not set in this builder</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">default</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.has_variable"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.has_variable">[docs]</a>    <span class="k">def</span> <span class="nf">has_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param name: name of the recipe variable to check</span>
+<span class="sd">        :return: True if this recipe builder has a variable with the given name.</span>
+<span class="sd">            False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.set_variable"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.set_variable">[docs]</a>    <span class="k">def</span> <span class="nf">set_variable</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;RecipeYAMLBuilder&quot;</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sets the given variable name to the given value</span>
+
+<span class="sd">        :param name: variable name to set</span>
+<span class="sd">        :param val: value to set the variable to</span>
+<span class="sd">        :return: a reference to this object with the variable now set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.build_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.build_yaml_str">[docs]</a>    <span class="k">def</span> <span class="nf">build_yaml_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: yaml string representation of this recipe in standard format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># write variables</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="p">[</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">to_yaml_str</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+        <span class="p">)</span>
+        <span class="c1"># write modifier groups</span>
+        <span class="k">for</span> <span class="n">group</span><span class="p">,</span> <span class="n">builders</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">builders</span><span class="p">:</span>
+                <span class="k">continue</span>  <span class="c1"># do not write empty groups</span>
+            <span class="n">modifiers_yaml</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">builder</span><span class="o">.</span><span class="n">build_yaml_str</span><span class="p">()</span> <span class="k">for</span> <span class="n">builder</span> <span class="ow">in</span> <span class="n">builders</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">modifiers_yaml</span> <span class="o">=</span> <span class="n">textwrap</span><span class="o">.</span><span class="n">indent</span><span class="p">(</span><span class="n">modifiers_yaml</span><span class="p">,</span> <span class="s2">&quot;  &quot;</span><span class="p">)</span>
+            <span class="n">yaml_str</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="si">{</span><span class="n">group</span><span class="si">}</span><span class="s2">:</span><span class="se">\n</span><span class="si">{</span><span class="n">modifiers_yaml</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">return</span> <span class="n">yaml_str</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.save_yaml"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.save_yaml">[docs]</a>    <span class="k">def</span> <span class="nf">save_yaml</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves this recipe as a yaml file to the given path</span>
+
+<span class="sd">        :param file_path: file path to save file to. if no &#39;.&#39; character is found</span>
+<span class="sd">            in the path, &#39;.yaml&#39; will be added to the path</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="n">file_path</span> <span class="o">+=</span> <span class="s2">&quot;.yaml&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_file_str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">build_yaml_str</span><span class="p">(),</span> <span class="n">file_path</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RecipeYAMLBuilder.save_markdown"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.RecipeYAMLBuilder.save_markdown">[docs]</a>    <span class="k">def</span> <span class="nf">save_markdown</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Saves this recipe as a markdown file to the given path with the</span>
+<span class="sd">        recipe yaml contained in the frontmatter</span>
+
+<span class="sd">        :param file_path: file path to save file to. if no &#39;.&#39; character is found</span>
+<span class="sd">            in the path, &#39;.md&#39; will be added to the path</span>
+<span class="sd">        :param desc: optional description to add to the markdown file after the recipe</span>
+<span class="sd">            YAML in the frontmatter. Default is empty string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;.&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">file_path</span><span class="p">:</span>
+            <span class="n">file_path</span> <span class="o">+=</span> <span class="s2">&quot;.md&quot;</span>
+
+        <span class="n">md_content</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;---</span><span class="se">\n</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">build_yaml_str</span><span class="p">()</span><span class="si">}</span><span class="se">\n</span><span class="s2">---</span><span class="se">\n</span><span class="si">{</span><span class="n">desc</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_file_str</span><span class="p">(</span><span class="n">md_content</span><span class="p">,</span> <span class="n">file_path</span><span class="p">)</span></div>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_save_file_str</span><span class="p">(</span><span class="n">content</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">file</span><span class="p">:</span>
+            <span class="n">file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">content</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_validate_modifier_group_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">if</span> <span class="s2">&quot;modifiers&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;modifier groups must contain &#39;modifiers&#39; in their name received &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;group with name: </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_modifier_builder_is_instance</span><span class="p">(</span>
+        <span class="n">builder</span><span class="p">:</span> <span class="n">ModifierYAMLBuilder</span><span class="p">,</span> <span class="n">type_</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Type</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">builder_class</span> <span class="o">=</span> <span class="n">builder</span><span class="o">.</span><span class="n">modifier_class</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">type_</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">builder_class</span><span class="o">.</span><span class="vm">__name__</span> <span class="o">==</span> <span class="n">type_</span>
+        <span class="k">return</span> <span class="n">builder_class</span> <span class="ow">is</span> <span class="n">type_</span> <span class="ow">or</span> <span class="nb">issubclass</span><span class="p">(</span><span class="n">builder_class</span><span class="p">,</span> <span class="n">type_</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;RecipeYAMLBuilder variables object must be a Dict &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;found type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_variables</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">builders</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_modifier_groups</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_validate_modifier_group_name</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">builders</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;All modifier groups in RecipeYAMLBuilder must contain a list&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;of ModifierYAMLBuilder objects. Group </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> has value of &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">builders</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">builder</span> <span class="ow">in</span> <span class="n">builders</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">builder</span><span class="p">,</span> <span class="n">ModifierYAMLBuilder</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;All modifier groups in RecipeYAMLBuilder must contain a &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;list of ModifierYAMLBuilder objects. Group </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2"> &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;contains an element of type </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">builder</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PruningRecipeBuilder"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.PruningRecipeBuilder">[docs]</a><span class="k">class</span> <span class="nc">PruningRecipeBuilder</span><span class="p">(</span><span class="n">RecipeYAMLBuilder</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Builds a basic, editable pruning recipe based on a given model info</span>
+<span class="sd">    standardized variables may be modified by constructor, or later on</span>
+
+<span class="sd">    | Sample yaml:</span>
+<span class="sd">    |   num_epochs: 100</span>
+<span class="sd">    |   init_lr: 0.0001</span>
+<span class="sd">    |   pruning_start_target: 0.0</span>
+<span class="sd">    |   pruning_end_target: 0.6</span>
+<span class="sd">    |   pruning_update_frequency: 0.5</span>
+<span class="sd">    |   base_target_sparsity: 0.8</span>
+<span class="sd">    |   mask_type: unstructured</span>
+<span class="sd">    |</span>
+<span class="sd">    |   training_modifiers:</span>
+<span class="sd">    |     - !EpochRangeModifier</span>
+<span class="sd">    |       start_epoch: 0.0</span>
+<span class="sd">    |       end_epoch: eval(num_epochs)</span>
+<span class="sd">    |</span>
+<span class="sd">    |     - !SetLearningRateModifier</span>
+<span class="sd">    |       start_epoch: 0.0</span>
+<span class="sd">    |       learning_rate: eval(init_lr)</span>
+<span class="sd">    |</span>
+<span class="sd">    |   pruning_modifiers:</span>
+<span class="sd">    |     - !GMPruningModifier</span>
+<span class="sd">    |       params:</span>
+<span class="sd">    |         - ...  # based on prunable param names found in ModelInfo</span>
+<span class="sd">    |       init_sparsity: 0.0</span>
+<span class="sd">    |       final_sparsity: eval(base_target_sparsity)</span>
+<span class="sd">    |       start_epoch: eval(pruning_start_target * num_epochs)</span>
+<span class="sd">    |       end_epoch: eval(pruning_end_target * num_epochs)</span>
+<span class="sd">    |       update_frequency: eval(pruning_update_frequency)</span>
+<span class="sd">    |       mask_type: eval(mask_type)</span>
+
+<span class="sd">    :param model_info: model info object to extract layer information from</span>
+<span class="sd">    :param num_epochs: total number of epochs the recipe should run for. Default is 100</span>
+<span class="sd">    :param init_lr: initial learning rate value. Default is 0.0001</span>
+<span class="sd">    :param pruning_start_target: epoch that pruning should begin. this value</span>
+<span class="sd">        should be in range [0.0,1.0] representing the fraction of num_epochs</span>
+<span class="sd">        that the start epoch should be. (start_epoch=pruning_start_target*num_epochs).</span>
+<span class="sd">        Default is 0.0</span>
+<span class="sd">    :param pruning_end_target: epoch that pruning should complete. this value</span>
+<span class="sd">        should be in range [0.0,1.0] representing the fraction of num_epochs</span>
+<span class="sd">        that the end epoch should be. (end_epoch=pruning_end_target*num_epochs).</span>
+<span class="sd">        Default is 0.6</span>
+<span class="sd">    :param base_target_sparsity: target sparsity for pruning layers to. Default is 0.8</span>
+<span class="sd">    :param pruning_update_frequency: udpate frequency for pruning modifier.</span>
+<span class="sd">        Default is 0.5</span>
+<span class="sd">    :param mask_type: mask type to set the pruning modifier to. Default is unstructured</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">,</span>
+        <span class="n">num_epochs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">100.0</span><span class="p">,</span>
+        <span class="n">init_lr</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0001</span><span class="p">,</span>
+        <span class="n">pruning_start_target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">pruning_end_target</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+        <span class="n">base_target_sparsity</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.8</span><span class="p">,</span>
+        <span class="n">pruning_update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">mask_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_epochs</span> <span class="o">=</span> <span class="n">num_epochs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">init_lr</span> <span class="o">=</span> <span class="n">init_lr</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pruning_start_target</span> <span class="o">=</span> <span class="n">pruning_start_target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pruning_end_target</span> <span class="o">=</span> <span class="n">pruning_end_target</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pruning_update_frequency</span> <span class="o">=</span> <span class="n">pruning_update_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">base_target_sparsity</span> <span class="o">=</span> <span class="n">base_target_sparsity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mask_type</span> <span class="o">=</span> <span class="n">mask_type</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">variables</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">num_epochs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_epochs</span><span class="p">,</span>
+                <span class="n">init_lr</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">init_lr</span><span class="p">,</span>
+                <span class="n">pruning_start_target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pruning_start_target</span><span class="p">,</span>
+                <span class="n">pruning_end_target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pruning_end_target</span><span class="p">,</span>
+                <span class="n">pruning_update_frequency</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">pruning_update_frequency</span><span class="p">,</span>
+                <span class="n">base_target_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">base_target_sparsity</span><span class="p">,</span>
+                <span class="n">mask_type</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">mask_type</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">modifier_groups</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span>
+                <span class="n">training_modifiers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_training_modifiers</span><span class="p">(),</span>
+                <span class="n">pruning_modifiers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_pruning_modifiers</span><span class="p">(</span><span class="n">model_info</span><span class="p">),</span>
+            <span class="p">),</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="c1"># allow updates to base variables to propagate to the internal vars dict</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">has_variable</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">set_variable</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_base_training_modifiers</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ModifierYAMLBuilder</span><span class="p">]:</span>
+        <span class="n">epoch_modifier</span> <span class="o">=</span> <span class="n">ModifierYAMLBuilder</span><span class="p">(</span>
+            <span class="n">EpochRangeModifier</span><span class="p">,</span> <span class="n">start_epoch</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">end_epoch</span><span class="o">=</span><span class="s2">&quot;eval(num_epochs)&quot;</span>
+        <span class="p">)</span>
+        <span class="n">init_lr_modifier</span> <span class="o">=</span> <span class="n">ModifierYAMLBuilder</span><span class="p">(</span>
+            <span class="n">SetLearningRateModifier</span><span class="p">,</span>
+            <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;eval(init_lr)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">epoch_modifier</span><span class="p">,</span> <span class="n">init_lr_modifier</span><span class="p">]</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_base_pruning_modifiers</span><span class="p">(</span><span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ModifierYAMLBuilder</span><span class="p">]:</span>
+        <span class="n">pruning_modifier</span> <span class="o">=</span> <span class="n">ModifierYAMLBuilder</span><span class="p">(</span>
+            <span class="n">GMPruningModifier</span><span class="p">,</span>
+            <span class="n">params</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">model_info</span><span class="o">.</span><span class="n">get_prunable_param_names</span><span class="p">()),</span>
+            <span class="n">init_sparsity</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">final_sparsity</span><span class="o">=</span><span class="s2">&quot;eval(base_target_sparsity)&quot;</span><span class="p">,</span>
+            <span class="n">start_epoch</span><span class="o">=</span><span class="s2">&quot;eval(pruning_start_target * num_epochs)&quot;</span><span class="p">,</span>
+            <span class="n">end_epoch</span><span class="o">=</span><span class="s2">&quot;eval(pruning_end_target * num_epochs)&quot;</span><span class="p">,</span>
+            <span class="n">update_frequency</span><span class="o">=</span><span class="s2">&quot;eval(pruning_update_frequency)&quot;</span><span class="p">,</span>
+            <span class="n">mask_type</span><span class="o">=</span><span class="s2">&quot;eval(mask_type)&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">pruning_modifier</span><span class="p">]</span>
+
+<div class="viewcode-block" id="PruningRecipeBuilder.build_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.PruningRecipeBuilder.build_yaml_str">[docs]</a>    <span class="k">def</span> <span class="nf">build_yaml_str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: yaml string representation of this recipe in standard format</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">pruning_modifier</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_modifier_builders</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="n">pruning_modifier</span><span class="o">.</span><span class="n">params</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">params</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="n">pruning_modifier</span><span class="o">.</span><span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">params</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">build_yaml_str</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="to_yaml_str"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.recipe_builder.to_yaml_str">[docs]</a><span class="k">def</span> <span class="nf">to_yaml_str</span><span class="p">(</span><span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param val: value to get yaml str value of</span>
+<span class="sd">    :return: direct str cast of val if it is an int, float, or bool, otherwise</span>
+<span class="sd">        the stripped output of yaml.dump</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">yaml_str</span> <span class="o">=</span> <span class="n">yaml</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">val</span><span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="p">(</span><span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">)):</span>
+            <span class="n">yaml_str</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="o">+</span> <span class="n">yaml_str</span>
+        <span class="k">return</span> <span class="n">yaml_str</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: main
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../v0.8.0/index.html">v0.8.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="recipe_builder.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

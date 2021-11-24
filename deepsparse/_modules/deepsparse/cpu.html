@@ -199,6 +199,7 @@
     <span class="s2">"cpu_vnni_compatible"</span><span class="p">,</span>
     <span class="s2">"cpu_avx2_compatible"</span><span class="p">,</span>
     <span class="s2">"cpu_avx512_compatible"</span><span class="p">,</span>
+    <span class="s2">"print_hardware_capability"</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -243,7 +244,7 @@
     <span class="k">def</span> <span class="fm">__setattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
         <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">"__dict__"</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">AttributeError</span><span class="p">(</span>
-                <span class="s2">"neuralmagic: architecture: can't modify </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+                <span class="s2">"Neural Magic: Architecture: can't modify </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
             <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="nb">super</span><span class="p">(</span><span class="n">architecture</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__setattr__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span>
@@ -273,7 +274,7 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_physical_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">"""</span>
-<span class="sd">        :return: the totla number of cores available on the current machine</span>
+<span class="sd">        :return: the total number of cores available on the current machine</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_socket</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_sockets</span></div>
 
@@ -289,7 +290,7 @@
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
-            <span class="s2">"neuralmagic: encountered exception while trying read arch.bin: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="s2">"Neural Magic: Encountered exception while trying read arch.bin: </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">ex</span>
             <span class="p">)</span>
         <span class="p">)</span>
@@ -311,21 +312,21 @@
 <span class="sd">    :return: an instance of the architecture class</span>
 <span class="sd">    """</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">sys</span><span class="o">.</span><span class="n">platform</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">"linux"</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s2">"neuralmagic: only Linux platforms are supported."</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span><span class="s2">"Neural Magic: Only Linux is supported."</span><span class="p">)</span>
 
     <span class="n">arch</span> <span class="o">=</span> <span class="n">_parse_arch_bin</span><span class="p">()</span>
     <span class="n">avx_type_override</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"NM_ARCH"</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">avx_type_override</span> <span class="ow">and</span> <span class="n">avx_type_override</span> <span class="o">!=</span> <span class="n">arch</span><span class="o">.</span><span class="n">isa</span><span class="p">:</span>
         <span class="nb">print</span><span class="p">(</span>
-            <span class="s2">"neuralmagic: using env variable NM_ARCH=</span><span class="si">{}</span><span class="s2"> for avx_type"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="s2">"Neural Magic: Using env variable NM_ARCH=</span><span class="si">{}</span><span class="s2"> for avx_type"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
                 <span class="n">avx_type_override</span>
             <span class="p">)</span>
         <span class="p">)</span>
         <span class="k">if</span> <span class="n">avx_type_override</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_VECTOR_EXTENSIONS</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
                 <span class="p">(</span>
-                    <span class="s2">"neuralmagic: invalid avx instruction set '</span><span class="si">{}</span><span class="s2">' must be "</span>
+                    <span class="s2">"Neural Magic: Invalid AVX instruction set '</span><span class="si">{}</span><span class="s2">' must be "</span>
                     <span class="s2">"one of </span><span class="si">{}</span><span class="s2">."</span>
                 <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">avx_type_override</span><span class="p">,</span> <span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">VALID_VECTOR_EXTENSIONS</span><span class="p">))</span>
             <span class="p">)</span>
@@ -333,7 +334,7 @@
 
     <span class="k">if</span> <span class="n">arch</span><span class="o">.</span><span class="n">isa</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">VALID_VECTOR_EXTENSIONS</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
-            <span class="s2">"neuralmagic: cannot determine avx instruction set. Set NM_ARCH to one of"</span>
+            <span class="s2">"Neural Magic: The AVX instruction set is unknown. Set NM_ARCH to one of"</span>
             <span class="s2">" </span><span class="si">{}</span><span class="s2"> to continue."</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="s2">","</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">VALID_VECTOR_EXTENSIONS</span><span class="p">))</span>
         <span class="p">)</span>
 
@@ -384,6 +385,31 @@
     <span class="n">arch</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
 
     <span class="k">return</span> <span class="n">arch</span><span class="o">.</span><span class="n">available_cores_per_socket</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">isa</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">vnni</span></div>
+
+
+<div class="viewcode-block" id="print_hardware_capability"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.print_hardware_capability">[docs]</a><span class="k">def</span> <span class="nf">print_hardware_capability</span><span class="p">():</span>
+    <span class="sd">"""</span>
+<span class="sd">    Print out the detected CPU's hardware capability and general support for</span>
+<span class="sd">    model performance within the DeepSparse Engine.</span>
+<span class="sd">    """</span>
+    <span class="n">arch</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
+    <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">vendor</span><span class="si">}</span><span class="s2"> CPU detected with </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_physical_cores</span><span class="si">}</span><span class="s2"> cores "</span>
+        <span class="sa">f</span><span class="s2">"and </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_sockets</span><span class="si">}</span><span class="s2"> sockets available.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"DeepSparse FP32 model performance supported: "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">"</span>
+        <span class="s2">"DeepSparse INT8 (quantized) model performance supported: "</span>
+        <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">cpu_vnni_compatible</span><span class="p">()</span><span class="si">}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">"</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cpu_avx512_compatible</span><span class="p">():</span>
+        <span class="n">message</span> <span class="o">+=</span> <span class="p">(</span>
+            <span class="s2">"AVX2 instruction set detected. Performance speedups are available, "</span>
+            <span class="s2">"but inference time will be slower compared with an AVX-512 system.</span><span class="se">\n\n</span><span class="s2">"</span>
+        <span class="p">)</span>
+
+    <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">"Additional CPU info: </span><span class="si">{</span><span class="n">arch</span><span class="si">}</span><span class="s2">"</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
 </pre>
         </div>
        </div>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils package &mdash; SparseML 0.9.0.20211119 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils package &mdash; SparseML 0.9.0.20211124 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../_static/favicon.ico"/>
@@ -52,6 +52,7 @@
 <ul class="current">
 <li class="toctree-l1 current"><a class="reference internal" href="sparseml.html">sparseml package</a><ul class="current">
 <li class="toctree-l2 current"><a class="reference internal" href="sparseml.html#subpackages">Subpackages</a><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="sparseml.benchmark.html">sparseml.benchmark package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sparseml.deepsparse.html">sparseml.deepsparse package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sparseml.framework.html">sparseml.framework package</a></li>
 <li class="toctree-l3"><a class="reference internal" href="sparseml.keras.html">sparseml.keras package</a></li>
@@ -2005,6 +2006,332 @@ values for each detector in the Yolo model.</p></li>
 </dd></dl>
 
 </div>
+<div class="section" id="module-sparseml.pytorch.utils.mfac_helpers">
+<span id="sparseml-pytorch-utils-mfac-helpers-module"></span><h2>sparseml.pytorch.utils.mfac_helpers module<a class="headerlink" href="#module-sparseml.pytorch.utils.mfac_helpers" title="Permalink to this headline"></a></h2>
+<p>Helper functions for performing Matrix-Free Approximate Curvature (M-FAC)
+pruning.</p>
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverse">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">FisherInverse</span></code><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverse"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">abc.ABC</span></code></p>
+<p>Abstract class for working with the inverse Fisher information matrix. Storing
+the full matrix is not a requirement.</p>
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverse.diag">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">diag</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span> &#x2192; <span class="pre">torch.Tensor</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverse.diag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse.diag" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the entries along the diagonal entries of the inverse Fisher matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverse.mul">
+<em class="property"><span class="pre">abstract</span> </em><code class="sig-name descname"><span class="pre">mul</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">torch.Tensor</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverse.mul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse.mul" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> – tensor to multiply with the inverse Fisher matrix</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the matrix multiplied value of x and the inverse Fisher matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFast">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">FisherInverseFast</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFast"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFast" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse" title="sparseml.pytorch.utils.mfac_helpers.FisherInverse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.utils.mfac_helpers.FisherInverse</span></code></a></p>
+<p>Base implementation of computing the inverse Fisher matrix values based on the
+M-FAC paper. Takes O(d * m) memory and O(d * m^2) time to initialize where d
+is the number of parameters and m is the number of gradient samples</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grads</strong> – tensor of gradient samples to compute the inverse Fisher product
+with. Dimension should be (num_samples, num_parameters)</p></li>
+<li><p><strong>damp</strong> – the dampening factor. Default is 1e-5</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.diag">
+<code class="sig-name descname"><span class="pre">diag</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFast.diag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.diag" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the entries along the diagonal entries of the inverse Fisher matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.mul">
+<code class="sig-name descname"><span class="pre">mul</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFast.mul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.mul" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> – tensor to multiply with the inverse Fisher matrix</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the matrix multiplied value of x and the inverse Fisher matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.to">
+<code class="sig-name descname"><span class="pre">to</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFast.to"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFast.to" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>device</strong> – device to move intermediate results to</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>device movement done in place, returns a copy of this object as well</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">FisherInverseFastBlock</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">block_size</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">devices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastBlock"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse" title="sparseml.pytorch.utils.mfac_helpers.FisherInverse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.utils.mfac_helpers.FisherInverse</span></code></a></p>
+<p>Implementation of computing the inverse Fisher matrix values based on the
+M-FAC paper using a given block size to break up computation. Individual
+blocks must fit into GPU memory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grads</strong> – tensor of gradient samples to compute the inverse Fisher product
+with. Dimension should be (num_samples, num_parameters)</p></li>
+<li><p><strong>block_size</strong> – size of blocks to form along diagonal of the Fisher matrix</p></li>
+<li><p><strong>damp</strong> – the dampening factor. Default is 1e-5</p></li>
+<li><p><strong>devices</strong> – list of GPU device ids to use for computation. Default is to use cpu</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock.diag">
+<code class="sig-name descname"><span class="pre">diag</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastBlock.diag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock.diag" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the entries along the diagonal entries of the inverse Fisher matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock.mul">
+<code class="sig-name descname"><span class="pre">mul</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastBlock.mul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastBlock.mul" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> – tensor to multiply with the inverse Fisher matrix</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the matrix multiplied value of x and the inverse Fisher matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">FisherInverseFastPageSwap</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grads</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">damp</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1e-05</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_pages</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">devices</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastPageSwap"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <a class="reference internal" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse" title="sparseml.pytorch.utils.mfac_helpers.FisherInverse"><code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.utils.mfac_helpers.FisherInverse</span></code></a></p>
+<p>Implementation of computing the inverse Fisher matrix values based on the
+M-FAC paper using a given page size to break up computation across samples.
+Pages of gradients must fit into GPU memory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grads</strong> – tensor of gradient samples to compute the inverse Fisher product
+with. Dimension should be (num_samples, num_parameters)</p></li>
+<li><p><strong>damp</strong> – the dampening factor. Default is 1e-5</p></li>
+<li><p><strong>num_pages</strong> – number of pages to break gradient samples into. the number of
+gradients must be divisible by num_pages</p></li>
+<li><p><strong>devices</strong> – list of GPU device ids to use for computation. Default is to use cpu</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap.diag">
+<code class="sig-name descname"><span class="pre">diag</span></code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastPageSwap.diag"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap.diag" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Returns</dt>
+<dd class="field-odd"><p>the entries along the diagonal entries of the inverse Fisher matrix.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap.mul">
+<code class="sig-name descname"><span class="pre">mul</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#FisherInverseFastPageSwap.mul"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverseFastPageSwap.mul" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>x</strong> – tensor to multiply with the inverse Fisher matrix</p>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>the matrix multiplied value of x and the inverse Fisher matrix</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.GradSampler">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">GradSampler</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">data_loader</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss_fn</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#GradSampler"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.GradSampler" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Class for computing gradient samples for a Model given a sample data loader and
+loss function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_loader</strong> – iterator of data samples to use as model inputs and their loss
+targets. Samples can either be single tensors as model input or a list of
+inputs and should be iterated in tuples with their targets</p></li>
+<li><p><strong>loss_fn</strong> – function to be called on model outputs to compute the loss at
+each step</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.GradSampler.iter_module_backwards">
+<code class="sig-name descname"><span class="pre">iter_module_backwards</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_grads</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Generator</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span> </span><span class="pre">None</span><span class="p"><span class="pre">,</span> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#GradSampler.iter_module_backwards"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.GradSampler.iter_module_backwards" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – module to compute gradients for</p></li>
+<li><p><strong>num_grads</strong> – number of gradient samples to compute</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>generator that yields after every gradient is computed with the index
+of the gradient sample number</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.GradSampler.module_backward">
+<code class="sig-name descname"><span class="pre">module_backward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_outputs</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">targets</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#GradSampler.module_backward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.GradSampler.module_backward" title="Permalink to this definition"></a></dt>
+<dd><p>Computes module loss based on the given module outputs, target data and loss
+function</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module_outputs</strong> – outputs of a forward pass from a module</p></li>
+<li><p><strong>targets</strong> – target outputs for the module to be used for the loss function</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.GradSampler.module_forward">
+<code class="sig-name descname"><span class="pre">module_forward</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.nn.modules.module.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">data</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">Any</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#GradSampler.module_forward"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.GradSampler.module_forward" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> – module to perform forward pass with</p></li>
+<li><p><strong>data</strong> – single data sample to pass to module</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>output(s) of the module forward pass</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">MFACOptions</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">num_grads:</span> <span class="pre">Union[Dict[float,</span> <span class="pre">int],</span> <span class="pre">int]</span> <span class="pre">=</span> <span class="pre">64,</span> <span class="pre">damp:</span> <span class="pre">float</span> <span class="pre">=</span> <span class="pre">1e-05,</span> <span class="pre">grads_device:</span> <span class="pre">Union[str,</span> <span class="pre">int]</span> <span class="pre">=</span> <span class="pre">'cpu',</span> <span class="pre">fisher_block_size:</span> <span class="pre">Optional[int]</span> <span class="pre">=</span> <span class="pre">2000,</span> <span class="pre">num_pages:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">available_gpus:</span> <span class="pre">List[str]</span> <span class="pre">=</span> <span class="pre">&lt;factory&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#MFACOptions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="Permalink to this definition"></a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
+<p>Options for running the Matrix-Free Approxmiate Curvature (M-FAC) algorithm</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>num_grads</strong> – number of gradients to store in buffer for Fisher computation.
+can be an int where that constant value will be used throughout pruning or a
+dictionary of float sparsity values to the number of gradients that should be
+stored when that sparsity level (between 0.0 and 1.0) is reached. If a
+dictionary, then 0.0 must be included as a key for the base number of gradients
+to store (i.e. {0: 64, 0.5: 128, 0.75: 256}). Default is 64</p></li>
+<li><p><strong>damp</strong> – dampening factor, default is 1e-5</p></li>
+<li><p><strong>grads_device</strong> – device to store the gradient buffer on. Default is “cpu”</p></li>
+<li><p><strong>fisher_block_size</strong> – optional value to enable blocked computation of the
+Fisher matrix. Blocks will be formed consecutively along the diagonal. If
+None, blocked computation is not used. Default is 2000</p></li>
+<li><p><strong>num_pages</strong> – number of pages to break the gradient samples into for GPU
+computation. Only available when blocked computation is not enabled.
+Default is 1</p></li>
+<li><p><strong>available_gpus</strong> – list of GPU device names to perform computation on. Default
+is empty</p></li>
+</ul>
+</dd>
+</dl>
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.available_gpus">
+<code class="sig-name descname"><span class="pre">available_gpus</span></code><em class="property"><span class="pre">:</span> <span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.available_gpus" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.damp">
+<code class="sig-name descname"><span class="pre">damp</span></code><em class="property"><span class="pre">:</span> <span class="pre">float</span></em><em class="property"> <span class="pre">=</span> <span class="pre">1e-05</span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.damp" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.fisher_block_size">
+<code class="sig-name descname"><span class="pre">fisher_block_size</span></code><em class="property"><span class="pre">:</span> <span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">2000</span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.fisher_block_size" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py method">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.get_num_grads_for_sparsity">
+<code class="sig-name descname"><span class="pre">get_num_grads_for_sparsity</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sparsity</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> &#x2192; <span class="pre">int</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#MFACOptions.get_num_grads_for_sparsity"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.get_num_grads_for_sparsity" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.grads_device">
+<code class="sig-name descname"><span class="pre">grads_device</span></code><em class="property"><span class="pre">:</span> <span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">'cpu'</span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.grads_device" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.num_grads">
+<code class="sig-name descname"><span class="pre">num_grads</span></code><em class="property"><span class="pre">:</span> <span class="pre">Union</span><span class="p"><span class="pre">[</span></span><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">float</span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></em><em class="property"> <span class="pre">=</span> <span class="pre">64</span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.num_grads" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt id="sparseml.pytorch.utils.mfac_helpers.MFACOptions.num_pages">
+<code class="sig-name descname"><span class="pre">num_pages</span></code><em class="property"><span class="pre">:</span> <span class="pre">int</span></em><em class="property"> <span class="pre">=</span> <span class="pre">1</span></em><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions.num_pages" title="Permalink to this definition"></a></dt>
+<dd></dd></dl>
+
+</dd></dl>
+
+<dl class="py function">
+<dt id="sparseml.pytorch.utils.mfac_helpers.compute_hessian_inv">
+<code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.mfac_helpers.</span></code><code class="sig-name descname"><span class="pre">compute_hessian_inv</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">grads</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mfac_options</span></span><span class="p"><span class="pre">:</span></span> <span class="n"><span class="pre">Optional</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions"><span class="pre">sparseml.pytorch.utils.mfac_helpers.MFACOptions</span></a><span class="p"><span class="pre">]</span></span></span> <span class="o"><span class="pre">=</span></span> <span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> &#x2192; <a class="reference internal" href="#sparseml.pytorch.utils.mfac_helpers.FisherInverse" title="sparseml.pytorch.utils.mfac_helpers.FisherInverse"><span class="pre">sparseml.pytorch.utils.mfac_helpers.FisherInverse</span></a><a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#compute_hessian_inv"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.mfac_helpers.compute_hessian_inv" title="Permalink to this definition"></a></dt>
+<dd><dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>grads</strong> – tensor of gradient samples to compute the Hessian inverse
+representation with. Should have shape (num_samples, num_parameters)</p></li>
+<li><p><strong>mfac_options</strong> – MFACOptions object specifying how to perform the computations</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>FisherInverse object with access to the diagonal multiplication of the
+Fisher approximation of the Hessian inverse</p>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
 <div class="section" id="module-sparseml.pytorch.utils.model">
 <span id="sparseml-pytorch-utils-model-module"></span><h2>sparseml.pytorch.utils.model module<a class="headerlink" href="#module-sparseml.pytorch.utils.model" title="Permalink to this headline"></a></h2>
 <p>Code related to interacting with a trained model such as saving, loading, etc</p>
@@ -2592,7 +2919,7 @@ Will raise an exception if torch version does not support amp.</p></li>
 
 <dl class="py class">
 <dt id="sparseml.pytorch.utils.module.ModuleTrainer">
-<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.module.</span></code><code class="sig-name descname"><span class="pre">ModuleTrainer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">module:</span> <span class="pre">torch.nn.modules.module.Module,</span> <span class="pre">device:</span> <span class="pre">str,</span> <span class="pre">loss:</span> <span class="pre">Union[sparseml.pytorch.utils.loss.LossWrapper,</span> <span class="pre">Callable[[Any,</span> <span class="pre">Any],</span> <span class="pre">torch.Tensor]],</span> <span class="pre">optimizer:</span> <span class="pre">torch.optim.optimizer.Optimizer,</span> <span class="pre">num_accumulated_batches:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">optim_closure:</span> <span class="pre">Union[None,</span> <span class="pre">Callable]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">loggers:</span> <span class="pre">Optional[List[sparseml.pytorch.utils.logger.BaseLogger]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">log_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'Train',</span> <span class="pre">log_steps:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">100,</span> <span class="pre">log_summary:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">device_context:</span> <span class="pre">sparseml.pytorch.utils.module.ModuleDeviceContext</span> <span class="pre">=</span> <span class="pre">&lt;sparseml.pytorch.utils.module.ModuleDeviceContext</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/module.html#ModuleTrainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.module.ModuleTrainer" title="Permalink to this definition"></a></dt>
+<em class="property"><span class="pre">class</span> </em><code class="sig-prename descclassname"><span class="pre">sparseml.pytorch.utils.module.</span></code><code class="sig-name descname"><span class="pre">ModuleTrainer</span></code><span class="sig-paren">(</span><em class="sig-param"><span class="pre">module:</span> <span class="pre">torch.nn.modules.module.Module,</span> <span class="pre">device:</span> <span class="pre">str,</span> <span class="pre">loss:</span> <span class="pre">Union[sparseml.pytorch.utils.loss.LossWrapper,</span> <span class="pre">Callable[[Any,</span> <span class="pre">Any],</span> <span class="pre">torch.Tensor]],</span> <span class="pre">optimizer:</span> <span class="pre">torch.optim.optimizer.Optimizer,</span> <span class="pre">num_accumulated_batches:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">1,</span> <span class="pre">optim_closure:</span> <span class="pre">Optional[Callable]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">loggers:</span> <span class="pre">Optional[List[sparseml.pytorch.utils.logger.BaseLogger]]</span> <span class="pre">=</span> <span class="pre">None,</span> <span class="pre">log_name:</span> <span class="pre">str</span> <span class="pre">=</span> <span class="pre">'Train',</span> <span class="pre">log_steps:</span> <span class="pre">int</span> <span class="pre">=</span> <span class="pre">100,</span> <span class="pre">log_summary:</span> <span class="pre">bool</span> <span class="pre">=</span> <span class="pre">True,</span> <span class="pre">device_context:</span> <span class="pre">sparseml.pytorch.utils.module.ModuleDeviceContext</span> <span class="pre">=</span> <span class="pre">&lt;sparseml.pytorch.utils.module.ModuleDeviceContext</span> <span class="pre">object&gt;</span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/sparseml/pytorch/utils/module.html#ModuleTrainer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#sparseml.pytorch.utils.module.ModuleTrainer" title="Permalink to this definition"></a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">sparseml.pytorch.utils.module.ModuleRunner</span></code></p>
 <p>Container for running a module through training over a given data loader
 for specific settings.</p>

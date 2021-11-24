@@ -43,6 +43,14 @@ sparseml.onnx.optim.sensitivity\_pruning module
    :undoc-members:
    :show-inheritance:
 
+sparseml.onnx.optim.structured\_pruning module
+----------------------------------------------
+
+.. automodule:: sparseml.onnx.optim.structured_pruning
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 Module contents
 ---------------
 
