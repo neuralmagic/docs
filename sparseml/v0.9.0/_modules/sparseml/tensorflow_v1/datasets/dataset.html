@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.datasets.dataset &mdash; SparseML 0.9.0.20211202 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.datasets.dataset</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.datasets.dataset</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">General dataset implementations for TensorFlow</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABCMeta</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;create_split_iterators_handle&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Dataset&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="k">def</span> <span class="nf">_make_initializable_iterator</span><span class="p">(</span><span class="n">dataset</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make initializable iterator with different versions of TF</span>
+
+<span class="sd">    :param dataset: the dataset to create the iterator</span>
+<span class="sd">    :return: an iterator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;make_initializable_iterator&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">make_initializable_iterator</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">dataset</span><span class="o">.</span><span class="n">make_initializable_iterator</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="create_split_iterators_handle"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.create_split_iterators_handle">[docs]</a><span class="k">def</span> <span class="nf">create_split_iterators_handle</span><span class="p">(</span><span class="n">split_datasets</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an iterators handle for switching between datasets easily while training.</span>
+
+<span class="sd">    :param split_datasets: the datasets to create the splits and handle for</span>
+<span class="sd">    :return: a tuple containing the handle that should be set with a feed dict,</span>
+<span class="sd">        the iterator used to get the next batch,</span>
+<span class="sd">        and a list of the iterators created from the split_datasets</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">output_types</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">output_shapes</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">split_iterators</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">split_dataset</span> <span class="ow">in</span> <span class="n">split_datasets</span><span class="p">:</span>
+        <span class="c1"># get_output_types and shapes are not available in TF 1.13 and prior</span>
+        <span class="c1"># hence the following conditional assignments</span>
+        <span class="n">output_types</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get_output_types</span><span class="p">(</span><span class="n">split_dataset</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;get_output_types&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">split_dataset</span><span class="o">.</span><span class="n">output_types</span>
+        <span class="p">)</span>
+        <span class="n">output_shapes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">get_output_shapes</span><span class="p">(</span><span class="n">split_dataset</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="s2">&quot;get_output_shapes&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">split_dataset</span><span class="o">.</span><span class="n">output_shapes</span>
+        <span class="p">)</span>
+        <span class="n">split_iterators</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_make_initializable_iterator</span><span class="p">(</span><span class="n">split_dataset</span><span class="p">))</span>
+
+    <span class="n">handle</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">string</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="p">[])</span>
+    <span class="n">iterator</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Iterator</span><span class="o">.</span><span class="n">from_string_handle</span><span class="p">(</span>
+        <span class="n">handle</span><span class="p">,</span> <span class="n">output_types</span><span class="p">,</span> <span class="n">output_shapes</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">handle</span><span class="p">,</span> <span class="n">iterator</span><span class="p">,</span> <span class="n">split_iterators</span></div>
+
+
+<div class="viewcode-block" id="Dataset"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset">[docs]</a><span class="k">class</span> <span class="nc">Dataset</span><span class="p">(</span><span class="n">metaclass</span><span class="o">=</span><span class="n">ABCMeta</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Generic dataset implementation for TensorFlow.</span>
+<span class="sd">    Expected to work with the tf.data APIs</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+<div class="viewcode-block" id="Dataset.build"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">repeat_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shuffle_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefetch_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_parallel_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the dataset in the current graph using tf.data APIs</span>
+
+<span class="sd">        :param batch_size: the batch size to create the dataset for</span>
+<span class="sd">        :param repeat_count: the number of times to repeat the dataset,</span>
+<span class="sd">            if unset or None, will repeat indefinitely</span>
+<span class="sd">        :param shuffle_buffer_size: None if not shuffling,</span>
+<span class="sd">            otherwise the size of the buffer to use for shuffling data</span>
+<span class="sd">        :param prefetch_buffer_size: None if not prefetching,</span>
+<span class="sd">            otherwise the size of the buffer to use for buffering</span>
+<span class="sd">        :param num_parallel_calls: the number of parallel calls to run the</span>
+<span class="sd">            processor function with</span>
+<span class="sd">        :return: a tf.data.Dataset instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">name_scope</span><span class="p">()):</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">creator</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">shuffle_buffer_size</span> <span class="ow">and</span> <span class="n">shuffle_buffer_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span>
+                    <span class="n">shuffle_buffer_size</span><span class="p">,</span> <span class="n">reshuffle_each_iteration</span><span class="o">=</span><span class="kc">True</span>
+                <span class="p">)</span>
+
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">map</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">processor</span><span class="p">,</span> <span class="n">num_parallel_calls</span><span class="o">=</span><span class="n">num_parallel_calls</span><span class="p">)</span>
+
+            <span class="c1"># Together with shuffling above, putting batch after repeat yields</span>
+            <span class="c1"># batches that straddle epoch boundaries</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="n">repeat_count</span><span class="p">)</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">batch</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">prefetch_buffer_size</span> <span class="ow">and</span> <span class="n">prefetch_buffer_size</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="o">.</span><span class="n">prefetch</span><span class="p">(</span><span class="n">prefetch_buffer_size</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">dataset</span></div>
+
+<div class="viewcode-block" id="Dataset.build_input_fn"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.build_input_fn">[docs]</a>    <span class="k">def</span> <span class="nf">build_input_fn</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">repeat_count</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">shuffle_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">prefetch_buffer_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_parallel_calls</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create an input_fn to be used with Estimators.</span>
+<span class="sd">        Invocation of the input_fn will create the dataset in the current graph</span>
+<span class="sd">        as well as return a tuple containing</span>
+<span class="sd">        (a dictionary of feature tensors, a dictionary of label tensors).</span>
+
+<span class="sd">        :param batch_size: the batch size to create the dataset for</span>
+<span class="sd">        :param repeat_count: the number of times to repeat the dataset,</span>
+<span class="sd">            if unset or None, will repeat indefinitely</span>
+<span class="sd">        :param shuffle_buffer_size: None if not shuffling,</span>
+<span class="sd">            otherwise the size of the buffer to use for shuffling data</span>
+<span class="sd">        :param prefetch_buffer_size: None if not prefetching,</span>
+<span class="sd">            otherwise the size of the buffer to use for buffering</span>
+<span class="sd">        :param num_parallel_calls: the number of parallel calls to run the</span>
+<span class="sd">            processor function with</span>
+<span class="sd">        :return: a callable representing the input_fn for an Estimator</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">input_fn</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span>
+            <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span>
+        <span class="p">]:</span>
+            <span class="n">dataset</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">build</span><span class="p">(</span>
+                <span class="n">batch_size</span><span class="p">,</span>
+                <span class="n">repeat_count</span><span class="p">,</span>
+                <span class="n">shuffle_buffer_size</span><span class="p">,</span>
+                <span class="n">prefetch_buffer_size</span><span class="p">,</span>
+                <span class="n">num_parallel_calls</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">dataset_iter</span> <span class="o">=</span> <span class="n">_make_initializable_iterator</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">add_to_collection</span><span class="p">(</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">GraphKeys</span><span class="o">.</span><span class="n">TABLE_INITIALIZERS</span><span class="p">,</span> <span class="n">dataset_iter</span><span class="o">.</span><span class="n">initializer</span>
+            <span class="p">)</span>
+            <span class="n">iter_batch</span> <span class="o">=</span> <span class="n">dataset_iter</span><span class="o">.</span><span class="n">get_next</span><span class="p">()</span>
+            <span class="n">features</span><span class="p">,</span> <span class="n">labels</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_iterator_batch</span><span class="p">(</span><span class="n">iter_batch</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">features</span><span class="p">,</span> <span class="n">labels</span>
+
+        <span class="k">return</span> <span class="n">input_fn</span></div>
+
+<div class="viewcode-block" id="Dataset.creator"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.creator">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">creator</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataset</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implemented by sub classes to create a tf.data dataset for the given impl.</span>
+
+<span class="sd">        :return: a created tf.data dataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Dataset.processor"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.processor">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">processor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implemented by sub classes to parallelize and map processing functions</span>
+<span class="sd">        for loading the data of the dataset into memory.</span>
+
+<span class="sd">        :param args: generic inputs for processing</span>
+<span class="sd">        :param kwargs: generic inputs for processing</span>
+<span class="sd">        :return: the processed tensors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Dataset.format_iterator_batch"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.format_iterator_batch">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">format_iterator_batch</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">iter_batch</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implemented by sub classes to parse the output from make_one_shot_iterator</span>
+<span class="sd">        into a features and labels dict to be used with Estimators</span>
+
+<span class="sd">        :param iter_batch: the batch ref returned from the iterator</span>
+<span class="sd">        :return: a tuple containing</span>
+<span class="sd">            (a dictionary of feature tensors, a dictionary of label tensors)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Dataset.name_scope"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.datasets.html#sparseml.tensorflow_v1.datasets.dataset.Dataset.name_scope">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Implemented by sub classes to get a name scope for building the dataset</span>
+<span class="sd">        in the graph</span>
+
+<span class="sd">        :return: the name scope the dataset should be built under in the graph</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.9.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="dataset.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

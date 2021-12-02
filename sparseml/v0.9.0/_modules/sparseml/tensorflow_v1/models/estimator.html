@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.models.estimator &mdash; SparseML 0.9.0.20211202 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.models.estimator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.models.estimator</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Model function creator classes to be used with estimator</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">sparseml</span> <span class="kn">import</span> <span class="n">get_main_logger</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ConstantPruningModifier</span><span class="p">,</span>
+    <span class="n">ModifierSessionRunHook</span><span class="p">,</span>
+    <span class="n">ScheduledModifierManager</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;EstimatorModelFn&quot;</span><span class="p">,</span> <span class="s2">&quot;ClassificationEstimatorModelFn&quot;</span><span class="p">]</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">get_main_logger</span><span class="p">()</span>
+
+
+<span class="k">class</span> <span class="nc">MetricUpdateOpsHook</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">SessionRunHook</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class to update metric ops for the training mode. Unlike the evaluation</span>
+<span class="sd">    mode where metrics were specified in eval_metric_ops field of the EstimatorSpec,</span>
+<span class="sd">    the metric tensors will not be updated automatically for training mode</span>
+<span class="sd">    tensors, therefore must be done explicitly</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_update_ops</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">],</span>
+        <span class="n">metrics_initializer_ops</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">],</span>
+        <span class="n">eval_every_n_steps</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics_update_ops</span> <span class="o">=</span> <span class="n">metrics_update_ops</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metrics_initializer_ops</span> <span class="o">=</span> <span class="n">metrics_initializer_ops</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_eval_every_n_steps</span> <span class="o">=</span> <span class="n">eval_every_n_steps</span>
+
+    <span class="k">def</span> <span class="nf">before_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_context</span><span class="p">):</span>
+        <span class="c1"># Metrics such as accuracy has a dependency link to the dataset</span>
+        <span class="c1"># iterator through the label tensor, therefore its update must be</span>
+        <span class="c1"># executed in the same run of the training op; otherwise the iterator</span>
+        <span class="c1"># would pull an extra batch from the dataset</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">SessionRunArgs</span><span class="p">(</span><span class="n">fetches</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics_update_ops</span><span class="p">])</span>
+
+    <span class="k">def</span> <span class="nf">after_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run_context</span><span class="p">,</span> <span class="n">run_values</span><span class="p">):</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">run_context</span><span class="o">.</span><span class="n">session</span>
+        <span class="n">global_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">get_or_create_global_step</span><span class="p">()</span>
+        <span class="n">global_step_val</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">global_step</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">global_step_val</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_eval_every_n_steps</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Reset metrics local variables at the end of step </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">global_step_val</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metrics_initializer_ops</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EstimatorModelFn"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn">[docs]</a><span class="k">class</span> <span class="nc">EstimatorModelFn</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for model function creator</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EstimatorModelFn.create"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_const</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create a model function to be used to create estimator</span>
+
+<span class="sd">        :param model_const: function to create model graph</span>
+<span class="sd">        :param arg: additional positional arguments passed into model_const</span>
+<span class="sd">        :param kwargs: additional keyword arguments passed into model_const</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">model_fn</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">mode</span><span class="p">,</span> <span class="n">params</span><span class="p">):</span>
+            <span class="n">net_outputs</span> <span class="o">=</span> <span class="n">model_const</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="c1">############################</span>
+            <span class="c1">#</span>
+            <span class="c1"># Prediction mode</span>
+            <span class="c1">#</span>
+            <span class="c1">############################</span>
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">ModeKeys</span><span class="o">.</span><span class="n">PREDICT</span><span class="p">:</span>
+                <span class="n">predictions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_predictions</span><span class="p">(</span><span class="n">net_outputs</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">EstimatorSpec</span><span class="p">(</span>
+                    <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">ModeKeys</span><span class="o">.</span><span class="n">PREDICT</span><span class="p">,</span>
+                    <span class="n">predictions</span><span class="o">=</span><span class="n">predictions</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="c1">############################</span>
+            <span class="c1">#</span>
+            <span class="c1"># Train and eval mode</span>
+            <span class="c1">#</span>
+            <span class="c1">############################</span>
+
+            <span class="c1"># Loss function</span>
+            <span class="n">loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_loss</span><span class="p">(</span><span class="n">net_outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+            <span class="c1"># Metrics to collect and their initialiers</span>
+            <span class="n">metrics_dict</span><span class="p">,</span> <span class="n">metrics_initializers_dict</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_metrics</span><span class="p">(</span>
+                <span class="n">net_outputs</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">params</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Modifier ops and extras</span>
+            <span class="c1"># Note that extras such as for pruning masks are needed for eval mode too</span>
+            <span class="p">(</span>
+                <span class="n">mod_manager</span><span class="p">,</span>
+                <span class="n">mod_update_ops_hook</span><span class="p">,</span>
+            <span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_modifier_ops_and_update_hook</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">ModeKeys</span><span class="o">.</span><span class="n">EVAL</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">EstimatorSpec</span><span class="p">(</span>
+                    <span class="n">mode</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span> <span class="n">eval_metric_ops</span><span class="o">=</span><span class="n">metrics_dict</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Training op</span>
+            <span class="n">training_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_training_op</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+            <span class="c1"># Ops to update metrics</span>
+            <span class="c1"># During training, we call these ops to gather metrics on the current batch</span>
+            <span class="c1"># at the time of evaluation</span>
+            <span class="n">metric_update_ops_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_metric_update_ops_hook</span><span class="p">(</span>
+                <span class="n">metrics_dict</span><span class="p">,</span> <span class="n">metrics_initializers_dict</span><span class="p">,</span> <span class="n">params</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Summaries to display on Tensorboard</span>
+            <span class="n">summary_train_hook</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_train_summary_hook</span><span class="p">(</span><span class="n">metrics_dict</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+
+            <span class="n">training_hooks</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">mod_update_ops_hook</span><span class="p">,</span>
+                <span class="n">metric_update_ops_hook</span><span class="p">,</span>
+                <span class="n">summary_train_hook</span><span class="p">,</span>
+            <span class="p">]</span>
+
+            <span class="k">if</span> <span class="s2">&quot;checkpoint_path&quot;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;checkpoint_path&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Finetuning</span>
+                <span class="n">base_name_scope</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;base_name_scope&quot;</span><span class="p">]</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">init_from_checkpoint</span><span class="p">(</span>
+                    <span class="n">params</span><span class="p">[</span><span class="s2">&quot;checkpoint_path&quot;</span><span class="p">],</span>
+                    <span class="p">{</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_name_scope</span><span class="p">):</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">base_name_scope</span><span class="p">)},</span>
+                <span class="p">)</span>
+
+            <span class="n">scaffold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_scaffold</span><span class="p">(</span><span class="n">mod_manager</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">estimator</span><span class="o">.</span><span class="n">EstimatorSpec</span><span class="p">(</span>
+                <span class="n">mode</span><span class="p">,</span>
+                <span class="n">loss</span><span class="o">=</span><span class="n">loss</span><span class="p">,</span>
+                <span class="n">train_op</span><span class="o">=</span><span class="n">training_op</span><span class="p">,</span>
+                <span class="n">scaffold</span><span class="o">=</span><span class="n">scaffold</span><span class="p">,</span>
+                <span class="n">training_hooks</span><span class="o">=</span><span class="n">training_hooks</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">model_fn</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_predictions"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_predictions">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_predictions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create predictions used to define the estimator spec in prediction mode</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param params: the model function params. If &quot;apply_softmax&quot; is specified</span>
+<span class="sd">            in params then softmax is apply to the net outputs</span>
+<span class="sd">        :return: dictionary of metric tensors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_loss"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_loss">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_loss</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create loss function</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param labels: ground truth labels</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a loss tensor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_metrics"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_metrics">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_metrics</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span>
+        <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create metrics for evaluation</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param labels: ground truth labels</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: (1) dictionary of metric tensors and their update operations;</span>
+<span class="sd">                 (2) list of extra/internal vars created for the metrics if any</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_metric_update_ops_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_metric_update_ops_hook">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_metric_update_ops_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">metrics_initializers_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricUpdateOpsHook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create hooks for the update operations of the collected metrics</span>
+
+<span class="sd">        :param metrics_dict: dictionary of metrics, created as a result of</span>
+<span class="sd">            create_metrics function</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SessionRunHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_train_summary_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_train_summary_hook">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_train_summary_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">SummarySaverHook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create hook for the summary of metrics</span>
+
+<span class="sd">        :param metrics_dict: dictionary of metrics, created as a result of</span>
+<span class="sd">            create_metrics function</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SummarySaverHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_training_op"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_training_op">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_training_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create training op for optimization</span>
+
+<span class="sd">        :param loss: the loss tensor</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: an Operation minimizing loss</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_modifier_ops_and_update_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_modifier_ops_and_update_hook">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_modifier_ops_and_update_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">ScheduledModifierManager</span><span class="p">,</span> <span class="n">ModifierSessionRunHook</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create modifier ops and their update hook to run</span>
+
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SessionRunHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="EstimatorModelFn.create_scaffold"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.EstimatorModelFn.create_scaffold">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">create_scaffold</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">modifier_manager</span><span class="p">:</span> <span class="n">ScheduledModifierManager</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Scaffold</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create scaffold to be attached to the train estimator spec, containing</span>
+<span class="sd">        at least the saver</span>
+
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a Scaffold instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn">[docs]</a><span class="k">class</span> <span class="nc">ClassificationEstimatorModelFn</span><span class="p">(</span><span class="n">EstimatorModelFn</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Model function creator for classification models</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_predictions"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_predictions">[docs]</a>    <span class="k">def</span> <span class="nf">create_predictions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create predictions used to define the estimator spec in prediction mode</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: dictionary of metric tensors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">apply_softmax</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;apply_softmax&quot;</span><span class="p">)</span>
+        <span class="n">class_type</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;class_type&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">apply_softmax</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">class_type</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">probabilities</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">net_outputs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">probabilities</span> <span class="o">=</span> <span class="n">net_outputs</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;probabilities&quot;</span><span class="p">:</span> <span class="n">probabilities</span><span class="p">,</span>
+            <span class="s2">&quot;net_outputs&quot;</span><span class="p">:</span> <span class="n">net_outputs</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">predictions</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_loss"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_loss">[docs]</a>    <span class="k">def</span> <span class="nf">create_loss</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create loss function</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param labels: ground truth labels</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a loss tensor</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loss</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;loss&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">loss</span> <span class="o">==</span> <span class="s2">&quot;cross_entropy&quot;</span><span class="p">:</span>
+                <span class="n">xentropy</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax_cross_entropy_with_logits_v2</span><span class="p">(</span>
+                    <span class="n">labels</span><span class="o">=</span><span class="n">labels</span><span class="p">,</span> <span class="n">logits</span><span class="o">=</span><span class="n">net_outputs</span>
+                <span class="p">)</span>
+                <span class="n">loss_tens</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span><span class="n">xentropy</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;loss&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported loss function: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">loss</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">loss_tens</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_metrics"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_metrics">[docs]</a>    <span class="k">def</span> <span class="nf">create_metrics</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">net_outputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">labels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span>
+        <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create metrics for evaluation</span>
+
+<span class="sd">        :param net_outputs: output tensors of the model graph</span>
+<span class="sd">        :param labels: ground truth labels</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: dictionary of metrics and their reset operations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">metrics</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;metrics&quot;</span><span class="p">,</span> <span class="p">[])</span>
+
+        <span class="n">metrics_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">metrics_initializers_dict</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;metrics&quot;</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">metric</span> <span class="o">==</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span>
+                    <span class="n">labels_argmax</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">net_outputs_argmax</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">net_outputs</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                    <span class="n">metrics_dict</span><span class="p">[</span><span class="s2">&quot;accuracy&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">metrics</span><span class="o">.</span><span class="n">accuracy</span><span class="p">(</span>
+                        <span class="n">labels_argmax</span><span class="p">,</span>
+                        <span class="n">net_outputs_argmax</span><span class="p">,</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;accuracy_metric&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="c1"># The total and count variables created to support accuracy</span>
+                    <span class="n">running_vars</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span>
+                        <span class="n">tf_compat</span><span class="o">.</span><span class="n">GraphKeys</span><span class="o">.</span><span class="n">LOCAL_VARIABLES</span><span class="p">,</span>
+                        <span class="n">scope</span><span class="o">=</span><span class="s2">&quot;metrics/accuracy_metric&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="n">running_vars_initializer</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variables_initializer</span><span class="p">(</span>
+                        <span class="n">var_list</span><span class="o">=</span><span class="n">running_vars</span>
+                    <span class="p">)</span>
+                    <span class="n">metrics_initializers_dict</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">running_vars_initializer</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported metric: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">metric</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">metrics_dict</span><span class="p">,</span> <span class="n">metrics_initializers_dict</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_metric_update_ops_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_metric_update_ops_hook">[docs]</a>    <span class="k">def</span> <span class="nf">create_metric_update_ops_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">metrics_initializers_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MetricUpdateOpsHook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create hooks for the update operations of the collected metrics</span>
+
+<span class="sd">        :param metrics_dict: dictionary of metrics, created as a result of</span>
+<span class="sd">            create_metrics function</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SessionRunHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">metrics_update_ops</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">metrics_dict</span><span class="p">[</span><span class="n">metric_key</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">metric_key</span> <span class="ow">in</span> <span class="n">metrics_dict</span>
+        <span class="p">]</span>
+        <span class="n">metrics_initializer_ops</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">metrics_initializers_dict</span><span class="p">[</span><span class="n">metric_key</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">metric_key</span> <span class="ow">in</span> <span class="n">metrics_initializers_dict</span>
+        <span class="p">]</span>
+        <span class="n">metric_update_ops_hook</span> <span class="o">=</span> <span class="n">MetricUpdateOpsHook</span><span class="p">(</span>
+            <span class="n">metrics_update_ops</span><span class="p">,</span> <span class="n">metrics_initializer_ops</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;eval_every_n_steps&quot;</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">metric_update_ops_hook</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_summary_op"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_summary_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_summary_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create summary op given metric dictionary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics_dict</span><span class="p">:</span>
+            <span class="n">metric_tensor</span> <span class="o">=</span> <span class="n">metrics_dict</span><span class="p">[</span><span class="n">metric</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">scalar</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="n">metric_tensor</span><span class="p">)</span>
+        <span class="n">summary_op</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">summary</span><span class="o">.</span><span class="n">merge_all</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">summary_op</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_train_summary_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_train_summary_hook">[docs]</a>    <span class="k">def</span> <span class="nf">create_train_summary_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">metrics_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">]],</span>
+        <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">SummarySaverHook</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create hook for the summary of metrics</span>
+
+<span class="sd">        :param metrics_dict: dictionary of metrics, created as a result of</span>
+<span class="sd">            create_metrics function</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SsummarySaverHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">summary_op</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_summary_op</span><span class="p">(</span><span class="n">metrics_dict</span><span class="p">,</span> <span class="n">params</span><span class="p">)</span>
+        <span class="n">save_steps</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;eval_every_n_steps&quot;</span><span class="p">,</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;eval_every_n_steps&quot;</span><span class="p">])</span>
+        <span class="n">logs_dir</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;logs_dir&quot;</span><span class="p">,</span> <span class="s2">&quot;logs&quot;</span><span class="p">)</span>
+        <span class="n">summary_train_hook</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">SummarySaverHook</span><span class="p">(</span>
+            <span class="n">save_steps</span><span class="o">=</span><span class="n">save_steps</span><span class="p">,</span>
+            <span class="n">output_dir</span><span class="o">=</span><span class="n">logs_dir</span><span class="p">,</span>
+            <span class="n">summary_op</span><span class="o">=</span><span class="n">summary_op</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">summary_train_hook</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_training_op"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_training_op">[docs]</a>    <span class="k">def</span> <span class="nf">create_training_op</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">loss</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Operation</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create training op for optimization</span>
+
+<span class="sd">        :param loss: the loss tensor</span>
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: an Operation minimizing loss</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">global_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">get_or_create_global_step</span><span class="p">()</span>
+
+        <span class="n">optimizer_const</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">opt_name</span> <span class="ow">in</span> <span class="nb">dir</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="p">):</span>
+            <span class="n">opt_cls</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="p">,</span> <span class="n">opt_name</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">inspect</span><span class="o">.</span><span class="n">isclass</span><span class="p">(</span><span class="n">opt_cls</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">issubclass</span><span class="p">(</span>
+                <span class="n">opt_cls</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Optimizer</span>
+            <span class="p">):</span>
+                <span class="n">optimizer_const</span><span class="p">[</span><span class="n">opt_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">opt_cls</span>
+
+        <span class="n">optimizer_name</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;optimizer&quot;</span><span class="p">,</span> <span class="s2">&quot;AdamOptimizer&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">optimizer_name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">optimizer_const</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unsupported optimizer: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">optimizer_name</span><span class="p">))</span>
+        <span class="n">optimizer_params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;optimizer_params&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="n">optimizer</span> <span class="o">=</span> <span class="n">optimizer_const</span><span class="p">[</span><span class="n">optimizer_name</span><span class="p">](</span><span class="o">**</span><span class="n">optimizer_params</span><span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;train&quot;</span><span class="p">):</span>
+            <span class="c1"># We are using tf.layers.batch_normalization to support previous versions</span>
+            <span class="c1"># of TF, which requires us explicite model the dependency between the</span>
+            <span class="c1"># update of moving average and variance with training op</span>
+            <span class="n">update_ops</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_collection</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">GraphKeys</span><span class="o">.</span><span class="n">UPDATE_OPS</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">control_dependencies</span><span class="p">(</span><span class="n">update_ops</span><span class="p">):</span>
+                <span class="n">training_op</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">minimize</span><span class="p">(</span><span class="n">loss</span><span class="p">,</span> <span class="n">global_step</span><span class="o">=</span><span class="n">global_step</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">training_op</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_modifier_ops_and_update_hook"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_modifier_ops_and_update_hook">[docs]</a>    <span class="k">def</span> <span class="nf">create_modifier_ops_and_update_hook</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="p">(</span><span class="n">ScheduledModifierManager</span><span class="p">,</span> <span class="n">ModifierSessionRunHook</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create modifier ops and their update hook to run</span>
+
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a SessionRunHook instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">add_mods</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">[</span><span class="n">ConstantPruningModifier</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="s2">&quot;__ALL__&quot;</span><span class="p">)]</span>
+            <span class="k">if</span> <span class="s2">&quot;sparse_transfer_learn&quot;</span> <span class="ow">in</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;sparse_transfer_learn&quot;</span><span class="p">]</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="n">mod_update_ops_hook</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">manager</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">recipe_path</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;recipe_path&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">recipe_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">global_step</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">get_or_create_global_step</span><span class="p">()</span>
+            <span class="n">steps_per_epoch</span> <span class="o">=</span> <span class="n">params</span><span class="p">[</span><span class="s2">&quot;steps_per_epoch&quot;</span><span class="p">]</span>
+            <span class="n">manager</span> <span class="o">=</span> <span class="n">ScheduledModifierManager</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="n">recipe_path</span><span class="p">,</span> <span class="n">add_mods</span><span class="p">)</span>
+            <span class="n">mod_ops</span><span class="p">,</span> <span class="n">mod_extras</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">create_ops</span><span class="p">(</span><span class="n">steps_per_epoch</span><span class="p">,</span> <span class="n">global_step</span><span class="p">)</span>
+            <span class="n">mod_update_ops_hook</span> <span class="o">=</span> <span class="n">ModifierSessionRunHook</span><span class="p">(</span><span class="n">mod_ops</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">manager</span><span class="p">,</span> <span class="n">mod_update_ops_hook</span></div>
+
+<div class="viewcode-block" id="ClassificationEstimatorModelFn.create_scaffold"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.models.html#sparseml.tensorflow_v1.models.estimator.ClassificationEstimatorModelFn.create_scaffold">[docs]</a>    <span class="k">def</span> <span class="nf">create_scaffold</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">modifier_manager</span><span class="p">:</span> <span class="n">ScheduledModifierManager</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Scaffold</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create scaffold to be attached to the train estimator spec, containing</span>
+<span class="sd">        at least the saver</span>
+
+<span class="sd">        :param params: the model function params</span>
+<span class="sd">        :return: a Scaffold instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">init_fn</span><span class="p">(</span><span class="n">scaffold</span><span class="p">,</span> <span class="n">session</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">modifier_manager</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">return</span>
+            <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">modifier_manager</span><span class="o">.</span><span class="n">modifiers</span><span class="p">:</span>
+                <span class="n">mod</span><span class="o">.</span><span class="n">initialize_session</span><span class="p">(</span><span class="n">session</span><span class="p">)</span>
+
+        <span class="n">saver</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Saver</span><span class="p">()</span>
+        <span class="n">scaffold</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">train</span><span class="o">.</span><span class="n">Scaffold</span><span class="p">(</span><span class="n">saver</span><span class="o">=</span><span class="n">saver</span><span class="p">,</span> <span class="n">init_fn</span><span class="o">=</span><span class="n">init_fn</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">scaffold</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.9.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="estimator.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

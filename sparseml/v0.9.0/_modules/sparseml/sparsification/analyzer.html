@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.sparsification.analyzer &mdash; SparseML 0.9.0.20211202 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> SparseML<img src="../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.sparsification.analyzer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.sparsification.analyzer</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code for running analysis on neural networks</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">pydantic</span> <span class="kn">import</span> <span class="n">BaseModel</span><span class="p">,</span> <span class="n">Field</span>
+<span class="kn">from</span> <span class="nn">tqdm.auto</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">default_pruning_sparsities_loss</span>
+<span class="kn">from</span> <span class="nn">sparseml.sparsification.model_info</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ModelInfo</span><span class="p">,</span>
+    <span class="n">ModelResult</span><span class="p">,</span>
+    <span class="n">PruningSensitivityResult</span><span class="p">,</span>
+    <span class="n">PruningSensitivityResultTypes</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;AnalyzerProgress&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Analyzer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PruningLossSensitivityMagnitudeAnalyzer&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="AnalyzerProgress"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.AnalyzerProgress">[docs]</a><span class="k">class</span> <span class="nc">AnalyzerProgress</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple class for tracking model analyzer progress</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">step</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;step&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;current step of the Analyzer&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">total_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;total_steps&quot;</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;total steps Analyzer will run&quot;</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="n">Field</span><span class="p">(</span>
+        <span class="n">title</span><span class="o">=</span><span class="s2">&quot;metadata&quot;</span><span class="p">,</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+            <span class="s2">&quot;optional metadata dict of property names to values for current &quot;</span>
+            <span class="s2">&quot;analysis step&quot;</span>
+        <span class="p">),</span>
+    <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">progress</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: float progress on [0,1] scale</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">step</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">total_steps</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Analyzer"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.Analyzer">[docs]</a><span class="k">class</span> <span class="nc">Analyzer</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base abstract class for model analyzers. Analyzers should be able to detect</span>
+<span class="sd">    if given a ModelInfo object and other keyword inputs if they should run their</span>
+<span class="sd">    analysis.</span>
+
+<span class="sd">    :param model_info: ModelInfo object of the model to be analyzed. after</span>
+<span class="sd">        running this analysis, the analysis_results of this ModelInfo object</span>
+<span class="sd">        will be updated</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_info</span> <span class="o">=</span> <span class="n">model_info</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_result</span><span class="p">()</span>  <span class="c1"># type: ModelResult</span>
+
+<div class="viewcode-block" id="Analyzer.available"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.Analyzer.available">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method that subclasses must implement to determine if</span>
+<span class="sd">        given the model info and keyword arguments that the Analyzer can</span>
+<span class="sd">        run its analysis</span>
+
+<span class="sd">        :param model_info: ModelInfo object of the model to be analyzed</span>
+<span class="sd">        :param kwargs: additional keyword arguments that will be passed to the run</span>
+<span class="sd">            function</span>
+<span class="sd">        :return: True if given the inputs, this analyzer can run its analysis. False</span>
+<span class="sd">            otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="Analyzer.run"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.Analyzer.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelResult</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Runs the given analysis by calling to the underlying run_iter method</span>
+<span class="sd">        :param show_progress: set True to display a tqdm progress bar. default is False</span>
+<span class="sd">        :param kwargs: key word arguments validated by available() to run this analysis</span>
+<span class="sd">        :return: the final result from this analysis. this result will also be</span>
+<span class="sd">            added to the ModelInfo object of this Analyzer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">bar</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">prev_progress</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">progress</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_iter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">show_progress</span> <span class="ow">and</span> <span class="n">bar</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bar</span> <span class="o">=</span> <span class="n">tqdm</span><span class="p">(</span>
+                    <span class="n">total</span><span class="o">=</span><span class="n">progress</span><span class="o">.</span><span class="n">total_steps</span><span class="p">,</span>
+                    <span class="n">desc</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">analysis_type</span><span class="si">}</span><span class="s2"> Analyzer Progress&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">progress</span><span class="o">.</span><span class="n">step</span> <span class="o">-</span> <span class="n">prev_progress</span><span class="p">)</span>
+                <span class="n">prev_progress</span> <span class="o">=</span> <span class="n">progress</span><span class="o">.</span><span class="n">step</span>
+
+        <span class="k">if</span> <span class="n">bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span></div>
+
+<div class="viewcode-block" id="Analyzer.run_iter"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.Analyzer.run_iter">[docs]</a>    <span class="k">def</span> <span class="nf">run_iter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">AnalyzerProgress</span><span class="p">,</span> <span class="n">ModelResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        runs the analysis stepwise using the abstract _run_iter method yielding an</span>
+<span class="sd">        AnalyzerProgress and the in progress ModelResult at each step</span>
+
+<span class="sd">        After the last step, the final results will be added to the given ModelInfo</span>
+
+<span class="sd">        :param kwargs: key word arguments validated by available() to run this analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">progress</span><span class="p">,</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_iter</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">progress</span><span class="p">,</span> <span class="n">result</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_info</span><span class="o">.</span><span class="n">add_analysis_result</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="p">)</span></div>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_initialize_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ModelResult</span><span class="p">:</span>
+        <span class="c1"># sets the initial ModelResult object for this analysis</span>
+        <span class="c1"># such as analysis_type, layer selection, and result value initialization</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_run_iter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">AnalyzerProgress</span><span class="p">,</span> <span class="n">ModelResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="c1"># runs the analysis and updates self.result</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="PruningLossSensitivityMagnitudeAnalyzer"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.PruningLossSensitivityMagnitudeAnalyzer">[docs]</a><span class="k">class</span> <span class="nc">PruningLossSensitivityMagnitudeAnalyzer</span><span class="p">(</span><span class="n">Analyzer</span><span class="p">,</span> <span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for running pruning loss sensitivity weight magnitude analysis.</span>
+<span class="sd">    A valid in-framework model with prunable weights is required to run this analysis</span>
+
+<span class="sd">    pruning_loss_analysis_sparsity_levels is an optional run argument to set the</span>
+<span class="sd">    sparsities that this analysis will run at. if not set, the value defaults to</span>
+<span class="sd">    sparsml.optim.default_pruning_sparsities_loss(extended=True)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PruningLossSensitivityMagnitudeAnalyzer.available"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.PruningLossSensitivityMagnitudeAnalyzer.available">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">available</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">model_info</span><span class="p">:</span> <span class="n">ModelInfo</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Determines if given the available kwargs and ModelInfo, that weight magnitude</span>
+<span class="sd">        analysis is available. `model` must exist in the given keyword arguments and</span>
+<span class="sd">        be a valid model of the given framework and include all prunable parameters</span>
+<span class="sd">        named in the ModelInfo</span>
+
+<span class="sd">        :param model_info: ModelInfo object of the model to be analyzed</span>
+<span class="sd">        :param kwargs: keyword arguments that will be passed in to this analysis. model</span>
+<span class="sd">            must be included for this analysis to be available</span>
+<span class="sd">        :return: True if given the inputs, this analyzer can run its analysis. False</span>
+<span class="sd">            otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;model&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="o">.</span><span class="n">validate_model</span><span class="p">(</span>
+            <span class="n">model_info</span><span class="o">.</span><span class="n">get_prunable_param_names</span><span class="p">(),</span> <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="PruningLossSensitivityMagnitudeAnalyzer.validate_model"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.PruningLossSensitivityMagnitudeAnalyzer.validate_model">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">validate_model</span><span class="p">(</span><span class="n">prunable_param_names</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Validates that all prunable parameter names in the ModelInfo layer_info</span>
+<span class="sd">        exist in the given model and that the given model is of the correct framework</span>
+
+<span class="sd">        :param prunable_param_names: set of prunable parameter names found in the model</span>
+<span class="sd">            info</span>
+<span class="sd">        :param model: model to validate</span>
+<span class="sd">        :return: True if this is a valid model for weight mangitude pruning analysis.</span>
+<span class="sd">            False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="PruningLossSensitivityMagnitudeAnalyzer.get_named_prunable_params"><a class="viewcode-back" href="../../../api/sparseml.sparsification.html#sparseml.sparsification.analyzer.PruningLossSensitivityMagnitudeAnalyzer.get_named_prunable_params">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_named_prunable_params</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        loads the prunable parameters in a standardized way so that weight magnitude</span>
+<span class="sd">        analysis may be run on each</span>
+
+<span class="sd">        :param model: model to load the prunable parameters from</span>
+<span class="sd">        :return: dictionary of prunable parameter name as listed in the ModelInfo to</span>
+<span class="sd">            a numpy array of the values of the parameter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_initialize_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningSensitivityResult</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">PruningSensitivityResult</span><span class="p">(</span><span class="n">PruningSensitivityResultTypes</span><span class="o">.</span><span class="n">LOSS</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_run_iter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Generator</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">AnalyzerProgress</span><span class="p">,</span> <span class="n">PruningSensitivityResult</span><span class="p">],</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="n">named_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_named_prunable_params</span><span class="p">(</span><span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;model&quot;</span><span class="p">])</span>
+        <span class="n">num_params</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">named_params</span><span class="p">)</span>
+        <span class="n">sparsity_levels</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;pruning_loss_analysis_sparsity_levels&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="s2">&quot;pruning_loss_analysis_sparsity_levels&quot;</span> <span class="ow">in</span> <span class="n">kwargs</span>
+            <span class="k">else</span> <span class="n">default_pruning_sparsities_loss</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">named_params</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+            <span class="k">yield</span> <span class="n">AnalyzerProgress</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">idx</span><span class="p">,</span> <span class="n">total_steps</span><span class="o">=</span><span class="n">num_params</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span>
+
+            <span class="n">sorted_param_vals</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">param</span><span class="o">.</span><span class="n">flatten</span><span class="p">()))</span>
+            <span class="n">prev_sparsity_idx</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sparsity_levels</span><span class="p">:</span>
+                <span class="n">sparsity_idx</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">sparsity</span> <span class="o">*</span> <span class="n">sorted_param_vals</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">sparsity_idx</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_param_vals</span><span class="p">):</span>
+                    <span class="n">sparsity_idx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">sorted_param_vals</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+                <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span><span class="p">:</span>
+                    <span class="n">sparsity</span> <span class="o">=</span> <span class="mf">0.0</span>
+                    <span class="n">sparse_avg</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">sparsity_idx</span> <span class="o">&gt;</span> <span class="n">prev_sparsity_idx</span><span class="p">:</span>
+                        <span class="n">sparse_avg</span> <span class="o">=</span> <span class="p">(</span>
+                            <span class="n">sorted_param_vals</span><span class="p">[</span><span class="n">prev_sparsity_idx</span><span class="p">:</span><span class="n">sparsity_idx</span><span class="p">]</span>
+                            <span class="o">.</span><span class="n">mean</span><span class="p">()</span>
+                            <span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                        <span class="p">)</span>
+                        <span class="n">prev_sparsity_idx</span> <span class="o">=</span> <span class="n">sparsity_idx</span> <span class="o">+</span> <span class="mi">1</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">result</span><span class="o">.</span><span class="n">add_layer_sparsity_result</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">sparse_avg</span><span class="p">)</span>
+
+        <span class="k">yield</span> <span class="n">AnalyzerProgress</span><span class="p">(</span><span class="n">step</span><span class="o">=</span><span class="n">num_params</span><span class="p">,</span> <span class="n">total_steps</span><span class="o">=</span><span class="n">num_params</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">result</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.9.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="analyzer.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

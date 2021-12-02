@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim package — SparseML 0.8.0.20211201 documentation
+   sparseml.pytorch.optim package — SparseML 0.9.0.20211202 documentation
   </title>
   <link href="../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -43,7 +43,7 @@
        <img alt="Logo" class="logo" src="../_static/icon-sparseml.png"/>
       </a>
       <div class="version">
-       0.8
+       0.9
       </div>
       <div role="search">
        <form action="../search.html" class="wy-form" id="rtd-search-form" method="get">
@@ -97,6 +97,11 @@
            Subpackages
           </a>
           <ul class="current">
+           <li class="toctree-l3">
+            <a class="reference internal" href="sparseml.benchmark.html">
+             sparseml.benchmark package
+            </a>
+           </li>
            <li class="toctree-l3">
             <a class="reference internal" href="sparseml.deepsparse.html">
              sparseml.deepsparse package
@@ -8824,9 +8829,11 @@ aka model pruning
                 ,
                </span>
               </span>
-              <span class="pre">
-               sparseml.pytorch.utils.mfac_helpers.MFACOptions
-              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
               <span class="p">
                <span class="pre">
                 ]
@@ -10174,6 +10181,2281 @@ keep most recent
                 </p>
                </dd>
               </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+         </div>
+         <div class="section" id="module-sparseml.pytorch.optim.mask_pruning_scorer">
+          <span id="sparseml-pytorch-optim-mask-pruning-scorer-module">
+          </span>
+          <h2>
+           sparseml.pytorch.optim.mask_pruning_scorer module
+           <a class="headerlink" href="#module-sparseml.pytorch.optim.mask_pruning_scorer" title="Permalink to this headline">
+            
+           </a>
+          </h2>
+          <p>
+           Classes for tracking and scoring model parameters to generate pruning scores
+          </p>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              MFACOptions
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="pre">
+              num_grads:
+             </span>
+             <span class="pre">
+              Union[Dict[float,
+             </span>
+             <span class="pre">
+              int],
+             </span>
+             <span class="pre">
+              int]
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              64,
+             </span>
+             <span class="pre">
+              damp:
+             </span>
+             <span class="pre">
+              float
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              1e-05,
+             </span>
+             <span class="pre">
+              grads_device:
+             </span>
+             <span class="pre">
+              Union[str,
+             </span>
+             <span class="pre">
+              int]
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              'cpu',
+             </span>
+             <span class="pre">
+              fisher_block_size:
+             </span>
+             <span class="pre">
+              Optional[int]
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              2000,
+             </span>
+             <span class="pre">
+              num_pages:
+             </span>
+             <span class="pre">
+              int
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              1,
+             </span>
+             <span class="pre">
+              available_gpus:
+             </span>
+             <span class="pre">
+              List[str]
+             </span>
+             <span class="pre">
+              =
+             </span>
+             <span class="pre">
+              &lt;factory&gt;
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#MFACOptions">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <code class="xref py py-class docutils literal notranslate">
+              <span class="pre">
+               object
+              </span>
+             </code>
+            </p>
+            <p>
+             Options for running the Matrix-Free Approxmiate Curvature (M-FAC) algorithm
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  num_grads
+                 </strong>
+                 – number of gradients to store in buffer for Fisher computation.
+can be an int where that constant value will be used throughout pruning or a
+dictionary of float sparsity values to the number of gradients that should be
+stored when that sparsity level (between 0.0 and 1.0) is reached. If a
+dictionary, then 0.0 must be included as a key for the base number of gradients
+to store (i.e. {0: 64, 0.5: 128, 0.75: 256}). Default is 64
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  damp
+                 </strong>
+                 – dampening factor, default is 1e-5
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  grads_device
+                 </strong>
+                 – device to store the gradient buffer on. Default is “cpu”
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  fisher_block_size
+                 </strong>
+                 – optional value to enable blocked computation of the
+Fisher matrix. Blocks will be formed consecutively along the diagonal. If
+None, blocked computation is not used. Default is 2000
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  num_pages
+                 </strong>
+                 – number of pages to break the gradient samples into for GPU
+computation. Only available when blocked computation is not enabled.
+Default is 1
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  available_gpus
+                 </strong>
+                 – list of GPU device names to perform computation on. Default
+is empty
+                </p>
+               </li>
+              </ul>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.available_gpus">
+              <code class="sig-name descname">
+               <span class="pre">
+                available_gpus
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                List
+               </span>
+               <span class="p">
+                <span class="pre">
+                 [
+                </span>
+               </span>
+               <span class="pre">
+                str
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ]
+                </span>
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.available_gpus" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.damp">
+              <code class="sig-name descname">
+               <span class="pre">
+                damp
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                float
+               </span>
+              </em>
+              <em class="property">
+               <span class="pre">
+                =
+               </span>
+               <span class="pre">
+                1e-05
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.damp" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.fisher_block_size">
+              <code class="sig-name descname">
+               <span class="pre">
+                fisher_block_size
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                Optional
+               </span>
+               <span class="p">
+                <span class="pre">
+                 [
+                </span>
+               </span>
+               <span class="pre">
+                int
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ]
+                </span>
+               </span>
+              </em>
+              <em class="property">
+               <span class="pre">
+                =
+               </span>
+               <span class="pre">
+                2000
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.fisher_block_size" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.get_num_grads_for_sparsity">
+              <code class="sig-name descname">
+               <span class="pre">
+                get_num_grads_for_sparsity
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 sparsity
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Union
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 float
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ,
+                 </span>
+                </span>
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 float
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               int
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/utils/mfac_helpers.html#MFACOptions.get_num_grads_for_sparsity">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.get_num_grads_for_sparsity" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.grads_device">
+              <code class="sig-name descname">
+               <span class="pre">
+                grads_device
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                Union
+               </span>
+               <span class="p">
+                <span class="pre">
+                 [
+                </span>
+               </span>
+               <span class="pre">
+                str
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ,
+                </span>
+               </span>
+               <span class="pre">
+                int
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ]
+                </span>
+               </span>
+              </em>
+              <em class="property">
+               <span class="pre">
+                =
+               </span>
+               <span class="pre">
+                'cpu'
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.grads_device" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.num_grads">
+              <code class="sig-name descname">
+               <span class="pre">
+                num_grads
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                Union
+               </span>
+               <span class="p">
+                <span class="pre">
+                 [
+                </span>
+               </span>
+               <span class="pre">
+                Dict
+               </span>
+               <span class="p">
+                <span class="pre">
+                 [
+                </span>
+               </span>
+               <span class="pre">
+                float
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ,
+                </span>
+               </span>
+               <span class="pre">
+                int
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ]
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ,
+                </span>
+               </span>
+               <span class="pre">
+                int
+               </span>
+               <span class="p">
+                <span class="pre">
+                 ]
+                </span>
+               </span>
+              </em>
+              <em class="property">
+               <span class="pre">
+                =
+               </span>
+               <span class="pre">
+                64
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.num_grads" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.num_pages">
+              <code class="sig-name descname">
+               <span class="pre">
+                num_pages
+               </span>
+              </code>
+              <em class="property">
+               <span class="pre">
+                :
+               </span>
+               <span class="pre">
+                int
+               </span>
+              </em>
+              <em class="property">
+               <span class="pre">
+                =
+               </span>
+               <span class="pre">
+                1
+               </span>
+              </em>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACOptions.num_pages" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              MFACPruningParamsScorer
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               params
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.nn.parameter.Parameter
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               mfac_options
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MFACPruningParamsScorer">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <code class="xref py py-class docutils literal notranslate">
+              <span class="pre">
+               sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsGradScorer
+              </span>
+             </code>
+            </p>
+            <p>
+             Scores parameters using the Matrix-Free Approximate Curvature (M-FAC)
+algorithm to solve for the optimal update in the Optimal Brain Surgeon (OBS)
+framework.  Given an estimate of the inverse Hessian matrix H^-1,
+scores are determined by W^2 / (2 * diag(H^-1)).
+            </p>
+            <p>
+             Additionally, when masking, weights should also be updated by the optimal
+perturbation: -w_i * H^-1 / H_{i,i} for every newly masked weight w_i.
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  params
+                 </strong>
+                 – list of model Parameters to track and score
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  mfac_options
+                 </strong>
+                 – Dictionary of key words specifying arguments for the M-FAC
+pruning run. num_grads controls the number of gradient samples that are kept,
+fisher_block_size if given enables block approximations of the Fisher matrix
+(if not specified, the full matrix is used), available_gpus specifies a list
+of device ids that can be used for computation. For a full list of options,
+see the MFACOptions dataclass documentation. Default configuration uses
+CPU for computation without blocked computation
+                </p>
+               </li>
+              </ul>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.get_name">
+              <em class="property">
+               <span class="pre">
+                static
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                get_name
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               str
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MFACPruningParamsScorer.get_name">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.get_name" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 name of this pruning method
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.mask_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                mask_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 mask_diffs
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MFACPruningParamsScorer.mask_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.mask_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Update parameters for a new mask based on the OBS optimal perturbation:
+-w_i * H^-1 / H_{i,i} for every newly masked weight w_i
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    masks
+                   </strong>
+                   – latest masks to be applied to these parameters
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    mask_diffs
+                   </strong>
+                   – mask diff values returned by mask_difference for these
+masks that describe how these masks changed since the last update
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.pre_optim_step_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                pre_optim_step_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MFACPruningParamsScorer.pre_optim_step_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.pre_optim_step_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Update the gradient buffer based on the current gradients
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 <strong>
+                  masks
+                 </strong>
+                 – latest masks that are applied to these parameters
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.score_parameters">
+              <code class="sig-name descname">
+               <span class="pre">
+                score_parameters
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.Tensor
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MFACPruningParamsScorer.score_parameters">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MFACPruningParamsScorer.score_parameters" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 List of Tensors the same shapes as the given Parameters where
+each Parameter’s elements are scored based on the optimal value
+given by the OBS method. For the approximated Hessian inverse matrix
+H^-1, scores will be W^2 / (2 * diag(H^-1))
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              MagnitudePruningParamsScorer
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               params
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.nn.parameter.Parameter
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MagnitudePruningParamsScorer">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <a class="reference internal" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer" title="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer
+               </span>
+              </code>
+             </a>
+            </p>
+            <p>
+             Scores parameters based on their magnitude
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <p>
+               <strong>
+                params
+               </strong>
+               – list of model Parameters to track and score
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer.get_name">
+              <em class="property">
+               <span class="pre">
+                static
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                get_name
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               str
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MagnitudePruningParamsScorer.get_name">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer.get_name" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 name of this pruning method
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer.score_parameters">
+              <code class="sig-name descname">
+               <span class="pre">
+                score_parameters
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.Tensor
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MagnitudePruningParamsScorer.score_parameters">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MagnitudePruningParamsScorer.score_parameters" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 List of Tensors the same shapes as the given Parameters where
+each Parameter’s elements are scored by their magnitude (absolute value)
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              MovementPruningParamsScorer
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               params
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.nn.parameter.Parameter
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <code class="xref py py-class docutils literal notranslate">
+              <span class="pre">
+               sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsGradScorer
+              </span>
+             </code>
+            </p>
+            <p>
+             Scores parameters based on their movement which is defined as
+movement_score = sum(-1.0 * W * dL/dW)
+            </p>
+            <p>
+             Movement pruning introduced here:
+             <a class="reference external" href="https://arxiv.org/abs/2005.07683">
+              https://arxiv.org/abs/2005.07683
+             </a>
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <p>
+               <strong>
+                params
+               </strong>
+               – list of model Parameters to track and score
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.check_regen_param_vals">
+              <code class="sig-name descname">
+               <span class="pre">
+                check_regen_param_vals
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer.check_regen_param_vals">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.check_regen_param_vals" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Check that movement scores are on the correct device and regenerate if not
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.get_name">
+              <em class="property">
+               <span class="pre">
+                static
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                get_name
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               str
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer.get_name">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.get_name" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 name of this pruning method
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.mask_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                mask_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 mask_diffs
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer.mask_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.mask_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Resets non main process scores after they have been recorded in the main
+process during the mask update
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    masks
+                   </strong>
+                   – latest masks to be applied to these parameters
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    mask_diffs
+                   </strong>
+                   – mask diff values returned by mask_difference for these
+masks that describe how these masks changed since the last update
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.pre_optim_step_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                pre_optim_step_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer.pre_optim_step_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.pre_optim_step_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Update movement scores based on the current Parameter weights and gradients
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 <strong>
+                  masks
+                 </strong>
+                 – latest masks that are applied to these parameters
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.score_parameters">
+              <code class="sig-name descname">
+               <span class="pre">
+                score_parameters
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.Tensor
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#MovementPruningParamsScorer.score_parameters">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.MovementPruningParamsScorer.score_parameters" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 List of Tensors the same shapes as the given Parameters where
+each Parameter’s elements are scored by their weight times the direction
+of their gradient.
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              PruningParamsScorer
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               params
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.nn.parameter.Parameter
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <code class="xref py py-class docutils literal notranslate">
+              <span class="pre">
+               abc.ABC
+              </span>
+             </code>
+            </p>
+            <p>
+             Base abstract class for scoring model parameters for pruning
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <p>
+               <strong>
+                params
+               </strong>
+               – list of model Parameters to track and score
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.check_regen_param_vals">
+              <code class="sig-name descname">
+               <span class="pre">
+                check_regen_param_vals
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.check_regen_param_vals">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.check_regen_param_vals" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Check that all variables based on the params are on the correct device
+and regenerate if not
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.get_name">
+              <em class="property">
+               <span class="pre">
+                abstract
+               </span>
+               <span class="pre">
+                static
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                get_name
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               str
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.get_name">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.get_name" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 name of this pruning method
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.mask_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                mask_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 mask_diffs
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.mask_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.mask_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Perform any updates based on the latest mask to be applied to the weights
+immediately after this function completes
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    masks
+                   </strong>
+                   – latest masks to be applied to these parameters
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    mask_diffs
+                   </strong>
+                   – mask diff values returned by mask_difference for these
+masks that describe how these masks changed since the last update
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.on_pruning_end">
+              <code class="sig-name descname">
+               <span class="pre">
+                on_pruning_end
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.on_pruning_end">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.on_pruning_end" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Perform any cleanup after pruning is complete
+              </p>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.pre_optim_step_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                pre_optim_step_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 masks
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.pre_optim_step_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.pre_optim_step_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="simple">
+               <dt>
+                Perform any required logic for tracking Parameter data and gradients before
+               </dt>
+               <dd>
+                <p>
+                 an Optimizer step is applied to the model.
+                </p>
+               </dd>
+              </dl>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 <strong>
+                  masks
+                 </strong>
+                 – latest masks that are applied to these parameters
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.score_parameters">
+              <em class="property">
+               <span class="pre">
+                abstract
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                score_parameters
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.Tensor
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.score_parameters">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.score_parameters" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Returns
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 List of Tensors the same shapes as the given Parameters that
+correspond to their scores to be pruned by
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.update_last_applied_sparsity">
+              <code class="sig-name descname">
+               <span class="pre">
+                update_last_applied_sparsity
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 sparsity
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#PruningParamsScorer.update_last_applied_sparsity">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer.update_last_applied_sparsity" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 <strong>
+                  sparsity
+                 </strong>
+                 – sparsity level between 0.0 and 1.0 that was the last value
+set for the given parameters
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py function">
+           <dt id="sparseml.pytorch.optim.mask_pruning_scorer.create_pruning_param_scorer">
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              create_pruning_param_scorer
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               params
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.nn.parameter.Parameter
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               score_type
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Union
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               str
+              </span>
+              <span class="p">
+               <span class="pre">
+                ,
+               </span>
+              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            →
+            <a class="reference internal" href="#sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer" title="sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer">
+             <span class="pre">
+              sparseml.pytorch.optim.mask_pruning_scorer.PruningParamsScorer
+             </span>
+            </a>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/mask_pruning_scorer.html#create_pruning_param_scorer">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.mask_pruning_scorer.create_pruning_param_scorer" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  params
+                 </strong>
+                 – List of Parameters for the created PruningParamsScorer to track
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  score_type
+                 </strong>
+                 – String name of scoring type to use. Valid options are
+‘magnitude’, ‘movement’, or ‘MFAC’. For MFAC pruning, passing in an MFACOptions
+object valid and is preferred.
+                </p>
+               </li>
+              </ul>
              </dd>
             </dl>
            </dd>
@@ -16444,6 +18726,1381 @@ one of: inp, out
            </dd>
           </dl>
          </div>
+         <div class="section" id="module-sparseml.pytorch.optim.modifier_distillation">
+          <span id="sparseml-pytorch-optim-modifier-distillation-module">
+          </span>
+          <h2>
+           sparseml.pytorch.optim.modifier_distillation module
+           <a class="headerlink" href="#module-sparseml.pytorch.optim.modifier_distillation" title="Permalink to this headline">
+            
+           </a>
+          </h2>
+          <p>
+           Modifier for performing model distillation
+          </p>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.modifier_distillation.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              DistillationModifier
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               start_epoch
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               -
+              </span>
+              <span class="pre">
+               1.0
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               end_epoch
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               -
+              </span>
+              <span class="pre">
+               1.0
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               hardness
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               0.5
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               temperature
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               2.0
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               distill_output_keys
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               Any
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.pytorch.optim.modifier.ScheduledModifier
+               </span>
+              </code>
+             </a>
+            </p>
+            <p>
+             Adds a knowledge distillation loss based on a teacher model during the
+loss_update phase of the SparseML lifecycle. A distillation_teacher
+module may be provided as a kwarg to the Manager initialization and
+loss_update(loss) must be called before any backwards pass in the integrated
+training flow. If no teacher model is provided, then self distillation
+will be used
+            </p>
+            <div class="line-block">
+             <div class="line">
+              Sample yaml:
+             </div>
+             <div class="line-block">
+              <div class="line">
+               !DistillationModifier
+              </div>
+              <div class="line-block">
+               <div class="line">
+                start_epoch: 0.0
+               </div>
+               <div class="line">
+                hardness: 0.5
+               </div>
+               <div class="line">
+                temperature: 2.0
+               </div>
+               <div class="line">
+                distill_output_keys: [0]
+               </div>
+              </div>
+             </div>
+            </div>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  start_epoch
+                 </strong>
+                 – The epoch to start the modifier at
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  hardness
+                 </strong>
+                 – how much to weight the distillation loss vs the base loss
+(e.g. hardness of 0.6 will return 0.6 * distill_loss + 0.4 * base_loss).
+Default is 0.5
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  temperature
+                 </strong>
+                 – temperature applied to teacher and student softmax for
+distillation
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  distill_output_keys
+                 </strong>
+                 – list of keys to of module outputs to use for
+distillation if multiple outputs are present. No or empty list defaults
+to using all available outputs
+                </p>
+               </li>
+              </ul>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.distill_output_keys">
+              <code class="sig-name descname">
+               <span class="pre">
+                distill_output_keys
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.distill_output_keys" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               list of keys to of module outputs to use for distillation
+if multiple outputs are present. No or empty list defaults
+to using all available outputs
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Type
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 return
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.finalize">
+              <code class="sig-name descname">
+               <span class="pre">
+                finalize
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 reset_loggers
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 bool
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 True
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="o">
+                <span class="pre">
+                 **
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 kwargs
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier.finalize">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.finalize" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Cleans up any state and hooks
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – The model/module to finalize the modifier for.
+Marked optional so state can still be cleaned up on delete,
+but generally should always be passed in.
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    reset_loggers
+                   </strong>
+                   – True to remove any currently attached loggers (default),
+False to keep the loggers attached.
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    kwargs
+                   </strong>
+                   – Optional kwargs to support specific arguments
+for individual modifiers.
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.hardness">
+              <code class="sig-name descname">
+               <span class="pre">
+                hardness
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.hardness" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               how much to weight the distillation loss vs the base loss
+(e.g. hardness of 0.6 will return 0.6 * distill_loss + 0.4 * base_loss)
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Type
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 return
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.initialize">
+              <code class="sig-name descname">
+               <span class="pre">
+                initialize
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 0
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 loggers
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 List
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.logger.BaseLogger" title="sparseml.pytorch.utils.logger.BaseLogger">
+                 <span class="pre">
+                  sparseml.pytorch.utils.logger.BaseLogger
+                 </span>
+                </a>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 distillation_teacher
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="o">
+                <span class="pre">
+                 **
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 kwargs
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier.initialize">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.initialize" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Store the teacher model for distillation if provided
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – the PyTorch model/module to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – The epoch to initialize the modifier and module at.
+Defaults to 0 (start of the training process)
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    loggers
+                   </strong>
+                   – Optional list of loggers to log the modification process to
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    distillation_teacher
+                   </strong>
+                   –
+                   <p>
+                    teacher module to perform knowledge distillation
+with. If not provided, self distillation will be used with a teacher
+                   </p>
+                   <blockquote>
+                    <div>
+                     <p>
+                      from a copy of the given module at the start epoch. If given string
+“disable” this modifier will not apply distillation of any kind,
+even in the active epoch range
+                     </p>
+                    </div>
+                   </blockquote>
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    kwargs
+                   </strong>
+                   – Optional kwargs to support specific arguments
+for individual modifiers.
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.loss_update">
+              <code class="sig-name descname">
+               <span class="pre">
+                loss_update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 loss
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.Tensor
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 optimizer
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.optim.optimizer.Optimizer
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 steps_per_epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 int
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 student_outputs
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 Iterable
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 teacher_inputs
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 Union
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ,
+                 </span>
+                </span>
+                <span class="pre">
+                 Iterable
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ,
+                 </span>
+                </span>
+                <span class="pre">
+                 Dict
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 Any
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ,
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.Tensor
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="o">
+                <span class="pre">
+                 **
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 kwargs
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               torch.Tensor
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier.loss_update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.loss_update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Updates the bass loss with the distillation loss
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    loss
+                   </strong>
+                   – The calculated loss tensor
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – module to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    optimizer
+                   </strong>
+                   – optimizer to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – current epoch and progress within the current epoch
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    steps_per_epoch
+                   </strong>
+                   – number of steps taken within each epoch
+(calculate batch number using this and epoch)
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+               <dt class="field-even">
+                Returns
+               </dt>
+               <dd class="field-even">
+                <p>
+                 loss tensor with knowledge distillation loss added
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.temperature">
+              <code class="sig-name descname">
+               <span class="pre">
+                temperature
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.temperature" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               temperature applied to teacher and student softmax for
+distillation
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Type
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 return
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.update">
+              <code class="sig-name descname">
+               <span class="pre">
+                update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 optimizer
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.optim.optimizer.Optimizer
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 steps_per_epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 int
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier.update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               If start_pending(), sets a hook for tracking student module inputs and outputs
+for distillation
+If end_pending(), removes hook for distillation tracking
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – module to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    optimizer
+                   </strong>
+                   – optimizer to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – current epoch and progress within the current epoch
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    steps_per_epoch
+                   </strong>
+                   – number of steps taken within each epoch
+(calculate batch number using this and epoch)
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_distillation.DistillationModifier.update_ready">
+              <code class="sig-name descname">
+               <span class="pre">
+                update_ready
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 steps_per_epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 int
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               bool
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_distillation.html#DistillationModifier.update_ready">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.update_ready" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – current epoch and progress within the current epoch
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    steps_per_epoch
+                   </strong>
+                   – number of steps taken within each epoch
+(calculate batch number using this and epoch)
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+               <dt class="field-even">
+                Returns
+               </dt>
+               <dd class="field-even">
+                <p>
+                 True if the modifier is pending an update and update() should be called
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+         </div>
          <div class="section" id="module-sparseml.pytorch.optim.modifier_epoch">
           <span id="sparseml-pytorch-optim-modifier-epoch-module">
           </span>
@@ -16528,11 +20185,13 @@ one of: inp, out
            <dd>
             <p>
              Bases:
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_epoch.EpochRangeModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_epoch.EpochRangeModifier" title="sparseml.sparsification.modifier_epoch.EpochRangeModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_epoch.EpochRangeModifier
+               </span>
+              </code>
+             </a>
              ,
              <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier">
               <code class="xref py py-class docutils literal notranslate">
@@ -17698,11 +21357,13 @@ if not set will set the lr for all param groups
            <dd>
             <p>
              Bases:
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_lr.LearningRateModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_lr.LearningRateModifier" title="sparseml.sparsification.modifier_lr.LearningRateModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_lr.LearningRateModifier
+               </span>
+              </code>
+             </a>
              ,
              <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledUpdateModifier" title="sparseml.pytorch.optim.modifier.ScheduledUpdateModifier">
               <code class="xref py py-class docutils literal notranslate">
@@ -18458,11 +22119,13 @@ Additionally will first set the lr to the init_lr if not set yet
            <dd>
             <p>
              Bases:
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_lr.SetLearningRateModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_lr.SetLearningRateModifier" title="sparseml.sparsification.modifier_lr.SetLearningRateModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_lr.SetLearningRateModifier
+               </span>
+              </code>
+             </a>
              ,
              <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier">
               <code class="xref py py-class docutils literal notranslate">
@@ -20614,11 +24277,13 @@ value based on given settings.
            <dd>
             <p>
              Bases:
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_params.TrainableParamsModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_params.TrainableParamsModifier" title="sparseml.sparsification.modifier_params.TrainableParamsModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_params.TrainableParamsModifier
+               </span>
+              </code>
+             </a>
              ,
              <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier">
               <code class="xref py py-class docutils literal notranslate">
@@ -21316,11 +24981,13 @@ on models while pruning.
               </span>
              </code>
              ,
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_pruning.ConstantPruningModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_pruning.ConstantPruningModifier" title="sparseml.sparsification.modifier_pruning.ConstantPruningModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_pruning.ConstantPruningModifier
+               </span>
+              </code>
+             </a>
             </p>
             <p>
              Holds the sparsity level and shape for a given parameter(s) constant while training.
@@ -21990,9 +25657,11 @@ Useful for transfer learning from a pruned model.
                 ,
                </span>
               </span>
-              <span class="pre">
-               sparseml.pytorch.utils.mfac_helpers.MFACOptions
-              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
               <span class="p">
                <span class="pre">
                 ]
@@ -22033,11 +25702,13 @@ Useful for transfer learning from a pruned model.
               </span>
              </code>
              ,
-             <code class="xref py py-class docutils literal notranslate">
-              <span class="pre">
-               sparseml.sparsification.modifier_pruning.GMPruningModifier
-              </span>
-             </code>
+             <a class="reference internal" href="sparseml.sparsification.html#sparseml.sparsification.modifier_pruning.GMPruningModifier" title="sparseml.sparsification.modifier_pruning.GMPruningModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.sparsification.modifier_pruning.GMPruningModifier
+               </span>
+              </code>
+             </a>
             </p>
             <p>
              Gradually applies kernel sparsity to a given parameter or parameters from
@@ -23061,9 +26732,11 @@ at start_epoch, off at start_epoch + update_frequency, and so on.
                 ,
                </span>
               </span>
-              <span class="pre">
-               sparseml.pytorch.utils.mfac_helpers.MFACOptions
-              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
               <span class="p">
                <span class="pre">
                 ]
@@ -27576,9 +31249,11 @@ channels, or a SparsityMaskCreator object. default is ‘unstructured’
                 ,
                </span>
               </span>
-              <span class="pre">
-               sparseml.pytorch.utils.mfac_helpers.MFACOptions
-              </span>
+              <a class="reference internal" href="sparseml.pytorch.utils.html#sparseml.pytorch.utils.mfac_helpers.MFACOptions" title="sparseml.pytorch.utils.mfac_helpers.MFACOptions">
+               <span class="pre">
+                sparseml.pytorch.utils.mfac_helpers.MFACOptions
+               </span>
+              </a>
               <span class="p">
                <span class="pre">
                 ]
@@ -29850,6 +33525,1104 @@ parameters of this modifier
            </dd>
           </dl>
          </div>
+         <div class="section" id="module-sparseml.pytorch.optim.modifier_thinning">
+          <span id="sparseml-pytorch-optim-modifier-thinning-module">
+          </span>
+          <h2>
+           sparseml.pytorch.optim.modifier_thinning module
+           <a class="headerlink" href="#module-sparseml.pytorch.optim.modifier_thinning" title="Permalink to this headline">
+            
+           </a>
+          </h2>
+          <p>
+           Code to assist in the compression of structured-pruned models
+          </p>
+          <dl class="py class">
+           <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier">
+            <em class="property">
+             <span class="pre">
+              class
+             </span>
+            </em>
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.modifier_thinning.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              LayerThinningModifier
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               param_group_dependency_map
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Dict
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               str
+              </span>
+              <span class="p">
+               <span class="pre">
+                ,
+               </span>
+              </span>
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               str
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               structure_type
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               str
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               'filter'
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               start_epoch
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               -
+              </span>
+              <span class="pre">
+               1.0
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               update_epochs
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               float
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               strict
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               bool
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               True
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               end_epoch
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               float
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               -
+              </span>
+              <span class="pre">
+               1
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_thinning.html#LayerThinningModifier">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Bases:
+             <a class="reference internal" href="#sparseml.pytorch.optim.modifier.ScheduledModifier" title="sparseml.pytorch.optim.modifier.ScheduledModifier">
+              <code class="xref py py-class docutils literal notranslate">
+               <span class="pre">
+                sparseml.pytorch.optim.modifier.ScheduledModifier
+               </span>
+              </code>
+             </a>
+            </p>
+            <p>
+             Applies layer thinning to a model based on its structurally pruned parameters,
+updating these parameters dependencies along the opposite dimensions
+            </p>
+            <div class="line-block">
+             <div class="line">
+              Sample yaml:
+             </div>
+             <div class="line-block">
+              <div class="line">
+               !LayerThinningModifier
+              </div>
+              <div class="line-block">
+               <div class="line">
+                start_epoch: 0.0
+               </div>
+               <div class="line">
+                update_epochs: [1.0, 2.0]
+               </div>
+               <div class="line">
+                param_group_dependency_map: {
+               </div>
+               <div class="line-block">
+                <div class="line">
+                 “param.1.name,param.2.name”: [“param.1.dep.1.name”]
+                </div>
+               </div>
+               <div class="line">
+                }
+               </div>
+               <div class="line">
+                structure_type: filter
+               </div>
+              </div>
+             </div>
+            </div>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  param_group_dependency_map
+                 </strong>
+                 – mapping of comma separated parameter names that
+should be thinned together to a list of parameter names whose opposite channels
+should be updated based on which ones of the group are removed. Can be
+generated from an onnx export of the target module with
+sparseml.onnx.optim.get_param_structured_pruning_group_dependencies
+i.e. {“param.1.name,param.2.name”: [“param.1.dep.1.name”, “other.dep”,
+“other.dep.2], …}
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  structure_type
+                 </strong>
+                 – type of structured pruning to apply layer thinning based on.
+pruned parameters will first be thinned along the given structure type
+dimension, and then dependencies of those parameters will be updated accordingly
+along the opposite dimension
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  start_epoch
+                 </strong>
+                 – the epoch to apply layer thinning at
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  update_epochs
+                 </strong>
+                 – optional list of epochs to perform an additional thinning
+step after
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  strict
+                 </strong>
+                 – if True, all parameters in a pruning group must be sparse along
+the same indices, durring thinning will raise a ValueError if not.
+Default is True
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  end_epoch
+                 </strong>
+                 – do not set. value forced to -1
+                </p>
+               </li>
+              </ul>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.finalize">
+              <code class="sig-name descname">
+               <span class="pre">
+                finalize
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 Optional
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  [
+                 </span>
+                </span>
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+                <span class="p">
+                 <span class="pre">
+                  ]
+                 </span>
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 None
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 reset_loggers
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 bool
+                </span>
+               </span>
+               <span class="o">
+                <span class="pre">
+                 =
+                </span>
+               </span>
+               <span class="default_value">
+                <span class="pre">
+                 True
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="o">
+                <span class="pre">
+                 **
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 kwargs
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_thinning.html#LayerThinningModifier.finalize">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.finalize" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               Cleans up any state, apply thinning if it has not yet been applied
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – The model/module to finalize the modifier for.
+Marked optional so state can still be cleaned up on delete,
+but generally should always be passed in.
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    reset_loggers
+                   </strong>
+                   – True to remove any currently attached loggers (default),
+False to keep the loggers attached.
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    kwargs
+                   </strong>
+                   – Optional kwargs to support specific arguments
+for individual modifiers.
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.param_group_dependency_map">
+              <code class="sig-name descname">
+               <span class="pre">
+                param_group_dependency_map
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.param_group_dependency_map" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.strict">
+              <code class="sig-name descname">
+               <span class="pre">
+                strict
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.strict" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.structure_type">
+              <code class="sig-name descname">
+               <span class="pre">
+                structure_type
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.structure_type" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update">
+              <code class="sig-name descname">
+               <span class="pre">
+                update
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 module
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.nn.modules.module.Module
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 optimizer
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 torch.optim.optimizer.Optimizer
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 steps_per_epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 int
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_thinning.html#LayerThinningModifier.update">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               If this is an updatable epoch, compresses the module and any relevant optimizer
+params to match the current structured sparsity
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    module
+                   </strong>
+                   – module to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    optimizer
+                   </strong>
+                   – optimizer to modify
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – current epoch and progress within the current epoch
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    steps_per_epoch
+                   </strong>
+                   – number of steps taken within each epoch
+(calculate batch number using this and epoch)
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py attribute">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update_epochs">
+              <code class="sig-name descname">
+               <span class="pre">
+                update_epochs
+               </span>
+              </code>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update_epochs" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update_ready">
+              <code class="sig-name descname">
+               <span class="pre">
+                update_ready
+               </span>
+              </code>
+              <span class="sig-paren">
+               (
+              </span>
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 float
+                </span>
+               </span>
+              </em>
+              ,
+              <em class="sig-param">
+               <span class="n">
+                <span class="pre">
+                 steps_per_epoch
+                </span>
+               </span>
+               <span class="p">
+                <span class="pre">
+                 :
+                </span>
+               </span>
+               <span class="n">
+                <span class="pre">
+                 int
+                </span>
+               </span>
+              </em>
+              <span class="sig-paren">
+               )
+              </span>
+              →
+              <span class="pre">
+               bool
+              </span>
+              <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_thinning.html#LayerThinningModifier.update_ready">
+               <span class="viewcode-link">
+                <span class="pre">
+                 [source]
+                </span>
+               </span>
+              </a>
+              <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.LayerThinningModifier.update_ready" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Parameters
+               </dt>
+               <dd class="field-odd">
+                <ul class="simple">
+                 <li>
+                  <p>
+                   <strong>
+                    epoch
+                   </strong>
+                   – current epoch and progress within the current epoch
+                  </p>
+                 </li>
+                 <li>
+                  <p>
+                   <strong>
+                    steps_per_epoch
+                   </strong>
+                   – number of steps taken within each epoch
+(calculate batch number using this and epoch)
+                  </p>
+                 </li>
+                </ul>
+               </dd>
+               <dt class="field-even">
+                Returns
+               </dt>
+               <dd class="field-even">
+                <p>
+                 True if the modifier is pending an update and update() should be called
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py function">
+           <dt id="sparseml.pytorch.optim.modifier_thinning.compress_strucure_pruned_module">
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              sparseml.pytorch.optim.modifier_thinning.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              compress_strucure_pruned_module
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               module
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               torch.nn.modules.module.Module
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               param_group_dependency_map
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Dict
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               str
+              </span>
+              <span class="p">
+               <span class="pre">
+                ,
+               </span>
+              </span>
+              <span class="pre">
+               List
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               str
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               structure_type
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               str
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               'filter'
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               optimizer
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               torch.optim.optimizer.Optimizer
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               strict
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               bool
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               True
+              </span>
+             </span>
+            </em>
+            <span class="sig-paren">
+             )
+            </span>
+            <a class="reference internal" href="../_modules/sparseml/pytorch/optim/modifier_thinning.html#compress_strucure_pruned_module">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#sparseml.pytorch.optim.modifier_thinning.compress_strucure_pruned_module" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <p>
+             Removes in-place the given module parameters along either input or output channel
+dimensions for any of those channels that are completely pruned. Compresses
+parameters grouped according to the keys in the param_group_dependency_map
+and will update the opposite channels in the dependency map to remove those same
+channels
+            </p>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Parameters
+             </dt>
+             <dd class="field-odd">
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  module
+                 </strong>
+                 – module to compress structurally pruned parameters of
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  param_group_dependency_map
+                 </strong>
+                 – mapping of comma separated parameter names that
+should be pruned together to a list of parameter names whose opposite channels
+should be updated based on which ones of the group are removed.
+i.e. {(“param.1.name”, “param.2.name”): [“param.1.dep.1.name”, “other.dep”,
+“other.dep.2], …}
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  structure_type
+                 </strong>
+                 – type of pruning structure used to prune the model and
+generate the dependency map. Valid options are ‘filter’ and ‘channel’.
+Default is ‘filter’
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  optimizer
+                 </strong>
+                 – optional optimizer object to update momentum buffer of for
+relevant parameters
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  strict
+                 </strong>
+                 – if True, all parameters in a pruning group must be sparse along
+the same indices, will raise a ValueError if not. Default is True
+                </p>
+               </li>
+              </ul>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+         </div>
          <div class="section" id="module-sparseml.pytorch.optim.optimizer">
           <span id="sparseml-pytorch-optim-optimizer-module">
           </span>
@@ -30616,19 +35389,11 @@ for the step
              </span>
              <span class="n">
               <span class="pre">
-               Union
+               Optional
               </span>
               <span class="p">
                <span class="pre">
                 [
-               </span>
-              </span>
-              <span class="pre">
-               None
-              </span>
-              <span class="p">
-               <span class="pre">
-                ,
                </span>
               </span>
               <span class="pre">
@@ -30665,19 +35430,11 @@ for the step
              </span>
              <span class="n">
               <span class="pre">
-               Union
+               Optional
               </span>
               <span class="p">
                <span class="pre">
                 [
-               </span>
-              </span>
-              <span class="pre">
-               None
-              </span>
-              <span class="p">
-               <span class="pre">
-                ,
                </span>
               </span>
               <span class="pre">
@@ -34116,7 +38873,7 @@ Handles things like model pruning and increasing activation sparsity.
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.8.0
+    v: v0.9.0
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -34161,8 +38918,13 @@ Handles things like model pruning and increasing activation sparsity.
       </a>
      </dd>
      <dd>
-      <a href="sparseml.pytorch.optim.html">
+      <a href="../v0.8.0/api/sparseml.pytorch.optim.html">
        v0.8.0
+      </a>
+     </dd>
+     <dd>
+      <a href="sparseml.pytorch.optim.html">
+       v0.9.0
       </a>
      </dd>
     </dl>

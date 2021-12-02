@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.nn.layers &mdash; SparseML 0.9.0.20211202 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.9
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.nn.layers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.nn.layers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;activation&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pool2d&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;conv2d_block&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;depthwise_conv2d_block&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;dense_block&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fc&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;conv2d&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">BN_MOMENTUM</span> <span class="o">=</span> <span class="mf">0.9</span>
+<span class="n">BN_EPSILON</span> <span class="o">=</span> <span class="mf">1e-5</span>
+
+
+<div class="viewcode-block" id="activation"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.activation">[docs]</a><span class="k">def</span> <span class="nf">activation</span><span class="p">(</span><span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;act&quot;</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create an activation operation in the current graph and scope.</span>
+
+<span class="sd">    :param x_tens: the tensor to apply the op to</span>
+<span class="sd">    :param act: the activation type to apply, supported:</span>
+<span class="sd">        [None, relu, relu6, sigmoid, softmax]</span>
+<span class="sd">    :param name: the name to give to the activation op in the graph</span>
+<span class="sd">    :return: the created operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">act</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">x_tens</span>
+
+    <span class="k">if</span> <span class="n">act</span> <span class="o">==</span> <span class="s2">&quot;relu&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">act</span> <span class="o">==</span> <span class="s2">&quot;relu6&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">relu6</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">act</span> <span class="o">==</span> <span class="s2">&quot;sigmoid&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">sigmoid</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">act</span> <span class="o">==</span> <span class="s2">&quot;softmax&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">softmax</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown act given of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">act</span><span class="p">))</span></div>
+
+
+<span class="k">def</span> <span class="nf">symmetric_pad2d</span><span class="p">(</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">pad</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span> <span class="n">data_format</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a symmetric pad op in the current graph and scope.</span>
+<span class="sd">    To do this, pad must be an integer or tuple of integers.</span>
+<span class="sd">    If pad is a string, will not do anything and pad should be passed into</span>
+<span class="sd">    the pool or conv op.</span>
+
+<span class="sd">    :param x_tens: the tensor to apply padding to</span>
+<span class="sd">    :param pad: the padding to apply symmetrically. If it is a single integer,</span>
+<span class="sd">        will apply to both sides of height and width dimensions.</span>
+<span class="sd">        If it is a tuple, will take the first element as the padding for</span>
+<span class="sd">        both sides of height dimensions and second for booth sides of width ddimension.</span>
+<span class="sd">    :param data_format: either channels_last or channels_first</span>
+<span class="sd">    :return: the padded tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># default tensorflow_v1 padding</span>
+        <span class="k">return</span> <span class="n">x_tens</span>
+
+    <span class="n">y_pad</span> <span class="o">=</span> <span class="p">[</span><span class="n">pad</span><span class="p">,</span> <span class="n">pad</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">pad</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+    <span class="n">x_pad</span> <span class="o">=</span> <span class="p">[</span><span class="n">pad</span><span class="p">,</span> <span class="n">pad</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pad</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">pad</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">pad</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
+    <span class="n">pad_tensor</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y_pad</span><span class="p">,</span> <span class="n">x_pad</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+        <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span>
+        <span class="k">else</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">y_pad</span><span class="p">,</span> <span class="n">x_pad</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">pad_tensor</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="n">pad_tensor</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">pad_tensor</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="pool2d"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.pool2d">[docs]</a><span class="k">def</span> <span class="nf">pool2d</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">type_</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">pool_size</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]],</span>
+    <span class="n">strides</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;same&quot;</span><span class="p">,</span>
+    <span class="n">data_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;channels_last&quot;</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a pool op with the given name in the current graph and scope.</span>
+<span class="sd">    Supported are [max, avg, global_avg]</span>
+
+<span class="sd">    :param name: the name to given to the pooling op in the graph</span>
+<span class="sd">    :param x_tens: the input tensor to apply pooling to</span>
+<span class="sd">    :param type_: the type of pooling to apply, one of [max, avg, global_avg]</span>
+<span class="sd">    :param pool_size: the size of the pooling window to apply,</span>
+<span class="sd">        if global_avg then is the desired output size</span>
+<span class="sd">    :param strides: the stride to apply for the pooling op,</span>
+<span class="sd">        if global_avg then is unused</span>
+<span class="sd">    :param padding: any padding to apply to the tensor before pooling;</span>
+<span class="sd">        if string then uses tensorflows built in padding, else uses symmetric_pad2d</span>
+<span class="sd">    :param data_format: either channels_last or channels_first</span>
+<span class="sd">    :return: the tensor after pooling</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">symmetric_pad2d</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">padding</span><span class="p">,</span> <span class="n">data_format</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;max&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">max_pooling2d</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">pool_size</span><span class="p">,</span>
+                <span class="n">strides</span><span class="p">,</span>
+                <span class="n">padding</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;valid&quot;</span><span class="p">,</span>
+                <span class="n">data_format</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;avg&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">average_pooling2d</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">pool_size</span><span class="p">,</span>
+                <span class="n">strides</span><span class="p">,</span>
+                <span class="n">padding</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;valid&quot;</span><span class="p">,</span>
+                <span class="n">data_format</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">type_</span> <span class="o">==</span> <span class="s2">&quot;global_avg&quot;</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">pool_size</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">pool_size</span> <span class="o">!=</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;only output pool_size of 1 is supported for global average pooling&quot;</span>
+                <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">reduce_mean</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span> <span class="k">else</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">],</span>
+                <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unrecognized type_ given of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">type_</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="conv2d_block"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.conv2d_block">[docs]</a><span class="k">def</span> <span class="nf">conv2d_block</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;same&quot;</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">data_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;channels_last&quot;</span><span class="p">,</span>
+    <span class="n">include_bn</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">include_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a convolution op and supporting ops (batch norm, activation, etc)</span>
+<span class="sd">    in the current graph and scope.</span>
+
+<span class="sd">    :param name: The name to group all ops under in the graph</span>
+<span class="sd">    :param x_tens: The input tensor to apply a convolution and supporting ops to</span>
+<span class="sd">    :param training: A bool or tensor to indicate if the net is being run</span>
+<span class="sd">        in training mode or not. Used for batch norm</span>
+<span class="sd">    :param channels: The number of output channels from the conv op</span>
+<span class="sd">    :param kernel_size: The size of the kernel to use for the conv op</span>
+<span class="sd">    :param padding: Any padding to apply to the tensor before the convolution;</span>
+<span class="sd">        if string then uses tensorflows built in padding, else uses symmetric_pad2d</span>
+<span class="sd">    :param stride: The stride to apply for the convolution</span>
+<span class="sd">    :param data_format: Either channels_last or channels_first</span>
+<span class="sd">    :param include_bn: True to include a batch norm operation after the conv,</span>
+<span class="sd">        False otherwise</span>
+<span class="sd">    :param include_bias: If left unset, will add a bias if not include_bn.</span>
+<span class="sd">        Otherwise can be set to True to include a bias after the convolution,</span>
+<span class="sd">        False otherwise.</span>
+<span class="sd">    :param act: The activation to apply after the conv op and batch norm (if included).</span>
+<span class="sd">        Default is &quot;relu&quot;, set to None for no activation.</span>
+<span class="sd">    :param kernel_initializer: The initializer to use for the convolution kernels</span>
+<span class="sd">    :param bias_initializer: The initializer to use for the bias variable,</span>
+<span class="sd">        if a bias is included</span>
+<span class="sd">    :param beta_initializer: The initializer to use for the beta variable,</span>
+<span class="sd">        if batch norm is included</span>
+<span class="sd">    :param gamma_initializer: The initializer to use for the gamma variable,</span>
+<span class="sd">        if gamma is included</span>
+<span class="sd">    :return: the tensor after all ops have been applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">include_bias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">include_bias</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">include_bn</span>
+
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">symmetric_pad2d</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">padding</span><span class="p">,</span> <span class="n">data_format</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">filters</span><span class="o">=</span><span class="n">channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="n">kernel_size</span><span class="p">,</span>
+            <span class="n">strides</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="n">padding</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;valid&quot;</span><span class="p">,</span>
+            <span class="n">data_format</span><span class="o">=</span><span class="n">data_format</span><span class="p">,</span>
+            <span class="n">use_bias</span><span class="o">=</span><span class="n">include_bias</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span> <span class="k">if</span> <span class="n">include_bias</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;conv&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_bn</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">1</span> <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_first&quot;</span> <span class="k">else</span> <span class="mi">3</span><span class="p">,</span>
+                <span class="n">momentum</span><span class="o">=</span><span class="n">BN_MOMENTUM</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="o">=</span><span class="n">BN_EPSILON</span><span class="p">,</span>
+                <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bn&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">act</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="depthwise_conv2d_block"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.depthwise_conv2d_block">[docs]</a><span class="k">def</span> <span class="nf">depthwise_conv2d_block</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;same&quot;</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="n">data_format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;channels_last&quot;</span><span class="p">,</span>
+    <span class="n">include_bn</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">include_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a depthwise convolution op and supporting ops (batch norm, activation, etc)</span>
+<span class="sd">    in the current graph and scope.</span>
+
+<span class="sd">    :param name: The name to group all ops under in the graph</span>
+<span class="sd">    :param x_tens: The input tensor to apply a convolution and supporting ops to</span>
+<span class="sd">    :param training: A bool or tensor to indicate if the net is being run</span>
+<span class="sd">        in training mode or not. Used for batch norm</span>
+<span class="sd">    :param channels: The number of output channels from the conv op</span>
+<span class="sd">    :param kernel_size: The size of the kernel to use for the conv op</span>
+<span class="sd">    :param padding: Any padding to apply to the tensor before the convolution;</span>
+<span class="sd">        if string then uses tensorflows built in padding, else uses symmetric_pad2d</span>
+<span class="sd">    :param stride: The stride to apply for the convolution</span>
+<span class="sd">    :param data_format: Either channels_last or channels_first</span>
+<span class="sd">    :param include_bn: True to include a batch norm operation after the conv,</span>
+<span class="sd">        False otherwise</span>
+<span class="sd">    :param include_bias: If left unset, will add a bias if not include_bn.</span>
+<span class="sd">        Otherwise can be set to True to include a bias after the convolution,</span>
+<span class="sd">        False otherwise.</span>
+<span class="sd">    :param act: The activation to apply after the conv op and batch norm (if included).</span>
+<span class="sd">        Default is &quot;relu&quot;, set to None for no activation.</span>
+<span class="sd">    :param kernel_initializer: The initializer to use for the convolution kernels</span>
+<span class="sd">    :param bias_initializer: The initializer to use for the bias variable,</span>
+<span class="sd">        if a bias is included</span>
+<span class="sd">    :param beta_initializer: The initializer to use for the beta variable,</span>
+<span class="sd">        if batch norm is included</span>
+<span class="sd">    :param gamma_initializer: The initializer to use for the gamma variable,</span>
+<span class="sd">        if gamma is included</span>
+<span class="sd">    :return: the tensor after all ops have been applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">include_bias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">include_bias</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">include_bn</span>
+
+    <span class="n">channel_axis</span> <span class="o">=</span> <span class="mi">3</span> <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span> <span class="k">else</span> <span class="mi">1</span>
+    <span class="n">stride</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span>
+        <span class="k">else</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span>
+    <span class="p">)</span>
+    <span class="n">kernel_shape</span> <span class="o">=</span> <span class="p">(</span><span class="n">kernel_size</span><span class="p">,</span> <span class="n">kernel_size</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">x_tens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="n">channel_axis</span><span class="p">]),</span> <span class="mi">1</span><span class="p">)</span>
+
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s2">&quot;conv&quot;</span><span class="p">):</span>
+            <span class="n">kernel</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+                <span class="s2">&quot;kernel&quot;</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="n">kernel_shape</span><span class="p">,</span>
+                <span class="n">initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                <span class="n">trainable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">bias</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+                    <span class="s2">&quot;bias&quot;</span><span class="p">,</span>
+                    <span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="n">channels</span><span class="p">,),</span>
+                    <span class="n">initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                    <span class="n">trainable</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">include_bias</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">)</span>
+
+            <span class="n">out</span> <span class="o">=</span> <span class="n">symmetric_pad2d</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">padding</span><span class="p">,</span> <span class="n">data_format</span><span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">depthwise_conv2d</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">kernel</span><span class="p">,</span>
+                <span class="n">stride</span><span class="p">,</span>
+                <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">padding</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="s2">&quot;VALID&quot;</span><span class="p">,</span>
+                <span class="n">data_format</span><span class="o">=</span><span class="s2">&quot;NHWC&quot;</span> <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span> <span class="k">else</span> <span class="s2">&quot;NCHW&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">bias_add</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">data_format</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_bn</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">3</span> <span class="k">if</span> <span class="n">data_format</span> <span class="o">==</span> <span class="s2">&quot;channels_last&quot;</span> <span class="k">else</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="n">momentum</span><span class="o">=</span><span class="n">BN_MOMENTUM</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="o">=</span><span class="n">BN_EPSILON</span><span class="p">,</span>
+                <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bn&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">act</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="dense_block"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.dense_block">[docs]</a><span class="k">def</span> <span class="nf">dense_block</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">include_bn</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">include_bias</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dropout_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;relu&quot;</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a dense or fully connected op and supporting ops</span>
+<span class="sd">    (batch norm, activation, etc) in the current graph and scope.</span>
+
+<span class="sd">    :param name: The name to group all ops under in the graph</span>
+<span class="sd">    :param x_tens: The input tensor to apply a fully connected and supporting ops to</span>
+<span class="sd">    :param training: A bool or tensor to indicate if the net is being run</span>
+<span class="sd">        in training mode or not. Used for batch norm and dropout</span>
+<span class="sd">    :param channels: The number of output channels from the dense op</span>
+<span class="sd">    :param include_bn: True to include a batch norm operation after the conv,</span>
+<span class="sd">        False otherwise</span>
+<span class="sd">    :param include_bias: If left unset, will add a bias if not include_bn.</span>
+<span class="sd">        Otherwise can be set to True to include a bias after the convolution,</span>
+<span class="sd">        False otherwise.</span>
+<span class="sd">    :param dropout_rate: The dropout rate to apply after the fully connected</span>
+<span class="sd">        and batch norm if included. If none, will not include batch norm</span>
+<span class="sd">    :param act: The activation to apply after the conv op and batch norm (if included).</span>
+<span class="sd">        Default is &quot;relu&quot;, set to None for no activation.</span>
+<span class="sd">    :param kernel_initializer: The initializer to use for the fully connected kernels</span>
+<span class="sd">    :param bias_initializer: The initializer to use for the bias variable,</span>
+<span class="sd">        if a bias is included</span>
+<span class="sd">    :param beta_initializer: The initializer to use for the beta variable,</span>
+<span class="sd">        if batch norm is included</span>
+<span class="sd">    :param gamma_initializer: The initializer to use for the gamma variable,</span>
+<span class="sd">        if gamma is included</span>
+<span class="sd">    :return: the tensor after all ops have been applied</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">include_bias</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">include_bias</span> <span class="o">=</span> <span class="ow">not</span> <span class="n">include_bn</span>
+
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dense</span><span class="p">(</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">units</span><span class="o">=</span><span class="n">channels</span><span class="p">,</span>
+            <span class="n">use_bias</span><span class="o">=</span><span class="n">include_bias</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span> <span class="k">if</span> <span class="n">include_bias</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;fc&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">include_bn</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">batch_normalization</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                <span class="n">momentum</span><span class="o">=</span><span class="n">BN_MOMENTUM</span><span class="p">,</span>
+                <span class="n">epsilon</span><span class="o">=</span><span class="n">BN_EPSILON</span><span class="p">,</span>
+                <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bn&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">dropout_rate</span> <span class="ow">and</span> <span class="n">dropout_rate</span> <span class="o">&gt;</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">dropout</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span> <span class="n">dropout_rate</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;dropout&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">act</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span></div>
+
+
+<div class="viewcode-block" id="fc"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.fc">[docs]</a><span class="k">def</span> <span class="nf">fc</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">in_chan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">out_chan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a fully connected layer with the proper ops and variables.</span>
+
+<span class="sd">    :param name: the name scope to create the layer under</span>
+<span class="sd">    :param x_tens: the tensor to apply the layer to</span>
+<span class="sd">    :param in_chan: the number of input channels</span>
+<span class="sd">    :param out_chan: the number of output channels</span>
+<span class="sd">    :param act: an activation type to add into the layer, supported:</span>
+<span class="sd">        [None, relu, sigmoid, softmax]</span>
+<span class="sd">    :return: the created layer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+            <span class="s2">&quot;weight&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">in_chan</span><span class="p">,</span> <span class="n">out_chan</span><span class="p">],</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_normal_initializer</span><span class="p">(),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+            <span class="s2">&quot;bias&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">out_chan</span><span class="p">],</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;matmul&quot;</span><span class="p">)</span>
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">bias_add</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bias_add&quot;</span><span class="p">)</span>
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">act</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">x_tens</span></div>
+
+
+<div class="viewcode-block" id="conv2d"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.nn.html#sparseml.tensorflow_v1.nn.layers.conv2d">[docs]</a><span class="k">def</span> <span class="nf">conv2d</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">in_chan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">out_chan</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">padding</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">act</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Create a convolutional layer with the proper ops and variables.</span>
+
+<span class="sd">    :param name: the name scope to create the layer under</span>
+<span class="sd">    :param x_tens: the tensor to apply the layer to</span>
+<span class="sd">    :param in_chan: the number of input channels</span>
+<span class="sd">    :param out_chan: the number of output channels</span>
+<span class="sd">    :param kernel: the kernel size to create a convolution for</span>
+<span class="sd">    :param stride: the stride to apply to the convolution</span>
+<span class="sd">    :param padding: the padding to apply to the convolution</span>
+<span class="sd">    :param act: an activation type to add into the layer, supported:</span>
+<span class="sd">        [None, relu, sigmoid, softmax]</span>
+<span class="sd">    :return: the created layer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+            <span class="s2">&quot;weight&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">kernel</span><span class="p">,</span> <span class="n">kernel</span><span class="p">,</span> <span class="n">in_chan</span><span class="p">,</span> <span class="n">out_chan</span><span class="p">],</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_normal_initializer</span><span class="p">(),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_variable</span><span class="p">(</span>
+            <span class="s2">&quot;bias&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[</span><span class="n">out_chan</span><span class="p">],</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">conv2d</span><span class="p">(</span>
+            <span class="n">x_tens</span><span class="p">,</span> <span class="n">weight</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="n">stride</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;conv&quot;</span>
+        <span class="p">)</span>
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">bias_add</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">bias</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;bias_add&quot;</span><span class="p">)</span>
+        <span class="n">x_tens</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">act</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">x_tens</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.9.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="layers.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
