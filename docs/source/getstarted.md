@@ -56,13 +56,13 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
   <tr>
    <td><strong>Sample Models</strong>
    </td>
-   <td>BERT, YOLO, ResNet, MobileNet, EfficientNet, Single-Shot Detectors (SSDs)
+   <td>BERT, YOLO, YOLACT, ResNet, MobileNet, EfficientNet, Single-Shot Detectors (SSDs)
    </td>
   </tr>
   <tr>
    <td><strong>Use Cases (Domains)</strong>
    </td>
-   <td>Image Classification, Object Detection, NLP
+   <td>NLP, Image Classification, Image Segmentation, Object Detection
    </td>
   </tr>
   <tr>
@@ -74,7 +74,7 @@ Our Sparsify and SparseML tools allow us to easily reach industry leading levels
 </table>
 <p></p>
 
-Today, we offer support for NLP and convolutional neural network-based computer vision models, specifically classification and object detection model types such as [the models in SparseZoo](https://sparsezoo.neuralmagic.com).
+Today, we offer support for NLP and convolutional neural network-based computer vision models, specifically classification, segmentation, and object detection model types such as [the models in SparseZoo](https://sparsezoo.neuralmagic.com).
 
 We are continuously exploring models to add to the SparseZoo including model architectures beyond computer vision and NLP; [Subscribe for updates](http://neuralmagic.com/subscribe).
 
@@ -92,9 +92,13 @@ Model inferences are executed as a single stream by default; concurrent executio
 
 ## Try it Out
 
-Not sure where to start? Here are several sparsified models with hands-on experiences you can work through, from deployment to training.
+Not sure where to start? Here are several sparsified models with hands-on experiences you can work through, from deployment to training:
 
-- [ResNet-50](https://docs.neuralmagic.com/main/source/model-pages/cv-classification-resnet50.html) - a popular image classification network.
-- [MobileNetV1](https://docs.neuralmagic.com/main/source/model-pages/cv-classification-mobilenet.html) - a popular image classification network for edge deployments.
-- [YOLOv3](https://docs.neuralmagic.com/main/source/model-pages/cv-detection-yolov3.html) - a popular object detection network.
-- [BERT](https://docs.neuralmagic.com/main/source/model-pages/nlp-bert.html) - a popular NLP model.
+- [BERT](https://sparsezoo.neuralmagic.com/getting-started/bert) - a popular NLP model.
+- [YOLOv5](https://sparsezoo.neuralmagic.com/getting-started/yolov5) - a popular object detection network.
+- [YOLOv3](https://sparsezoo.neuralmagic.com/getting-started/yolov3) - a popular object detection network.
+- [ResNet-50](https://sparsezoo.neuralmagic.com/getting-started/resnet_v1-50) - a popular image classification network.
+- [MobileNetV1](https://sparsezoo.neuralmagic.com/getting-started/mobilenet_v1-1.0) - a popular image classification network for edge deployments.
+
+
+
