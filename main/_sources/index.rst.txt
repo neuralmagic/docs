@@ -66,7 +66,7 @@ To contribute to Neural Magic documentation, please:
 - Submit a `pull request <https://github.com/neuralmagic/docs/pulls />`_ with your proposed documentation changes.
 - Get started with `writing and formatting on GitHub <https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github />`_.
 
-To learn more about Neural Magic, `check our website <https://www.neuralmagic.com />`_.
+To learn more about Neural Magic, `check our website <https://www.neuralmagic.com />`.
 
 
 .. toctree::

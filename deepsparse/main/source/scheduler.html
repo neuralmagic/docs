@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Serial or Concurrent Inferences &mdash; DeepSparse 0.10.0 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <title>Serial or Concurrent Inferences &mdash; DeepSparse 0.11.0 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../_static/favicon.ico"/>
@@ -31,7 +31,7 @@
             <a href="../index.html" class="icon icon-home"> DeepSparse<img src="../_static/icon-deepsparse.png" class="logo" alt="Logo"/>
           </a>
               <div class="version">
-                0.10
+                0.11
               </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
@@ -115,12 +115,19 @@ limitations under the License.
 <p><em>Multi-stream scheduling; requests execute in parallel and may utilize hardware resources better</em></p>
 <p>Whereas the default scheduler will queue up requests made simultaneously and handle them serially, the multi-stream scheduler maintains a set of dropboxes where requests may be deposited and the requesting threads can wait. These dropboxes allow workers to find work from multiple sources when work from a single source would otherwise be scarce, maximizing throughput. When a request is complete, the requesting thread is awakened and returns the results to the caller.</p>
 <p>The most common use cases for the multi-stream scheduler are where parallelism is low with respect to core count, and where requests need to be made asynchronously without time to batch them. Implementing a model server may fit such a scenario and be ideal for using multi-stream scheduling.</p>
+<p>A final “elastic” scheduler is available, designed to allow concurrent requests without multiplexing them on individual NUMA nodes. A workload that might benefit from the elastic scheduler is one in which multiple requests need to be handled simultaneously, but where performance is hindered when those requests have to share an L3 cache. The elastic scheduler executes no more than one request on a single NUMA node at any time, inhibiting cache sharing.</p>
+<p>Since the multi-stream scheduler will potentially handle multiple requests on a single NUMA node, if you’re working on a multi-socket system, you may find it useful to compare performance between the multi-stream and elastic schedulers to determine the profile of your model. Be aware that even apparently minor changes, such as batch size, can radically alter the size of the computation and, therefore, cache behavior.</p>
+<p><em>Elastic scheduling; requests execute in parallel, but not multiplexed on individual NUMA Nodes</em></p>
 <p>Depending on your engine execution strategy, enable one of these options by running:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="s2">&quot;single_stream&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>or</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="s2">&quot;multi_stream&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="s2">&quot;elastic&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>or pass in the enum value directly, since<code class="docutils literal notranslate"><span class="pre">&quot;multi_stream&quot;</span> <span class="pre">==</span> <span class="pre">Scheduler.multi_stream</span></code></p>
@@ -161,6 +168,7 @@ limitations under the License.
   <div class="rst-other-versions">
     <dl>
       <dt>Tags</dt>
+      <dd><a href="../../v0.10.0/source/scheduler.html">v0.10.0</a></dd>
       <dd><a href="../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../v0.3.1/source/scheduler.html">v0.3.1</a></dd>
       <dd><a href="../../v0.4.0/source/scheduler.html">v0.4.0</a></dd>
@@ -171,6 +179,7 @@ limitations under the License.
       <dd><a href="../../v0.7.0/source/scheduler.html">v0.7.0</a></dd>
       <dd><a href="../../v0.8.0/source/scheduler.html">v0.8.0</a></dd>
       <dd><a href="../../v0.9.0/source/scheduler.html">v0.9.0</a></dd>
+      <dd><a href="../../v0.9.1/source/scheduler.html">v0.9.1</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>

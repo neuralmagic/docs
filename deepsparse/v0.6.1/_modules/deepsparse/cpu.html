@@ -187,16 +187,23 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_threads</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the total number of hyperthreads available on the current machine</span>
+<span class="sd">        :return: the total number of hyperthreads on the current machine</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">threads_per_socket</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_sockets</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">num_physical_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the total number of cores on the current machine</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_socket</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_sockets</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_available_physical_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :return: the total number of cores available on the current machine</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">cores_per_socket</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_sockets</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_cores_per_socket</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_sockets</span></div>
 
 
 <span class="nd">@_Memoize</span>
@@ -207,6 +214,14 @@
     <span class="k">try</span><span class="p">:</span>
         <span class="n">info_str</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">check_output</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">architecture</span><span class="p">(</span><span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">info_str</span><span class="p">))</span>
+
+    <span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">CalledProcessError</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
+        <span class="n">error</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">ex</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+            <span class="s2">&quot;Neural Magic: Encountered exception while trying read arch.bin: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">error</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
 
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ex</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
@@ -292,7 +307,7 @@
 <span class="sd">    If any other OS is used, will raise an exception</span>
 
 <span class="sd">    Specifically:</span>
-<span class="sd">        - the number of physical cores available per socket on the system</span>
+<span class="sd">        - the number of physical cores available on the system</span>
 <span class="sd">        - detects the vector instruction set available (avx2, avx512)</span>
 <span class="sd">        - if vnni is available</span>
 
@@ -300,11 +315,11 @@
 <span class="sd">    set detection</span>
 
 <span class="sd">    :return: a tuple containing the detected cpu information</span>
-<span class="sd">             (number of physical cores per socket, avx instruction set, vnni support)</span>
+<span class="sd">             (number of physical cores available, avx instruction set, vnni support)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
 
-    <span class="k">return</span> <span class="n">arch</span><span class="o">.</span><span class="n">available_cores_per_socket</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">isa</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">vnni</span></div>
+    <span class="k">return</span> <span class="n">arch</span><span class="o">.</span><span class="n">num_available_physical_cores</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">isa</span><span class="p">,</span> <span class="n">arch</span><span class="o">.</span><span class="n">vnni</span></div>
 
 
 <div class="viewcode-block" id="print_hardware_capability"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.print_hardware_capability">[docs]</a><span class="k">def</span> <span class="nf">print_hardware_capability</span><span class="p">():</span>
@@ -314,8 +329,9 @@
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">arch</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
     <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">vendor</span><span class="si">}</span><span class="s2"> CPU detected with </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_physical_cores</span><span class="si">}</span><span class="s2"> cores &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;and </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_sockets</span><span class="si">}</span><span class="s2"> sockets available.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">vendor</span><span class="si">}</span><span class="s2"> CPU detected with </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_available_physical_cores</span><span class="si">}</span><span class="s2"> cores. &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">available_sockets</span><span class="si">}</span><span class="s2"> sockets with &quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">available_cores_per_socket</span><span class="si">}</span><span class="s2"> cores each)</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;DeepSparse FP32 model performance supported: &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;DeepSparse INT8 (quantized) model performance supported: &quot;</span>
@@ -362,6 +378,7 @@
   <div class="rst-other-versions">
     <dl>
       <dt>Tags</dt>
+      <dd><a href="../../../v0.10.0/index.html">v0.10.0</a></dd>
       <dd><a href="../../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../../v0.3.1/index.html">v0.3.1</a></dd>
       <dd><a href="../../../v0.4.0/index.html">v0.4.0</a></dd>
@@ -372,6 +389,7 @@
       <dd><a href="../../../v0.7.0/index.html">v0.7.0</a></dd>
       <dd><a href="../../../v0.8.0/index.html">v0.8.0</a></dd>
       <dd><a href="../../../v0.9.0/index.html">v0.9.0</a></dd>
+      <dd><a href="../../../v0.9.1/index.html">v0.9.1</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>

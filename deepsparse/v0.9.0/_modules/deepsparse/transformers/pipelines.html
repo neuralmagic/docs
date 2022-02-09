@@ -110,17 +110,32 @@
 
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
 <span class="kn">from</span> <span class="nn">dataclasses</span> <span class="kn">import</span> <span class="n">dataclass</span>
 <span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">chain</span>
-<span class="kn">from</span> <span class="nn">tempfile</span> <span class="kn">import</span> <span class="n">NamedTemporaryFile</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">onnx</span>
+<span class="kn">from</span> <span class="nn">transformers.configuration_utils</span> <span class="kn">import</span> <span class="n">PretrainedConfig</span>
+<span class="kn">from</span> <span class="nn">transformers.data</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">SquadExample</span><span class="p">,</span>
+    <span class="n">SquadFeatures</span><span class="p">,</span>
+    <span class="n">squad_convert_examples_to_features</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">transformers.file_utils</span> <span class="kn">import</span> <span class="n">ExplicitEnum</span>
+<span class="kn">from</span> <span class="nn">transformers.models.auto</span> <span class="kn">import</span> <span class="n">AutoConfig</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+<span class="kn">from</span> <span class="nn">transformers.tokenization_utils</span> <span class="kn">import</span> <span class="n">PreTrainedTokenizer</span>
+<span class="kn">from</span> <span class="nn">transformers.tokenization_utils_base</span> <span class="kn">import</span> <span class="n">PaddingStrategy</span><span class="p">,</span> <span class="n">TruncationStrategy</span>
+<span class="kn">from</span> <span class="nn">transformers.utils</span> <span class="kn">import</span> <span class="n">logging</span>
 
 <span class="kn">from</span> <span class="nn">deepsparse</span> <span class="kn">import</span> <span class="n">Engine</span><span class="p">,</span> <span class="n">compile_model</span><span class="p">,</span> <span class="n">cpu</span>
-<span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
+<span class="kn">from</span> <span class="nn">deepsparse.transformers.helpers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">fix_numpy_types</span><span class="p">,</span>
+    <span class="n">get_onnx_path_and_configs</span><span class="p">,</span>
+    <span class="n">overwrite_transformer_onnx_model_inputs</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">deepsparse.transformers.loaders</span> <span class="kn">import</span> <span class="n">get_batch_loader</span>
 
 
 <span class="k">try</span><span class="p">:</span>
@@ -131,41 +146,17 @@
     <span class="n">onnxruntime</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">ort_import_error</span> <span class="o">=</span> <span class="n">ort_import_err</span>
 
-
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">transformers.configuration_utils</span> <span class="kn">import</span> <span class="n">PretrainedConfig</span>
-    <span class="kn">from</span> <span class="nn">transformers.data</span> <span class="kn">import</span> <span class="p">(</span>
-        <span class="n">SquadExample</span><span class="p">,</span>
-        <span class="n">SquadFeatures</span><span class="p">,</span>
-        <span class="n">squad_convert_examples_to_features</span><span class="p">,</span>
-    <span class="p">)</span>
-    <span class="kn">from</span> <span class="nn">transformers.models.auto</span> <span class="kn">import</span> <span class="n">AutoConfig</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
-    <span class="kn">from</span> <span class="nn">transformers.tokenization_utils</span> <span class="kn">import</span> <span class="n">PreTrainedTokenizer</span>
-    <span class="kn">from</span> <span class="nn">transformers.tokenization_utils_base</span> <span class="kn">import</span> <span class="n">PaddingStrategy</span>
-    <span class="kn">from</span> <span class="nn">transformers.utils</span> <span class="kn">import</span> <span class="n">logging</span>
-
-    <span class="n">transformers_import_error</span> <span class="o">=</span> <span class="kc">None</span>
-<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">transformers_import_err</span><span class="p">:</span>
-    <span class="n">PretrainedConfig</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">SquadExample</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">SquadFeatures</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">squad_convert_examples_to_features</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">AutoConfig</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">AutoTokenizer</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">PreTrainedTokenizer</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">PaddingStrategy</span> <span class="o">=</span> <span class="nb">object</span>
-    <span class="n">logging</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">transformers_import_error</span> <span class="o">=</span> <span class="n">transformers_import_err</span>
-
-
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">&quot;ArgumentHandler&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Pipeline&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TextClassificationPipeline&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TokenClassificationPipeline&quot;</span><span class="p">,</span>
     <span class="s2">&quot;QuestionAnsweringPipeline&quot;</span><span class="p">,</span>
     <span class="s2">&quot;pipeline&quot;</span><span class="p">,</span>
     <span class="s2">&quot;overwrite_transformer_onnx_model_inputs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SUPPORTED_ENGINES&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SUPPORTED_TASKS&quot;</span><span class="p">,</span>
 <span class="p">]</span>
-
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span> <span class="k">if</span> <span class="n">logging</span> <span class="k">else</span> <span class="kc">None</span>
 
@@ -297,8 +288,6 @@
         <span class="n">binary_output</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
 
-        <span class="n">_validate_transformers_import</span><span class="p">()</span>
-
         <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="o">=</span> <span class="n">model</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">config</span> <span class="o">=</span> <span class="n">config</span>
@@ -334,14 +323,15 @@
             <span class="n">inputs</span><span class="p">,</span>
             <span class="n">add_special_tokens</span><span class="o">=</span><span class="n">add_special_tokens</span><span class="p">,</span>
             <span class="n">return_tensors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_framework</span><span class="p">,</span>
-            <span class="n">padding</span><span class="o">=</span><span class="n">padding</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="n">PaddingStrategy</span><span class="o">.</span><span class="n">MAX_LENGTH</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">truncation</span><span class="o">=</span><span class="n">TruncationStrategy</span><span class="o">.</span><span class="n">LONGEST_FIRST</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
         <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">inputs</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="n">inputs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_and_tokenize</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">name</span> <span class="ow">in</span> <span class="n">inputs</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_names</span><span class="p">):</span>
@@ -364,6 +354,35 @@
         <span class="c1">#     return predictions</span>
         <span class="c1"># else:</span>
         <span class="c1">#     return predictions.numpy()</span>
+
+
+<span class="k">class</span> <span class="nc">TokenClassificationArgumentHandler</span><span class="p">(</span><span class="n">ArgumentHandler</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Handles arguments for token classification.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+
+        <span class="k">if</span> <span class="n">inputs</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">inputs</span><span class="p">]</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one input is required.&quot;</span><span class="p">)</span>
+
+        <span class="n">offset_mapping</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;offset_mapping&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">offset_mapping</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">offset_mapping</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+                <span class="n">offset_mapping</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">tuple</span>
+            <span class="p">):</span>
+                <span class="n">offset_mapping</span> <span class="o">=</span> <span class="p">[</span><span class="n">offset_mapping</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">offset_mapping</span><span class="p">)</span> <span class="o">!=</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;offset_mapping should have the same batch size as the input&quot;</span>
+                <span class="p">)</span>
+        <span class="k">return</span> <span class="n">inputs</span><span class="p">,</span> <span class="n">offset_mapping</span>
 
 
 <span class="k">class</span> <span class="nc">QuestionAnsweringArgumentHandler</span><span class="p">(</span><span class="n">ArgumentHandler</span><span class="p">):</span>
@@ -432,6 +451,384 @@
             <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">inputs</span><span class="p">]</span>
 
         <span class="k">return</span> <span class="n">inputs</span>
+
+
+<div class="viewcode-block" id="TextClassificationPipeline"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TextClassificationPipeline">[docs]</a><span class="k">class</span> <span class="nc">TextClassificationPipeline</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Text classification pipeline using any `ModelForSequenceClassification`.</span>
+
+<span class="sd">    This text classification pipeline can currently be loaded from `pipeline()`</span>
+<span class="sd">    using the following task identifier: `&quot;text-classification&quot;`.</span>
+
+<span class="sd">    The models that this pipeline can use are models that have been fine-tuned on</span>
+<span class="sd">    a text classification task.</span>
+
+<span class="sd">    :param return_all_scores: set True to return all model scores. Default False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_all_scores</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">return_all_scores</span> <span class="o">=</span> <span class="n">return_all_scores</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classify the text(s) given as inputs.</span>
+
+<span class="sd">        :param args: One or several texts (or one list of prompts) to classify</span>
+<span class="sd">        :param args: kwargs for inner call function</span>
+<span class="sd">        :return: A list or a list of list of dicts: Each result comes as list of dicts</span>
+<span class="sd">            with the following keys:</span>
+<span class="sd">            - `label` -- The label predicted.</span>
+<span class="sd">            - `score` -- The corresponding probability.</span>
+<span class="sd">            If ``self.return_all_scores=True``, one dictionary is returned per label</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__call__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">outputs</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="ow">and</span> <span class="n">outputs</span><span class="p">:</span>
+            <span class="n">outputs</span> <span class="o">=</span> <span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">num_labels</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">outputs</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">outputs</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">return_all_scores</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="p">{</span><span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="o">.</span><span class="n">item</span><span class="p">()}</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">score</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+                <span class="p">]</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">scores</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span>
+                <span class="p">{</span>
+                    <span class="s2">&quot;label&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">item</span><span class="o">.</span><span class="n">argmax</span><span class="p">()],</span>
+                    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">item</span><span class="o">.</span><span class="n">max</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span>
+                <span class="p">}</span>
+                <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">scores</span>
+            <span class="p">]</span></div>
+
+
+<span class="k">class</span> <span class="nc">AggregationStrategy</span><span class="p">(</span><span class="n">ExplicitEnum</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    All the valid aggregation strategies for TokenClassificationPipeline</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">NONE</span> <span class="o">=</span> <span class="s2">&quot;none&quot;</span>
+    <span class="n">SIMPLE</span> <span class="o">=</span> <span class="s2">&quot;simple&quot;</span>
+    <span class="n">FIRST</span> <span class="o">=</span> <span class="s2">&quot;first&quot;</span>
+    <span class="n">AVERAGE</span> <span class="o">=</span> <span class="s2">&quot;average&quot;</span>
+    <span class="n">MAX</span> <span class="o">=</span> <span class="s2">&quot;max&quot;</span>
+
+
+<div class="viewcode-block" id="TokenClassificationPipeline"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline">[docs]</a><span class="k">class</span> <span class="nc">TokenClassificationPipeline</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Named Entity Recognition pipeline using any `ModelForTokenClassification`.</span>
+
+<span class="sd">    This token classification pipeline can currently be loaded from `pipeline()`</span>
+<span class="sd">    using the following task identifier: `&quot;token-classification&quot;`.</span>
+
+<span class="sd">    The models that this pipeline can use are models that have been fine-tuned on</span>
+<span class="sd">    a token classification task.</span>
+
+<span class="sd">    :param args_parser: argument parser to use default is</span>
+<span class="sd">        TokenClassificationArgumentHandler</span>
+<span class="sd">    :param aggregation_strategy: AggregationStrategy Enum object to determine</span>
+<span class="sd">        the pipeline aggregation strategy. Default is AggregationStrategy.NONE</span>
+<span class="sd">    :param ignore_labels: list of labels to ignore. Default is `[&quot;O&quot;]`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">default_input_names</span> <span class="o">=</span> <span class="s2">&quot;sequences&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">args_parser</span><span class="p">:</span> <span class="n">ArgumentHandler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">aggregation_strategy</span><span class="p">:</span> <span class="n">AggregationStrategy</span> <span class="o">=</span> <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+        <span class="n">ignore_labels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">args_parser</span><span class="o">=</span><span class="n">args_parser</span> <span class="ow">or</span> <span class="n">TokenClassificationArgumentHandler</span><span class="p">(),</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">ignore_labels</span> <span class="o">=</span> <span class="n">ignore_labels</span> <span class="ow">or</span> <span class="p">[</span><span class="s2">&quot;O&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">aggregation_strategy</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">aggregation_strategy</span> <span class="o">=</span> <span class="n">AggregationStrategy</span><span class="p">[</span><span class="n">aggregation_strategy</span><span class="o">.</span><span class="n">upper</span><span class="p">()]</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">aggregation_strategy</span>
+            <span class="ow">in</span> <span class="p">{</span>
+                <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">FIRST</span><span class="p">,</span>
+                <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">MAX</span><span class="p">,</span>
+                <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">AVERAGE</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">is_fast</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Slow tokenizers cannot handle subwords. Please set the &quot;</span>
+                <span class="s1">&#39;`aggregation_strategy` option to `&quot;simple&quot;` or use a fast tokenizer.&#39;</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">aggregation_strategy</span> <span class="o">=</span> <span class="n">aggregation_strategy</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Classify each token of the text(s) given as inputs.</span>
+
+
+<span class="sd">        :param inputs: One or several texts (or one list of texts) for token</span>
+<span class="sd">            classification</span>
+<span class="sd">        :return: A list or a list of list of :obj:`dict`: Each result comes as a list</span>
+<span class="sd">            of dictionaries (one for each token in the corresponding input, or each</span>
+<span class="sd">            entity if this pipeline was instantiated with an aggregation_strategy)</span>
+<span class="sd">            with the following keys:</span>
+<span class="sd">            - `word` -- The token/word classified.</span>
+<span class="sd">            - `score` -- The corresponding probability for `entity`.</span>
+<span class="sd">            - `entity` -- The entity predicted for that token/word (it is named</span>
+<span class="sd">                `entity_group` when `aggregation_strategy` is not `&quot;none&quot;`.</span>
+<span class="sd">            - `index` -- The index of the corresponding token in the sentence.</span>
+<span class="sd">            - `start` -- index of the start of the corresponding entity in the sentence</span>
+<span class="sd">                Only exists if the offsets are available within the tokenizer</span>
+<span class="sd">            - `end` -- The index of the end of the corresponding entity in the sentence.</span>
+<span class="sd">                Only exists if the offsets are available within the tokenizer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_inputs</span><span class="p">,</span> <span class="n">offset_mappings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_args_parser</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="n">answers</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">tokens</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="p">(</span>
+            <span class="n">_inputs</span><span class="p">,</span>
+            <span class="n">return_tensors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_framework</span><span class="p">,</span>
+            <span class="n">truncation</span><span class="o">=</span><span class="n">TruncationStrategy</span><span class="o">.</span><span class="n">LONGEST_FIRST</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="n">PaddingStrategy</span><span class="o">.</span><span class="n">MAX_LENGTH</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">return_special_tokens_mask</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">return_offsets_mapping</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">is_fast</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">is_fast</span><span class="p">:</span>
+            <span class="n">offset_mapping</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;offset_mapping&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">offset_mappings</span><span class="p">:</span>
+            <span class="n">offset_mapping</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">_inputs</span><span class="p">)</span>
+
+        <span class="n">special_tokens_mask</span> <span class="o">=</span> <span class="n">tokens</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;special_tokens_mask&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Forward</span>
+        <span class="n">_forward_pass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">tokens</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">entities_index</span><span class="p">,</span> <span class="n">current_entities</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">_forward_pass</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokens</span><span class="p">[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">][</span><span class="n">entities_index</span><span class="p">]</span>
+
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">current_entities</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">current_entities</span><span class="p">)</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+                <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdims</span><span class="o">=</span><span class="kc">True</span>
+            <span class="p">)</span>
+            <span class="n">pre_entities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gather_pre_entities</span><span class="p">(</span>
+                <span class="n">_inputs</span><span class="p">[</span><span class="n">entities_index</span><span class="p">],</span>
+                <span class="n">input_ids</span><span class="p">,</span>
+                <span class="n">scores</span><span class="p">,</span>
+                <span class="n">offset_mapping</span><span class="p">[</span><span class="n">entities_index</span><span class="p">],</span>
+                <span class="n">special_tokens_mask</span><span class="p">[</span><span class="n">entities_index</span><span class="p">],</span>
+            <span class="p">)</span>
+            <span class="n">grouped_entities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate</span><span class="p">(</span><span class="n">pre_entities</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregation_strategy</span><span class="p">)</span>
+            <span class="c1"># Filter anything that is in self.ignore_labels</span>
+            <span class="n">current_entities</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">entity</span>
+                <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">grouped_entities</span>
+                <span class="k">if</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;entity&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_labels</span>
+                <span class="ow">and</span> <span class="n">entity</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;entity_group&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ignore_labels</span>
+            <span class="p">]</span>
+            <span class="n">answers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_entities</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">answers</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">answers</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">answers</span>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.gather_pre_entities"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.gather_pre_entities">[docs]</a>    <span class="k">def</span> <span class="nf">gather_pre_entities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sentence</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">input_ids</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">scores</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">offset_mapping</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]],</span>
+        <span class="n">special_tokens_mask</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="n">pre_entities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">token_scores</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">scores</span><span class="p">):</span>
+            <span class="c1"># Filter special_tokens, they should only occur</span>
+            <span class="c1"># at the sentence boundaries since we&#39;re not encoding pairs of</span>
+            <span class="c1"># sentences so we don&#39;t have to keep track of those.</span>
+            <span class="k">if</span> <span class="n">special_tokens_mask</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="n">word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">convert_ids_to_tokens</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">input_ids</span><span class="p">[</span><span class="n">idx</span><span class="p">]))</span>
+            <span class="k">if</span> <span class="n">offset_mapping</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">start_ind</span><span class="p">,</span> <span class="n">end_ind</span> <span class="o">=</span> <span class="n">offset_mapping</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+                <span class="n">word_ref</span> <span class="o">=</span> <span class="n">sentence</span><span class="p">[</span><span class="n">start_ind</span><span class="p">:</span><span class="n">end_ind</span><span class="p">]</span>
+                <span class="n">is_subword</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word_ref</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">word</span><span class="p">)</span>
+
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">input_ids</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">unk_token_id</span><span class="p">:</span>
+                    <span class="n">word</span> <span class="o">=</span> <span class="n">word_ref</span>
+                    <span class="n">is_subword</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">start_ind</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">end_ind</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="n">is_subword</span> <span class="o">=</span> <span class="kc">False</span>
+
+            <span class="n">pre_entity</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="n">word</span><span class="p">,</span>
+                <span class="s2">&quot;scores&quot;</span><span class="p">:</span> <span class="n">token_scores</span><span class="p">,</span>
+                <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">start_ind</span><span class="p">,</span>
+                <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">end_ind</span><span class="p">,</span>
+                <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">idx</span><span class="p">,</span>
+                <span class="s2">&quot;is_subword&quot;</span><span class="p">:</span> <span class="n">is_subword</span><span class="p">,</span>
+            <span class="p">}</span>
+            <span class="n">pre_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pre_entity</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pre_entities</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.aggregate"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.aggregate">[docs]</a>    <span class="k">def</span> <span class="nf">aggregate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">pre_entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">aggregation_strategy</span><span class="p">:</span> <span class="n">AggregationStrategy</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">aggregation_strategy</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+            <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">SIMPLE</span><span class="p">,</span>
+        <span class="p">}:</span>
+            <span class="n">entities</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">pre_entity</span> <span class="ow">in</span> <span class="n">pre_entities</span><span class="p">:</span>
+                <span class="n">entity_idx</span> <span class="o">=</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;scores&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+                <span class="n">score</span> <span class="o">=</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;scores&quot;</span><span class="p">][</span><span class="n">entity_idx</span><span class="p">]</span>
+                <span class="n">entity</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">entity_idx</span><span class="p">],</span>
+                    <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+                    <span class="s2">&quot;index&quot;</span><span class="p">:</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;index&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;word&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+                    <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">pre_entity</span><span class="p">[</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+                <span class="p">}</span>
+                <span class="n">entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">entities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_words</span><span class="p">(</span><span class="n">pre_entities</span><span class="p">,</span> <span class="n">aggregation_strategy</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">aggregation_strategy</span> <span class="o">==</span> <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">NONE</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">entities</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">group_entities</span><span class="p">(</span><span class="n">entities</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.aggregate_word"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.aggregate_word">[docs]</a>    <span class="k">def</span> <span class="nf">aggregate_word</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">aggregation_strategy</span><span class="p">:</span> <span class="n">AggregationStrategy</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="n">word</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">convert_tokens_to_string</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;word&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">aggregation_strategy</span> <span class="o">==</span> <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">FIRST</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;scores&quot;</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">entity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">aggregation_strategy</span> <span class="o">==</span> <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">MAX</span><span class="p">:</span>
+            <span class="n">max_entity</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">entities</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">entity</span><span class="p">:</span> <span class="n">entity</span><span class="p">[</span><span class="s2">&quot;scores&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">())</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">max_entity</span><span class="p">[</span><span class="s2">&quot;scores&quot;</span><span class="p">]</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">scores</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">scores</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">entity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">aggregation_strategy</span> <span class="o">==</span> <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">AVERAGE</span><span class="p">:</span>
+            <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">stack</span><span class="p">([</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;scores&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">])</span>
+            <span class="n">average_scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">entity_idx</span> <span class="o">=</span> <span class="n">average_scores</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+            <span class="n">entity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">id2label</span><span class="p">[</span><span class="n">entity_idx</span><span class="p">]</span>
+            <span class="n">score</span> <span class="o">=</span> <span class="n">average_scores</span><span class="p">[</span><span class="n">entity_idx</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid aggregation_strategy&quot;</span><span class="p">)</span>
+        <span class="n">new_entity</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;entity&quot;</span><span class="p">:</span> <span class="n">entity</span><span class="p">,</span>
+            <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">score</span><span class="p">,</span>
+            <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="n">word</span><span class="p">,</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">entities</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">new_entity</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.aggregate_words"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.aggregate_words">[docs]</a>    <span class="k">def</span> <span class="nf">aggregate_words</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">],</span> <span class="n">aggregation_strategy</span><span class="p">:</span> <span class="n">AggregationStrategy</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+        <span class="k">assert</span> <span class="n">aggregation_strategy</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">{</span>
+            <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">NONE</span><span class="p">,</span>
+            <span class="n">AggregationStrategy</span><span class="o">.</span><span class="n">SIMPLE</span><span class="p">,</span>
+        <span class="p">},</span> <span class="s2">&quot;NONE and SIMPLE strategies are invalid&quot;</span>
+
+        <span class="n">word_entities</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">word_group</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">word_group</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">word_group</span> <span class="o">=</span> <span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="n">entity</span><span class="p">[</span><span class="s2">&quot;is_subword&quot;</span><span class="p">]:</span>
+                <span class="n">word_group</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">word_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">aggregate_word</span><span class="p">(</span><span class="n">word_group</span><span class="p">,</span> <span class="n">aggregation_strategy</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">word_group</span> <span class="o">=</span> <span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="c1"># Last item</span>
+        <span class="n">word_entities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">aggregate_word</span><span class="p">(</span><span class="n">word_group</span><span class="p">,</span> <span class="n">aggregation_strategy</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">word_entities</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.group_sub_entities"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.group_sub_entities">[docs]</a>    <span class="k">def</span> <span class="nf">group_sub_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="c1"># Get the first entity in the entity group</span>
+        <span class="n">entity</span> <span class="o">=</span> <span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;entity&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">)[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nanmean</span><span class="p">([</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">])</span>
+        <span class="n">tokens</span> <span class="o">=</span> <span class="p">[</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;word&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">]</span>
+
+        <span class="n">entity_group</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;entity_group&quot;</span><span class="p">:</span> <span class="n">entity</span><span class="p">,</span>
+            <span class="s2">&quot;score&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span>
+            <span class="s2">&quot;word&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">convert_tokens_to_string</span><span class="p">(</span><span class="n">tokens</span><span class="p">),</span>
+            <span class="s2">&quot;start&quot;</span><span class="p">:</span> <span class="n">entities</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;start&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;end&quot;</span><span class="p">:</span> <span class="n">entities</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;end&quot;</span><span class="p">],</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">entity_group</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.get_tag"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.get_tag">[docs]</a>    <span class="k">def</span> <span class="nf">get_tag</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entity_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">entity_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;B-&quot;</span><span class="p">):</span>
+            <span class="n">bi</span> <span class="o">=</span> <span class="s2">&quot;B&quot;</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">entity_name</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="k">elif</span> <span class="n">entity_name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;I-&quot;</span><span class="p">):</span>
+            <span class="n">bi</span> <span class="o">=</span> <span class="s2">&quot;I&quot;</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">entity_name</span><span class="p">[</span><span class="mi">2</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># It&#39;s not in B-, I- format</span>
+            <span class="n">bi</span> <span class="o">=</span> <span class="s2">&quot;B&quot;</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="n">entity_name</span>
+        <span class="k">return</span> <span class="n">bi</span><span class="p">,</span> <span class="n">tag</span></div>
+
+<div class="viewcode-block" id="TokenClassificationPipeline.group_entities"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.TokenClassificationPipeline.group_entities">[docs]</a>    <span class="k">def</span> <span class="nf">group_entities</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entities</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+
+        <span class="n">entity_groups</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">entity_group_disagg</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">entity</span> <span class="ow">in</span> <span class="n">entities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">entity_group_disagg</span><span class="p">:</span>
+                <span class="n">entity_group_disagg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># If the current entity is similar and adjacent to the previous entity,</span>
+            <span class="c1"># append it to the disaggregated entity group</span>
+            <span class="c1"># The split is meant to account for the &quot;B&quot; and &quot;I&quot; prefixes</span>
+            <span class="c1"># Shouldn&#39;t merge if both entities are B-type</span>
+            <span class="n">bi</span><span class="p">,</span> <span class="n">tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tag</span><span class="p">(</span><span class="n">entity</span><span class="p">[</span><span class="s2">&quot;entity&quot;</span><span class="p">])</span>
+            <span class="n">last_bi</span><span class="p">,</span> <span class="n">last_tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_tag</span><span class="p">(</span><span class="n">entity_group_disagg</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;entity&quot;</span><span class="p">])</span>
+
+            <span class="k">if</span> <span class="n">tag</span> <span class="o">==</span> <span class="n">last_tag</span> <span class="ow">and</span> <span class="n">bi</span> <span class="o">!=</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span>
+                <span class="c1"># Modify subword type to be previous_type</span>
+                <span class="n">entity_group_disagg</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">entity</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If the current entity is different from the previous entity</span>
+                <span class="c1"># aggregate the disaggregated entity group</span>
+                <span class="n">entity_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_sub_entities</span><span class="p">(</span><span class="n">entity_group_disagg</span><span class="p">))</span>
+                <span class="n">entity_group_disagg</span> <span class="o">=</span> <span class="p">[</span><span class="n">entity</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">entity_group_disagg</span><span class="p">:</span>
+            <span class="c1"># it&#39;s the last entity, add it to the entity groups</span>
+            <span class="n">entity_groups</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">group_sub_entities</span><span class="p">(</span><span class="n">entity_group_disagg</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">entity_groups</span></div></div>
 
 
 <div class="viewcode-block" id="QuestionAnsweringPipeline"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.QuestionAnsweringPipeline">[docs]</a><span class="k">class</span> <span class="nc">QuestionAnsweringPipeline</span><span class="p">(</span><span class="n">Pipeline</span><span class="p">):</span>
@@ -895,6 +1292,10 @@
 
 <span class="c1"># Register all the supported tasks here</span>
 <span class="n">SUPPORTED_TASKS</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;ner&quot;</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">(</span>
+        <span class="n">pipeline_constructor</span><span class="o">=</span><span class="n">TokenClassificationPipeline</span><span class="p">,</span>
+        <span class="n">default_model_name</span><span class="o">=</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
     <span class="s2">&quot;question-answering&quot;</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">(</span>
         <span class="n">pipeline_constructor</span><span class="o">=</span><span class="n">QuestionAnsweringPipeline</span><span class="p">,</span>
         <span class="n">default_model_name</span><span class="o">=</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
@@ -905,7 +1306,19 @@
             <span class="s2">&quot;zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/&quot;</span>
             <span class="s2">&quot;pruned-aggressive_98&quot;</span>
         <span class="p">),</span>
-    <span class="p">)</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;sentiment-analysis&quot;</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">(</span>
+        <span class="n">pipeline_constructor</span><span class="o">=</span><span class="n">TextClassificationPipeline</span><span class="p">,</span>
+        <span class="n">default_model_name</span><span class="o">=</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;text-classification&quot;</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">(</span>
+        <span class="n">pipeline_constructor</span><span class="o">=</span><span class="n">TextClassificationPipeline</span><span class="p">,</span>
+        <span class="n">default_model_name</span><span class="o">=</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="s2">&quot;token-classification&quot;</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">(</span>
+        <span class="n">pipeline_constructor</span><span class="o">=</span><span class="n">TokenClassificationPipeline</span><span class="p">,</span>
+        <span class="n">default_model_name</span><span class="o">=</span><span class="s2">&quot;bert-base-uncased&quot;</span><span class="p">,</span>
+    <span class="p">),</span>
 <span class="p">}</span>
 
 <span class="n">DEEPSPARSE_ENGINE</span> <span class="o">=</span> <span class="s2">&quot;deepsparse&quot;</span>
@@ -923,7 +1336,8 @@
     <span class="n">tokenizer</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PreTrainedTokenizer</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-    <span class="n">num_sockets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Pipeline</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -932,20 +1346,22 @@
 <span class="sd">    :param task: name of the task to define which pipeline to create. Currently</span>
 <span class="sd">        supported task - &quot;question-answering&quot;</span>
 <span class="sd">    :param model_name: canonical name of the hugging face model this model is based on</span>
-<span class="sd">    :param model_path: path to (ONNX) model file to run</span>
+<span class="sd">    :param model_path: path to model directory containing `model.onnx`, `config.json`,</span>
+<span class="sd">        and `tokenizer.json` files, ONNX model file, or SparseZoo stub</span>
 <span class="sd">    :param engine_type: inference engine name to use. Supported options are &#39;deepsparse&#39;</span>
 <span class="sd">        and &#39;onnxruntime&#39;</span>
 <span class="sd">    :param config: huggingface model config, if none provided, default will be used</span>
+<span class="sd">        which will be from the model name or sparsezoo stub if given for model path</span>
 <span class="sd">    :param tokenizer: huggingface tokenizer, if none provided, default will be used</span>
 <span class="sd">    :param max_length: maximum sequence length of model inputs. default is 128</span>
 <span class="sd">    :param num_cores: number of CPU cores to run engine with. Default is the maximum</span>
 <span class="sd">        available</span>
-<span class="sd">    :param num_sockets: number of CPU sockets to run engine with. Default is the maximum</span>
-<span class="sd">        available</span>
+<span class="sd">    :param scheduler: The scheduler to use for the engine. Can be None, single or multi.</span>
+<span class="sd">    :param batch_size: The batch_size to use for the pipeline. Defaults to 1</span>
+<span class="sd">        Note: `question-answering` pipeline only supports a batch_size of 1.</span>
 <span class="sd">    :param kwargs: additional key word arguments for task specific pipeline constructor</span>
 <span class="sd">    :return: Pipeline object for the given taks and model</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="n">_validate_transformers_import</span><span class="p">()</span>
 
     <span class="c1"># Retrieve the task</span>
     <span class="k">if</span> <span class="n">task</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">SUPPORTED_TASKS</span><span class="p">:</span>
@@ -957,33 +1373,47 @@
             <span class="sa">f</span><span class="s2">&quot;Unsupported engine </span><span class="si">{</span><span class="n">engine_type</span><span class="si">}</span><span class="s2">, supported engines &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;are </span><span class="si">{</span><span class="n">SUPPORTED_ENGINES</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span>
-
+    <span class="k">if</span> <span class="n">task</span> <span class="o">==</span> <span class="s2">&quot;question-answering&quot;</span> <span class="ow">and</span> <span class="n">batch_size</span> <span class="o">!=</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> pipeline only supports batch_size 1. &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Supplied batch_size = </span><span class="si">{</span><span class="n">batch_size</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
     <span class="n">task_info</span> <span class="o">=</span> <span class="n">SUPPORTED_TASKS</span><span class="p">[</span><span class="n">task</span><span class="p">]</span>
+
     <span class="n">model_path</span> <span class="o">=</span> <span class="n">model_path</span> <span class="ow">or</span> <span class="n">_get_default_model_path</span><span class="p">(</span><span class="n">task_info</span><span class="p">)</span>
     <span class="n">model_name</span> <span class="o">=</span> <span class="n">model_name</span> <span class="ow">or</span> <span class="n">task_info</span><span class="o">.</span><span class="n">default_model_name</span>
 
-    <span class="c1"># default the tokenizer and config to given model name</span>
-    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span> <span class="ow">or</span> <span class="n">model_name</span>
-    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">model_name</span>
+    <span class="n">onnx_path</span><span class="p">,</span> <span class="n">config_path</span><span class="p">,</span> <span class="n">tokenizer_path</span> <span class="o">=</span> <span class="n">get_onnx_path_and_configs</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
+
+    <span class="c1"># default the tokenizer and config to file in model directory or given model name</span>
+    <span class="n">config</span> <span class="o">=</span> <span class="n">config</span> <span class="ow">or</span> <span class="n">config_path</span> <span class="ow">or</span> <span class="n">model_name</span>
+    <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">tokenizer</span> <span class="ow">or</span> <span class="n">tokenizer_path</span> <span class="ow">or</span> <span class="n">model_name</span>
 
     <span class="c1"># create model</span>
-    <span class="k">if</span> <span class="n">model_path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;zoo:&quot;</span><span class="p">):</span>
-        <span class="n">model_path</span> <span class="o">=</span> <span class="n">_download_zoo_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
     <span class="n">model</span><span class="p">,</span> <span class="n">input_names</span> <span class="o">=</span> <span class="n">_create_model</span><span class="p">(</span>
-        <span class="n">model_path</span><span class="p">,</span> <span class="n">engine_type</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="p">,</span> <span class="n">max_length</span>
+        <span class="n">onnx_path</span><span class="p">,</span>
+        <span class="n">engine_type</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">,</span>
+        <span class="n">max_length</span><span class="p">,</span>
+        <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
     <span class="p">)</span>
 
     <span class="c1"># Instantiate tokenizer if needed</span>
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)):</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
             <span class="c1"># For tuple we have (tokenizer name, {kwargs})</span>
+            <span class="n">tokenizer_kwargs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="n">tokenizer_kwargs</span><span class="p">[</span><span class="s2">&quot;model_max_length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_length</span>
             <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">**</span><span class="n">tokenizer</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="k">else</span><span class="p">:</span>
-            <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">tokenizer</span><span class="p">)</span>
+            <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+                <span class="n">tokenizer</span><span class="p">,</span> <span class="n">model_max_length</span><span class="o">=</span><span class="n">max_length</span>
+            <span class="p">)</span>
 
     <span class="c1"># Instantiate config if needed</span>
     <span class="k">if</span> <span class="n">config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
-        <span class="n">config</span> <span class="o">=</span> <span class="n">AutoConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">config</span><span class="p">)</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">AutoConfig</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="n">finetuning_task</span><span class="o">=</span><span class="n">task</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">task_info</span><span class="o">.</span><span class="n">pipeline_constructor</span><span class="p">(</span>
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
@@ -996,67 +1426,19 @@
     <span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="overwrite_transformer_onnx_model_inputs"><a class="viewcode-back" href="../../../api/deepsparse.transformers.html#deepsparse.transformers.pipelines.overwrite_transformer_onnx_model_inputs">[docs]</a><span class="k">def</span> <span class="nf">overwrite_transformer_onnx_model_inputs</span><span class="p">(</span>
-    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
-    <span class="n">output_path</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
-<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="n">NamedTemporaryFile</span><span class="p">]]:</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Overrides an ONNX model&#39;s inputs to have the given batch size and sequence lengths.</span>
-<span class="sd">    Assumes that these are the first and second shape indices of the given model inputs</span>
-<span class="sd">    respectively</span>
-
-<span class="sd">    :param path: path to the ONNX model to override</span>
-<span class="sd">    :param batch_size: batch size to set</span>
-<span class="sd">    :param max_length: max sequence length to set</span>
-<span class="sd">    :param output_path: if provided, the model will be saved to the given path,</span>
-<span class="sd">        otherwise, the model will be saved to a named temporary file that will</span>
-<span class="sd">        be deleted after the program exits</span>
-<span class="sd">    :return: if no output path, a tuple of the saved path to the model, list of</span>
-<span class="sd">        model input names, and reference to the tempfile object will be returned</span>
-<span class="sd">        otherwise, only the model input names will be returned</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-    <span class="c1"># overwrite input shapes</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
-    <span class="n">initializer_input_names</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="p">])</span>
-    <span class="n">external_inputs</span> <span class="o">=</span> <span class="p">[</span>
-        <span class="n">inp</span> <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span> <span class="k">if</span> <span class="n">inp</span><span class="o">.</span><span class="n">name</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">initializer_input_names</span>
-    <span class="p">]</span>
-    <span class="n">input_names</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">for</span> <span class="n">external_input</span> <span class="ow">in</span> <span class="n">external_inputs</span><span class="p">:</span>
-        <span class="n">external_input</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span> <span class="o">=</span> <span class="n">batch_size</span>
-        <span class="n">external_input</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span> <span class="o">=</span> <span class="n">max_length</span>
-        <span class="n">input_names</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">external_input</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-    <span class="c1"># Save modified model</span>
-    <span class="k">if</span> <span class="n">output_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">tmp_file</span> <span class="o">=</span> <span class="n">NamedTemporaryFile</span><span class="p">()</span>  <span class="c1"># file will be deleted after program exit</span>
-        <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tmp_file</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">tmp_file</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">input_names</span><span class="p">,</span> <span class="n">tmp_file</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">onnx</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_path</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">input_names</span></div>
-
-
 <span class="k">def</span> <span class="nf">_get_default_model_path</span><span class="p">(</span><span class="n">task_info</span><span class="p">:</span> <span class="n">TaskInfo</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">cpu</span><span class="o">.</span><span class="n">cpu_vnni_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="n">task_info</span><span class="o">.</span><span class="n">default_quant_stub</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">task_info</span><span class="o">.</span><span class="n">default_quant_stub</span>
     <span class="k">return</span> <span class="n">task_info</span><span class="o">.</span><span class="n">default_pruned_stub</span> <span class="ow">or</span> <span class="n">task_info</span><span class="o">.</span><span class="n">base_stub</span>
 
 
-<span class="k">def</span> <span class="nf">_download_zoo_model</span><span class="p">(</span><span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">load_model_from_stub</span><span class="p">(</span><span class="n">model_path</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">model</span><span class="o">.</span><span class="n">onnx_file</span><span class="o">.</span><span class="n">downloaded_path</span><span class="p">()</span>
-
-
 <span class="k">def</span> <span class="nf">_create_model</span><span class="p">(</span>
     <span class="n">model_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">engine_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
-    <span class="n">num_sockets</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
     <span class="n">max_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+    <span class="n">scheduler</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Engine</span><span class="p">,</span> <span class="s2">&quot;onnxruntime.InferenceSession&quot;</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
     <span class="n">onnx_path</span><span class="p">,</span> <span class="n">input_names</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">overwrite_transformer_onnx_model_inputs</span><span class="p">(</span>
         <span class="n">model_path</span><span class="p">,</span> <span class="n">max_length</span><span class="o">=</span><span class="n">max_length</span>
@@ -1064,7 +1446,10 @@
 
     <span class="k">if</span> <span class="n">engine_type</span> <span class="o">==</span> <span class="n">DEEPSPARSE_ENGINE</span><span class="p">:</span>
         <span class="n">model</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
-            <span class="n">onnx_path</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_cores</span><span class="o">=</span><span class="n">num_cores</span><span class="p">,</span> <span class="n">num_sockets</span><span class="o">=</span><span class="n">num_sockets</span>
+            <span class="n">onnx_path</span><span class="p">,</span>
+            <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+            <span class="n">num_cores</span><span class="o">=</span><span class="n">num_cores</span><span class="p">,</span>
+            <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
         <span class="p">)</span>
     <span class="k">elif</span> <span class="n">engine_type</span> <span class="o">==</span> <span class="n">ORT_ENGINE</span><span class="p">:</span>
         <span class="n">_validate_ort_import</span><span class="p">()</span>
@@ -1090,14 +1475,32 @@
         <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">_validate_transformers_import</span><span class="p">():</span>
-    <span class="k">if</span> <span class="n">transformers_import_error</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
-            <span class="s2">&quot;An exception occurred when importing from the transformers library. &quot;</span>
-            <span class="s2">&quot;Please verify that transformers~=4.8 is installed or install deepsparse &quot;</span>
-            <span class="s2">&quot;with `pip install deepsparse[transformers]`. </span><span class="se">\n\n</span><span class="s2">Exception info: &quot;</span>
-            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">transformers_import_error</span><span class="si">}</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+<span class="k">def</span> <span class="nf">process_dataset</span><span class="p">(</span>
+    <span class="n">pipeline_object</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">data_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">task</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">output_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param pipeline_object: An instantiated pipeline Callable object</span>
+<span class="sd">    :param data_path: Path to input file, supports csv, json and text files</span>
+<span class="sd">    :param batch_size: batch_size to use for inference</span>
+<span class="sd">    :param task: The task pipeline is instantiated for</span>
+<span class="sd">    :param output_path: Path to a json file to output inference results to</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">batch_loader</span> <span class="o">=</span> <span class="n">get_batch_loader</span><span class="p">(</span>
+        <span class="n">data_file</span><span class="o">=</span><span class="n">data_path</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
+        <span class="n">task</span><span class="o">=</span><span class="n">task</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="c1"># Wraps pipeline object to make numpy types serializable</span>
+    <span class="n">pipeline_object</span> <span class="o">=</span> <span class="n">fix_numpy_types</span><span class="p">(</span><span class="n">pipeline_object</span><span class="p">)</span>
+    <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">output_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">output_file</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">batch</span> <span class="ow">in</span> <span class="n">batch_loader</span><span class="p">:</span>
+            <span class="n">batch_output</span> <span class="o">=</span> <span class="n">pipeline_object</span><span class="p">(</span><span class="o">**</span><span class="n">batch</span><span class="p">)</span>
+            <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">batch_output</span><span class="p">,</span> <span class="n">output_file</span><span class="p">)</span>
+            <span class="n">output_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 </pre></div>
 
            </div>
@@ -1130,6 +1533,7 @@
   <div class="rst-other-versions">
     <dl>
       <dt>Tags</dt>
+      <dd><a href="../../../../v0.10.0/index.html">v0.10.0</a></dd>
       <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
       <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
@@ -1140,6 +1544,7 @@
       <dd><a href="../../../../v0.7.0/index.html">v0.7.0</a></dd>
       <dd><a href="../../../../v0.8.0/index.html">v0.8.0</a></dd>
       <dd><a href="pipelines.html">v0.9.0</a></dd>
+      <dd><a href="../../../../v0.9.1/index.html">v0.9.1</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>
