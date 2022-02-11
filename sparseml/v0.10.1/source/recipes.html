@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Sparsification Recipes &mdash; SparseML 0.10.1.20220211 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="ONNX Export" href="onnx_export.html" />
+    <link rel="prev" title="Sparsification Code" href="code.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> SparseML<img src="../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.10
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="code.html">Sparsification Code</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Sparsification Recipes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#modifiers-intro">Modifiers Intro</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#training-epoch-modifiers">Training Epoch Modifiers</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#pruning-modifiers">Pruning Modifiers</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#constantpruningmodifier">ConstantPruningModifier</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#gmpruningmodifier">GMPruningModifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#quantization-modifiers">Quantization Modifiers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#learning-rate-modifiers">Learning Rate Modifiers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setlearningratemodifier">SetLearningRateModifier</a></li>
+<li class="toctree-l4"><a class="reference internal" href="#learningratemodifier">LearningRateModifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#params-variables-modifiers">Params/Variables Modifiers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#trainableparamsmodifier">TrainableParamsModifier</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#optimizer-modifiers">Optimizer Modifiers</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#setweightdecaymodifier">SetWeightDecayModifier</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>Sparsification Recipes</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/recipes.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--
+Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--><div class="section" id="sparsification-recipes">
+<h1>Sparsification Recipes<a class="headerlink" href="#sparsification-recipes" title="Permalink to this headline"></a></h1>
+<p>All SparseML Sparsification APIs are designed to work with recipes.
+The files encode the instructions needed for modifying the model and/or training process as a list of modifiers.
+Example modifiers can be anything from setting the learning rate for the optimizer to gradual magnitude pruning.
+The files are written in <a class="reference external" href="https://yaml.org/">YAML</a> and stored in YAML or
+<a class="reference external" href="https://www.markdownguide.org/">markdown</a> files using
+<a class="reference external" href="https://assemble.io/docs/YAML-front-matter.html">YAML front matter</a>.
+The rest of the SparseML system is coded to parse the recipe files into a native format for the desired framework
+and apply the modifications to the model and training pipeline.</p>
+<p>In a recipe, modifiers must be written in a list that includes “modifiers” in its name.</p>
+<p>The easiest ways to get or create recipes are by either using the pre-configured recipes in <a class="reference external" href="https://github.com/neuralmagic/sparsezoo">SparseZoo</a> or using <a class="reference external" href="https://github.com/neuralmagic/sparsify">Sparsify’s</a> automatic creation.</p>
+<p>However, power users may be inclined to create their own recipes by hand to enable more
+fine-grained control or to add in custom modifiers.</p>
+<p>A sample recipe for pruning a model generally looks like the following:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1.0</span><span class="w"></span>
+<span class="nt">modifiers</span><span class="p">:</span><span class="w"></span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!EpochRangeModifier</span><span class="w"></span>
+<span class="w">        </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">70.0</span><span class="w"></span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!LearningRateModifier</span><span class="w"></span>
+<span class="w">        </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-1.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">update_frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">-1.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">init_lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.005</span><span class="w"></span>
+<span class="w">        </span><span class="nt">lr_class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MultiStepLR</span><span class="w"></span>
+<span class="w">        </span><span class="nt">lr_kwargs</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="s">&#39;milestones&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">43</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">60</span><span class="p p-Indicator">],</span><span class="w"> </span><span class="s">&#39;gamma&#39;</span><span class="p p-Indicator">:</span><span class="w"> </span><span class="nv">0.1</span><span class="p p-Indicator">}</span><span class="w"></span>
+
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!GMPruningModifier</span><span class="w"></span>
+<span class="w">        </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">40</span><span class="w"></span>
+<span class="w">        </span><span class="nt">update_frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w"></span>
+<span class="w">        </span><span class="nt">init_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span><span class="w"></span>
+<span class="w">        </span><span class="nt">final_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.85</span><span class="w"></span>
+<span class="w">        </span><span class="nt">mask_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">unstructured</span><span class="w"></span>
+<span class="w">        </span><span class="nt">params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;sections.0.0.conv1.weight&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;sections.0.0.conv2.weight&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;sections.0.0.conv3.weight&#39;</span><span class="p p-Indicator">]</span><span class="w"></span>
+</pre></div>
+</div>
+<div class="section" id="modifiers-intro">
+<h2>Modifiers Intro<a class="headerlink" href="#modifiers-intro" title="Permalink to this headline"></a></h2>
+<p>Recipes can contain multiple modifiers, each modifying a portion of the training process in a different way.
+In general, each modifier will have a start and an end epoch for when the modifier should be active.
+The modifiers will start at <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code> and run until <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>.
+Note that it does not run through <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>.
+Additionally, all epoch values support decimal values such that they can be started somewhere in the middle of an epoch.
+For example, <code class="docutils literal notranslate"><span class="pre">start_epoch:</span> <span class="pre">2.5</span></code> will start in the middle of the second training epoch.</p>
+<p>The most commonly used modifiers are enumerated as subsections below.</p>
+</div>
+<div class="section" id="training-epoch-modifiers">
+<h2>Training Epoch Modifiers<a class="headerlink" href="#training-epoch-modifiers" title="Permalink to this headline"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">EpochRangeModifier</span></code> controls the range of epochs for training a model.
+Each supported ML framework has an implementation to enable easily retrieving this number of epochs.
+Note, that this is not a hard rule and if other modifiers have a larger <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code> or smaller <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>
+then those values will be used instead.</p>
+<p>The only parameters that can be controlled for <code class="docutils literal notranslate"><span class="pre">EpochRangeModifier</span></code> are the <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code> and <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>.
+Both parameters are required.</p>
+<p>Required Parameters:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>: The start range for the epoch (0 indexed)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>: The end range for the epoch</p>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!EpochRangeModifier</span><span class="w"></span>
+<span class="w">   </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
+<span class="w">   </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25.0</span><span class="w"></span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+<div class="section" id="pruning-modifiers">
+<h2>Pruning Modifiers<a class="headerlink" href="#pruning-modifiers" title="Permalink to this headline"></a></h2>
+<p>The pruning modifiers handle <a class="reference external" href="https://neuralmagic.com/blog/pruning-overview/">pruning</a>
+the specified layer(s) in a given model.</p>
+<div class="section" id="constantpruningmodifier">
+<h3>ConstantPruningModifier<a class="headerlink" href="#constantpruningmodifier" title="Permalink to this headline"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">ConstantPruningModifier</span></code> enforces the sparsity structure and level for an already pruned layer(s) in a model.
+The modifier is generally used for transfer learning from an already pruned model or
+to enforce sparsity while quantizing.
+The weights remain trainable in this setup; however, the sparsity is unchanged.</p>
+<p>Required Parameters:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">params</span></code><span class="classifier">The parameters in the model to prune.</span></dt><dd><p>This can be set to a string containing <code class="docutils literal notranslate"><span class="pre">__ALL__</span></code> to prune all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by ‘re:’ of parameter name patterns to match.
+For example: <code class="docutils literal notranslate"><span class="pre">['blocks.1.conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['mnist_net/blocks/conv0/conv']</span></code> for TensorFlow.
+Regex can also be used to match all conv params: <code class="docutils literal notranslate"><span class="pre">['re:.*conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['re:.*/conv']</span></code> for TensorFlow.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!ConstantPruningModifier</span><span class="w"></span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">__ALL__</span><span class="w"></span>
+</pre></div>
+</div>
+<div class="section" id="gmpruningmodifier">
+<h4>GMPruningModifier<a class="headerlink" href="#gmpruningmodifier" title="Permalink to this headline"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">GMPruningModifier</span></code> prunes the parameter(s) in a model to a
+target sparsity (percentage of 0’s for a layer’s param/variable)
+using [gradual magnitude pruning] (<a class="reference external" href="https://neuralmagic.com/blog/pruning-gmp/">https://neuralmagic.com/blog/pruning-gmp/</a>).
+This is done gradually from an initial to final sparsity (<code class="docutils literal notranslate"><span class="pre">init_sparsity</span></code>, <code class="docutils literal notranslate"><span class="pre">final_sparsity</span></code>)
+over a range of epochs (<code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>, <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>) and updated at a specific interval defined by the <code class="docutils literal notranslate"><span class="pre">update_frequency</span></code>.
+For example, using the following settings <code class="docutils literal notranslate"><span class="pre">start_epoch:</span> <span class="pre">0</span></code>, <code class="docutils literal notranslate"><span class="pre">end_epoch:</span> <span class="pre">5</span></code>, <code class="docutils literal notranslate"><span class="pre">update_frequency:</span> <span class="pre">1</span></code>,
+<code class="docutils literal notranslate"><span class="pre">init_sparsity:</span> <span class="pre">0.05</span></code>, <code class="docutils literal notranslate"><span class="pre">final_sparsity:</span> <span class="pre">0.8</span></code> will do the following:</p>
+<ul class="simple">
+<li><p>at epoch 0 set the sparsity for the specified param(s) to 5%</p></li>
+<li><p>once every epoch, gradually increase the sparsity towards 80%</p></li>
+<li><p>by the start of epoch 5, stop pruning and set the final sparsity for the specified param(s) to 80%</p></li>
+</ul>
+<p>Required Parameters:</p>
+<ul>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">params</span></code><span class="classifier">The parameters in the model to prune.</span></dt><dd><p>This can be set to a string containing <code class="docutils literal notranslate"><span class="pre">__ALL__</span></code> to prune all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by ‘re:’ of parameter name patterns to match.
+For example: <code class="docutils literal notranslate"><span class="pre">['blocks.1.conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['mnist_net/blocks/conv0/conv']</span></code> for TensorFlow.
+Regex can also be used to match all conv params: <code class="docutils literal notranslate"><span class="pre">['re:.*conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['re:.*/conv']</span></code> for TensorFlow.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">init_sparsity</span></code><span class="classifier">The decimal value for the initial sparsity to start pruning with.</span></dt><dd><p>At <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code> will set the sparsity for the param/variable to this value.
+Generally, this is kept at kept at 0.05 (5%).</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">final_sparsity</span></code><span class="classifier">The decimal value for the final sparsity to end pruning with.</span></dt><dd><p>By the start of <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code> will set the sparsity for the param/variable to this value.
+Generally, this is kept in a range from 0.6 to 0.95 depending on the model and layer.
+Anything less than 0.4 is not useful for performance.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code><span class="classifier">The epoch to start the pruning at (0 indexed).</span></dt><dd><p>This supports floating-point values to enable starting pruning between epochs.</p>
+</dd>
+</dl>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>: The epoch before which to stop pruning.
+This supports floating-point values to enable stopping pruning between epochs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">update_frequency</span></code>: The number of epochs/fractions of an epoch between each pruning step.
+It supports floating-point values to enable updating inside of epochs.
+Generally, this is set to update once per epoch (<code class="docutils literal notranslate"><span class="pre">1.0</span></code>).
+However, if the loss for the model recovers quickly, it should be set to a lesser value.
+For example: set it to <code class="docutils literal notranslate"><span class="pre">0.5</span></code> for once every half epoch (twice per epoch).</p></li>
+</ul>
+</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!GMPruningModifier</span><span class="w"></span>
+<span class="w">    </span><span class="nt">params</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;blocks.1.conv&#39;</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">    </span><span class="nt">init_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.05</span><span class="w"></span>
+<span class="w">    </span><span class="nt">final_sparsity</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.8</span><span class="w"></span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">20.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">update_frequency</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="quantization-modifiers">
+<h3>Quantization Modifiers<a class="headerlink" href="#quantization-modifiers" title="Permalink to this headline"></a></h3>
+<p>The <code class="docutils literal notranslate"><span class="pre">QuantizationModifier</span></code> sets the model to run with
+<a class="reference external" href="https://pytorch.org/docs/stable/quantization.html">quantization aware training (QAT)</a>.
+QAT emulates the precision loss of int8 quantization during training so weights can be
+learned to limit any accuracy loss from quantization.
+Once the <code class="docutils literal notranslate"><span class="pre">QuantizationModifier</span></code> is enabled, it cannot be disabled (no <code class="docutils literal notranslate"><span class="pre">end_epoch</span></code>).
+Quantization zero points are set to be asymmetric for activations and symmetric for weights.
+Currently only available in PyTorch.</p>
+<p>Notes:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt>ONNX exports of PyTorch QAT models will be QAT models themselves (emulated quantization).</dt><dd><p>To convert your QAT ONNX model to a fully quantizerd model use
+the script <code class="docutils literal notranslate"><span class="pre">scripts/pytorch/model_quantize_qat_export.py</span></code> or the function
+<code class="docutils literal notranslate"><span class="pre">neuralmagicML.pytorch.quantization.quantize_qat_export</span></code>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt>If performing QAT on a sparse model, you must preserve sparsity during QAT by</dt><dd><p>applying a <code class="docutils literal notranslate"><span class="pre">ConstantPruningModifier</span></code> or have already used a <code class="docutils literal notranslate"><span class="pre">GMPruningModifier</span></code> with
+<code class="docutils literal notranslate"><span class="pre">leave_enabled</span></code> set to True.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Required Parameters:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>: The epoch to start QAT. This supports floating-point values to enable
+starting pruning between epochs.</p></li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!QuantizationModifier</span><span class="w"></span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="learning-rate-modifiers">
+<h3>Learning Rate Modifiers<a class="headerlink" href="#learning-rate-modifiers" title="Permalink to this headline"></a></h3>
+<p>The learning rate modifiers set the learning rate (LR) for an optimizer during training.
+If you are using an Adam optimizer, then generally, these are not useful.
+If you are using a standard stochastic gradient descent optimizer, then these give a convenient way to control the LR.</p>
+<div class="section" id="setlearningratemodifier">
+<h4>SetLearningRateModifier<a class="headerlink" href="#setlearningratemodifier" title="Permalink to this headline"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">SetLearningRateModifier</span></code> sets the learning rate (LR) for the optimizer to a specific value at a specific point
+in the training process.</p>
+<p>Required Parameters:</p>
+<ul>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code><span class="classifier">The epoch in the training process to set the <code class="docutils literal notranslate"><span class="pre">learning_rate</span></code> value for the optimizer.</span></dt><dd><p>This supports floating-point values to enable setting the LR between epochs.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">learning_rate</span></code>: The floating-point value to set as the learning rate for the optimizer at <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>.</p></li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!SetLearningRateModifier</span><span class="w"></span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">learning_rate</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="learningratemodifier">
+<h4>LearningRateModifier<a class="headerlink" href="#learningratemodifier" title="Permalink to this headline"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">LearningRateModifier</span></code> sets schedules for controlling the learning rate for an optimizer during training.
+If you are using an Adam optimizer, then generally, these are not useful.
+If you are using a standard stochastic gradient descent optimizer, then these give a convenient way to control the LR.
+Provided schedules to choose from are the following:</p>
+<ul>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">ExponentialLR</span></code><span class="classifier">Multiplies the learning rate by a <code class="docutils literal notranslate"><span class="pre">gamma</span></code> value every epoch.</span></dt><dd><p>To use this one, <code class="docutils literal notranslate"><span class="pre">lr_kwargs</span></code> should be set to a dictionary containing <code class="docutils literal notranslate"><span class="pre">gamma</span></code>.
+For example: <code class="docutils literal notranslate"><span class="pre">{'gamma':</span> <span class="pre">0.9}</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">StepLR</span></code><span class="classifier">Multiplies the learning rate by a <code class="docutils literal notranslate"><span class="pre">gamma</span></code> value after a certain epoch period defined by <code class="docutils literal notranslate"><span class="pre">step</span></code>.</span></dt><dd><p>To use this one, <code class="docutils literal notranslate"><span class="pre">lr_kwargs</span></code> must be set to a dictionary containing <code class="docutils literal notranslate"><span class="pre">gamma</span></code> and <code class="docutils literal notranslate"><span class="pre">step_size</span></code>.
+For example: <code class="docutils literal notranslate"><span class="pre">{'gamma':</span> <span class="pre">0.9,</span> <span class="pre">'step_size':</span> <span class="pre">2.0}</span></code></p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">MultiStepLR</span></code><span class="classifier">Multiplies the learning rate by a <code class="docutils literal notranslate"><span class="pre">gamma</span></code> value at specific epoch points defined by <code class="docutils literal notranslate"><span class="pre">milestones</span></code>.</span></dt><dd><p>To use this one, <code class="docutils literal notranslate"><span class="pre">lr_kwargs</span></code> must be set to a dictionary containing <code class="docutils literal notranslate"><span class="pre">gamma</span></code> and <code class="docutils literal notranslate"><span class="pre">milestones</span></code>.
+For example: <code class="docutils literal notranslate"><span class="pre">{'gamma':</span> <span class="pre">0.9,</span> <span class="pre">'milestones':</span> <span class="pre">[2.0,</span> <span class="pre">5.5,</span> <span class="pre">10.0]}</span></code></p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Required Parameters:</p>
+<ul>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code><span class="classifier">The epoch to start modifying the LR at (0 indexed).</span></dt><dd><p>This supports floating-point values to enable starting pruning between epochs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">end_epoch</span></code><span class="classifier">The epoch to stop modifying the LR before.</span></dt><dd><p>This supports floating-point values to enable stopping pruning between epochs.</p>
+</dd>
+</dl>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lr_class</span></code>: The LR class to use, one of [<code class="docutils literal notranslate"><span class="pre">ExponentialLR</span></code>, <code class="docutils literal notranslate"><span class="pre">StepLR</span></code>, <code class="docutils literal notranslate"><span class="pre">MultiStepLR</span></code>].</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lr_kwargs</span></code>: The named arguments for the <code class="docutils literal notranslate"><span class="pre">lr_class</span></code>.</p></li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">init_lr</span></code><span class="classifier">[Optional] The initial LR to set at <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code> and to use for creating the schedules.</span></dt><dd><p>If not given, the optimizer’s current LR will be used at startup.</p>
+</dd>
+</dl>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!LearningRateModifier</span><span class="w"></span>
+<span class="w">   </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
+<span class="w">   </span><span class="nt">end_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">25.0</span><span class="w"></span>
+<span class="w">   </span><span class="nt">lr_class</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">MultiStepLR</span><span class="w"></span>
+<span class="w">   </span><span class="nt">lr_kwargs</span><span class="p">:</span><span class="w"></span>
+<span class="w">       </span><span class="nt">gamma</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.9</span><span class="w"></span>
+<span class="w">       </span><span class="nt">milestones</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">2.0</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">5.5</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">10.0</span><span class="p p-Indicator">]</span><span class="w"></span>
+<span class="w">   </span><span class="nt">init_lr</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.1</span><span class="w"></span>
+</pre></div>
+</div>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="params-variables-modifiers">
+<h3>Params/Variables Modifiers<a class="headerlink" href="#params-variables-modifiers" title="Permalink to this headline"></a></h3>
+<div class="section" id="trainableparamsmodifier">
+<h4>TrainableParamsModifier<a class="headerlink" href="#trainableparamsmodifier" title="Permalink to this headline"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">TrainableParamsModifier</span></code> controls the params that are marked as trainable for the current optimizer.
+This is generally useful when transfer learning to easily mark which parameters should or should not be frozen/trained.</p>
+<p>Required Parameters:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">params</span></code><span class="classifier">The names of parameters to mark as trainable or not.</span></dt><dd><p>This can be set to a string containing <code class="docutils literal notranslate"><span class="pre">__ALL__</span></code> to mark all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by ‘re:’ of parameter name patterns to match.
+For example: <code class="docutils literal notranslate"><span class="pre">['blocks.1.conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['mnist_net/blocks/conv0/conv']</span></code> for TensorFlow.
+Regex can also be used to match all conv params: <code class="docutils literal notranslate"><span class="pre">['re:.*conv']</span></code> for PyTorch and <code class="docutils literal notranslate"><span class="pre">['re:.*/conv']</span></code> for TensorFlow.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!TrainableParamsModifier</span><span class="w"></span>
+<span class="w">  </span><span class="nt">params</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">__ALL__</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+<div class="section" id="optimizer-modifiers">
+<h3>Optimizer Modifiers<a class="headerlink" href="#optimizer-modifiers" title="Permalink to this headline"></a></h3>
+<div class="section" id="setweightdecaymodifier">
+<h4>SetWeightDecayModifier<a class="headerlink" href="#setweightdecaymodifier" title="Permalink to this headline"></a></h4>
+<p>The <code class="docutils literal notranslate"><span class="pre">SetWeightDecayModifier</span></code> sets the weight decay (L2 penalty) for the optimizer to a
+specific value at a specific point in the training process.</p>
+<p>Required Parameters:</p>
+<ul>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">start_epoch</span></code><span class="classifier">The epoch in the training process to set the <code class="docutils literal notranslate"><span class="pre">weight_decay</span></code> value for the</span></dt><dd><p>optimizer. This supports floating-point values to enable setting the weight decay
+between epochs.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">weight_decay</span></code><span class="classifier">The floating-point value to set as the weight decay for the optimizer</span></dt><dd><p>at <code class="docutils literal notranslate"><span class="pre">start_epoch</span></code>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p>Example:</p>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="p p-Indicator">-</span><span class="w"> </span><span class="kt">!SetWeightDecayModifier</span><span class="w"></span>
+<span class="w">    </span><span class="nt">start_epoch</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5.0</span><span class="w"></span>
+<span class="w">    </span><span class="nt">weight_decay</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"></span>
+</pre></div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="code.html" class="btn btn-neutral float-left" title="Sparsification Code" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="onnx_export.html" class="btn btn-neutral float-right" title="ONNX Export" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.10.1
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../v0.10.0/source/recipes.html">v0.10.0</a></dd>
+      <dd><a href="recipes.html">v0.10.1</a></dd>
+      <dd><a href="../../v0.3.0/source/recipes.html">v0.3.0</a></dd>
+      <dd><a href="../../v0.3.1/source/recipes.html">v0.3.1</a></dd>
+      <dd><a href="../../v0.4.0/source/recipes.html">v0.4.0</a></dd>
+      <dd><a href="../../v0.5.0/source/recipes.html">v0.5.0</a></dd>
+      <dd><a href="../../v0.5.1/source/recipes.html">v0.5.1</a></dd>
+      <dd><a href="../../v0.6.0/source/recipes.html">v0.6.0</a></dd>
+      <dd><a href="../../v0.7.0/source/recipes.html">v0.7.0</a></dd>
+      <dd><a href="../../v0.8.0/source/recipes.html">v0.8.0</a></dd>
+      <dd><a href="../../v0.9.0/source/recipes.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../main/source/recipes.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
