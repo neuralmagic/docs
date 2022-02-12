@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.7.0.20220211 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_pruning &mdash; SparseML 0.7.0.20220212 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -123,7 +123,6 @@
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">ModifierProp</span><span class="p">,</span>
     <span class="n">PyTorchModifierYAML</span><span class="p">,</span>
-    <span class="n">ScheduledModifier</span><span class="p">,</span>
     <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="p">(</span>
@@ -134,12 +133,8 @@
     <span class="n">get_named_layers_and_params_by_regex</span><span class="p">,</span>
     <span class="n">get_prunable_layers</span><span class="p">,</span>
     <span class="n">replace_layer</span><span class="p">,</span>
-    <span class="n">tensor_sparsity</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.logger</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
-<span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">ConstantPruningModifier</span> <span class="k">as</span> <span class="n">BaseConstantPruningModifier</span><span class="p">,</span>
-<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">GMPruningModifier</span> <span class="k">as</span> <span class="n">BaseGMPruningModifier</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
@@ -152,13 +147,10 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;ConstantPruningModifier&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;GMPruningModifier&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;MagnitudePruningModifier&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;LegacyGMPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MFACPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MFACGlobalPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;MovementPruningModifier&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;GlobalMagnitudePruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;LayerPruningModifier&quot;</span><span class="p">,</span>
     <span class="s2">&quot;StructuredPruningModifier&quot;</span><span class="p">,</span>
 <span class="p">]</span>
@@ -455,85 +447,7 @@
         <span class="p">]</span>
 
 
-<div class="viewcode-block" id="ConstantPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">ConstantPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">,</span> <span class="n">BaseConstantPruningModifier</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Holds the sparsity level and shape for a given parameter(s) constant while training.</span>
-<span class="sd">    Useful for transfer learning use cases.</span>
-
-<span class="sd">    | Sample yaml:</span>
-<span class="sd">    |   !ConstantPruningModifier</span>
-<span class="sd">    |       start_epoch: 0.0</span>
-<span class="sd">    |       end_epoch: 10.0</span>
-<span class="sd">    |       params: [&#39;re:.*weight&#39;]</span>
-<span class="sd">    |       log_types: __ALL__</span>
-
-<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
-<span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
-<span class="sd">    :param update_frequency: Ignored for this modifier</span>
-<span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">        and Linear layers&#39; weights</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-<div class="viewcode-block" id="ConstantPruningModifier.from_sparse_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.ConstantPruningModifier.from_sparse_model">[docs]</a>    <span class="nd">@staticmethod</span>
-    <span class="k">def</span> <span class="nf">from_sparse_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">ScheduledModifier</span><span class="p">]:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        Create constant ks modifiers for all prunable params in the given model</span>
-<span class="sd">        (conv, linear) that have been artificially sparsified (sparsity &gt; 40%).</span>
-<span class="sd">        Useful for transfer learning from a pruned model.</span>
-
-<span class="sd">        :param model: the model to create constant ks modifiers for</span>
-<span class="sd">        :return: the list of created constant ks modifiers</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">prunable</span> <span class="o">=</span> <span class="n">get_prunable_layers</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-        <span class="n">modifiers</span> <span class="o">=</span> <span class="p">[]</span>
-
-        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">prunable</span><span class="p">:</span>
-            <span class="n">weight</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">)</span>
-            <span class="n">sparsity</span> <span class="o">=</span> <span class="n">tensor_sparsity</span><span class="p">(</span><span class="n">weight</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">:</span>  <span class="c1"># set at 10% sparsity to be threshold for intentional</span>
-                <span class="n">modifiers</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
-                    <span class="n">ConstantPruningModifier</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">)])</span>
-                <span class="p">)</span>
-
-        <span class="k">return</span> <span class="n">modifiers</span></div>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">ConstantPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
-            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
-            <span class="n">end_comparator</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">update_frequency</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
-    <span class="p">):</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_weights</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">end_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">set_param_masks_from_weights</span><span class="p">()</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">enabled</span> <span class="o">=</span> <span class="kc">False</span></div>
-
-
-<div class="viewcode-block" id="GMPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">GMPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">,</span> <span class="n">BaseGMPruningModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">_GMPruningModifier</span><span class="p">(</span><span class="n">_PruningParamsModifier</span><span class="p">,</span> <span class="n">BaseGMPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
 <span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
@@ -611,7 +525,7 @@
         <span class="n">params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_params_and_final_sparsity</span><span class="p">(</span>
             <span class="n">params</span><span class="p">,</span> <span class="n">final_sparsity</span>
         <span class="p">)</span>
-        <span class="nb">super</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">_GMPruningModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
             <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
             <span class="n">final_sparsity</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_final_sparsity</span><span class="p">,</span>
@@ -749,7 +663,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied_sparsity</span>
 
-<div class="viewcode-block" id="GMPruningModifier.optimizer_pre_step"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.optimizer_pre_step">[docs]</a>    <span class="k">def</span> <span class="nf">optimizer_pre_step</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">optimizer_pre_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -766,9 +680,9 @@
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pre_step_completed</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">pre_optim_step_update</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pre_step_completed</span> <span class="o">=</span> <span class="kc">False</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pre_step_completed</span> <span class="o">=</span> <span class="kc">False</span>
 
-<div class="viewcode-block" id="GMPruningModifier.optimizer_post_step"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GMPruningModifier.optimizer_post_step">[docs]</a>    <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
+    <span class="k">def</span> <span class="nf">optimizer_post_step</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -791,7 +705,7 @@
             <span class="c1"># have changed (optimizer with momentum, not masking gradient)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_module_masks</span><span class="o">.</span><span class="n">apply</span><span class="p">()</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_applied</span> <span class="o">=</span> <span class="kc">False</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sparsity_applied</span> <span class="o">=</span> <span class="kc">False</span>
 
     <span class="k">def</span> <span class="nf">_check_mask_update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -937,109 +851,19 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="c1"># default params to ALL_PRUNABLE_TOKEN</span>
             <span class="n">params</span> <span class="o">=</span> <span class="n">params</span> <span class="ow">or</span> <span class="n">ALL_PRUNABLE_TOKEN</span>
-            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">final_sparsity</span></div>
+            <span class="k">return</span> <span class="n">params</span><span class="p">,</span> <span class="n">final_sparsity</span>
 
 
-<div class="viewcode-block" id="MagnitudePruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.MagnitudePruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">MagnitudePruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
-<span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
-<span class="sd">    and applied with an interpolated function for each step taken.</span>
+<div class="viewcode-block" id="LegacyGMPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.LegacyGMPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
+<span class="k">class</span> <span class="nc">LegacyGMPruningModifier</span><span class="p">(</span><span class="n">_GMPruningModifier</span><span class="p">):</span>
 
-<span class="sd">    Uses magnitude pruning to gradually mask parameter values. Pruning is</span>
-<span class="sd">    unstructured by default, structure can be specified by mask_type.</span>
-
-<span class="sd">    | Sample yaml:</span>
-<span class="sd">    |   !MagnitudePruningModifier</span>
-<span class="sd">    |       init_sparsity: 0.05</span>
-<span class="sd">    |       final_sparsity: 0.8</span>
-<span class="sd">    |       start_epoch: 0.0</span>
-<span class="sd">    |       end_epoch: 10.0</span>
-<span class="sd">    |       update_frequency: 1.0</span>
-<span class="sd">    |       params: [&quot;re:.*weight&quot;]</span>
-<span class="sd">    |       leave_enabled: True</span>
-<span class="sd">    |       inter_func: cubic</span>
-<span class="sd">    |       log_types: __ALL__</span>
-<span class="sd">    |       mask_type: unstructured</span>
-
-<span class="sd">    :param init_sparsity: the initial sparsity for the param to start with at</span>
-<span class="sd">        start_epoch</span>
-<span class="sd">    :param final_sparsity: the final sparsity for the param to end with at end_epoch.</span>
-<span class="sd">        Can also be a Dict of final sparsity values to a list of parameters to apply</span>
-<span class="sd">        them to. If given a Dict, then params must be set to [] and the params to</span>
-<span class="sd">        be pruned will be read from the final_sparsity Dict</span>
-<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
-<span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
-<span class="sd">    :param update_frequency: The number of epochs or fraction of epochs to update at</span>
-<span class="sd">        between start and end</span>
-<span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">        and Linear layers&#39; weights. If a sparsity to param mapping is defined by</span>
-<span class="sd">        final_sparsity, then params should be set to []</span>
-<span class="sd">    :param leave_enabled: True to continue masking the weights after end_epoch,</span>
-<span class="sd">        False to stop masking. Should be set to False if exporting the result</span>
-<span class="sd">        immediately after or doing some other prune</span>
-<span class="sd">    :param inter_func: the type of interpolation function to use:</span>
-<span class="sd">        [linear, cubic, inverse_cubic]</span>
-<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
-<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
-<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
-<span class="sd">    :param mask_type: String to define type of sparsity (options: [&#39;unstructured&#39;,</span>
-<span class="sd">        &#39;channel&#39;, &#39;filter&#39;]), List to define block shape of a parameters in and out</span>
-<span class="sd">        channels, or a SparsityMaskCreator object. default is &#39;unstructured&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">init_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">final_sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]],</span>
-        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span>
-        <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubic&quot;</span><span class="p">,</span>
-        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
-        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
-            <span class="n">final_sparsity</span><span class="o">=</span><span class="n">final_sparsity</span><span class="p">,</span>
-            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
-            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
-            <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
-            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-            <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
-            <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
-            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
-            <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
-            <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-            <span class="n">score_type</span><span class="o">=</span><span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">global_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if global pruning is enabled, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">score_type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: the the scoring method used for pruning</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_type</span></div>
+    <span class="c1"># pointer to old GMPruningModifier during migration for testing,</span>
+    <span class="c1"># will be deleted with this file</span>
+    <span class="k">pass</span></div>
 
 
 <div class="viewcode-block" id="MovementPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.MovementPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">MovementPruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MovementPruningModifier</span><span class="p">(</span><span class="n">_GMPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
 <span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
@@ -1137,100 +961,8 @@
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_score_type</span></div>
 
 
-<div class="viewcode-block" id="GlobalMagnitudePruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.GlobalMagnitudePruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">GlobalMagnitudePruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
-<span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
-<span class="sd">    and applied with an interpolated function for each step taken.</span>
-
-<span class="sd">    Uses magnitude pruning over the global scope of all given parameters</span>
-<span class="sd">    to gradually mask parameter values. Pruning is unstructured by default,</span>
-<span class="sd">    structure can be specified by mask_type.</span>
-
-<span class="sd">    | Sample yaml:</span>
-<span class="sd">    |   !GlobalMagnitudePruningModifier</span>
-<span class="sd">    |       init_sparsity: 0.05</span>
-<span class="sd">    |       final_sparsity: 0.8</span>
-<span class="sd">    |       start_epoch: 0.0</span>
-<span class="sd">    |       end_epoch: 10.0</span>
-<span class="sd">    |       update_frequency: 1.0</span>
-<span class="sd">    |       params: __ALL_PRUNABLE__</span>
-<span class="sd">    |       leave_enabled: True</span>
-<span class="sd">    |       inter_func: cubic</span>
-<span class="sd">    |       log_types: __ALL__</span>
-<span class="sd">    |       mask_type: unstructured</span>
-<span class="sd">    |       score_type: magnitude</span>
-
-<span class="sd">    :param init_sparsity: the initial sparsity for the param to start with at</span>
-<span class="sd">        start_epoch</span>
-<span class="sd">    :param final_sparsity: the final sparsity for the param to end with at end_epoch</span>
-<span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
-<span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
-<span class="sd">    :param update_frequency: The number of epochs or fraction of epochs to update at</span>
-<span class="sd">        between start and end</span>
-<span class="sd">    :param params: A list of full parameter names or regex patterns of names to apply</span>
-<span class="sd">        pruning to.  Regex patterns must be specified with the prefix &#39;re:&#39;. __ALL__</span>
-<span class="sd">        will match to all parameters. __ALL_PRUNABLE__ will match to all ConvNd</span>
-<span class="sd">        and Linear layers&#39; weights. Defualt is __ALL_PRUNABLE__</span>
-<span class="sd">    :param leave_enabled: True to continue masking the weights after end_epoch,</span>
-<span class="sd">        False to stop masking. Should be set to False if exporting the result</span>
-<span class="sd">        immediately after or doing some other prune</span>
-<span class="sd">    :param inter_func: the type of interpolation function to use:</span>
-<span class="sd">        [linear, cubic, inverse_cubic]</span>
-<span class="sd">    :param phased: True to enable a phased approach where pruning will</span>
-<span class="sd">        turn on and off with the update_frequency. Starts with pruning on</span>
-<span class="sd">        at start_epoch, off at start_epoch + update_frequency, and so on.</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
-<span class="sd">    :param mask_type: String to define type of sparsity (options: [&#39;unstructured&#39;,</span>
-<span class="sd">        &#39;channel&#39;, &#39;filter&#39;]), List to define block shape of a parameters in and out</span>
-<span class="sd">        channels, or a SparsityMaskCreator object. default is &#39;unstructured&#39;</span>
-<span class="sd">    :param score_type: Method used to score parameters for masking, i.e.</span>
-<span class="sd">        &#39;magnitude&#39;, &#39;movement&#39;. Default is &#39;magnitude&#39;</span>
-<span class="sd">    &quot;&quot;&quot;</span>
-
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">init_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">final_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-        <span class="n">params</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_PRUNABLE_TOKEN</span><span class="p">,</span>
-        <span class="n">leave_enabled</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
-        <span class="n">inter_func</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cubic&quot;</span><span class="p">,</span>
-        <span class="n">phased</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
-        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
-        <span class="n">score_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">MFACOptions</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;magnitude&quot;</span><span class="p">,</span>
-    <span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">init_sparsity</span><span class="o">=</span><span class="n">init_sparsity</span><span class="p">,</span>
-            <span class="n">final_sparsity</span><span class="o">=</span><span class="n">final_sparsity</span><span class="p">,</span>
-            <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
-            <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
-            <span class="n">update_frequency</span><span class="o">=</span><span class="n">update_frequency</span><span class="p">,</span>
-            <span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">,</span>
-            <span class="n">leave_enabled</span><span class="o">=</span><span class="n">leave_enabled</span><span class="p">,</span>
-            <span class="n">inter_func</span><span class="o">=</span><span class="n">inter_func</span><span class="p">,</span>
-            <span class="n">phased</span><span class="o">=</span><span class="n">phased</span><span class="p">,</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
-            <span class="n">mask_type</span><span class="o">=</span><span class="n">mask_type</span><span class="p">,</span>
-            <span class="n">global_sparsity</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-            <span class="n">score_type</span><span class="o">=</span><span class="n">score_type</span><span class="p">,</span>
-        <span class="p">)</span>
-
-    <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">global_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-        <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">        :return: True if global pruning is enabled, False otherwise</span>
-<span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_sparsity</span></div>
-
-
 <div class="viewcode-block" id="StructuredPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.StructuredPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">StructuredPruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">StructuredPruningModifier</span><span class="p">(</span><span class="n">_GMPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies structured kernel sparsity to a given parameter or parameters</span>
 <span class="sd">    from init_sparsity until final_sparsity is reached over a given amount of time</span>
@@ -1404,7 +1136,7 @@
 
 
 <div class="viewcode-block" id="MFACPruningModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_pruning.MFACPruningModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
-<span class="k">class</span> <span class="nc">MFACPruningModifier</span><span class="p">(</span><span class="n">GMPruningModifier</span><span class="p">):</span>
+<span class="k">class</span> <span class="nc">MFACPruningModifier</span><span class="p">(</span><span class="n">_GMPruningModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gradually applies kernel sparsity to a given parameter or parameters from</span>
 <span class="sd">    init_sparsity until final_sparsity is reached over a given amount of time</span>
