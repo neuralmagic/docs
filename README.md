@@ -26,7 +26,7 @@ limitations under the License.
         <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
     </a>
     <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
-        <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.0%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
+        <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.1%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
     </a>
      <a href="https://www.youtube.com/channel/UCo8dO_WMGYbWCRnj_Dxr4EA">
         <img src="https://img.shields.io/badge/-YouTube-red?&style=for-the-badge&logo=youtube&logoColor=white" height=25>
@@ -50,8 +50,7 @@ To file a docs issue for a specific software component, use its repo issue track
 | [SparseZoo](https://docs.neuralmagic.com/sparsezoo/)          | [Repo](https://github.com/neuralmagic/sparsezoo/)  | [Queue](https://github.com/neuralmagic/sparsezoo/issues/)  | [Index](https://github.com/neuralmagic/sparsezoo/releases/)  | Apache 2.0          |
 | [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | Neural Magic Engine |
 
-We also have a **Deep Sparse Community** [Discourse Forum](https://https://discuss.neuralmagic.com/) and [Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ).</br>
-We are growing the community member by member and happy to see you there; simply sign up and log in!
+For user help or questions, sign up or log in to our [**Deep Sparse Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
 
 To contribute to Neural Magic documentation, please:</br>
 
@@ -60,9 +59,9 @@ To contribute to Neural Magic documentation, please:</br>
   Submit a [pull request](https://github.com/neuralmagic/docs/pulls/) with your
   proposed documentation changes.</br>
   Get started with
-  [writing and formatting on GitHub](https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github).
+  [writing and formatting on GitHub.](https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github)
   
-  To learn more about Neural Magic, [check our website](https://www.neuralmagic.com).
+  To learn more about Neural Magic, [check our website.](https://www.neuralmagic.com)
 </div>
 
  </div>
