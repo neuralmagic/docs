@@ -20,7 +20,7 @@ limitations under the License.
 
 **What is Neural Magic?**
 
-Founded by a team of award-winning MIT computer scientists and funded by Comcast Ventures, Andreessen Horowitz, NEA, Pillar VC, and Amdocs, Neural Magic is the creator and maintainer of the Deep Sparse Platform. It has several components, including the [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse), a CPU runtime that runs sparse models at GPU speeds. To enable companies the ability to use ubiquitous and unconstrained CPU resources, Neural Magic includes [Sparsify](https://docs.neuralmagic.com/sparsify), [SparseML](https://docs.neuralmagic.com/sparseml), and the [SparseZoo](https://docs.neuralmagic.com/sparsezoo), open-sourced model optimization technologies that allow users to achieve performance breakthroughs, at scale, with all the flexibility of software.
+Founded by a team of award-winning MIT computer scientists and funded by Amdocs, Andreessen Horowitz, Comcast Ventures, NEA, Pillar VC, and Ridgeline Partners, Neural Magic is the creator and maintainer of the Deep Sparse Platform. It has several components, including the [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse), a CPU runtime that runs sparse models at GPU speeds. To enable companies the ability to use ubiquitous and unconstrained CPU resources, Neural Magic includes [Sparsify](https://docs.neuralmagic.com/sparsify), [SparseML](https://docs.neuralmagic.com/sparseml), and the [SparseZoo](https://docs.neuralmagic.com/sparsezoo), open-sourced model optimization technologies that allow users to achieve performance breakthroughs, at scale, with all the flexibility of software.
 
 **What is the DeepSparse Engine?**
 
@@ -60,7 +60,7 @@ We focus on the models and use cases related to computer vision and NLP due to c
 
 **What types of models does Neural Magic support?**
 
-Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision. As of June 2021, NLP models like BERT are now available.
+Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. NLP models like BERT are also available. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision.
 
 **Is dynamic shape supported?**
 
@@ -88,7 +88,7 @@ ___
 
 **Which instruction sets are supported and do we have to enable certain settings?**
 
-AVX-512, AVX2, and VNNI. The DeepSparse Engine will automatically utilize the most effective available instruction set for the task. Generally, if AVX-512 is available then we have no reason to use AVX2 instruction set. AVX-512 VNNI only comes into use for quantized models i.e., INT8 or UINT8.
+AVX-512, AVX2, and VNNI. The DeepSparse Engine will automatically utilize the most effective available instruction set for the task. AVX-512 will be more performant than AVX2 and VNNI will give a boost over AVX-512 for quantized networks.
 
 **Are you suitable for edge deployments (i.e., in-store devices, cameras)?**
 
@@ -116,7 +116,7 @@ For example, Neural Magic has been successful in removing 90% of ResNet-50 weigh
 
 **When does sparsification actually happen?**
 
-In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s [Sparsify](https://docs.neuralmagic.com/sparseml/ and [SparseML](https://docs.neuralmagic.com/sparseml/) tooling.
+In a scenario in which you want to sparsify and then run your own model in the DeepSparse Engine, you would first sparsify your model to achieve the desired level of performance and accuracy using Neural Magic’s [Sparsify](https://docs.neuralmagic.com/sparseml/) and [SparseML](https://docs.neuralmagic.com/sparseml/) tooling.
 
 **What does the sparsification process look like?**
 
@@ -132,11 +132,11 @@ For transfer learning, our tooling allows you to save the sparse architecture le
 
 **Do you support INT8 and INT16 (quantized) operations?**
 
-Currently, the DeepSparse Engine runs at FP32 and has some support for INT8. With the release of the Intel Cascade Lake generation chips and later, Intel CPUs now include VNNI instructions and support both INT8 and INT16 operations. On machines with VNNI support, the engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, and QLinearMatMul with constant weights. The DeepSparse Engine also supports 8-bit QLinearAdd, an ONNX Runtime custom operator.
+The DeepSparse Engine runs at FP32 and has support for INT8.  With Intel Cascade Lake generation chips and later, Intel CPUs include VNNI instructions and support both INT8 and INT16 operations. On these machines, performance improvements from quantization will be greater. The  DeepSparse Engine has INT8 support for the ONNX operators QLinearConv, QuantizeLinear, DequantizeLinear, QLinearMatMul, and MatMulInteger. Our engine also supports 8-bit QLinearAdd, an ONNX Runtime custom operator.
 
-**Do you support FP16 (half precision) operations?**
+**Do you support FP16 (half precision) and BF16 operations?**
 
-Neural Magic is waiting on support from Intel; we will assess inclusion into our roadmap at the appropriate time.
+Neural Magic is looking to include both FP16 and BF16 on our roadmap in the near future.
 
 ___
 
