@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparsezoo.package &mdash; SparseZoo 0.9.0.20220310 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
+  <title>sparsezoo.package &mdash; SparseZoo 0.9.0.20220311 documentation</title><link rel="stylesheet" href="../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../_static/favicon.ico"/>
@@ -161,18 +161,23 @@
 <span class="sd">    :param package_integration: package integration of the client</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">if</span> <span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NM_VERSION_CHECK&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span>
-        <span class="ow">or</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NM_VERSION_CHECK&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;false&quot;</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NM_VERSION_CHECK&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;NM_VERSION_CHECK&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;false&quot;</span>
     <span class="p">):</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Skipping Neural Magic&#39;s latest package version check&quot;</span><span class="p">)</span>
+        <span class="k">return</span>
+
+    <span class="k">try</span><span class="p">:</span>
         <span class="n">package_version_check_request</span><span class="p">(</span>
             <span class="n">package_name</span><span class="o">=</span><span class="n">package_name</span><span class="p">,</span>
             <span class="n">package_integration</span><span class="o">=</span><span class="n">package_integration</span><span class="p">,</span>
             <span class="n">package_version</span><span class="o">=</span><span class="n">package_version</span><span class="p">,</span>
         <span class="p">)</span>
-    <span class="k">else</span><span class="p">:</span>
-        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-            <span class="s2">&quot;Skipping Neural Magic&#39;s internal code exection: &quot;</span>
-            <span class="s2">&quot;latest package version check&quot;</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Neural Magic&#39;s latest package version check raised an exception. &quot;</span>
+            <span class="s2">&quot;To turn off set the following in the environment NM_VERSION_CHECK=false &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;Exception: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span>
         <span class="p">)</span></div>
 
 
