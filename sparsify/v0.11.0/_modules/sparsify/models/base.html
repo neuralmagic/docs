@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparsify.models.base &mdash; Sparsify 0.11.0.20220312 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Sparsify<img src="../../../_static/icon-sparsify.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.11
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/userguide/index.html">User Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparsify.html">sparsify package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsify/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sparsify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>sparsify.models.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparsify.models.base</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Base DB model classes for the server</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">datetime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">peewee</span> <span class="kn">import</span> <span class="n">DateTimeField</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">TextField</span>
+<span class="kn">from</span> <span class="nn">playhouse.sqlite_ext</span> <span class="kn">import</span> <span class="n">JSONField</span>
+<span class="kn">from</span> <span class="nn">playhouse.sqliteq</span> <span class="kn">import</span> <span class="n">SqliteQueueDatabase</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;FileStorage&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;database&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;storage&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseModel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BaseCreatedModifiedModel&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ListObjField&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CSVField&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CSVIntField&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CSVFloatField&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="FileStorage"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.FileStorage">[docs]</a><span class="k">class</span> <span class="nc">FileStorage</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for handling local file storage and the path that is located at.</span>
+<span class="sd">    Used for storing large files that would not be good in the DB</span>
+<span class="sd">    such as model and data files.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root_path</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">root_path</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the root path on the local file system for where to store files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_validate_setup</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root_path</span>
+
+<div class="viewcode-block" id="FileStorage.init"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.FileStorage.init">[docs]</a>    <span class="k">def</span> <span class="nf">init</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">root_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize the file storage class for a given path</span>
+
+<span class="sd">        :param root_path: the root path on the local file system</span>
+<span class="sd">            for where to store files</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_root_path</span> <span class="o">=</span> <span class="n">root_path</span></div>
+
+    <span class="k">def</span> <span class="nf">_validate_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_root_path</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;root_path is not set, call init first&quot;</span><span class="p">)</span></div>
+
+
+<span class="n">database</span> <span class="o">=</span> <span class="n">SqliteQueueDatabase</span><span class="p">(</span>
+    <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_gevent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">autostart</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+    <span class="n">queue_max_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+    <span class="n">results_timeout</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">storage</span> <span class="o">=</span> <span class="n">FileStorage</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="BaseModel"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.BaseModel">[docs]</a><span class="k">class</span> <span class="nc">BaseModel</span><span class="p">(</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base peewee model all DB models must extend from</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">class</span> <span class="nc">Meta</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+        <span class="n">database</span> <span class="o">=</span> <span class="n">database</span>
+        <span class="n">storage</span> <span class="o">=</span> <span class="n">storage</span>
+
+<div class="viewcode-block" id="BaseModel.refresh"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.BaseModel.refresh">[docs]</a>    <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Refresh the data for the model instance from the DB</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_by_id</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pk</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="BaseCreatedModifiedModel"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.BaseCreatedModifiedModel">[docs]</a><span class="k">class</span> <span class="nc">BaseCreatedModifiedModel</span><span class="p">(</span><span class="n">BaseModel</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base peewee model that includes created and modified timestamp functionality</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">created</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+    <span class="n">modified</span> <span class="o">=</span> <span class="n">DateTimeField</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">)</span>
+
+<div class="viewcode-block" id="BaseCreatedModifiedModel.save"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.BaseCreatedModifiedModel.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modified</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ListObjField"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.ListObjField">[docs]</a><span class="k">class</span> <span class="nc">ListObjField</span><span class="p">(</span><span class="n">JSONField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Field for handling lists of objects in a peewee database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ListObjField.db_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.ListObjField.db_value">[docs]</a>    <span class="k">def</span> <span class="nf">db_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;list&quot;</span><span class="p">:</span> <span class="n">value</span><span class="p">}</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">db_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ListObjField.python_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.ListObjField.python_value">[docs]</a>    <span class="k">def</span> <span class="nf">python_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="n">value</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">python_value</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">value</span><span class="p">[</span><span class="s2">&quot;list&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="p">[]</span></div></div>
+
+
+<div class="viewcode-block" id="CSVField"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVField">[docs]</a><span class="k">class</span> <span class="nc">CSVField</span><span class="p">(</span><span class="n">TextField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CSV field for handling lists of strings in a peewee database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSVField.db_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVField.db_value">[docs]</a>    <span class="k">def</span> <span class="nf">db_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span><span class="p">:</span>
+            <span class="n">value</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">value</span></div>
+
+<div class="viewcode-block" id="CSVField.python_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVField.python_value">[docs]</a>    <span class="k">def</span> <span class="nf">python_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+        <span class="k">return</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="p">[]</span></div></div>
+
+
+<div class="viewcode-block" id="CSVIntField"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVIntField">[docs]</a><span class="k">class</span> <span class="nc">CSVIntField</span><span class="p">(</span><span class="n">CSVField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CSV field for handling lists of integers in a peewee database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSVIntField.python_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVIntField.python_value">[docs]</a>    <span class="k">def</span> <span class="nf">python_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="p">[]</span></div></div>
+
+
+<div class="viewcode-block" id="CSVFloatField"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVFloatField">[docs]</a><span class="k">class</span> <span class="nc">CSVFloatField</span><span class="p">(</span><span class="n">CSVField</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    CSV field for handling lists of floats in a peewee database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CSVFloatField.python_value"><a class="viewcode-back" href="../../../api/sparsify.models.html#sparsify.models.base.CSVFloatField.python_value">[docs]</a>    <span class="k">def</span> <span class="nf">python_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">value</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span> <span class="k">if</span> <span class="n">value</span> <span class="k">else</span> <span class="p">[]</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.11.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="base.html">v0.11.0</a></dd>
+      <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
