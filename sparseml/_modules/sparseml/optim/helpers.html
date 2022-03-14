@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.optim.helpers — SparseML 0.11.0.20220312 documentation
+   sparseml.optim.helpers — SparseML 0.11.0.20220314 documentation
   </title>
   <link href="../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -359,7 +359,9 @@
 <div class="viewcode-block" id="update_recipe_variables"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.helpers.update_recipe_variables">[docs]</a><span class="k">def</span> <span class="nf">update_recipe_variables</span><span class="p">(</span><span class="n">recipe_yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="sd">"""</span>
 <span class="sd">    :param recipe_yaml_str: YAML string of a SparseML recipe</span>
-<span class="sd">    :param variables: variables dictionary to update recipe top level variables with</span>
+<span class="sd">    :param variables: variables dictionary to update recipe top level variables with.</span>
+<span class="sd">        If recipe contains stages, it will parse the whole recipe</span>
+<span class="sd">        and substitute ANY variable with the corresponding name.</span>
 <span class="sd">    :return: given recipe with variables updated</span>
 <span class="sd">    """</span>
 
@@ -368,15 +370,68 @@
         <span class="c1"># yaml string does not create a dict, return original string</span>
         <span class="k">return</span> <span class="n">recipe_yaml_str</span>
 
-    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">variables</span><span class="p">:</span>
-        <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">container</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"updating recipe variable </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> but </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2"> is not currently "</span>
-                <span class="s2">"set in existing recipe. Set the variable in the recipe in order "</span>
-                <span class="s2">"to overwrite it."</span>
-            <span class="p">)</span>
+    <span class="k">if</span> <span class="n">check_if_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">container_key</span><span class="p">,</span> <span class="n">container_value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
 
-    <span class="n">container</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">variables</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                    <span class="c1"># checking contents of a stage</span>
+                    <span class="k">for</span> <span class="n">stage_key</span><span class="p">,</span> <span class="n">stage_value</span> <span class="ow">in</span> <span class="n">container_value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+                        <span class="c1"># checking contents of the modifiers list</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stage_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">modifier</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stage_value</span><span class="p">):</span>
+                                <span class="k">if</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">modifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                                    <span class="n">container</span><span class="p">[</span><span class="n">container_key</span><span class="p">][</span><span class="n">stage_key</span><span class="p">][</span><span class="n">i</span><span class="p">][</span>
+                                        <span class="n">var_key</span>
+                                    <span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
+                                    <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+                        <span class="c1"># checking stage variables</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">stage_key</span><span class="p">:</span>
+                                <span class="n">container</span><span class="p">[</span><span class="n">container_key</span><span class="p">][</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
+                                <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="c1"># checking contents of global variables</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">container_key</span><span class="p">:</span>
+                        <span class="n">container</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
+                        <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_found</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"updating recipe variable </span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> but "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> is not currently "</span>
+                    <span class="s2">"set in existing recipe. Set the variable in the recipe in order "</span>
+                    <span class="s2">"to overwrite it."</span>
+                <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="c1"># checking contents of the modifiers list</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">modifier</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">modifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                            <span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
+                            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                        <span class="n">container</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
+                        <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_found</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"updating recipe variable </span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> but "</span>
+                    <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> is not currently "</span>
+                    <span class="s2">"set in existing recipe. Set the variable in the recipe in order "</span>
+                    <span class="s2">"to overwrite it."</span>
+                <span class="p">)</span>
+
     <span class="k">return</span> <span class="n">rewrite_recipe_yaml_string_with_classes</span><span class="p">(</span><span class="n">container</span><span class="p">)</span></div>
 
 
