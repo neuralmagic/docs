@@ -20,7 +20,7 @@ limitations under the License.
 
 **What is Neural Magic?**
 
-Founded by a team of award-winning MIT computer scientists and funded by Amdocs, Andreessen Horowitz, Comcast Ventures, NEA, Pillar VC, and Ridgeline Partners, Neural Magic is the creator and maintainer of the Deep Sparse Platform. It has several components, including the [DeepSparse Engine](https://docs.neuralmagic.com/deepsparse), a CPU runtime that runs sparse models at GPU speeds. To enable companies the ability to use ubiquitous and unconstrained CPU resources, Neural Magic includes [Sparsify](https://docs.neuralmagic.com/sparsify), [SparseML](https://docs.neuralmagic.com/sparseml), and the [SparseZoo](https://docs.neuralmagic.com/sparsezoo), open-sourced model optimization technologies that allow users to achieve performance breakthroughs, at scale, with all the flexibility of software.
+Founded by a team of award-winning MIT computer scientists and funded by Amdocs, Andreessen Horowitz, Comcast Ventures, NEA, Pillar VC, and Ridgeline Partners, Neural Magic is the creator and maintainer of the Deep Sparse Platform. It has several components, including the [DeepSparse Engine,](https://docs.neuralmagic.com/deepsparse) a CPU runtime that runs sparse models at GPU speeds. To enable companies the ability to use ubiquitous and unconstrained CPU resources, Neural Magic includes [Sparsify,](https://docs.neuralmagic.com/sparsify) [SparseML,](https://docs.neuralmagic.com/sparseml) and the [SparseZoo,](https://docs.neuralmagic.com/sparsezoo) open-sourced model optimization technologies that allow users to achieve performance breakthroughs, at scale, with all the flexibility of software.
 
 **What is the DeepSparse Engine?**
 
@@ -46,13 +46,13 @@ Our inference engine supports all versions of TensorFlow <= 2.0; support for the
 
 **Do you run on AMD hardware?**
 
-The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux, with support for AVX2, AVX-512, and VNNI instruction sets. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
+The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux, with support for AVX2, AVX-512, and VNNI instruction sets. Specific support details for some algorithms over different microarchitectures [is available.](https://docs.neuralmagic.com/deepsparse/source/hardware.html)
 
 We are open to opportunities to expand our support footprint for different CPU-based processor architectures, based on market adoption and deep learning use cases.
 
 **Do you run on ARM architecture?**
 
-We are actively working on ARM support and it’s slated for release mid-2022. We would like to hear your use cases and keep you in the loop! [Contact us to continue the conversation](https://neuralmagic.com/contact/).
+We are actively working on ARM support and it’s slated for release mid-2022. We would like to hear your use cases and keep you in the loop! [Contact us to continue the conversation.](https://neuralmagic.com/contact/)
 
 **To what use cases is the Deep Sparse Platform best suited?**
 
@@ -60,15 +60,15 @@ We focus on the models and use cases related to computer vision and NLP due to c
 
 **What types of models does Neural Magic support?**
 
-Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. NLP models like BERT are also available. We are continuously adding models to [our supported model list and SparseZoo](https://docs.neuralmagic.com/sparsezoo). Additionally, we are investigating model architectures beyond computer vision.
+Today, we offer support for CNN-based computer vision models, specifically classification and object detection model types. NLP models like BERT are also available. We are continuously adding models to [our supported model list and SparseZoo.](https://docs.neuralmagic.com/sparsezoo) Additionally, we are investigating model architectures beyond computer vision.
 
 **Is dynamic shape supported?**
 
-Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates](https://neuralmagic.com/subscribe/).
+Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates.](https://neuralmagic.com/subscribe/)
 
 **Can multiple model inferences be executed?**
 
-Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy](https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html). 
+Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy.](https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html)
 
 ___
 
@@ -94,11 +94,11 @@ AVX2, AVX-512, and VNNI. The DeepSparse Engine will automatically utilize the mo
 
 Yes, absolutely. We can run anywhere you have a CPU with x86 instructions, including on bare metal, in the cloud, on-prem, or at the edge. Additionally, our model optimization tools are able to reduce the footprint of models across all architectures. We only guarantee performance in the DeepSparse Engine.
 
-We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please contact us](https://neuralmagic.com/contact/). Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
+We’d love to hear from users highly interested in ML performance. If you want to chat about your use cases or how others are leveraging the Deep Sparse Platform, [please contact us.](https://neuralmagic.com/contact/) Or simply head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) and check out our tools.
 
 **Do you have available solutions or applications on the Microsoft/Azure platform?**
 
-We deploy extremely easily. We are completely infrastructure-agnostic. As long as it has the “right” CPUs (e.g., AVX2 or AVX-512)  we can run on any cloud platform, including Azure!
+We deploy extremely easily. We are completely infrastructure-agnostic. As long as it has the “right” CPUs (e.g., AVX2 or AVX-512) we can run on any cloud platform, including Azure!
 
 **Can the inference engine run on Kubernetes? How do you containerize and take advantage of underlying infrastructure?**
 
@@ -112,7 +112,7 @@ ___
 
 Neural networks are extremely over-parameterized, allowing most weights to be iteratively removed from the network without effect on accuracy. Eventually, though, pruning will begin affecting the overall capacity of the network, the degree of which varies based on the use case. However, this is something entirely under the data scientist control to choose whether to recover fully or to prune more for even better performance.
 
-For example, Neural Magic has been successful in removing 90% of ResNet-50 weights with no loss in accuracy. For more background on techniques that have informed our methodologies, check out this paper co-written by Neural Magic, _[WoodFisher: Efficient Second-Order Approximation for Neural Network Compression](https://arxiv.org/abs/2004.14340)_.
+For example, Neural Magic has been successful in removing 90% of ResNet-50 weights with no loss in accuracy. For more background on techniques that have informed our methodologies, check out this paper co-written by Neural Magic, _[WoodFisher: Efficient Second-Order Approximation for Neural Network Compression.](https://arxiv.org/abs/2004.14340)_
 
 **When does sparsification actually happen?**
 
@@ -120,7 +120,7 @@ In a scenario in which you want to sparsify and then run your own model in the D
 
 **What does the sparsification process look like?**
 
-Neural Magic’s Sparsify and SparseML tooling, at its core, uses well-established state-of-the-art research principles such as [Gradual Magnitude Pruning](https://neuralmagic.com/blog/pruning-gmp/) (GMP) to sparsify models. This is an iterative process in which groups of important weights are pruned away and then the network is allowed to recover. To significantly simplify the process, we offer tools and guidance for you to achieve the best performance possible. To peruse research papers contributed by Neural Magic staff, [check them out](https://neuralmagic.com/resources/technical-papers/). Or head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) to get started!
+Neural Magic’s Sparsify and SparseML tooling, at its core, uses well-established state-of-the-art research principles such as [Gradual Magnitude Pruning](https://neuralmagic.com/blog/pruning-gmp/) (GMP) to sparsify models. This is an iterative process in which groups of important weights are pruned away and then the network is allowed to recover. To significantly simplify the process, we offer tools and guidance for you to achieve the best performance possible. To peruse research papers contributed by Neural Magic staff, [check them out.](https://neuralmagic.com/resources/technical-papers/) Or head over to the [Neural Magic GitHub repo](https://github.com/neuralmagic) to get started!
 
 **How does sparsification work in relation to TensorFlow?**
 
