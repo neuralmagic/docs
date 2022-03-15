@@ -46,13 +46,13 @@ Our inference engine supports all versions of TensorFlow <= 2.0; support for the
 
 **Do you run on AMD hardware?**
 
-The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux. It is highly recommended to run on a CPU with AVX-512 instructions available for optimal algorithms to be enabled. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
+The DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux, with support for AVX2, AVX-512, and VNNI instruction sets. Specific support details for some algorithms over different microarchitectures [is available](https://docs.neuralmagic.com/deepsparse/source/hardware.html).
 
 We are open to opportunities to expand our support footprint for different CPU-based processor architectures, based on market adoption and deep learning use cases.
 
 **Do you run on ARM architecture?**
 
-We currently do not support ARM and it’s on the Neural Magic roadmap; however, we’d still like to hear your use cases. [Contact us to continue the conversation](https://neuralmagic.com/contact/).
+We are actively working on ARM support and it’s slated for release mid-2022. We would like to hear your use cases and keep you in the loop! [Contact us to continue the conversation](https://neuralmagic.com/contact/).
 
 **To what use cases is the Deep Sparse Platform best suited?**
 
@@ -88,7 +88,7 @@ ___
 
 **Which instruction sets are supported and do we have to enable certain settings?**
 
-AVX-512, AVX2, and VNNI. The DeepSparse Engine will automatically utilize the most effective available instruction set for the task. AVX-512 will be more performant than AVX2 and VNNI will give a boost over AVX-512 for quantized networks.
+AVX2, AVX-512, and VNNI. The DeepSparse Engine will automatically utilize the most effective available instructions for the task. Depending on your goals and hardware priorities, optimal performance can be found. Neural Magic is happy to discuss your use cases and offer recommendations.
 
 **Are you suitable for edge deployments (i.e., in-store devices, cameras)?**
 
@@ -98,7 +98,7 @@ We’d love to hear from users highly interested in ML performance. If you want 
 
 **Do you have available solutions or applications on the Microsoft/Azure platform?**
 
-We deploy extremely easily. We are completely infrastructure-agnostic. As long as it has the "right" CPUs (80% of the entire Intel offering today), we can run on any cloud platform. For a Microsoft/Azure platform, we would just have to run Neural Magic on a Microsoft instance with the appropriate CPUs.
+We deploy extremely easily. We are completely infrastructure-agnostic. As long as it has the “right” CPUs (e.g., AVX2 or AVX-512)  we can run on any cloud platform, including Azure!
 
 **Can the inference engine run on Kubernetes? How do you containerize and take advantage of underlying infrastructure?**
 
