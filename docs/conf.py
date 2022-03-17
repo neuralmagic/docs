@@ -26,8 +26,8 @@ copyright = (
 author = "Neural Magic"
 
 # The full version, including alpha/beta/rc tags
-version = "0.6"
-release = "0.6.0"
+version = "0.11"
+release = "0.11.0"
 
 
 # -- General configuration ---------------------------------------------------
