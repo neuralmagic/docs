@@ -25,8 +25,8 @@ Neural Magic’s Deep Sparse Platform provides a suite of software components to
         <a href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ/">
         <img src="https://img.shields.io/badge/slack-purple?style=for-the-badge&logo=slack" height=25>
         </a>
-        <a href="https://discuss.neuralmagic.com/">
-        <img src="https://img.shields.io/badge/support%20forums-navy?style=for-the-badge&logo=discourse" height=25>
+        <a href="https://github.com/neuralmagic/docs/issues">
+        <img src="https://img.shields.io/badge/support%20forums-navy?style=for-the-badge&logo=github" height=25>
         </a>
         <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
             <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.1%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25 style="margin-bottom:4px;">
