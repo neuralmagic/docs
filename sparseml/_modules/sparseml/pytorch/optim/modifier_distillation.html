@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.optim.modifier_distillation — SparseML 0.11.0.20220317 documentation
+   sparseml.pytorch.optim.modifier_distillation — SparseML 0.11.0.20220318 documentation
   </title>
   <link href="../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -189,7 +189,11 @@
 <span class="kn">from</span> <span class="nn">torch.optim</span> <span class="kn">import</span> <span class="n">Optimizer</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseModifier</span><span class="p">,</span> <span class="n">ModifierProp</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="n">PyTorchModifierYAML</span><span class="p">,</span> <span class="n">ScheduledUpdateModifier</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PyTorchModifierYAML</span><span class="p">,</span>
+    <span class="n">ScheduledModifier</span><span class="p">,</span>
+    <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">device_of</span><span class="p">,</span> <span class="n">tensors_module_forward</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
 
@@ -376,7 +380,10 @@
                 <span class="s2">"unrecognized value for distillation_modifier given of "</span>
                 <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">distillation_teacher</span><span class="si">}</span><span class="s2">. "</span>
                 <span class="s2">"To disable set to 'disable' and for self attention set to 'self'"</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_student__loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_teacher_loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_distillation_loss</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 <div class="viewcode-block" id="DistillationModifier.update_ready"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.update_ready">[docs]</a>    <span class="k">def</span> <span class="nf">update_ready</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="sd">"""</span>
@@ -392,7 +399,8 @@
             <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span>
         <span class="p">)</span></div>
 
-<div class="viewcode-block" id="DistillationModifier.loss_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.loss_update">[docs]</a>    <span class="k">def</span> <span class="nf">loss_update</span><span class="p">(</span>
+    <span class="nd">@ScheduledModifier</span><span class="o">.</span><span class="n">log_call</span>
+    <span class="k">def</span> <span class="nf">loss_update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">loss</span><span class="p">:</span> <span class="n">Tensor</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
@@ -414,12 +422,15 @@
 <span class="sd">            (calculate batch number using this and epoch)</span>
 <span class="sd">        :return: loss tensor with knowledge distillation loss added</span>
 <span class="sd">        """</span>
-        <span class="n">loss</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">loss_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_student__loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_teacher_loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_distillation_loss</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_student__loss</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">loss_update</span><span class="p">(</span>
             <span class="n">loss</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
         <span class="p">)</span>
 
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
-            <span class="k">return</span> <span class="n">loss</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_student__loss</span>
 
         <span class="k">if</span> <span class="n">student_outputs</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">student_inputs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
@@ -479,19 +490,41 @@
                 <span class="p">)</span>
 
         <span class="c1"># get distillation loss as average of individual output distillation loss values</span>
-        <span class="n">teacher_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">distill_losses</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">distill_losses</span><span class="p">)</span>
-        <span class="n">distillation_loss</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hardness</span><span class="p">)</span> <span class="o">*</span> <span class="n">loss</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_hardness</span> <span class="o">*</span> <span class="n">teacher_loss</span>
-        <span class="p">)</span>
-        <span class="n">_log_losses</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span>
-            <span class="nb">round</span><span class="p">(</span><span class="n">epoch</span> <span class="o">*</span> <span class="n">steps_per_epoch</span><span class="p">),</span>
-            <span class="n">loss</span><span class="p">,</span>
-            <span class="n">teacher_loss</span><span class="p">,</span>
-            <span class="n">distillation_loss</span><span class="p">,</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_teacher_loss</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">distill_losses</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">distill_losses</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_latest_distillation_loss</span> <span class="o">=</span> <span class="p">((</span><span class="mf">1.0</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hardness</span><span class="p">)</span> <span class="o">*</span> <span class="n">loss</span><span class="p">)</span> <span class="o">+</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hardness</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_teacher_loss</span>
         <span class="p">)</span>
 
-        <span class="k">return</span> <span class="n">distillation_loss</span></div>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_distillation_loss</span>
+
+<div class="viewcode-block" id="DistillationModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">"""</span>
+<span class="sd">        log the latest set of losses</span>
+
+<span class="sd">        :param module: module to modify</span>
+<span class="sd">        :param optimizer: optimizer to modify</span>
+<span class="sd">        :param epoch: current epoch and progress within the current epoch</span>
+<span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
+<span class="sd">            (calculate batch number using this and epoch)</span>
+<span class="sd">        """</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+
+        <span class="n">losses</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">"original_loss"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_student__loss</span><span class="p">,</span>
+            <span class="s2">"teacher_loss"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_teacher_loss</span><span class="p">,</span>
+            <span class="s2">"distillation_loss"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_latest_distillation_loss</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">log_named_scalars</span><span class="p">(</span>
+            <span class="n">name_value_pairs</span><span class="o">=</span><span class="n">losses</span><span class="o">.</span><span class="n">items</span><span class="p">(),</span>
+            <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+            <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+        <span class="p">)</span></div>
 
 <div class="viewcode-block" id="DistillationModifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_distillation.DistillationModifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -520,24 +553,6 @@
             <span class="p">)</span>
             <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_temperature</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
         <span class="p">)</span></div>
-
-
-<span class="k">def</span> <span class="nf">_log_losses</span><span class="p">(</span>
-    <span class="n">loggers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">],</span>
-    <span class="n">global_step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-    <span class="n">original_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">teacher_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">distillation_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="n">losses</span> <span class="o">=</span> <span class="p">{</span>
-        <span class="s2">"original_loss"</span><span class="p">:</span> <span class="n">original_loss</span><span class="p">,</span>
-        <span class="s2">"teacher_loss"</span><span class="p">:</span> <span class="n">teacher_loss</span><span class="p">,</span>
-        <span class="s2">"distillation_loss"</span><span class="p">:</span> <span class="n">distillation_loss</span><span class="p">,</span>
-    <span class="p">}</span>
-
-    <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span> <span class="ow">in</span> <span class="n">losses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">log_scalar</span><span class="p">(</span><span class="sa">f</span><span class="s2">"DistillationModifier/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">loss</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">global_step</span><span class="p">)</span>
 </pre>
         </div>
        </div>

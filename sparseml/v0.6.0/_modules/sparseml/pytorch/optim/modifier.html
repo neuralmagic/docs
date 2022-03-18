@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier &mdash; SparseML 0.6.0.20220317 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier &mdash; SparseML 0.6.0.20220318 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -106,7 +106,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 
 <span class="kn">import</span> <span class="nn">math</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch</span> <span class="kn">import</span> <span class="n">Tensor</span>
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
@@ -119,9 +119,9 @@
     <span class="n">ModifierProp</span><span class="p">,</span>
     <span class="n">ModifierYAML</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">LOGGING_LEVELS</span><span class="p">,</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">LoggerManager</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">PYTORCH_FRAMEWORK</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">PYTORCH_FRAMEWORK</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -163,7 +163,6 @@
 <span class="sd">    |</span>
 <span class="sd">    |   - finalize</span>
 
-<span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -185,8 +184,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">Modifier</span><span class="o">.</span><span class="n">load_framework_obj</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">,</span> <span class="n">PYTORCH_FRAMEWORK</span><span class="p">)</span></div>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="o">=</span> <span class="kc">None</span>
 
@@ -239,7 +238,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
         <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span>
-        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoggerManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">finalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
@@ -250,13 +249,13 @@
 
 <span class="sd">        :param module: the PyTorch model/module to modify</span>
 <span class="sd">        :param epoch: the epoch to apply the modifier at, defaults to math.inf (end)</span>
-<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param loggers: Optional logger manager to log the modification process to</span>
 <span class="sd">        :param finalize: True to invoke finalize after initialize, False otherwise.</span>
 <span class="sd">            If training after one shot, set finalize=False to keep modifiers applied.</span>
 <span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
 <span class="sd">            for individual modifiers (passed to initialize and finalize).</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">finalize</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">finalize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
@@ -265,7 +264,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
         <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoggerManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">finalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
@@ -277,7 +276,7 @@
 
 <span class="sd">        :param module: the PyTorch model/module to modify</span>
 <span class="sd">        :param epoch: the epoch to apply the modifier at, defaults to 0.0 (start)</span>
-<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param loggers: Optional logger manager to log the modification process to</span>
 <span class="sd">        :param finalize: True to invoke finalize after initialize, False otherwise.</span>
 <span class="sd">            Set finalize to True and epoch to math.inf for one shot application.</span>
 <span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
@@ -295,7 +294,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
         <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -307,30 +306,27 @@
 <span class="sd">        :param module: the PyTorch model/module to modify</span>
 <span class="sd">        :param epoch: The epoch to initialize the modifier and module at.</span>
 <span class="sd">            Defaults to 0 (start of the training process)</span>
-<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param loggers: Optional logger manager to log the modification process to</span>
 <span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
 <span class="sd">            for individual modifiers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize_loggers</span><span class="p">(</span><span class="n">loggers</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="Modifier.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]):</span>
+<div class="viewcode-block" id="Modifier.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles initializing and setting up the loggers for the modifier.</span>
 
-<span class="sd">        :param loggers: the loggers to setup this modifier with for logging important</span>
-<span class="sd">            info and milestones to</span>
+<span class="sd">        :param loggers: the logger maanger to setup this modifier with for logging</span>
+<span class="sd">        important info and milestones to</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="o">=</span> <span class="kc">True</span>
-
-        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">loggers</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span><span class="p">:</span>
             <span class="k">return</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="o">=</span> <span class="p">[</span>
-            <span class="n">log</span>
-            <span class="k">for</span> <span class="n">log</span> <span class="ow">in</span> <span class="n">loggers</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span> <span class="o">==</span> <span class="n">ALL_TOKEN</span> <span class="ow">or</span> <span class="n">log</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log_types</span>
-        <span class="p">]</span></div>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">loggers</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="n">LoggerManager</span><span class="p">(</span><span class="n">loggers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loggers_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loggers</span> <span class="o">=</span> <span class="n">loggers</span></div>
 
 <div class="viewcode-block" id="Modifier.finalize"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.finalize">[docs]</a>    <span class="k">def</span> <span class="nf">finalize</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Module</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">reset_loggers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
@@ -376,7 +372,11 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;modifier must be enabled&quot;</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="Modifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.Modifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles logging updates for the modifier for better tracking and visualization.</span>
@@ -489,10 +489,8 @@
 <span class="sd">    |       - optimizer_pre_step</span>
 <span class="sd">    |       - optimizer_post_step</span>
 
-<span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
 <span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
-<span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param min_start: The minimum acceptable value for start_epoch, default -1</span>
 <span class="sd">    :param min_end: The minimum acceptable value for end_epoch, default 0</span>
 <span class="sd">    :param end_comparator: integer value representing how the end_epoch should be</span>
@@ -504,9 +502,72 @@
 <span class="sd">    :param kwargs: standard key word args, used to support multi inheritance</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
+<div class="viewcode-block" id="ScheduledModifier.log_call"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.ScheduledModifier.log_call">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">log_call</span><span class="p">(</span><span class="n">func</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Logs the wrapped function using the python logger(s) assigned to the calling</span>
+<span class="sd">        class, if the loggers exist. The logs printed will announce when a function is</span>
+<span class="sd">        used and when it is exited</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+            <span class="bp">self</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;epoch&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="n">steps_per_epoch</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;steps_per_epoch&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+            <span class="c1"># Log call state</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">log_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_log_epoch</span><span class="p">):</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_string</span><span class="p">(</span>
+                    <span class="n">string</span><span class="o">=</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Calling </span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2"> with:</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;args: </span><span class="si">{</span><span class="n">format_args</span><span class="p">(</span><span class="n">args</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;kwargs: </span><span class="si">{</span><span class="n">format_args</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">),</span>
+                    <span class="n">loggers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span>
+                    <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                    <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="c1"># Log return state</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">log_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_log_epoch</span><span class="p">):</span>
+                <span class="n">out_print</span> <span class="o">=</span> <span class="n">out</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">)</span> <span class="k">else</span> <span class="p">[</span><span class="n">out</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">log_string</span><span class="p">(</span>
+                    <span class="n">string</span><span class="o">=</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Returned: </span><span class="si">{</span><span class="n">format_args</span><span class="p">(</span><span class="n">out_print</span><span class="p">)</span><span class="si">}</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">),</span>
+                    <span class="n">loggers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span>
+                    <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                    <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">out</span>
+
+        <span class="k">def</span> <span class="nf">format_args</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">            Helper function to format call logs. Args and returns are printed in full</span>
+<span class="sd">            if they are of type (float, int, str, toch.Tensor), otherwise only their</span>
+<span class="sd">            type is printed.</span>
+<span class="sd">            &quot;&quot;&quot;</span>
+            <span class="n">args_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">printable</span> <span class="o">=</span> <span class="p">(</span><span class="nb">float</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Tensor</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">args</span><span class="p">:</span>  <span class="c1"># handles empty function returns</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">):</span>  <span class="c1"># handles single function return</span>
+                <span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="n">args</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">Dict</span><span class="p">):</span>  <span class="c1"># handles kwargs</span>
+                <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">v</span><span class="p">,</span> <span class="n">printable</span><span class="p">):</span>
+                        <span class="n">args_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">v</span><span class="si">}</span><span class="s2">| &quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">args_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">v</span><span class="p">)</span><span class="si">}</span><span class="s2">| &quot;</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># handles lists (args, single return) and tuples (returns)</span>
+                <span class="k">for</span> <span class="n">arg</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">printable</span><span class="p">):</span>
+                        <span class="n">args_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arg</span><span class="si">}</span><span class="s2">| &quot;</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">args_string</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">arg</span><span class="p">)</span><span class="si">}</span><span class="s2">| &quot;</span>
+            <span class="k">return</span> <span class="n">args_string</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span></div>
+
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">min_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
@@ -515,7 +576,6 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">min_start</span><span class="o">=</span><span class="n">min_start</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
@@ -528,6 +588,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_ended</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_called</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_log_called</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_log_epoch</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">validate_schedule</span><span class="p">()</span>
 
@@ -633,7 +694,7 @@
             <span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_called</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_schedule_called</span> <span class="o">=</span> <span class="kc">False</span>
 
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_pending</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
@@ -677,6 +738,7 @@
 <span class="sd">        :param steps_per_epoch: number of steps taken within each epoch</span>
 <span class="sd">            (calculate batch number using this and epoch)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;modifier must be initialized first&quot;</span><span class="p">)</span>
 
@@ -686,12 +748,18 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_enabled</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;modifier must be enabled&quot;</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_log_called</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_log_called</span> <span class="o">=</span> <span class="kc">False</span></div>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="o">.</span><span class="n">log_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_log_epoch</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_log_epoch</span> <span class="o">=</span> <span class="n">epoch</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_log_called</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_scheduled_log_called</span> <span class="o">=</span> <span class="kc">False</span></div>
 
 <div class="viewcode-block" id="ScheduledModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.ScheduledModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles logging updates for the modifier for better tracking and visualization.</span>
@@ -710,6 +778,63 @@
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                 <span class="s2">&quot;log_update should not be called directly, &quot;</span>
                 <span class="s2">&quot;call scheduled_log_update instead&quot;</span>
+            <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScheduledModifier.log_string"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.ScheduledModifier.log_string">[docs]</a>    <span class="k">def</span> <span class="nf">log_string</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoggerManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">loggers</span><span class="p">:</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">and</span> <span class="n">steps_per_epoch</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">loggers</span><span class="o">.</span><span class="n">epoch_to_step</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">loggers</span><span class="o">.</span><span class="n">log_string</span><span class="p">(</span>
+            <span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">string</span><span class="o">=</span><span class="n">string</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">LOGGING_LEVELS</span><span class="p">[</span><span class="s2">&quot;debug&quot;</span><span class="p">]</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScheduledModifier.log_scalar"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.ScheduledModifier.log_scalar">[docs]</a>    <span class="k">def</span> <span class="nf">log_scalar</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">tag</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoggerManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">tag</span><span class="p">:</span>
+            <span class="n">tag</span> <span class="o">=</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">loggers</span><span class="p">:</span>
+            <span class="n">loggers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span>
+        <span class="k">if</span> <span class="n">epoch</span> <span class="ow">and</span> <span class="n">steps_per_epoch</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="n">loggers</span><span class="o">.</span><span class="n">epoch_to_step</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">step</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">loggers</span><span class="o">.</span><span class="n">log_scalar</span><span class="p">(</span><span class="n">tag</span><span class="o">=</span><span class="n">tag</span><span class="p">,</span> <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span> <span class="n">step</span><span class="o">=</span><span class="n">step</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ScheduledModifier.log_named_scalars"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier.ScheduledModifier.log_named_scalars">[docs]</a>    <span class="k">def</span> <span class="nf">log_named_scalars</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name_value_pairs</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">LoggerManager</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">name_value_pairs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_scalar</span><span class="p">(</span>
+                <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">tag</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">loggers</span><span class="o">=</span><span class="n">loggers</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+                <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span>
             <span class="p">)</span></div></div>
 
 
@@ -734,10 +859,8 @@
 <span class="sd">    |       - optimizer_pre_step</span>
 <span class="sd">    |       - optimizer_post_step</span>
 
-<span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
 <span class="sd">    :param end_epoch: The epoch to end the modifier at</span>
-<span class="sd">    :param log_types: The loggers that can be used by the modifier instance</span>
 <span class="sd">    :param min_start: The minimum acceptable value for start_epoch, default -1</span>
 <span class="sd">    :param min_end: The minimum acceptable value for end_epoch, default 0</span>
 <span class="sd">    :param end_comparator: integer value representing how the end_epoch should be</span>
@@ -752,7 +875,6 @@
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">min_start</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
@@ -763,7 +885,6 @@
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">min_start</span><span class="o">=</span><span class="n">min_start</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>

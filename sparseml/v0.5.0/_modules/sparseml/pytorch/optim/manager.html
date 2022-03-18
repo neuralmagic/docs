@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.manager &mdash; SparseML 0.5.0.20220317 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.manager &mdash; SparseML 0.5.0.20220318 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -113,7 +113,7 @@
 
 <span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">load_recipe_yaml_str</span><span class="p">,</span> <span class="n">parse_recipe_variables</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.optim.modifier</span> <span class="kn">import</span> <span class="n">Modifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
-<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">is_parallel_model</span>
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="n">BaseLogger</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">is_parallel_model</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 
 
@@ -442,7 +442,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
         <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
-        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">finalize</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
@@ -454,7 +454,7 @@
 
 <span class="sd">        :param module: the PyTorch model/module to modify</span>
 <span class="sd">        :param epoch: the epoch to apply the modifier at, defaults to 0.0 (start)</span>
-<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param loggers: Optional logger manager to log the modification process to</span>
 <span class="sd">        :param finalize: True to invoke finalize after initialize, False otherwise.</span>
 <span class="sd">            Set finalize to True and epoch to math.inf for one shot application.</span>
 <span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
@@ -468,7 +468,7 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
         <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
-        <span class="n">loggers</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -480,7 +480,7 @@
 <span class="sd">        :param module: the PyTorch model/module to modify</span>
 <span class="sd">        :param epoch: The epoch to initialize the manager and module at.</span>
 <span class="sd">            Defaults to 0 (start of the training process)</span>
-<span class="sd">        :param loggers: Optional list of loggers to log the modification process to</span>
+<span class="sd">        :param loggers: Optional logger manager to log the modification process to</span>
 <span class="sd">        :param kwargs: Optional kwargs to support specific arguments</span>
 <span class="sd">            for individual modifiers.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
@@ -494,12 +494,12 @@
 
             <span class="n">mod</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">loggers</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
 
-<div class="viewcode-block" id="ScheduledModifierManager.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.manager.ScheduledModifierManager.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]):</span>
+<div class="viewcode-block" id="ScheduledModifierManager.initialize_loggers"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.manager.ScheduledModifierManager.initialize_loggers">[docs]</a>    <span class="k">def</span> <span class="nf">initialize_loggers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loggers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">LoggerManager</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">]]):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Handles initializing and setting up the loggers for the contained modifiers.</span>
 
-<span class="sd">        :param loggers: the loggers to setup this manager with for logging important</span>
-<span class="sd">            info and milestones to</span>
+<span class="sd">        :param loggers: the logger manager to setup this manager with for logging</span>
+<span class="sd">            important info and milestones to</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">initialize_loggers</span><span class="p">(</span><span class="n">loggers</span><span class="p">)</span>
 
@@ -617,9 +617,8 @@
 
             <span class="k">if</span> <span class="n">mod</span><span class="o">.</span><span class="n">update_ready</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">):</span>
                 <span class="n">mod</span><span class="o">.</span><span class="n">scheduled_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-            <span class="k">if</span> <span class="n">log_updates</span><span class="p">:</span>
-                <span class="n">mod</span><span class="o">.</span><span class="n">scheduled_log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
+                <span class="k">if</span> <span class="n">log_updates</span><span class="p">:</span>
+                    <span class="n">mod</span><span class="o">.</span><span class="n">scheduled_log_update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
 
 <div class="viewcode-block" id="ScheduledModifierManager.loss_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.manager.ScheduledModifierManager.loss_update">[docs]</a>    <span class="k">def</span> <span class="nf">loss_update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
@@ -649,7 +648,12 @@
                 <span class="k">continue</span>
 
             <span class="n">loss</span> <span class="o">=</span> <span class="n">mod</span><span class="o">.</span><span class="n">loss_update</span><span class="p">(</span>
-                <span class="n">loss</span><span class="p">,</span> <span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+                <span class="n">loss</span><span class="p">,</span>
+                <span class="n">module</span><span class="p">,</span>
+                <span class="n">optimizer</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+                <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
             <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">loss</span></div>

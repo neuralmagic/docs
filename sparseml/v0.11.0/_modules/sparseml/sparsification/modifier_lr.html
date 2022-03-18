@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.sparsification.modifier_lr &mdash; SparseML 0.11.0.20220317 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.sparsification.modifier_lr &mdash; SparseML 0.11.0.20220318 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
@@ -100,7 +100,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">Code related to learning rate controls that are shared across frameworks.</span>
 <span class="sd">&quot;&quot;&quot;</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.optim.modifier</span> <span class="kn">import</span> <span class="p">(</span>
     <span class="n">BaseModifier</span><span class="p">,</span>
@@ -109,7 +109,6 @@
     <span class="n">ModifierProp</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification.types</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -127,12 +126,9 @@
 <span class="sd">    |    !SetLearningRateModifier</span>
 <span class="sd">    |        start_epoch: 0.0</span>
 <span class="sd">    |        learning_rate: 0.001</span>
-<span class="sd">    |        log_types: __ALL__</span>
 
 <span class="sd">    :param learning_rate: The learning rate to use once this modifier starts</span>
 <span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
 <span class="sd">    :param: end_epoch: should not be set, does not affect modifier. Set at -1</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
@@ -140,13 +136,11 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;end_comparator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;end_comparator&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
@@ -201,7 +195,6 @@
 <span class="sd">    |            decay_rate: 0.96</span>
 <span class="sd">    |        start_epoch: 0.0</span>
 <span class="sd">    |        end_epoch: 10.0</span>
-<span class="sd">    |        log_types: __ALL__</span>
 
 <span class="sd">    :param lr_class: The name of the lr scheduler class to use:</span>
 <span class="sd">        [StepLR, MultiStepLR, ExponentialLR]</span>
@@ -213,8 +206,6 @@
 <span class="sd">    :param end_epoch: The epoch to end the modifier at,</span>
 <span class="sd">        (set to -1.0 so it doesn&#39;t end)</span>
 <span class="sd">    :param update_frequency: unused and should not be set</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
@@ -225,13 +216,11 @@
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;update_frequency&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;update_frequency&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">)</span>
         <span class="n">kwargs</span><span class="p">[</span><span class="s2">&quot;end_comparator&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;end_comparator&quot;</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>

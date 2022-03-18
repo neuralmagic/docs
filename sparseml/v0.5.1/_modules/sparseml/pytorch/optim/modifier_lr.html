@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.modifier_lr &mdash; SparseML 0.5.1.20220317 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.modifier_lr &mdash; SparseML 0.5.1.20220318 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -105,7 +105,7 @@
 
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">Module</span>
 <span class="kn">from</span> <span class="nn">torch.optim.lr_scheduler</span> <span class="kn">import</span> <span class="p">(</span>
@@ -124,7 +124,6 @@
     <span class="n">ScheduledUpdateModifier</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.pytorch.utils</span> <span class="kn">import</span> <span class="p">(</span>
-    <span class="n">BaseLogger</span><span class="p">,</span>
     <span class="n">get_optim_groups_learning_rates</span><span class="p">,</span>
     <span class="n">set_optim_learning_rate</span><span class="p">,</span>
 <span class="p">)</span>
@@ -133,7 +132,7 @@
     <span class="n">SetLearningRateModifier</span> <span class="k">as</span> <span class="n">BaseSetLearningRateModifier</span><span class="p">,</span>
 <span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">ALL_TOKEN</span><span class="p">,</span> <span class="n">convert_to_bool</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">convert_to_bool</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
@@ -151,19 +150,6 @@
 <span class="p">}</span>
 
 
-<span class="k">def</span> <span class="nf">_log_lr</span><span class="p">(</span>
-    <span class="n">group_lrs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
-    <span class="n">loggers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseLogger</span><span class="p">],</span>
-    <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
-    <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-<span class="p">):</span>
-    <span class="n">step</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="k">if</span> <span class="n">steps_per_epoch</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">round</span><span class="p">(</span><span class="n">epoch</span> <span class="o">*</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-
-    <span class="k">for</span> <span class="n">logger</span> <span class="ow">in</span> <span class="n">loggers</span><span class="p">:</span>
-        <span class="k">for</span> <span class="p">(</span><span class="n">group_name</span><span class="p">,</span> <span class="n">group_lr</span><span class="p">)</span> <span class="ow">in</span> <span class="n">group_lrs</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">log_scalar</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;LearningRateModifier/</span><span class="si">{</span><span class="n">group_name</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">group_lr</span><span class="p">,</span> <span class="n">step</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="SetLearningRateModifier"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier">[docs]</a><span class="nd">@PyTorchModifierYAML</span><span class="p">()</span>
 <span class="k">class</span> <span class="nc">SetLearningRateModifier</span><span class="p">(</span><span class="n">BaseSetLearningRateModifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
@@ -176,15 +162,12 @@
 <span class="sd">    |   !SetLearningRateModifier</span>
 <span class="sd">    |       start_epoch: 0.0</span>
 <span class="sd">    |       learning_rate: 0.001</span>
-<span class="sd">    |       log_types: __ALL__</span>
 <span class="sd">    |       constant_logging: True</span>
 
 <span class="sd">    :param learning_rate: The learning rate to use once this modifier starts</span>
 <span class="sd">    :param start_epoch: The epoch to start the modifier at</span>
 <span class="sd">        (set to -1.0 so it starts immediately)</span>
 <span class="sd">    :param end_epoch: unused and should not be set</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
 <span class="sd">    :param constant_logging: True to constantly log on every step,</span>
 <span class="sd">        False to only log on an LR change and min once per epoch, default False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -195,12 +178,10 @@
         <span class="n">param_groups</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">constant_logging</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">SetLearningRateModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">learning_rate</span><span class="o">=</span><span class="n">learning_rate</span><span class="p">,</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span>
             <span class="n">end_comparator</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -210,7 +191,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_applied</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">constant_logging</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="nd">@ModifierProp</span><span class="p">()</span>
     <span class="k">def</span> <span class="nf">param_groups</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
@@ -252,7 +232,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_applied</span>
 
-<div class="viewcode-block" id="SetLearningRateModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+    <span class="nd">@ScheduledModifier</span><span class="o">.</span><span class="n">log_call</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -265,10 +246,14 @@
 <span class="sd">            (calculate batch number using this and epoch)</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_check_set_lr</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_set_lr</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">)</span>
 
 <div class="viewcode-block" id="SetLearningRateModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.SetLearningRateModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check whether to log an update for the learning rate of the modifier</span>
@@ -296,14 +281,13 @@
 
         <span class="n">current_lr</span> <span class="o">=</span> <span class="n">group_lrs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span>
-            <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">!=</span> <span class="n">current_lr</span>
-            <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">!=</span> <span class="n">current_lr</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="n">current_lr</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
-            <span class="n">_log_lr</span><span class="p">(</span><span class="n">group_lrs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_named_scalars</span><span class="p">(</span>
+                <span class="n">name_value_pairs</span><span class="o">=</span><span class="n">group_lrs</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
     <span class="k">def</span> <span class="nf">_check_set_lr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
         <span class="k">if</span> <span class="p">(</span>
@@ -350,8 +334,6 @@
 <span class="sd">    :param_groups: The param group indices to set the lr for within the optimizer,</span>
 <span class="sd">        if not set will set the lr for all param groups</span>
 <span class="sd">    :param update_frequency: unused and should not be set</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
 <span class="sd">    :param constant_logging: True to constantly log on every step,</span>
 <span class="sd">        False to only log on an LR change and min once per epoch, default False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -366,10 +348,8 @@
         <span class="n">cycle_epochs</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
         <span class="n">param_groups</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
             <span class="n">update_frequency</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span>
@@ -383,7 +363,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_applied_lr</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
     <span class="nd">@BaseModifier</span><span class="o">.</span><span class="n">sparsification_types</span><span class="o">.</span><span class="n">getter</span>
@@ -464,7 +443,8 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_param_groups</span> <span class="o">=</span> <span class="n">value</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
-<div class="viewcode-block" id="LearningRateFunctionModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+    <span class="nd">@ScheduledModifier</span><span class="o">.</span><span class="n">log_call</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -478,11 +458,15 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
         <span class="n">lambad_func</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">LearningRateFunctionModifier</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;_</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_lr_func</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span> <span class="o">=</span> <span class="n">lambad_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">)</span>
-        <span class="n">set_optim_learning_rate</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_groups</span><span class="p">)</span></div>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span> <span class="o">=</span> <span class="n">lambad_func</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
+        <span class="n">set_optim_learning_rate</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_learning_rate</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">param_groups</span><span class="p">)</span>
 
 <div class="viewcode-block" id="LearningRateFunctionModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check whether to log an update for the learning rate of the modifier.</span>
@@ -509,13 +493,13 @@
 
         <span class="n">current_lr</span> <span class="o">=</span> <span class="n">group_lrs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="n">current_lr</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span>
-            <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span>
-        <span class="p">):</span>
-            <span class="n">_log_lr</span><span class="p">(</span><span class="n">group_lrs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="n">current_lr</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span></div>
+        <span class="k">if</span> <span class="n">current_lr</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_named_scalars</span><span class="p">(</span>
+                <span class="n">name_value_pairs</span><span class="o">=</span><span class="n">group_lrs</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="n">current_lr</span></div>
 
 <div class="viewcode-block" id="LearningRateFunctionModifier.validate"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateFunctionModifier.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -618,7 +602,7 @@
 <span class="sd">    |       lr_kwargs:</span>
 <span class="sd">    |           gamma: 0.95</span>
 <span class="sd">    |       init_lr: 0.01</span>
-<span class="sd">    |       log_types: __ALL__</span>
+
 <span class="sd">    |       constant_logging: True</span>
 
 <span class="sd">    :param lr_class: The name of the lr scheduler class to use:</span>
@@ -631,8 +615,6 @@
 <span class="sd">    :param end_epoch: The epoch to end the modifier at,</span>
 <span class="sd">        (set to -1.0 so it doesn&#39;t end)</span>
 <span class="sd">    :param update_frequency: unused and should not be set</span>
-<span class="sd">    :param log_types: The loggers to allow the learning rate to be logged to,</span>
-<span class="sd">        default is __ALL__</span>
 <span class="sd">    :param constant_logging: True to constantly log on every step,</span>
 <span class="sd">        False to only log on an LR change and min once per epoch, default False</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -645,14 +627,12 @@
         <span class="n">start_epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
         <span class="n">end_epoch</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
         <span class="n">update_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">1.0</span><span class="p">,</span>
-        <span class="n">log_types</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="n">ALL_TOKEN</span><span class="p">,</span>
         <span class="n">constant_logging</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">(</span><span class="n">LearningRateModifier</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
             <span class="n">lr_class</span><span class="o">=</span><span class="n">lr_class</span><span class="p">,</span>
             <span class="n">lr_kwargs</span><span class="o">=</span><span class="n">lr_kwargs</span><span class="p">,</span>
             <span class="n">init_lr</span><span class="o">=</span><span class="n">init_lr</span><span class="p">,</span>
-            <span class="n">log_types</span><span class="o">=</span><span class="n">log_types</span><span class="p">,</span>
             <span class="n">start_epoch</span><span class="o">=</span><span class="n">start_epoch</span><span class="p">,</span>
             <span class="n">end_epoch</span><span class="o">=</span><span class="n">end_epoch</span><span class="p">,</span>
             <span class="n">update_frequency</span><span class="o">=-</span><span class="mf">1.0</span><span class="p">,</span>
@@ -664,7 +644,6 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span> <span class="o">=</span> <span class="n">convert_to_bool</span><span class="p">(</span><span class="n">constant_logging</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_double_step</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler_steps</span> <span class="o">=</span> <span class="mi">0</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">validate</span><span class="p">()</span>
 
@@ -684,7 +663,8 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span> <span class="o">=</span> <span class="n">value</span>
 
-<div class="viewcode-block" id="LearningRateModifier.update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateModifier.update">[docs]</a>    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
+    <span class="nd">@ScheduledModifier</span><span class="o">.</span><span class="n">log_call</span>
+    <span class="k">def</span> <span class="nf">update</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -731,10 +711,14 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_lr_scheduler</span><span class="o">.</span><span class="n">step</span><span class="p">(</span>
                 <span class="n">epoch</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">&gt;=</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mf">0.0</span>
-            <span class="p">)</span></div>
+            <span class="p">)</span>
 
 <div class="viewcode-block" id="LearningRateModifier.log_update"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateModifier.log_update">[docs]</a>    <span class="k">def</span> <span class="nf">log_update</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">module</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+        <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span>
+        <span class="n">epoch</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">steps_per_epoch</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Check whether to log an update for the learning rate of the modifier</span>
@@ -758,14 +742,13 @@
 
         <span class="n">current_lr</span> <span class="o">=</span> <span class="n">group_lrs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
 
-        <span class="k">if</span> <span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span>
-            <span class="ow">or</span> <span class="n">current_lr</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span>
-            <span class="ow">or</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span>
-        <span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_constant_logging</span> <span class="ow">or</span> <span class="n">current_lr</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_lr</span> <span class="o">=</span> <span class="n">current_lr</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_last_logged_epoch</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">floor</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
-            <span class="n">_log_lr</span><span class="p">(</span><span class="n">group_lrs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">loggers</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">steps_per_epoch</span><span class="p">)</span></div>
+            <span class="bp">self</span><span class="o">.</span><span class="n">log_named_scalars</span><span class="p">(</span>
+                <span class="n">name_value_pairs</span><span class="o">=</span><span class="n">group_lrs</span><span class="p">,</span>
+                <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                <span class="n">steps_per_epoch</span><span class="o">=</span><span class="n">steps_per_epoch</span><span class="p">,</span>
+            <span class="p">)</span></div>
 
 <div class="viewcode-block" id="LearningRateModifier.validate"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.optim.html#sparseml.pytorch.optim.modifier_lr.LearningRateModifier.validate">[docs]</a>    <span class="k">def</span> <span class="nf">validate</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
