@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.optim.helpers &mdash; SparseML 0.12.0.20220323 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.optim.helpers &mdash; SparseML 0.12.0.20220324 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
@@ -280,6 +280,69 @@
     <span class="k">return</span> <span class="n">recipe_variables</span></div>
 
 
+<span class="k">def</span> <span class="nf">_update_staged_recipe_variable</span><span class="p">(</span><span class="n">var_name</span><span class="p">,</span> <span class="n">var_value</span><span class="p">,</span> <span class="n">container</span><span class="p">):</span>
+
+    <span class="c1"># Extends the functionality of _update_container_value to handle staged recipes.</span>
+
+    <span class="c1"># :param var_name: The key we are attempting to find in the container.</span>
+    <span class="c1"># :param var_value: The value which will overwrite the previous value</span>
+    <span class="c1">#     every time var_name is found in the container&#39;s keys.</span>
+    <span class="c1"># :param container: A container generated from a YAML string of SparseML recipe</span>
+    <span class="c1"># :return: (optionally mutated) container, as well as key_value</span>
+    <span class="c1">#     (True if var_key found in container&#39;s attributes, otherwise False)</span>
+
+    <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">container_key</span><span class="p">,</span> <span class="n">container_value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># checking contents of global variables</span>
+            <span class="k">if</span> <span class="n">var_name</span> <span class="o">==</span> <span class="n">container_key</span><span class="p">:</span>
+                <span class="n">container</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_value</span>
+                <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># checking contents of a stage</span>
+            <span class="n">stage_container</span><span class="p">,</span> <span class="n">stage_key_found</span> <span class="o">=</span> <span class="n">_update_recipe_variable</span><span class="p">(</span>
+                <span class="n">var_name</span><span class="p">,</span> <span class="n">var_value</span><span class="p">,</span> <span class="n">container_value</span>
+            <span class="p">)</span>
+            <span class="n">container</span><span class="p">[</span><span class="n">container_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_container</span>
+            <span class="k">if</span> <span class="n">stage_key_found</span><span class="p">:</span>
+                <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">container</span><span class="p">,</span> <span class="n">key_found</span>
+
+
+<span class="k">def</span> <span class="nf">_update_recipe_variable</span><span class="p">(</span><span class="n">var_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">var_value</span><span class="p">,</span> <span class="n">container</span><span class="p">):</span>
+
+    <span class="c1"># Checks whether there is at least one attribute (key) in the container,</span>
+    <span class="c1"># with the same name as var_name.</span>
+    <span class="c1"># If this is the case, key_found = True, otherwise False.</span>
+    <span class="c1"># Additionally, during checking, when var_name key is present in any of the</span>
+    <span class="c1"># container&#39;s attributes, this attribute&#39;s value gets overwritten with var_value.</span>
+
+    <span class="c1"># :param var_name: The key we are attempting to find in the container.</span>
+    <span class="c1"># :param var_value: The value which will overwrite the previous value</span>
+    <span class="c1">#   every time var_name is found in the container&#39;s keys.</span>
+    <span class="c1"># :param container: A container generated from a YAML string of SparseML recipe</span>
+    <span class="c1"># :return: (optionally mutated) container, as well as key_value</span>
+    <span class="c1">#    (True if var_key found in container&#39;s attributes, otherwise False)</span>
+
+    <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">var_name</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
+                <span class="n">container</span><span class="p">[</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_value</span>
+                <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">modifier</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">var_name</span> <span class="ow">in</span> <span class="n">modifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                    <span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">idx</span><span class="p">][</span><span class="n">var_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">var_value</span>
+                    <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
+
+    <span class="k">return</span> <span class="n">container</span><span class="p">,</span> <span class="n">key_found</span>
+
+
 <div class="viewcode-block" id="update_recipe_variables"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.helpers.update_recipe_variables">[docs]</a><span class="k">def</span> <span class="nf">update_recipe_variables</span><span class="p">(</span><span class="n">recipe_yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">variables</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    :param recipe_yaml_str: YAML string of a SparseML recipe</span>
@@ -294,67 +357,23 @@
         <span class="c1"># yaml string does not create a dict, return original string</span>
         <span class="k">return</span> <span class="n">recipe_yaml_str</span>
 
-    <span class="k">if</span> <span class="n">check_if_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
-        <span class="k">for</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">container_key</span><span class="p">,</span> <span class="n">container_value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">var_key</span><span class="p">,</span> <span class="n">var_value</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">check_if_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+            <span class="n">container</span><span class="p">,</span> <span class="n">key_found</span> <span class="o">=</span> <span class="n">_update_staged_recipe_variable</span><span class="p">(</span>
+                <span class="n">var_key</span><span class="p">,</span> <span class="n">var_value</span><span class="p">,</span> <span class="n">container</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">container</span><span class="p">,</span> <span class="n">key_found</span> <span class="o">=</span> <span class="n">_update_recipe_variable</span><span class="p">(</span>
+                <span class="n">var_key</span><span class="p">,</span> <span class="n">var_value</span><span class="p">,</span> <span class="n">container</span>
+            <span class="p">)</span>
 
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">container_value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
-                    <span class="c1"># checking contents of a stage</span>
-                    <span class="k">for</span> <span class="n">stage_key</span><span class="p">,</span> <span class="n">stage_value</span> <span class="ow">in</span> <span class="n">container_value</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-
-                        <span class="c1"># checking contents of the modifiers list</span>
-                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stage_value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">modifier</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stage_value</span><span class="p">):</span>
-                                <span class="k">if</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">modifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                                    <span class="n">container</span><span class="p">[</span><span class="n">container_key</span><span class="p">][</span><span class="n">stage_key</span><span class="p">][</span><span class="n">i</span><span class="p">][</span>
-                                        <span class="n">var_key</span>
-                                    <span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
-                                    <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
-
-                        <span class="c1"># checking stage variables</span>
-                        <span class="k">else</span><span class="p">:</span>
-                            <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">stage_key</span><span class="p">:</span>
-                                <span class="n">container</span><span class="p">[</span><span class="n">container_key</span><span class="p">][</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
-                                <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
-
-                <span class="c1"># checking contents of global variables</span>
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">container_key</span><span class="p">:</span>
-                        <span class="n">container</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
-                        <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_found</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;updating recipe variable </span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> but &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> is not currently &quot;</span>
-                    <span class="s2">&quot;set in existing recipe. Set the variable in the recipe in order &quot;</span>
-                    <span class="s2">&quot;to overwrite it.&quot;</span>
-                <span class="p">)</span>
-
-    <span class="k">else</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">variables</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                <span class="c1"># checking contents of the modifiers list</span>
-                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-                    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">modifier</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">value</span><span class="p">):</span>
-                        <span class="k">if</span> <span class="n">var_key</span> <span class="ow">in</span> <span class="n">modifier</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
-                            <span class="n">container</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
-                            <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
-
-                <span class="k">else</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="n">var_key</span> <span class="o">==</span> <span class="n">key</span><span class="p">:</span>
-                        <span class="n">container</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">variables</span><span class="p">[</span><span class="n">var_key</span><span class="p">]</span>
-                        <span class="n">key_found</span> <span class="o">=</span> <span class="kc">True</span>
-
-            <span class="k">if</span> <span class="ow">not</span> <span class="n">key_found</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                    <span class="sa">f</span><span class="s2">&quot;updating recipe variable </span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> but &quot;</span>
-                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> is not currently &quot;</span>
-                    <span class="s2">&quot;set in existing recipe. Set the variable in the recipe in order &quot;</span>
-                    <span class="s2">&quot;to overwrite it.&quot;</span>
-                <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key_found</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;updating recipe variable </span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> but &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">var_key</span><span class="si">}</span><span class="s2"> is not currently &quot;</span>
+                <span class="s2">&quot;set in existing recipe. Set the variable in the recipe in order &quot;</span>
+                <span class="s2">&quot;to overwrite it.&quot;</span>
+            <span class="p">)</span>
 
     <span class="k">return</span> <span class="n">rewrite_recipe_yaml_string_with_classes</span><span class="p">(</span><span class="n">container</span><span class="p">)</span></div>
 
@@ -613,6 +632,7 @@
       <dd><a href="../../../../v0.10.0/index.html">v0.10.0</a></dd>
       <dd><a href="../../../../v0.10.1/index.html">v0.10.1</a></dd>
       <dd><a href="../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../v0.11.1/index.html">v0.11.1</a></dd>
       <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
       <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>

@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>C++ API Overview &mdash; DeepSparse 0.11.2 documentation</title><link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script src="../_static/jquery.js"></script>
+        <script src="../_static/underscore.js"></script>
+        <script src="../_static/doctools.js"></script>
+        <script src="../_static/clipboard.min.js"></script>
+        <script src="../_static/copybutton.js"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="deepsparse package" href="../api/deepsparse.html" />
+    <link rel="prev" title="Serial or Concurrent Inferences" href="scheduler.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../index.html" class="icon icon-home"> DeepSparse<img src="../_static/icon-deepsparse.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.11
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="hardware.html">Hardware Support</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Performance</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../debugging-optimizing/index.html">Debugging and Optimizing</a></li>
+<li class="toctree-l1"><a class="reference internal" href="scheduler.html">Serial or Concurrent Inferences</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">C++ API Overview</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#prerequisites">Prerequisites</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#demo-obtaining-building-and-running">Demo: Obtaining, Building, and Running</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#c-api">C++ API</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#compiler">Compiler</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#config">Config</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#dimensions">Dimensions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#tensor">Tensor</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#engine">Engine</a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#utility-functions">Utility Functions</a></li>
+</ul>
+</li>
+<li class="toctree-l3"><a class="reference internal" href="#user-calling-code">User Calling Code</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../api/deepsparse.html">deepsparse package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">DeepSparse</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home"></a> &raquo;</li>
+      <li>C++ API Overview</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/c++api-overview.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <!--
+Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing,
+software distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+--><div class="section" id="c-api-overview">
+<h1>C++ API Overview<a class="headerlink" href="#c-api-overview" title="Permalink to this headline"></a></h1>
+<p>You can use a C++ API in <code class="docutils literal notranslate"><span class="pre">libdeepsparse.so</span></code> as the interface between your application and the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">Neural Magic DeepSparse Engine.</a> You would start with a model that has been exported in ONNX format, client code on your server. Your application will write data to input tensors, execute the DeepSparse Engine for inference results, and read output tensors for result data.</p>
+<p>A simple demo with code is provided to invoke the DeepSparse Engine using the C++ API. Once you have installed the DeepSparse Engine, you will be ready to use the C++ API and take advantage of the library <code class="docutils literal notranslate"><span class="pre">libdeepsparse</span></code>. With <code class="docutils literal notranslate"><span class="pre">libdeepsparse</span></code>, you can run the demo by building and running <code class="docutils literal notranslate"><span class="pre">demo.bin</span></code>.</p>
+<p>You can find more information about the engine at <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">https://docs.neuralmagic.com/deepsparse/.</a></p>
+<div class="section" id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Permalink to this headline"></a></h2>
+<p>The following is required to build and run the demo.</p>
+<p><strong>OS</strong> - Our engine binary is manylinux2014-compatible and built on CentOS 7.  Linux distributions such as Ubuntu 20.04, which are compatible with manylinux2014, should support it.</p>
+<p><strong>Hardware</strong> - The utility arch.bin is included in deepsparse_api_demo.tar.gz. Run <code class="docutils literal notranslate"><span class="pre">arch.bin</span></code> to check hardware support. The “isa” field in the output states whether you are running on a machine that supports the avx512 or avx2 instruction set.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">arch</span><span class="o">.</span><span class="n">bin</span>
+</pre></div>
+</div>
+<p><strong>Installed Tools</strong> - These tools are assumed to be installed to build the demo:</p>
+<ul class="simple">
+<li><p>clang++ 11  or g++ 10</p></li>
+<li><p>C++17 standard libraries</p></li>
+</ul>
+</div>
+<div class="section" id="demo-obtaining-building-and-running">
+<h2>Demo: Obtaining, Building, and Running<a class="headerlink" href="#demo-obtaining-building-and-running" title="Permalink to this headline"></a></h2>
+<p>To download a demo file, use the curl command:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">curl</span> <span class="n">https</span><span class="p">:</span><span class="o">//</span><span class="n">github</span><span class="o">.</span><span class="n">com</span><span class="o">/</span><span class="n">neuralmagic</span><span class="o">/</span><span class="n">deepsparse</span><span class="o">/</span><span class="n">releases</span><span class="o">/</span><span class="n">download</span><span class="o">/</span><span class="n">v0</span><span class="mf">.8.0</span><span class="o">/</span><span class="n">deepsparse_api_demo</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span> <span class="o">--</span><span class="n">output</span> <span class="n">deepsparse_api_demo</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+<p>or visit our <a class="reference external" href="https://github.com/neuralmagic/deepsparse/releases/tag/v0.8.0">DeepSparse Engine Release page</a> and download <code class="docutils literal notranslate"><span class="pre">deepsparse_api_demo.tar.gz</span></code> from there.</p>
+<p>Once you obtain the file deepsparse-api.tar.gz, follow these steps to unpack and build the demo:</p>
+<p><span class="raw-html-m2r"><YOUR ARCH></span> should be either avx2 or avx512 based on the result of arch.bin.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tar</span> <span class="n">xzvf</span> <span class="n">deepsparse_api_demo</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">cd</span> <span class="o">&lt;</span><span class="n">YOUR</span> <span class="n">ARCH</span><span class="o">&gt;</span><span class="n">_deepsarse_api_demo</span>
+<span class="n">make</span>
+<span class="o">./</span><span class="nb">bin</span><span class="o">/&lt;</span><span class="n">YOUR</span> <span class="n">ARCH</span><span class="o">&gt;/</span><span class="n">demo</span><span class="o">.</span><span class="n">bin</span> <span class="o">./</span><span class="n">data</span><span class="o">/</span><span class="n">model</span><span class="o">.</span><span class="n">onnx</span>
+</pre></div>
+</div>
+<p><strong>Note</strong>.  The makefile defaults to avx512 support. For tar files and machines with avx2 instruction set, to build, you must set the ARCH flag on the command line when you make the demo.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">make</span> <span class="n">ARCH</span><span class="o">=</span><span class="n">avx2</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="c-api">
+<h2>C++ API<a class="headerlink" href="#c-api" title="Permalink to this headline"></a></h2>
+<p>This document discusses the high-level overview of the API. For the exact signatures and classes of the API, review the header files under</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">deepsparse_api_demo</span><span class="o">/</span><span class="n">include</span><span class="o">/</span><span class="n">libdeepsparse</span><span class="o">/</span>
+</pre></div>
+</div>
+<p>The API consists of five C++ header files:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compiler</span><span class="o">.</span><span class="n">hpp</span>
+<span class="n">config</span><span class="o">.</span><span class="n">hpp</span>
+<span class="n">dimensions</span><span class="o">.</span><span class="n">hpp</span>
+<span class="n">tensor</span><span class="o">.</span><span class="n">hpp</span>
+<span class="n">engine</span><span class="o">.</span><span class="n">hpp</span>
+</pre></div>
+</div>
+<div class="section" id="compiler">
+<h3>Compiler<a class="headerlink" href="#compiler" title="Permalink to this headline"></a></h3>
+<p>Helper header to export the API to a shared object.</p>
+</div>
+<div class="section" id="config">
+<h3>Config<a class="headerlink" href="#config" title="Permalink to this headline"></a></h3>
+<p>This file contains a structure that is used in the call to create the engine. The <strong>engine_config_t</strong> fields are:</p>
+<p><strong>model_file_path</strong> - This should be a file path to the model in the ONNX file format.  See <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> on proper ONNX model files.</p>
+<p><strong>batch_size</strong> - The batch size refers to the process of concatenating input and output tensors into a contiguous batched tensor. See <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> about the performance trade-offs of batching.</p>
+<p><strong>num_threads</strong> - The number of worker threads for the engine to use while executing a model.  If left as 0, the engine will select a default number of worker threads.</p>
+</div>
+<div class="section" id="dimensions">
+<h3>Dimensions<a class="headerlink" href="#dimensions" title="Permalink to this headline"></a></h3>
+<p>Review the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> about expected input and output tensors. The <strong>dimensions_t</strong> object describes the extent or count of elements along each dimension of a tensor_t.</p>
+</div>
+<div class="section" id="tensor">
+<h3>Tensor<a class="headerlink" href="#tensor" title="Permalink to this headline"></a></h3>
+<p>A tensor is an n-dimensional array of data elements and metadata. An element is a concrete value of a supported primitive type (for example, an element of type float or uint8).</p>
+<p><strong>tensor_t</strong> - members.</p>
+<p><strong>element_type()</strong> - Return an enumeration value of the concrete type of a tensor element.</p>
+<p><strong>dims()</strong> - Return a dimension_t that specifies the extents of the tensor.</p>
+<p><strong>data()</strong> - Pointer to the first element of the tensor data memory.</p>
+<p>The data that tensor_t points to may have either of two different lifetime models for the memory.</p>
+<ol class="arabic simple">
+<li><p>The tensor owns the data memory.</p></li>
+<li><p>The tensor aliases a pointer to the memory location. The lifetime of the data memory is delegated to a lambda passed to the tensor. For externally-owned data pointers, the lambda can be a no-op.</p></li>
+</ol>
+<p>_Code Example: Memory lifetime allocated and owned by tensor<em>t</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &quot;deepsparse/engine.hpp&quot;</span>
+
+<span class="n">void</span> <span class="n">my_engine_inference</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="o">...</span>
+    <span class="p">{</span>
+        <span class="o">//</span> <span class="n">create</span> <span class="n">a</span> <span class="nb">float</span> <span class="n">tensor</span> <span class="k">with</span> <span class="n">y</span> <span class="ow">and</span> <span class="n">x</span> <span class="mi">10</span> <span class="n">by</span> <span class="mi">10</span>
+        <span class="n">auto</span> <span class="n">t</span> <span class="o">=</span> <span class="n">deepsparse</span><span class="p">::</span><span class="n">create_tensor</span><span class="p">(</span>
+            <span class="n">deepsparse</span><span class="p">::</span><span class="n">element_type_t</span><span class="p">::</span><span class="n">float32</span><span class="p">,</span>
+            <span class="n">deepsparse</span><span class="p">::</span><span class="n">dimensions_t</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">});</span>
+
+        <span class="nb">float</span><span class="o">*</span> <span class="n">p_raw</span> <span class="o">=</span> <span class="n">t</span><span class="o">.</span><span class="n">data</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">&gt;</span><span class="p">();</span> <span class="o">//</span> <span class="mi">100</span> <span class="n">floats</span>
+        <span class="o">//</span> <span class="n">read</span> <span class="ow">and</span> <span class="n">write</span> <span class="n">values</span> <span class="n">to</span> <span class="n">p_raw</span> <span class="ow">and</span> <span class="n">send</span> <span class="n">tensor</span> <span class="n">to</span> <span class="n">the</span> <span class="n">engine</span><span class="o">.</span>
+
+
+    <span class="p">}</span>
+    <span class="o">//</span> <span class="n">data</span> <span class="n">memory</span> <span class="n">of</span> <span class="n">t</span> <span class="n">deallocated</span> <span class="n">when</span> <span class="n">t</span> <span class="n">goes</span> <span class="n">out</span> <span class="n">of</span> <span class="n">scope</span>
+    <span class="o">//</span> <span class="o">...</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><em>Code Example: Tensor data memory lifetime is delegated to lambda</em></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1">#include &lt;cstdlib&gt;</span>
+<span class="c1">#include &quot;deepsparse/engine.hpp&quot;</span>
+
+<span class="n">void</span> <span class="n">my_engine_inference</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="o">//</span> <span class="n">tensor</span> <span class="n">data</span> <span class="n">memory</span> <span class="n">MUST</span> <span class="n">aligned</span><span class="o">.</span>
+    <span class="o">//</span> <span class="n">dims</span> <span class="n">must</span> <span class="n">match</span> <span class="n">total</span> <span class="n">number</span> <span class="n">of</span> <span class="n">elements</span> <span class="n">below</span>
+    <span class="nb">float</span><span class="o">*</span> <span class="n">p_raw</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="nb">float</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">aligned_alloc</span><span class="p">(</span>
+            <span class="n">deepsparse</span><span class="p">::</span><span class="n">minimum_required_alignment</span><span class="p">(),</span>
+            <span class="n">sizeof</span><span class="p">(</span><span class="nb">float</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">));</span>
+    <span class="p">{</span>
+
+        <span class="o">//</span> <span class="n">policy</span> <span class="o">-</span> <span class="n">tensor</span> <span class="ow">is</span> <span class="n">just</span> <span class="n">an</span> <span class="n">alias</span> <span class="n">to</span> <span class="n">memory</span>
+        <span class="n">auto</span> <span class="n">alias_dealloc</span> <span class="o">=</span> <span class="p">[](</span><span class="n">void</span><span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="p">{};</span>
+
+        <span class="o">//</span> <span class="n">policy</span> <span class="o">-</span> <span class="n">tensor</span> <span class="n">destructor</span> <span class="n">calls</span> <span class="n">dealloc</span>
+        <span class="n">auto</span> <span class="n">owned_dealloc</span> <span class="o">=</span> <span class="p">[](</span><span class="n">void</span><span class="o">*</span> <span class="n">p</span><span class="p">)</span> <span class="p">{</span>
+            <span class="n">free</span><span class="p">(</span><span class="n">p</span><span class="p">);</span>
+            <span class="o">//</span> <span class="ow">or</span> <span class="n">cast</span> <span class="n">p</span> <span class="n">to</span> <span class="n">pointer</span> <span class="n">to</span> <span class="n">well</span> <span class="n">known</span> <span class="nb">type</span>
+            <span class="o">//</span> <span class="ow">and</span> <span class="n">manually</span> <span class="n">call</span> <span class="n">your</span> <span class="n">own</span> <span class="n">delete</span>
+        <span class="p">};</span>
+
+        <span class="o">//</span> <span class="n">create</span> <span class="n">a</span> <span class="n">alias</span> <span class="nb">float</span> <span class="n">tensor</span> <span class="k">with</span> <span class="n">y</span> <span class="ow">and</span> <span class="n">x</span> <span class="mi">10</span> <span class="n">by</span> <span class="mi">10</span>
+        <span class="n">auto</span> <span class="n">t</span> <span class="o">=</span> <span class="n">deepsparse</span><span class="p">::</span><span class="n">tensor_t</span><span class="p">(</span>
+            <span class="n">deepsparse</span><span class="p">::</span><span class="n">element_type_t</span><span class="p">::</span><span class="n">float32</span><span class="p">,</span>
+            <span class="n">deepsparse</span><span class="p">::</span><span class="n">dimensions_t</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">},</span>
+            <span class="n">p_raw</span><span class="p">,</span>
+            <span class="n">alias_dealloc</span> <span class="o">//</span> <span class="k">lambda</span> <span class="n">invoked</span> <span class="ow">in</span> <span class="nb">object</span> <span class="n">destructor</span>
+        <span class="p">);</span>
+
+        <span class="o">//</span> <span class="n">read</span> <span class="ow">and</span> <span class="n">write</span> <span class="n">p_raw</span> <span class="ow">and</span> <span class="n">send</span> <span class="n">to</span> <span class="n">the</span> <span class="n">engine</span><span class="o">.</span>
+    <span class="p">}</span>
+
+<span class="p">}</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="engine">
+<h3>Engine<a class="headerlink" href="#engine" title="Permalink to this headline"></a></h3>
+<p>The engine API is the primary interface for external code to load and run the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">Neural Magic DeepSparse Engine</a>.</p>
+<p><strong>engine_t()</strong> - Construct an instance of the engine with the configuration struct. The config file path to the model is used to load and compile the model during the constructor. On error, exceptions will be thrown to the calling code.</p>
+<p><strong>execute()</strong> - This is the primary method to run the inference specified in the ONNX model.  The engine executes the model with the input tensors and returns output tensors.</p>
+<p><strong>Input and output getters</strong> - these methods are used to get metadata on the input and output tensors of the loaded model.</p>
+<div class="section" id="utility-functions">
+<h4>Utility Functions<a class="headerlink" href="#utility-functions" title="Permalink to this headline"></a></h4>
+<p><strong>generate_random_inputs()</strong> - Once the engine is instantiated and has a model loaded, this function can use the model’s definition of input tensors to generate a set of tensors with random values with the correct type and shape. Random input can be used to test the engine or its performance.</p>
+<p><strong>load_inputs()</strong> - Creates a collection of tensor_t from the model input files. The input files are expected to be in the NumPy array format. See the <a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse Engine documentation</a> for more on input file support.</p>
+<p><strong>max_diff()</strong> - Returns the largest absolute elementwise difference between two tensors. This function is used to compare the output result with the expected output when testing the engine.</p>
+<p><strong>allclose()</strong> - Returns true if two tensors are less elementwise different than the specified absolute and relative tolerances.</p>
+</div>
+</div>
+<div class="section" id="user-calling-code">
+<h3>User Calling Code<a class="headerlink" href="#user-calling-code" title="Permalink to this headline"></a></h3>
+<p>The expected workflow is that the calling code will create one engine per model. The model path will specify an ONNX file. During creation, the engine will load and compile the model from the file.</p>
+<p>The input tensors will be created by the calling code. The tensor dimensions and types must match the corresponding dimensions and types of the model inputs. And, the number of tensors must be the same as the number of model inputs.</p>
+<p>Call engine execute() with the collection of input tensors. During the execute() call, the engine will do the inference over the ONNX model with the input tensors and return the output tensors.</p>
+<p>The output tensors’ data members can then be read to extract values and results.</p>
+<p>For a detailed example of creating, loading, and running an engine, see the code in <code class="docutils literal notranslate"><span class="pre">deepsparse_api_demo/src/demo.cpp</span></code></p>
+</div>
+</div>
+</div>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="scheduler.html" class="btn btn-neutral float-left" title="Serial or Concurrent Inferences" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="../api/deepsparse.html" class="btn btn-neutral float-right" title="deepsparse package" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Neural Magic Engine License and Apache License, Version 2.0 as noted..</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.11.2
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../v0.10.0/source/c++api-overview.html">v0.10.0</a></dd>
+      <dd><a href="../../v0.11.0/source/c++api-overview.html">v0.11.0</a></dd>
+      <dd><a href="../../v0.11.1/source/c++api-overview.html">v0.11.1</a></dd>
+      <dd><a href="c++api-overview.html">v0.11.2</a></dd>
+      <dd><a href="../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../v0.6.1/index.html">v0.6.1</a></dd>
+      <dd><a href="../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../v0.9.0/source/c++api-overview.html">v0.9.0</a></dd>
+      <dd><a href="../../v0.9.1/source/c++api-overview.html">v0.9.1</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../main/source/c++api-overview.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

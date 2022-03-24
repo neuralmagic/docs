@@ -1,0 +1,1001 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.models.classification.resnet &mdash; SparseML 0.11.1.20220324 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../../_static/copybutton.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.11
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.models.classification.resnet</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.models.classification.resnet</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">TensorFlow ResNet implementation.</span>
+<span class="sd">Further info on ResNet can be found in the paper</span>
+<span class="sd">`here &lt;https://arxiv.org/abs/1512.03385&gt;`__.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.models.estimator</span> <span class="kn">import</span> <span class="n">ClassificationEstimatorModelFn</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.models.registry</span> <span class="kn">import</span> <span class="n">ModelRegistry</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.nn</span> <span class="kn">import</span> <span class="n">activation</span><span class="p">,</span> <span class="n">conv2d_block</span><span class="p">,</span> <span class="n">dense_block</span><span class="p">,</span> <span class="n">pool2d</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;ResNetSection&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet_const&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet18&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet20&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet34&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet50&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet101&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;resnet152&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">BASE_NAME_SCOPE</span> <span class="o">=</span> <span class="s2">&quot;resnet&quot;</span>
+
+
+<span class="k">def</span> <span class="nf">_input</span><span class="p">(</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="n">simplified_arch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">simplified_arch</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;input&quot;</span><span class="p">,</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+            <span class="n">stride</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">pool2d</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;pool&quot;</span><span class="p">,</span> <span class="n">x_tens</span><span class="o">=</span><span class="n">out</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="s2">&quot;max&quot;</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">strides</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">padding</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;input&quot;</span><span class="p">,</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">_identity_modifier</span><span class="p">(</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+        <span class="s2">&quot;identity&quot;</span><span class="p">,</span>
+        <span class="n">x_tens</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">out_channels</span><span class="p">,</span>
+        <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+        <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+        <span class="n">act</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">_basic_block</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;conv_bn_0&quot;</span><span class="p">,</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;conv_bn_1&quot;</span><span class="p">,</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">act</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stride</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">x_tens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">_identity_modifier</span><span class="p">(</span>
+                    <span class="n">x_tens</span><span class="p">,</span>
+                    <span class="n">training</span><span class="p">,</span>
+                    <span class="n">out_channels</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="p">,</span>
+                    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">x_tens</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">act</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;act_out&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">_bottleneck_block</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">proj_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;conv_bn_0&quot;</span><span class="p">,</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;conv_bn_1&quot;</span><span class="p">,</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+            <span class="n">padding</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">conv2d_block</span><span class="p">(</span>
+            <span class="s2">&quot;conv_bn_2&quot;</span><span class="p">,</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="p">,</span>
+            <span class="n">kernel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">act</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">stride</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="ow">or</span> <span class="nb">int</span><span class="p">(</span><span class="n">x_tens</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="o">!=</span> <span class="n">out_channels</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                <span class="n">out</span><span class="p">,</span>
+                <span class="n">_identity_modifier</span><span class="p">(</span>
+                    <span class="n">x_tens</span><span class="p">,</span>
+                    <span class="n">training</span><span class="p">,</span>
+                    <span class="n">out_channels</span><span class="p">,</span>
+                    <span class="n">stride</span><span class="p">,</span>
+                    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">x_tens</span><span class="p">)</span>
+
+        <span class="n">out</span> <span class="o">=</span> <span class="n">activation</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">act</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;act_out&quot;</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">out</span>
+
+
+<span class="k">def</span> <span class="nf">_classifier</span><span class="p">(</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s2">&quot;classifier&quot;</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">pool2d</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="s2">&quot;avgpool&quot;</span><span class="p">,</span> <span class="n">x_tens</span><span class="o">=</span><span class="n">x_tens</span><span class="p">,</span> <span class="n">type_</span><span class="o">=</span><span class="s2">&quot;global_avg&quot;</span><span class="p">,</span> <span class="n">pool_size</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">num_classes</span><span class="p">:</span>
+            <span class="n">logits</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">logits</span><span class="p">,</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">logits</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">])])</span>
+
+            <span class="k">if</span> <span class="n">class_type</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">class_type</span> <span class="o">==</span> <span class="s2">&quot;single&quot;</span><span class="p">:</span>
+                    <span class="n">act</span> <span class="o">=</span> <span class="s2">&quot;softmax&quot;</span>
+                <span class="k">elif</span> <span class="n">class_type</span> <span class="o">==</span> <span class="s2">&quot;multi&quot;</span><span class="p">:</span>
+                    <span class="n">act</span> <span class="o">=</span> <span class="s2">&quot;sigmoid&quot;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                        <span class="s2">&quot;unknown class_type given of </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">class_type</span><span class="p">)</span>
+                    <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">act</span> <span class="o">=</span> <span class="kc">None</span>
+
+            <span class="n">logits</span> <span class="o">=</span> <span class="n">dense_block</span><span class="p">(</span>
+                <span class="s2">&quot;dense&quot;</span><span class="p">,</span>
+                <span class="n">logits</span><span class="p">,</span>
+                <span class="n">training</span><span class="p">,</span>
+                <span class="n">num_classes</span><span class="p">,</span>
+                <span class="n">include_bn</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                <span class="n">act</span><span class="o">=</span><span class="n">act</span><span class="p">,</span>
+                <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">logits</span>
+
+
+<div class="viewcode-block" id="ResNetSection"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.ResNetSection">[docs]</a><span class="k">class</span> <span class="nc">ResNetSection</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Settings to describe how to put together a ResNet based architecture</span>
+<span class="sd">    using user supplied configurations.</span>
+
+<span class="sd">    :param num_blocks: the number of blocks to put in the section</span>
+<span class="sd">        (ie Basic or Bottleneck blocks)</span>
+<span class="sd">    :param out_channels: the number of output channels from the section</span>
+<span class="sd">    :param downsample: True to apply stride 2 for downsampling of the input,</span>
+<span class="sd">        False otherwise</span>
+<span class="sd">    :param proj_channels: The number of channels in the projection for a</span>
+<span class="sd">        bottleneck block, if &lt; 0 then uses basic</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_blocks</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">downsample</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">proj_channels</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_blocks</span> <span class="o">=</span> <span class="n">num_blocks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">out_channels</span> <span class="o">=</span> <span class="n">out_channels</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">downsample</span> <span class="o">=</span> <span class="n">downsample</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">proj_channels</span> <span class="o">=</span> <span class="n">proj_channels</span>
+
+<div class="viewcode-block" id="ResNetSection.create"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.ResNetSection.create">[docs]</a>    <span class="k">def</span> <span class="nf">create</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the section in the current graph and scope</span>
+
+<span class="sd">        :param name: the name for the scope to create the section under</span>
+<span class="sd">        :param x_tens: The input tensor to the ResNet architecture</span>
+<span class="sd">        :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">            in training or inference mode</span>
+<span class="sd">        :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">            fully connected kernels</span>
+<span class="sd">        :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">        :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">        :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">        :return: the output tensor from the section</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">x_tens</span>
+
+        <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+            <span class="n">stride</span> <span class="o">=</span> <span class="mi">2</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">downsample</span> <span class="k">else</span> <span class="mi">1</span>
+
+            <span class="k">for</span> <span class="n">block</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_blocks</span><span class="p">):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">proj_channels</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="n">_bottleneck_block</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;block_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block</span><span class="p">),</span>
+                        <span class="n">x_tens</span><span class="o">=</span><span class="n">out</span><span class="p">,</span>
+                        <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                        <span class="n">out_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">out_channels</span><span class="p">,</span>
+                        <span class="n">proj_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">proj_channels</span><span class="p">,</span>
+                        <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+                        <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                        <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                        <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                        <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">out</span> <span class="o">=</span> <span class="n">_basic_block</span><span class="p">(</span>
+                        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;block_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">block</span><span class="p">),</span>
+                        <span class="n">x_tens</span><span class="o">=</span><span class="n">out</span><span class="p">,</span>
+                        <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                        <span class="n">out_channels</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">out_channels</span><span class="p">,</span>
+                        <span class="n">stride</span><span class="o">=</span><span class="n">stride</span><span class="p">,</span>
+                        <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                        <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                        <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                        <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+                    <span class="p">)</span>
+
+                <span class="n">stride</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">out</span></div></div>
+
+
+<div class="viewcode-block" id="resnet_const"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet_const">[docs]</a><span class="k">def</span> <span class="nf">resnet_const</span><span class="p">(</span>
+    <span class="n">x_tens</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">],</span>
+    <span class="n">sec_settings</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ResNetSection</span><span class="p">],</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="p">,</span>
+    <span class="n">bias_initializer</span><span class="p">,</span>
+    <span class="n">beta_initializer</span><span class="p">,</span>
+    <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="n">simplified_arch</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Graph constructor for ResNet implementation.</span>
+
+<span class="sd">    :param x_tens: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param sec_settings: The settings for each section in the ResNet modoel</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :param simplified_arch: Whether the network is a simplified version for the</span>
+<span class="sd">        Cifar10/100 dataset</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">_input</span><span class="p">(</span>
+            <span class="n">x_tens</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="p">,</span>
+            <span class="n">simplified_arch</span><span class="o">=</span><span class="n">simplified_arch</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">sec_index</span><span class="p">,</span> <span class="n">section</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sec_settings</span><span class="p">):</span>
+            <span class="n">out</span> <span class="o">=</span> <span class="n">section</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;section_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">sec_index</span><span class="p">),</span>
+                <span class="n">x_tens</span><span class="o">=</span><span class="n">out</span><span class="p">,</span>
+                <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">,</span>
+                <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+                <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+                <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+                <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="n">logits</span> <span class="o">=</span> <span class="n">_classifier</span><span class="p">(</span>
+            <span class="n">out</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">num_classes</span><span class="p">,</span>
+            <span class="n">class_type</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">logits</span></div>
+
+
+<div class="viewcode-block" id="resnet18"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet18">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet18&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_18&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-18&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_18&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-18&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;18&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet18</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Standard ResNet18 implementation;</span>
+<span class="sd">    expected input shape is (B, 224, 224, 3)</span>
+
+<span class="sd">    :param inputs: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resnet_const</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">sec_settings</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">class_type</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="resnet20"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet20">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet20&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_20&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-20&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_20&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-20&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;20&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;Cifar10&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet20</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;single&quot;</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">variable_scope</span><span class="p">(</span><span class="s2">&quot;resnet20&quot;</span><span class="p">,</span> <span class="n">reuse</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">AUTO_REUSE</span><span class="p">):</span>
+        <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">16</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+            <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+            <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="p">]</span>
+        <span class="n">net</span> <span class="o">=</span> <span class="n">resnet_const</span><span class="p">(</span>
+            <span class="n">inputs</span><span class="p">,</span>
+            <span class="n">training</span><span class="p">,</span>
+            <span class="n">sec_settings</span><span class="p">,</span>
+            <span class="n">num_classes</span><span class="p">,</span>
+            <span class="n">class_type</span><span class="o">=</span><span class="n">class_type</span><span class="p">,</span>
+            <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">kernel_initializer</span><span class="p">,</span>
+            <span class="n">bias_initializer</span><span class="o">=</span><span class="n">bias_initializer</span><span class="p">,</span>
+            <span class="n">beta_initializer</span><span class="o">=</span><span class="n">beta_initializer</span><span class="p">,</span>
+            <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">gamma_initializer</span><span class="p">,</span>
+            <span class="n">simplified_arch</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">net</span></div>
+
+
+<div class="viewcode-block" id="resnet34"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet34">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet34&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_34&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-34&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_34&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-34&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;34&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet34</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Standard ResNet34 implementation;</span>
+<span class="sd">    expected input shape is (B, 224, 224, 3)</span>
+
+<span class="sd">    :param inputs: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span><span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">out_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span> <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resnet_const</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">sec_settings</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">class_type</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="resnet50"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet50">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet50&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_50&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-50&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_50&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-50&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;50&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet50</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Standard ResNet50 implementation;</span>
+<span class="sd">    expected input shape is (B, 224, 224, 3)</span>
+
+<span class="sd">    :param inputs: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resnet_const</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">sec_settings</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">class_type</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="resnet101"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet101">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet101&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_101&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-101&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_101&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-101&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;101&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet101</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Standard ResNet101 implementation;</span>
+<span class="sd">    expected input shape is (B, 224, 224, 3)</span>
+
+<span class="sd">    :param inputs: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">23</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resnet_const</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">sec_settings</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">class_type</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="resnet152"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.models.classification.html#sparseml.tensorflow_v1.models.classification.resnet.resnet152">[docs]</a><span class="nd">@ModelRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span>
+    <span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;resnet152&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet_152&quot;</span><span class="p">,</span> <span class="s2">&quot;resnet-152&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1_152&quot;</span><span class="p">,</span> <span class="s2">&quot;resnetv1-152&quot;</span><span class="p">],</span>
+    <span class="n">input_shape</span><span class="o">=</span><span class="p">(</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+    <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;cv&quot;</span><span class="p">,</span>
+    <span class="n">sub_domain</span><span class="o">=</span><span class="s2">&quot;classification&quot;</span><span class="p">,</span>
+    <span class="n">architecture</span><span class="o">=</span><span class="s2">&quot;resnet_v1&quot;</span><span class="p">,</span>
+    <span class="n">sub_architecture</span><span class="o">=</span><span class="s2">&quot;152&quot;</span><span class="p">,</span>
+    <span class="n">default_dataset</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">,</span>
+    <span class="n">default_desc</span><span class="o">=</span><span class="s2">&quot;base&quot;</span><span class="p">,</span>
+    <span class="n">default_model_fn_creator</span><span class="o">=</span><span class="n">ClassificationEstimatorModelFn</span><span class="p">,</span>
+    <span class="n">base_name_scope</span><span class="o">=</span><span class="n">BASE_NAME_SCOPE</span><span class="p">,</span>
+    <span class="n">tl_ignore_tens</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.+/classifier/dense/fc/.+&quot;</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="k">def</span> <span class="nf">resnet152</span><span class="p">(</span>
+    <span class="n">inputs</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">training</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">num_classes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="n">class_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">glorot_uniform_initializer</span><span class="p">(),</span>
+    <span class="n">bias_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">beta_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">zeros_initializer</span><span class="p">(),</span>
+    <span class="n">gamma_initializer</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">ones_initializer</span><span class="p">(),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Standard ResNet152 implementation;</span>
+<span class="sd">    expected input shape is (B, 224, 224, 3)</span>
+
+<span class="sd">    :param inputs: The input tensor to the ResNet architecture</span>
+<span class="sd">    :param training: bool or Tensor to specify if the model should be run</span>
+<span class="sd">        in training or inference mode</span>
+<span class="sd">    :param num_classes: The number of classes to classify</span>
+<span class="sd">    :param class_type: One of [single, multi, None] to support multi class training.</span>
+<span class="sd">        Default single. If None, then will not add the fully connected at the end.</span>
+<span class="sd">    :param kernel_initializer: Initializer to use for the conv and</span>
+<span class="sd">        fully connected kernels</span>
+<span class="sd">    :param bias_initializer: Initializer to use for the bias in the fully connected</span>
+<span class="sd">    :param beta_initializer: Initializer to use for the batch norm beta variables</span>
+<span class="sd">    :param gamma_initializer: Initializer to use for the batch norm gama variables</span>
+<span class="sd">    :return: the output tensor from the created graph</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sec_settings</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">64</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">36</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">ResNetSection</span><span class="p">(</span>
+            <span class="n">num_blocks</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">out_channels</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+            <span class="n">downsample</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">proj_channels</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">resnet_const</span><span class="p">(</span>
+        <span class="n">inputs</span><span class="p">,</span>
+        <span class="n">training</span><span class="p">,</span>
+        <span class="n">sec_settings</span><span class="p">,</span>
+        <span class="n">num_classes</span><span class="p">,</span>
+        <span class="n">class_type</span><span class="p">,</span>
+        <span class="n">kernel_initializer</span><span class="p">,</span>
+        <span class="n">bias_initializer</span><span class="p">,</span>
+        <span class="n">beta_initializer</span><span class="p">,</span>
+        <span class="n">gamma_initializer</span><span class="p">,</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.11.1
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="resnet.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
