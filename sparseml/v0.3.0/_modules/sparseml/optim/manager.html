@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.optim.manager &mdash; SparseML 0.3.0.20220328 documentation</title>
+  <title>sparseml.optim.manager &mdash; SparseML 0.3.0.20220330 documentation</title>
   
 
   
@@ -200,11 +200,11 @@
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">cmp_to_key</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generator</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">from</span> <span class="nn">sparseml.optim.modifier</span> <span class="kn">import</span> <span class="n">BaseModifier</span><span class="p">,</span> <span class="n">BaseObject</span><span class="p">,</span> <span class="n">ModifierProp</span>
 <span class="kn">from</span> <span class="nn">sparseml.sparsification.types</span> <span class="kn">import</span> <span class="n">SparsificationTypes</span>
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">clean_path</span><span class="p">,</span> <span class="n">create_parent_dirs</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">RECIPE_METADATA_KEY</span><span class="p">,</span> <span class="n">clean_path</span><span class="p">,</span> <span class="n">create_parent_dirs</span>
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BaseManager&quot;</span><span class="p">]</span>
@@ -216,14 +216,19 @@
 <span class="sd">    Handles base implementations for properties and methods.</span>
 
 <span class="sd">    :param modifiers: the modifiers to wrap</span>
+<span class="sd">    :metadata: additional (to the information provided in the recipe) data to be</span>
+<span class="sd">        preserved and possibly utilized - for reproducibility and completeness</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">modifiers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]]],</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="k">if</span> <span class="n">metadata</span> <span class="k">else</span> <span class="kc">None</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
             <span class="c1"># sort modifiers by when they start and end so that later modifiers</span>
@@ -266,6 +271,10 @@
     <span class="k">def</span> <span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">compare</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
         <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">str</span><span class="p">(</span><span class="n">compare</span><span class="p">)</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span>
+
 <div class="viewcode-block" id="BaseManager.compose_staged"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.compose_staged">[docs]</a>    <span class="nd">@classmethod</span>
     <span class="k">def</span> <span class="nf">compose_staged</span><span class="p">(</span>
         <span class="bp">cls</span><span class="p">,</span>
@@ -296,19 +305,70 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">additional_recipe</span><span class="p">,</span> <span class="n">BaseManager</span><span class="p">):</span>
             <span class="n">additional_recipe</span> <span class="o">=</span> <span class="bp">cls</span><span class="o">.</span><span class="n">from_yaml</span><span class="p">(</span><span class="n">additional_recipe</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;non-staged recipes not yet supported for Manager.compose_staged &quot;</span>
-                <span class="s2">&quot;found base_recipe with non_staged modifiers&quot;</span>
+        <span class="n">base_recipe_metadata</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span>
+        <span class="n">additional_recipe_metadata</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">_metadata</span><span class="p">)</span>
+
+        <span class="c1"># Both base_recipe and additional_recipe are non-staged_recipes</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span>
+        <span class="p">):</span>
+            <span class="c1"># Need to generate stage names for two standard recipes</span>
+            <span class="n">base_stage_name</span><span class="p">,</span> <span class="n">additional_stage_name</span> <span class="o">=</span> <span class="s2">&quot;stage_0&quot;</span><span class="p">,</span> <span class="s2">&quot;stage_1&quot;</span>
+            <span class="n">base_stages</span> <span class="o">=</span> <span class="p">{</span><span class="n">base_stage_name</span><span class="p">:</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)}</span>
+
+            <span class="n">additional_stages</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">additional_stage_name</span><span class="p">:</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="n">base_recipe_metadata</span><span class="p">[</span><span class="n">base_stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_recipe_metadata</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+                <span class="n">RECIPE_METADATA_KEY</span>
             <span class="p">)</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">):</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
-                <span class="s2">&quot;non-staged recipes not yet supported for Manager.compose_staged &quot;</span>
-                <span class="s2">&quot;found additional_recipe with non_staged modifiers&quot;</span>
+            <span class="n">additional_recipe_metadata</span><span class="p">[</span>
+                <span class="n">additional_stage_name</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">additional_recipe_metadata</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">)</span>
+
+        <span class="c1"># Base_recipe is staged recipe and additional_recipe is not</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span>
+        <span class="p">):</span>
+
+            <span class="n">base_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+
+            <span class="n">additional_stage_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;stage_</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">base_stages</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">if</span> <span class="n">additional_stage_name</span> <span class="ow">in</span> <span class="n">base_stages</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Generated new stage name: </span><span class="si">{</span><span class="n">additional_stage_name</span><span class="si">}</span><span class="s2">, &quot;</span>
+                    <span class="s2">&quot;but there already exists&quot;</span>
+                    <span class="s2">&quot;a stage with that name in the checkpoint file. &quot;</span>
+                    <span class="s2">&quot;Please edit the stage name in the checkpoint file.&quot;</span>
+                <span class="p">)</span>
+
+            <span class="n">additional_stages</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="n">additional_stage_name</span><span class="p">:</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+            <span class="p">}</span>
+
+            <span class="n">additional_recipe_metadata</span><span class="p">[</span>
+                <span class="n">additional_stage_name</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="n">additional_recipe_metadata</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">)</span>
+
+        <span class="c1"># Additional_recipe is staged recipe and base_recipe is not</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">OrderedDict</span>
+        <span class="p">):</span>
+            <span class="n">additional_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+
+            <span class="n">base_stage_name</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;pre_</span><span class="si">{</span><span class="nb">list</span><span class="p">(</span><span class="n">additional_stages</span><span class="o">.</span><span class="n">keys</span><span class="p">())[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+
+            <span class="n">base_stages</span> <span class="o">=</span> <span class="p">{</span><span class="n">base_stage_name</span><span class="p">:</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)}</span>
+
+            <span class="n">base_recipe_metadata</span><span class="p">[</span><span class="n">base_stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">base_recipe_metadata</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span>
+                <span class="n">RECIPE_METADATA_KEY</span>
             <span class="p">)</span>
 
-        <span class="n">base_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
-        <span class="n">additional_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+        <span class="c1"># Both recipes are staged.</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">base_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">base_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+            <span class="n">additional_stages</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">additional_recipe</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
 
         <span class="n">base_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">base_stages</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
         <span class="n">additional_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">additional_stages</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
@@ -324,14 +384,18 @@
             <span class="n">base_end_epoch</span> <span class="o">=</span> <span class="n">base_recipe</span><span class="o">.</span><span class="n">max_epochs</span>
             <span class="k">for</span> <span class="n">additional_modifiers</span> <span class="ow">in</span> <span class="n">additional_stages</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="k">for</span> <span class="n">additional_modifier</span> <span class="ow">in</span> <span class="n">additional_modifiers</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">):</span>
-                        <span class="n">additional_modifier</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">+=</span> <span class="n">base_end_epoch</span>
                     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">):</span>
                         <span class="n">additional_modifier</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">+=</span> <span class="n">base_end_epoch</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">):</span>
+                        <span class="n">additional_modifier</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">+=</span> <span class="n">base_end_epoch</span>
 
         <span class="n">combined_stages</span> <span class="o">=</span> <span class="n">base_stages</span>
         <span class="n">combined_stages</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additional_stages</span><span class="p">)</span>
-        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">combined_stages</span><span class="p">)</span></div>
+
+        <span class="n">combined_metadata</span> <span class="o">=</span> <span class="n">base_recipe_metadata</span>
+        <span class="n">combined_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">additional_recipe_metadata</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">combined_stages</span><span class="p">,</span> <span class="n">combined_metadata</span><span class="p">)</span></div>
 
     <span class="nd">@ModifierProp</span><span class="p">(</span><span class="n">serializable</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
     <span class="k">def</span> <span class="nf">modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]]]:</span>
@@ -461,15 +525,17 @@
 
         <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">vals</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
 
-<div class="viewcode-block" id="BaseManager.save"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<div class="viewcode-block" id="BaseManager.save"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.save">[docs]</a>    <span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">include_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param file_path: the file path to save the yaml config representation to</span>
+<span class="sd">        :param include_metadata: boolean indicator whether metadata shall be</span>
+<span class="sd">            appended to the yaml file before saving. Default is True.</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">file_path</span> <span class="o">=</span> <span class="n">clean_path</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
         <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">file_path</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">yaml_file</span><span class="p">:</span>
-            <span class="n">yaml_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span></div>
+            <span class="n">yaml_file</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_string_lines</span><span class="p">(</span><span class="n">include_metadata</span><span class="p">)))</span></div>
 
 <div class="viewcode-block" id="BaseManager.finalize_and_save_structured_modifiers"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.finalize_and_save_structured_modifiers">[docs]</a>    <span class="k">def</span> <span class="nf">finalize_and_save_structured_modifiers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -511,33 +577,77 @@
             <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">modifiers_list</span><span class="p">:</span>
                 <span class="k">yield</span> <span class="n">mod</span></div>
 
-<div class="viewcode-block" id="BaseManager.to_string_lines"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.to_string_lines">[docs]</a>    <span class="k">def</span> <span class="nf">to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<div class="viewcode-block" id="BaseManager.to_string_lines"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.to_string_lines">[docs]</a>    <span class="k">def</span> <span class="nf">to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">include_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param include_metadata: boolean indicator whether metadata shall be</span>
+<span class="sd">            appended to the yaml file before saving. Default is False.</span>
 <span class="sd">        :return: a list of lines for a string / yaml representation of this instance</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;version: 1.1.0&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">]</span>
+        <span class="c1"># parse standard recipe</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">include_metadata</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">:</span>
+                <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_to_string_lines</span><span class="p">())</span>
             <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;modifiers:&quot;</span><span class="p">)</span>
-        <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers_to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">))</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers_list_to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">))</span>
+        <span class="c1"># parse staged recipe</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">modifiers_to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">include_metadata</span><span class="p">)</span>
+            <span class="p">)</span>
 
         <span class="k">return</span> <span class="n">yaml_str_lines</span></div>
 
+<div class="viewcode-block" id="BaseManager.metadata_to_string_lines"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.metadata_to_string_lines">[docs]</a>    <span class="k">def</span> <span class="nf">metadata_to_string_lines</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stage</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Parse `self._metadata` into list of strings.</span>
+<span class="sd">        :param stage: Name of the current recipe stage.</span>
+<span class="sd">            If stage = None, we are dealing with standard, unstaged recipe.</span>
+<span class="sd">        :return: a list of lines for a string / yaml representation of the</span>
+<span class="sd">            metadata for the given stage in the manager</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">stage</span><span class="p">:</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">yaml_str_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+                <span class="n">yaml_str_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">yaml_str_lines</span></div>
+
 <div class="viewcode-block" id="BaseManager.modifiers_to_string_lines"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.modifiers_to_string_lines">[docs]</a>    <span class="k">def</span> <span class="nf">modifiers_to_string_lines</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]]]</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">modifiers</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]]],</span>
+        <span class="n">include_metadata</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        :param modifiers: the modifiers to convert into string / yaml representation</span>
 <span class="sd">            for within the manage</span>
+<span class="sd">        :param include_metadata: boolean indicator whether metadata shall be</span>
+<span class="sd">            appended to the yaml file before saving.</span>
 <span class="sd">        :return: a list of lines for a string / yaml representation of the</span>
 <span class="sd">            modifiers in the manager</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
-            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">modifiers_list_to_string_lines</span><span class="p">(</span><span class="n">modifiers</span><span class="p">)</span>
 
         <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">stage</span><span class="p">,</span> <span class="n">stage_modifiers</span> <span class="ow">in</span> <span class="n">modifiers</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
             <span class="c1"># stage name for yaml dict</span>
             <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">include_metadata</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">:</span>
+                <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">metadata_to_string_lines</span><span class="p">(</span><span class="n">stage</span><span class="p">))</span>
+
             <span class="c1"># put all modifiers in stage into single modifier group</span>
             <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">stage</span><span class="si">}</span><span class="s2">_modifiers:&quot;</span><span class="p">)</span>
             <span class="n">stage_yaml_str_lines</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">modifiers_list_to_string_lines</span><span class="p">(</span><span class="n">stage_modifiers</span><span class="p">)</span>

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.optim.helpers &mdash; SparseML 0.12.0.20220328 documentation</title>
+  <title>sparseml.optim.helpers &mdash; SparseML 0.12.0.20220330 documentation</title>
   
 
   
@@ -197,12 +197,17 @@
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">json</span>
 <span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">suppress</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">yaml</span>
 
-<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">UnknownVariableException</span><span class="p">,</span> <span class="n">restricted_eval</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">RECIPE_METADATA_KEY</span><span class="p">,</span>
+    <span class="n">UnknownVariableException</span><span class="p">,</span>
+    <span class="n">restricted_eval</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 
@@ -215,6 +220,7 @@
     <span class="s2">&quot;evaluate_recipe_yaml_str_equations&quot;</span><span class="p">,</span>
     <span class="s2">&quot;parse_recipe_variables&quot;</span><span class="p">,</span>
     <span class="s2">&quot;check_if_staged_recipe&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;validate_metadata&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -692,6 +698,127 @@
             <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">val</span>
+
+
+<span class="k">def</span> <span class="nf">_extract_metadata_from_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">if</span> <span class="n">RECIPE_METADATA_KEY</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">container</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span> <span class="nf">_extract_metadata_from_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+    <span class="n">metadata</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="n">stage_names</span> <span class="o">=</span> <span class="n">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">stage_name</span> <span class="ow">in</span> <span class="n">stage_names</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">RECIPE_METADATA_KEY</span> <span class="ow">in</span> <span class="n">container</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="n">metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">container</span><span class="p">[</span><span class="n">stage_name</span><span class="p">][</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">]</span>
+    <span class="k">if</span> <span class="n">metadata</span> <span class="ow">and</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">stage_names</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;It seems that some stages in your checkpoint recipe&quot;</span>
+            <span class="s2">&quot;contain metadata and some do not. Either all or no stages must &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;must contain the </span><span class="si">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="si">}</span><span class="s2"> key&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span> <span class="nf">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+    <span class="c1"># Extracts valid stage names from a container.</span>
+    <span class="c1"># Valid stage name (key) is the one which corresponds to a value, which is</span>
+    <span class="c1"># a dictionary where at least one of the keys contains a string &#39;modifiers&#39;.</span>
+
+    <span class="n">stage_names</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">stage_name</span>
+        <span class="k">for</span> <span class="n">stage_name</span><span class="p">,</span> <span class="n">stage_dict</span> <span class="ow">in</span> <span class="n">container</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stage_dict</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="nb">any</span><span class="p">([</span><span class="n">key</span> <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">stage_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span> <span class="k">if</span> <span class="s2">&quot;modifiers&quot;</span> <span class="ow">in</span> <span class="n">key</span><span class="p">])</span>
+    <span class="p">]</span>
+    <span class="k">return</span> <span class="n">stage_names</span>
+
+
+<span class="k">def</span> <span class="nf">_check_warn_dict_difference</span><span class="p">(</span><span class="n">original_dict</span><span class="p">,</span> <span class="n">new_dict</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">original_dict</span> <span class="o">!=</span> <span class="n">new_dict</span><span class="p">:</span>
+        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Attempting to overwrite the previous metadata: </span><span class="si">{</span><span class="n">original_dict</span><span class="si">}</span><span class="s2"> &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;with new metadata: </span><span class="si">{</span><span class="n">new_dict</span><span class="si">}</span><span class="s2">. &quot;</span>
+            <span class="s2">&quot;This may lead to different results than the original run of the recipe. &quot;</span>
+            <span class="s2">&quot;The previous metadata will be omitted and discarded. Ignore if a &quot;</span>
+            <span class="s2">&quot;change in metadata is expected.&quot;</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">new_dict</span>
+
+
+<div class="viewcode-block" id="validate_metadata"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.helpers.validate_metadata">[docs]</a><span class="k">def</span> <span class="nf">validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Compare the metadata (previous_metadata) carried over from the recipe</span>
+<span class="sd">    (`yaml_str`) with the new, incoming metadata (&#39;metadata&#39;).</span>
+
+<span class="sd">    If attempting to overwrite previous metadata with the new metadata,</span>
+<span class="sd">    the script throws a warning and overwrites the previous metadata.</span>
+<span class="sd">    Otherwise, it propagates the new metadata in the correct form.</span>
+
+<span class="sd">    :param metadata: New metadata</span>
+<span class="sd">    :param yaml_str: String representation of the recipe YAML file,</span>
+<span class="sd">        (may contain previous metadata)</span>
+<span class="sd">    :return: Validated metadata</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">container</span> <span class="o">=</span> <span class="n">load_recipe_yaml_str_no_classes</span><span class="p">(</span><span class="n">yaml_str</span><span class="p">)</span>
+    <span class="n">is_container_staged</span> <span class="o">=</span> <span class="n">check_if_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+
+    <span class="n">checkpoint_metadata</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">_extract_metadata_from_staged_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_container_staged</span>
+        <span class="k">else</span> <span class="n">_extract_metadata_from_recipe</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">checkpoint_metadata</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">is_container_staged</span><span class="p">:</span>
+
+                <span class="n">is_metadata_staged</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">))</span> <span class="o">==</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="p">)</span>
+
+                <span class="k">for</span> <span class="n">stage_name</span> <span class="ow">in</span> <span class="n">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">is_metadata_staged</span><span class="p">:</span>
+                        <span class="n">checkpoint_metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_check_warn_dict_difference</span><span class="p">(</span>
+                            <span class="n">container</span><span class="p">[</span><span class="n">stage_name</span><span class="p">][</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span>
+                            <span class="n">metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">],</span>
+                        <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">checkpoint_metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_check_warn_dict_difference</span><span class="p">(</span>
+                            <span class="n">container</span><span class="p">[</span><span class="n">stage_name</span><span class="p">][</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span> <span class="n">metadata</span>
+                        <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">checkpoint_metadata</span> <span class="o">=</span> <span class="n">_check_warn_dict_difference</span><span class="p">(</span>
+                    <span class="n">container</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span> <span class="n">metadata</span>
+                <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="n">checkpoint_metadata</span>
+            <span class="k">if</span> <span class="n">is_container_staged</span>
+            <span class="k">else</span> <span class="p">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">:</span> <span class="n">checkpoint_metadata</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">{</span>
+                    <span class="n">stage_name</span><span class="p">:</span> <span class="n">metadata</span>
+                    <span class="k">for</span> <span class="n">stage_name</span> <span class="ow">in</span> <span class="n">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">)</span>
+                <span class="p">}</span>
+                <span class="k">if</span> <span class="n">is_container_staged</span>
+                <span class="k">else</span> <span class="p">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">:</span> <span class="n">metadata</span><span class="p">}</span>
+            <span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span>
+                <span class="p">{</span><span class="n">stage_name</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">stage_name</span> <span class="ow">in</span> <span class="n">_get_recipe_stage_names</span><span class="p">(</span><span class="n">container</span><span class="p">)}</span>
+                <span class="k">if</span> <span class="n">is_container_staged</span>
+                <span class="k">else</span> <span class="p">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+            <span class="p">)</span></div>
 </pre></div>
 
            </div>

@@ -7,7 +7,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>sparseml.keras.optim.manager &mdash; SparseML 0.11.0.20220328 documentation</title>
+  <title>sparseml.keras.optim.manager &mdash; SparseML 0.11.0.20220330 documentation</title>
   
 
   
@@ -205,7 +205,12 @@
 <span class="kn">from</span> <span class="nn">sparseml.keras.optim.modifier</span> <span class="kn">import</span> <span class="n">Modifier</span><span class="p">,</span> <span class="n">ScheduledModifier</span>
 <span class="kn">from</span> <span class="nn">sparseml.keras.utils.compat</span> <span class="kn">import</span> <span class="n">keras</span>
 <span class="kn">from</span> <span class="nn">sparseml.keras.utils.logger</span> <span class="kn">import</span> <span class="n">KerasLogger</span>
-<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="n">BaseManager</span><span class="p">,</span> <span class="n">load_recipe_yaml_str</span><span class="p">,</span> <span class="n">parse_recipe_variables</span>
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">BaseManager</span><span class="p">,</span>
+    <span class="n">load_recipe_yaml_str</span><span class="p">,</span>
+    <span class="n">parse_recipe_variables</span><span class="p">,</span>
+    <span class="n">validate_metadata</span><span class="p">,</span>
+<span class="p">)</span>
 <span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">Recipe</span>
 
 
@@ -222,6 +227,7 @@
         <span class="n">file_path</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Recipe</span><span class="p">],</span>
         <span class="n">add_modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Modifier</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">recipe_variables</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Convenience function used to create the manager of multiple modifiers from a</span>
@@ -237,6 +243,8 @@
 <span class="sd">            returned manager alongside the ones loaded from the recipe file</span>
 <span class="sd">        :param recipe_variables: additional variable values to override the recipe</span>
 <span class="sd">            with (i.e. num_epochs, init_lr)</span>
+<span class="sd">        :metadata: additional (to the information provided in the recipe) data to be</span>
+<span class="sd">            preserved and utilized in the future - for reproducibility and completeness.</span>
 <span class="sd">        :return: ScheduledModifierManager() created from the recipe file</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="n">recipe_variables</span> <span class="o">=</span> <span class="n">parse_recipe_variables</span><span class="p">(</span><span class="n">recipe_variables</span><span class="p">)</span>
@@ -245,12 +253,18 @@
         <span class="k">if</span> <span class="n">add_modifiers</span><span class="p">:</span>
             <span class="n">modifiers</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">add_modifiers</span><span class="p">)</span>
 
-        <span class="n">manager</span> <span class="o">=</span> <span class="n">ScheduledModifierManager</span><span class="p">(</span><span class="n">modifiers</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">yaml_str</span><span class="p">)</span>
+
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">ScheduledModifierManager</span><span class="p">(</span><span class="n">modifiers</span><span class="o">=</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">manager</span></div>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ScheduledModifier</span><span class="p">]):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">modifiers</span><span class="o">=</span><span class="n">modifiers</span><span class="p">)</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">ScheduledModifier</span><span class="p">],</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">modifiers</span><span class="o">=</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="ScheduledModifierManager.modify"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.manager.ScheduledModifierManager.modify">[docs]</a>    <span class="k">def</span> <span class="nf">modify</span><span class="p">(</span>
