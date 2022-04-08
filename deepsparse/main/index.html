@@ -159,27 +159,30 @@ limitations under the License.
 </div>
 <div class="section" id="id1">
 <h1>🔌 DeepSparse Server<a class="headerlink" href="#id1" title="Permalink to this headline"></a></h1>
-<p>The DeepSparse Server allows you to serve models and pipelines in deployment in CLI. The server runs on top of the popular FastAPI web framework and Uvicorn web server. Install the server using the following command:</p>
+<p>The DeepSparse Server allows you to serve models and pipelines from the terminal. The server runs on top of the popular FastAPI web framework and Uvicorn web server. Install the server using the following command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip install deepsparse<span class="o">[</span>server<span class="o">]</span>
 </pre></div>
 </div>
-<p><strong>⭐ Single Model ⭐</strong></p>
+<div class="section" id="single-model">
+<h2>Single Model<a class="headerlink" href="#single-model" title="Permalink to this headline"></a></h2>
 <p>Once installed, the following example CLI command is available for running inference with a single BERT model:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>deepsparse.server <span class="se">\</span>
     --task question_answering <span class="se">\</span>
-    --model_path <span class="s2">&quot;zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none&quot;</span>
+    --model_path <span class="s2">&quot;zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni&quot;</span>
 </pre></div>
 </div>
 <p>To look up arguments run: <code class="docutils literal notranslate"><span class="pre">deepsparse.server</span> <span class="pre">--help</span></code>.</p>
-<p><strong>⭐ Multiple Models ⭐</strong>
-To serve multiple models in your deployment you can easily build a <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. In the example below, we define two BERT models in our configuration for the question answering task:</p>
+</div>
+<div class="section" id="multiple-models">
+<h2>Multiple Models<a class="headerlink" href="#multiple-models" title="Permalink to this headline"></a></h2>
+<p>To serve multiple models in your deployment you can easily build a <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code>. In the example below, we define two BERT models in our configuration for the question answering task:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">models</span><span class="p">:</span><span class="w"></span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">task</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">question_answering</span><span class="w"></span>
 <span class="w">      </span><span class="nt">model_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none</span><span class="w"></span>
 <span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
 <span class="w">      </span><span class="nt">alias</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">question_answering/base</span><span class="w"></span>
 <span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">task</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">question_answering</span><span class="w"></span>
-<span class="w">      </span><span class="nt">model_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/pruned_quant-aggressive_95</span><span class="w"></span>
+<span class="w">      </span><span class="nt">model_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni</span><span class="w"></span>
 <span class="w">      </span><span class="nt">batch_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span><span class="w"></span>
 <span class="w">      </span><span class="nt">alias</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">question_answering/pruned_quant</span><span class="w"></span>
 </pre></div>
@@ -187,6 +190,8 @@ To serve multiple models in your deployment you can easily build a <code class="
 <p>Finally, after your <code class="docutils literal notranslate"><span class="pre">config.yaml</span></code> file is built, run the server with the config file path as an argument:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>deepsparse.server --config_file config.yaml
 </pre></div>
+</div>
+<p><a class="reference external" href="https://github.com/neuralmagic/deepsparse/tree/main/src/deepsparse/server">Getting Started with the DeepSparse Server</a> for more info.</p>
 </div>
 </div>
 <div class="section" id="id2">
@@ -197,7 +202,7 @@ To serve multiple models in your deployment you can easily build a <code class="
                           <span class="o">[</span>-ncores NUM_CORES<span class="o">]</span> <span class="o">[</span>-s <span class="o">{</span>async,sync<span class="o">}]</span> <span class="o">[</span>-t TIME<span class="o">]</span>
                           <span class="o">[</span>-nstreams NUM_STREAMS<span class="o">]</span> <span class="o">[</span>-pin <span class="o">{</span>none,core,numa<span class="o">}]</span>
                           <span class="o">[</span>-q<span class="o">]</span> <span class="o">[</span>-x EXPORT_PATH<span class="o">]</span>
-                            model_path
+                          model_path
 </pre></div>
 </div>
 <p><a class="reference external" href="https://github.com/neuralmagic/deepsparse/tree/main/src/deepsparse/benchmark_model">Getting Started with CLI Benchmarking</a> includes examples of select inference scenarios:</p>
@@ -206,18 +211,16 @@ To serve multiple models in your deployment you can easily build a <code class="
 <li><p>Asynchronous (Multi-stream) Scenario</p></li>
 </ul>
 </div>
-<hr class="docutils" />
-<div class="section" id="nlp-inference-question-answering">
-<h1>👩‍💻 NLP Inference | Question Answering<a class="headerlink" href="#nlp-inference-question-answering" title="Permalink to this headline"></a></h1>
+<div class="section" id="nlp-inference-example">
+<h1>👩‍💻 NLP Inference Example<a class="headerlink" href="#nlp-inference-example" title="Permalink to this headline"></a></h1>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">deepsparse.transformers</span> <span class="kn">import</span> <span class="n">pipeline</span>
 
 <span class="c1"># SparseZoo model stub or path to ONNX file</span>
-<span class="n">onnx_filepath</span><span class="o">=</span><span class="s2">&quot;zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/pruned-aggressive_98&quot;</span>
+<span class="n">model_path</span> <span class="o">=</span> <span class="s2">&quot;zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni&quot;</span>
 
 <span class="n">qa_pipeline</span> <span class="o">=</span> <span class="n">pipeline</span><span class="p">(</span>
     <span class="n">task</span><span class="o">=</span><span class="s2">&quot;question-answering&quot;</span><span class="p">,</span>
-    <span class="n">model_path</span><span class="o">=</span><span class="n">onnx_filepath</span><span class="p">,</span>
-    <span class="n">num_cores</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="c1"># uses all available CPU cores by default</span>
+    <span class="n">model_path</span><span class="o">=</span><span class="n">model_path</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="n">my_name</span> <span class="o">=</span> <span class="n">qa_pipeline</span><span class="p">(</span><span class="n">question</span><span class="o">=</span><span class="s2">&quot;What&#39;s my name?&quot;</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="s2">&quot;My name is Snorlax&quot;</span><span class="p">)</span>
@@ -229,19 +232,20 @@ To serve multiple models in your deployment you can easily build a <code class="
 </ul>
 <p>Tasks Supported:</p>
 <ul class="simple">
-<li><p>Text Classification (Sentiment Analysis)</p></li>
-<li><p>Question Answering</p></li>
-<li><p>Masked Language Modeling (MLM)</p></li>
+<li><p><a class="reference external" href="https://neuralmagic.com/use-cases/sparse-named-entity-recognition/">Token Classification: Named Entity Recognition</a></p></li>
+<li><p><a class="reference external" href="https://neuralmagic.com/use-cases/sparse-multi-class-text-classification/">Text Classification: Multi-Class</a></p></li>
+<li><p><a class="reference external" href="https://neuralmagic.com/use-cases/sparse-binary-text-classification/">Text Classification: Binary</a></p></li>
+<li><p><a class="reference external" href="https://neuralmagic.com/use-cases/sparse-sentiment-analysis/">Text Classification: Sentiment Analysis</a></p></li>
+<li><p><a class="reference external" href="https://neuralmagic.com/use-cases/sparse-question-answering/">Question Answering</a></p></li>
 </ul>
 </div>
-<hr class="docutils" />
 <div class="section" id="sparsezoo-onnx-vs-custom-onnx-models">
 <h1>🦉 SparseZoo ONNX vs. Custom ONNX Models<a class="headerlink" href="#sparsezoo-onnx-vs-custom-onnx-models" title="Permalink to this headline"></a></h1>
 <p>DeepSparse can accept ONNX models from two sources:</p>
-<ol class="arabic simple">
-<li><p><cite>SparseZoo ONNX</cite>: our open-source collection of sparse models available for download. [SparseZoo](<a class="reference external" href="https://github.com/neuralmagic/sparsezoo">https://github.com/neuralmagic/sparsezoo</a>) hosts inference-optimized models, trained on repeatable sparsification recipes using state-of-the-art techniques from <a class="reference external" href="https://github.com/neuralmagic/sparseml">SparseML.</a></p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">Custom</span> <span class="pre">ONNX</span></code>: Your own ONNX model, can be dense or sparse. Plug in your model to compare performance with other solutions.</p></li>
-</ol>
+<ul class="simple">
+<li><p><strong>SparseZoo ONNX</strong>: our open-source collection of sparse models available for download. <a class="reference external" href="https://github.com/neuralmagic/sparsezoo">SparseZoo</a> hosts inference-optimized models, trained on repeatable sparsification recipes using state-of-the-art techniques from <a class="reference external" href="https://github.com/neuralmagic/sparseml">SparseML</a>.</p></li>
+<li><p><strong>Custom ONNX</strong>: your own ONNX model, can be dense or sparse. Plug in your model to compare performance with other solutions.</p></li>
+</ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt; wget https://github.com/onnx/models/raw/main/vision/classification/mobilenet/model/mobilenetv2-7.onnx
 Saving to: ‘mobilenetv2-7.onnx’
 </pre></div>
@@ -260,7 +264,7 @@ Saving to: ‘mobilenetv2-7.onnx’
 <span class="n">outputs</span> <span class="o">=</span> <span class="n">engine</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Compatibility/Support Notes</p>
+<p>Compatibility/Support Notes:</p>
 <ul class="simple">
 <li><p>ONNX version 1.5-1.7</p></li>
 <li><p>ONNX opset version 11+</p></li>
@@ -268,7 +272,6 @@ Saving to: ‘mobilenetv2-7.onnx’
 </ul>
 <p>The <a class="reference external" href="https://github.com/neuralmagic/deepsparse">GitHub repository</a> includes package APIs along with examples to quickly get started benchmarking and inferencing sparse models.</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="scheduling-single-stream-multi-stream-and-elastic-inference">
 <h1>Scheduling Single-Stream, Multi-Stream, and Elastic Inference<a class="headerlink" href="#scheduling-single-stream-multi-stream-and-elastic-inference" title="Permalink to this headline"></a></h1>
 <p>The DeepSparse Engine offers up to three types of inferences based on your use case. Read more details here: <a class="reference external" href="https://github.com/neuralmagic/deepsparse/blob/main/docs/source/scheduler.md">Inference Types</a>.</p>
@@ -281,7 +284,6 @@ Saving to: ‘mobilenetv2-7.onnx’
 <p>3 ⚡ Elastic scheduling: requests execute in parallel, but not multiplexed on individual NUMA nodes.</p>
 <p>Use Case: A workload that might benefit from the elastic scheduler is one in which multiple requests need to be handled simultaneously, but where performance is hindered when those requests have to share an L3 cache.</p>
 </div>
-<hr class="docutils" />
 <div class="section" id="cpu-hardware-support">
 <h1>🧰 CPU Hardware Support<a class="headerlink" href="#cpu-hardware-support" title="Permalink to this headline"></a></h1>
 <p>With support for AVX2, AVX-512, and VNNI instruction sets, the DeepSparse Engine is validated to work on x86 Intel (Haswell generation and later) and AMD CPUs running Linux. Mac and Windows require running Linux in a Docker or virtual machine.</p>
@@ -332,39 +334,28 @@ Saving to: ‘mobilenetv2-7.onnx’
 </div>
 <div class="section" id="resources">
 <h1>Resources<a class="headerlink" href="#resources" title="Permalink to this headline"></a></h1>
-<table>
-<tr><th> Documentation </th><th> &emsp;&emsp;&emsp;Versions </th><th> Info </th></tr>
-<tr><td>
-
-[DeepSparse](https://docs.neuralmagic.com/deepsparse/)
-
-[SparseML](https://docs.neuralmagic.com/sparseml/)
-
-[SparseZoo](https://docs.neuralmagic.com/sparsezoo/)
-
-[Sparsify](https://docs.neuralmagic.com/sparsify/)
-
-</td><td>
-
-&emsp;stable : : [DeepSparse](https://pypi.org/project/deepsparse)
-
-&emsp;nightly (dev) : : [DeepSparse-Nightly](https://pypi.org/project/deepsparse-nightly/)
-
-&emsp;releases : : [GitHub](https://github.com/neuralmagic/deepsparse/releases)
-
-</td><td>
-
-[Blog](https://www.neuralmagic.com/blog/)
-
-[Resources](https://www.neuralmagic.com/resources/)
-
-</td></tr> </table></div>
+<ul class="simple">
+<li><p><a class="reference external" href="https://docs.neuralmagic.com/deepsparse/">DeepSparse</a></p></li>
+<li><p><a class="reference external" href="https://docs.neuralmagic.com/sparseml/">SparseML</a></p></li>
+<li><p><a class="reference external" href="https://docs.neuralmagic.com/sparsezoo/">SparseZoo</a></p></li>
+<li><p><a class="reference external" href="https://docs.neuralmagic.com/sparsify/">Sparsify</a></p></li>
+</ul>
+<ul class="simple">
+<li><p><a class="reference external" href="https://pypi.org/project/deepsparse">DeepSparse</a> | stable</p></li>
+<li><p><a class="reference external" href="https://pypi.org/project/deepsparse-nightly/">DeepSparse-Nightly</a> | nightly (dev)</p></li>
+<li><p><a class="reference external" href="https://github.com/neuralmagic/deepsparse/releases">GitHub</a> | releases</p></li>
+</ul>
+<ul class="simple">
+<li><p><a class="reference external" href="https://www.neuralmagic.com/blog/">Blog</a></p></li>
+<li><p><a class="reference external" href="https://www.neuralmagic.com/resources/">Resources</a></p></li>
+</ul>
+</div>
 <div class="section" id="community">
 <h1>Community<a class="headerlink" href="#community" title="Permalink to this headline"></a></h1>
 <div class="section" id="be-part-of-the-future-and-the-future-is-sparse">
 <h2>Be Part of the Future… And the Future is Sparse!<a class="headerlink" href="#be-part-of-the-future-and-the-future-is-sparse" title="Permalink to this headline"></a></h2>
 <p>Contribute with code, examples, integrations, and documentation as well as bug reports and feature requests! <a class="reference external" href="https://github.com/neuralmagic/deepsparse/blob/main/CONTRIBUTING.md">Learn how here.</a></p>
-<p>For user help or questions about DeepSparse, sign up or log in to our <a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">**Deep Sparse Community Slack**</a>. We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our <a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">GitHub Issue Queue.</a> You can get the latest news, webinar and event invites, research papers, and other ML Performance tidbits by <a class="reference external" href="https://neuralmagic.com/subscribe/">subscribing</a> to the Neural Magic community.</p>
+<p>For user help or questions about DeepSparse, sign up or log in to our <a href="#id8"><span class="problematic" id="id9">**</span></a><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a><a href="#id10"><span class="problematic" id="id11">**</span></a>. We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our <a class="reference external" href="https://github.com/neuralmagic/deepsparse/issues">GitHub Issue Queue.</a> You can get the latest news, webinar and event invites, research papers, and other ML Performance tidbits by <a class="reference external" href="https://neuralmagic.com/subscribe/">subscribing</a> to the Neural Magic community.</p>
 <p>For more general questions about Neural Magic, complete this <a class="reference external" href="http://neuralmagic.com/contact/">form.</a></p>
 </div>
 <div class="section" id="license">
