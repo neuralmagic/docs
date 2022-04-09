@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.optim.manager &mdash; SparseML 0.10.0.20220408 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.optim.manager &mdash; SparseML 0.10.0.20220409 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
@@ -104,6 +104,8 @@
 <span class="sd">ex to perform model pruning.</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">math</span>
 <span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
 <span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
@@ -116,6 +118,8 @@
 
 
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;BaseManager&quot;</span><span class="p">]</span>
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="BaseManager"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager">[docs]</a><span class="k">class</span> <span class="nc">BaseManager</span><span class="p">(</span><span class="n">BaseObject</span><span class="p">):</span>
@@ -137,6 +141,8 @@
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span> <span class="k">if</span> <span class="n">metadata</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_info_log_metadata</span><span class="p">()</span>
 
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">List</span><span class="p">):</span>
             <span class="c1"># sort modifiers by when they start and end so that later modifiers</span>
@@ -182,6 +188,16 @@
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span>
+
+<div class="viewcode-block" id="BaseManager.num_stages"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.manager.BaseManager.num_stages">[docs]</a>    <span class="k">def</span> <span class="nf">num_stages</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return the number of stages of the recipe</span>
+<span class="sd">        :return: number of stages</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modifiers</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span></div>
 
     <span class="nd">@metadata</span><span class="o">.</span><span class="n">setter</span>
     <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">):</span>
@@ -293,9 +309,28 @@
         <span class="k">if</span> <span class="ow">not</span> <span class="n">keep_original_epochs</span><span class="p">:</span>
             <span class="c1"># update additional modifier epochs</span>
             <span class="n">base_end_epoch</span> <span class="o">=</span> <span class="n">base_recipe</span><span class="o">.</span><span class="n">max_epochs</span>
+
+            <span class="c1"># make sure that for the modifiers in base_stages</span>
+            <span class="c1"># with the initial attribute `end_epoch` = -1,</span>
+            <span class="c1"># this attribute value is replaced with `base_end_epoch`</span>
+            <span class="k">for</span> <span class="n">base_modifiers</span> <span class="ow">in</span> <span class="n">base_stages</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">base_modifier</span> <span class="ow">in</span> <span class="n">base_modifiers</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="nb">hasattr</span><span class="p">(</span><span class="n">base_modifier</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="n">base_modifier</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="p">):</span>
+                        <span class="n">base_modifier</span><span class="o">.</span><span class="n">_init_end</span> <span class="o">=</span> <span class="n">base_end_epoch</span>
+                        <span class="n">base_modifier</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">=</span> <span class="n">base_end_epoch</span>
+
             <span class="k">for</span> <span class="n">additional_modifiers</span> <span class="ow">in</span> <span class="n">additional_stages</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
                 <span class="k">for</span> <span class="n">additional_modifier</span> <span class="ow">in</span> <span class="n">additional_modifiers</span><span class="p">:</span>
-                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span>
+                        <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;end_epoch&quot;</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="n">additional_modifier</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span>
+                    <span class="p">):</span>
+                        <span class="c1"># if end_epoch == -1, the .end_epoch is being</span>
+                        <span class="c1"># assumed implicitly and does not need to be</span>
+                        <span class="c1"># incremented</span>
                         <span class="n">additional_modifier</span><span class="o">.</span><span class="n">end_epoch</span> <span class="o">+=</span> <span class="n">base_end_epoch</span>
                     <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">additional_modifier</span><span class="p">,</span> <span class="s2">&quot;start_epoch&quot;</span><span class="p">):</span>
                         <span class="n">additional_modifier</span><span class="o">.</span><span class="n">start_epoch</span> <span class="o">+=</span> <span class="n">base_end_epoch</span>
@@ -529,15 +564,18 @@
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">],</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">yaml_str_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span>
             <span class="k">else</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="n">_nested_dict_to_lines</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">stage</span><span class="p">],</span> <span class="n">yaml_str_lines</span><span class="p">,</span> <span class="n">nesting_depth</span><span class="o">=</span><span class="mi">2</span>
+                <span class="p">)</span>
+
         <span class="k">else</span><span class="p">:</span>
             <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">RECIPE_METADATA_KEY</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
                 <span class="n">yaml_str_lines</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot; </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="si">}</span><span class="s2">&quot;</span>
-            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-                    <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  </span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="n">_nested_dict_to_lines</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span> <span class="n">yaml_str_lines</span>
+                <span class="p">)</span>
 
         <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">yaml_str_lines</span></div>
@@ -612,11 +650,37 @@
             <span class="nb">min</span><span class="p">(</span><span class="n">mod</span><span class="o">.</span><span class="n">start_epoch</span> <span class="k">for</span> <span class="n">mod</span> <span class="ow">in</span> <span class="n">quant_modifiers</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">epoch</span> <span class="o">+</span> <span class="mi">1</span>
             <span class="k">if</span> <span class="n">quant_modifiers</span>
             <span class="k">else</span> <span class="kc">False</span>
-        <span class="p">)</span></div></div>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_info_log_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">metadata_str</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Created recipe manager with metadata: </span><span class="si">{</span><span class="n">metadata_str</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">_sort_modifiers_list</span><span class="p">(</span><span class="n">modifiers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">BaseModifier</span><span class="p">]:</span>
     <span class="k">return</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">modifiers</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">cmp_to_key</span><span class="p">(</span><span class="n">BaseModifier</span><span class="o">.</span><span class="n">comparator</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">_nested_dict_to_lines</span><span class="p">(</span>
+    <span class="n">dict1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">yaml_str_lines</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">nesting_depth</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="n">indentation</span> <span class="o">=</span> <span class="s2">&quot;  &quot;</span>
+
+    <span class="k">if</span> <span class="n">dict1</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">yaml_str_lines</span>
+
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">dict1</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="nb">dict</span><span class="p">):</span>
+            <span class="c1"># add data for the current nesting level and</span>
+            <span class="c1"># move deeper to the next nesting level</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indentation</span> <span class="o">*</span> <span class="n">nesting_depth</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+            <span class="n">yaml_str_lines</span> <span class="o">=</span> <span class="n">_nested_dict_to_lines</span><span class="p">(</span>
+                <span class="n">value</span><span class="p">,</span> <span class="n">yaml_str_lines</span><span class="p">,</span> <span class="n">nesting_depth</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># reached maximum nesting level.</span>
+            <span class="n">yaml_str_lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">indentation</span> <span class="o">*</span> <span class="n">nesting_depth</span> <span class="o">+</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">key</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">yaml_str_lines</span>
 </pre></div>
 
            </div>

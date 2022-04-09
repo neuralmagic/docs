@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.utils.helpers &mdash; SparseML 0.9.0.20220408 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.utils.helpers &mdash; SparseML 0.9.0.20220409 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -102,6 +102,7 @@
 <span class="sd">Utility / helper functions</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">random</span>
 <span class="kn">import</span> <span class="nn">re</span>
 <span class="kn">import</span> <span class="nn">warnings</span>
@@ -170,7 +171,11 @@
     <span class="s2">&quot;get_layer_param&quot;</span><span class="p">,</span>
     <span class="s2">&quot;set_deterministic_seeds&quot;</span><span class="p">,</span>
     <span class="s2">&quot;torch_distributed_zero_first&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;thin_model_from_checkpoint&quot;</span><span class="p">,</span>
 <span class="p">]</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 
 <span class="c1">##############################</span>
@@ -1043,6 +1048,102 @@
     <span class="k">yield</span>
     <span class="k">if</span> <span class="n">local_rank</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">torch</span><span class="o">.</span><span class="n">distributed</span><span class="o">.</span><span class="n">barrier</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="thin_model_from_checkpoint"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.helpers.thin_model_from_checkpoint">[docs]</a><span class="k">def</span> <span class="nf">thin_model_from_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">state_dict</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Updates any Linear/Conv/BN layers in the given model to match their</span>
+<span class="sd">    respective shapes in the given state dict. Purpose of compatibility</span>
+<span class="sd">    when loading weight for a model from a checkpoint of the same architecture</span>
+<span class="sd">    but with potentially structured thinning applied. Note that this function</span>
+<span class="sd">    has no guarantees on accuracy, will only resize model parameters for</span>
+<span class="sd">    loading compatibility. All adjustments done in place</span>
+
+<span class="sd">    :param model: model to potentially adjust parameter shapes of</span>
+<span class="sd">    :param state_dict: state dict to infer parameter shapes from</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">first_thinned</span> <span class="o">=</span> <span class="kc">True</span>
+    <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="n">checkpoint_tens</span> <span class="ow">in</span> <span class="n">state_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">param_name</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;.weight&quot;</span><span class="p">):</span>
+            <span class="k">continue</span>  <span class="c1"># only deal with weight params of modules</span>
+        <span class="n">layer_name</span> <span class="o">=</span> <span class="n">param_name</span><span class="p">[:</span><span class="o">-</span><span class="mi">7</span><span class="p">]</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">get_layer</span><span class="p">(</span><span class="n">layer_name</span><span class="p">,</span> <span class="n">model</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;weight&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">checkpoint_tens</span><span class="o">.</span><span class="n">shape</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>  <span class="c1"># skip if there is no update to shape</span>
+
+        <span class="c1"># quick check that target layer is some flavor of FC/Conv/BN</span>
+        <span class="n">layer_type</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="s2">&quot;Linear&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layer_type</span>
+            <span class="ow">or</span> <span class="s2">&quot;Conv&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layer_type</span>
+            <span class="ow">or</span> <span class="p">(</span><span class="s2">&quot;BatchNorm&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layer_type</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="n">orig_shape</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">target_shape</span> <span class="o">=</span> <span class="n">checkpoint_tens</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="c1"># update weight param + grad</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">[</span>
+                <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">...</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span><span class="p">[</span>
+                    <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="o">...</span>
+                <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">grad</span><span class="p">[:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c1"># update bias param + grad</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;bias&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">layer</span><span class="o">.</span><span class="n">bias</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># target output channels should be the first dim of target shape</span>
+            <span class="n">layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">data</span><span class="p">[:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">grad</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">grad</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">bias</span><span class="o">.</span><span class="n">grad</span><span class="p">[:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+
+        <span class="c1"># update layer attributes</span>
+        <span class="k">if</span> <span class="s2">&quot;BatchNorm&quot;</span> <span class="ow">in</span> <span class="n">layer_type</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;num_features&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">num_features</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">size</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="c1"># BN running mean and var are not stored as Parameters</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;running_mean&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">running_mean</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">running_mean</span><span class="p">)[</span>
+                    <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;running_var&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">running_var</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">running_var</span><span class="p">)[</span>
+                    <span class="p">:</span> <span class="n">target_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Linear&quot;</span> <span class="ow">in</span> <span class="n">layer_type</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;out_features&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">out_features</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;in_features&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">in_features</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;Conv&quot;</span> <span class="ow">in</span> <span class="n">layer_type</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;out_channels&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">out_channels</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;in_channels&quot;</span><span class="p">):</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">in_channels</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="s2">&quot;groups&quot;</span><span class="p">)</span> <span class="ow">and</span> <span class="n">layer</span><span class="o">.</span><span class="n">groups</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">layer</span><span class="o">.</span><span class="n">groups</span> <span class="o">=</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">first_thinned</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Thinning module layers for compatibility with given state dict:&quot;</span>
+            <span class="p">)</span>
+            <span class="n">first_thinned</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Thinned layer </span><span class="si">{</span><span class="n">layer_name</span><span class="si">}</span><span class="s2"> from shape </span><span class="si">{</span><span class="n">orig_shape</span><span class="si">}</span><span class="s2"> to &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">layer</span><span class="o">.</span><span class="n">weight</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span></div>
 </pre></div>
 
            </div>

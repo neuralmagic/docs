@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   sparseml.pytorch.models.classification.resnet — SparseML 0.11.1.20220408 documentation
+   sparseml.pytorch.models.classification.resnet — SparseML 0.11.1.20220409 documentation
   </title>
   <link href="../../../../../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../../../../../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -208,7 +208,6 @@
 <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
     <span class="n">FloatFunctional</span> <span class="o">=</span> <span class="kc">None</span>
 
-
 <span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
     <span class="s2">"ResNetSectionSettings"</span><span class="p">,</span>
     <span class="s2">"ResNet"</span><span class="p">,</span>
@@ -302,6 +301,28 @@
         <span class="k">return</span> <span class="n">in_channels</span> <span class="o">!=</span> <span class="n">out_channels</span> <span class="ow">or</span> <span class="n">stride</span> <span class="o">&gt;</span> <span class="mi">1</span>
 
 
+<span class="k">class</span> <span class="nc">_AddReLU</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
+    <span class="sd">"""</span>
+<span class="sd">    Wrapper for the FloatFunctional class that enables QATWrapper used to</span>
+<span class="sd">    quantize the first input to the Add operation</span>
+<span class="sd">    """</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_channels</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">FloatFunctional</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">functional</span> <span class="o">=</span> <span class="n">FloatFunctional</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wrap_qat</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qat_wrapper_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"num_inputs"</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">"num_outputs"</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">functional</span> <span class="o">=</span> <span class="n">ReLU</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="n">num_channels</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">functional</span><span class="p">,</span> <span class="n">FloatFunctional</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">functional</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">functional</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="n">y</span><span class="p">)</span>
+
+
 <span class="k">class</span> <span class="nc">_BasicBlock</span><span class="p">(</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">in_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">out_channels</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">stride</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
@@ -325,11 +346,7 @@
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">FloatFunctional</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">FloatFunctional</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">ReLU</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span> <span class="o">=</span> <span class="n">_AddReLU</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 
@@ -342,12 +359,7 @@
         <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bn2</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
 
         <span class="n">identity_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">inp</span>
-
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">,</span> <span class="n">FloatFunctional</span><span class="p">):</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">identity_val</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">out</span> <span class="o">+=</span> <span class="n">identity_val</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">identity_val</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">out</span>
 
@@ -391,11 +403,7 @@
             <span class="k">else</span> <span class="kc">None</span>
         <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span> <span class="o">=</span> <span class="p">(</span>
-            <span class="n">FloatFunctional</span><span class="p">()</span>
-            <span class="k">if</span> <span class="n">FloatFunctional</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-            <span class="k">else</span> <span class="n">ReLU</span><span class="p">(</span><span class="n">num_channels</span><span class="o">=</span><span class="n">out_channels</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span> <span class="o">=</span> <span class="n">_AddReLU</span><span class="p">(</span><span class="n">out_channels</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">initialize</span><span class="p">()</span>
 
@@ -413,11 +421,7 @@
 
         <span class="n">identity_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">identity</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">inp</span>
 
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">,</span> <span class="n">FloatFunctional</span><span class="p">):</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">out</span><span class="p">,</span> <span class="n">identity_val</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">out</span> <span class="o">+=</span> <span class="n">identity_val</span>
-            <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_relu</span><span class="p">(</span><span class="n">identity_val</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">out</span>
 

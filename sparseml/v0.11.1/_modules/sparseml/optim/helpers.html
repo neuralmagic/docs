@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.optim.helpers &mdash; SparseML 0.11.1.20220408 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.optim.helpers &mdash; SparseML 0.11.1.20220409 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
@@ -101,14 +101,18 @@
 <span class="sd">Helper functions for base Modifier and Manger utilities</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">platform</span>
 <span class="kn">import</span> <span class="nn">re</span>
-<span class="kn">import</span> <span class="nn">warnings</span>
 <span class="kn">from</span> <span class="nn">contextlib</span> <span class="kn">import</span> <span class="n">suppress</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
 
 <span class="kn">import</span> <span class="nn">yaml</span>
 
+<span class="kn">from</span> <span class="nn">sparseml</span> <span class="kn">import</span> <span class="n">version</span> <span class="k">as</span> <span class="n">sparseml_version</span>
 <span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FRAMEWORK_METADATA_KEY</span><span class="p">,</span>
     <span class="n">RECIPE_METADATA_KEY</span><span class="p">,</span>
     <span class="n">UnknownVariableException</span><span class="p">,</span>
     <span class="n">restricted_eval</span><span class="p">,</span>
@@ -126,6 +130,7 @@
     <span class="s2">&quot;parse_recipe_variables&quot;</span><span class="p">,</span>
     <span class="s2">&quot;check_if_staged_recipe&quot;</span><span class="p">,</span>
     <span class="s2">&quot;validate_metadata&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;add_framework_metadata&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -644,7 +649,7 @@
 
 <span class="k">def</span> <span class="nf">_check_warn_dict_difference</span><span class="p">(</span><span class="n">original_dict</span><span class="p">,</span> <span class="n">new_dict</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">original_dict</span> <span class="o">!=</span> <span class="n">new_dict</span><span class="p">:</span>
-        <span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+        <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
             <span class="sa">f</span><span class="s2">&quot;Attempting to overwrite the previous metadata: </span><span class="si">{</span><span class="n">original_dict</span><span class="si">}</span><span class="s2"> &quot;</span>
             <span class="sa">f</span><span class="s2">&quot;with new metadata: </span><span class="si">{</span><span class="n">new_dict</span><span class="si">}</span><span class="s2">. &quot;</span>
             <span class="s2">&quot;This may lead to different results than the original run of the recipe. &quot;</span>
@@ -652,6 +657,54 @@
             <span class="s2">&quot;change in metadata is expected.&quot;</span>
         <span class="p">)</span>
     <span class="k">return</span> <span class="n">new_dict</span>
+
+
+<div class="viewcode-block" id="add_framework_metadata"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.helpers.add_framework_metadata">[docs]</a><span class="k">def</span> <span class="nf">add_framework_metadata</span><span class="p">(</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span> <span class="o">**</span><span class="n">extra_metadata</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Adds the information (in the form of a nested dictionary)</span>
+<span class="sd">    about the relevant frameworks used by the user to the metadata.</span>
+<span class="sd">    :param metadata: Validated metadata</span>
+<span class="sd">    :param extra_metadata: Optional framework metadata, specific for the given framework</span>
+<span class="sd">        (e.g. for pytorch integration</span>
+<span class="sd">        &#39;add_framework_metadata(metadata, pytorch_version = torch.__version__)&#39;)</span>
+<span class="sd">    :return: Validated metadata with framework metadata</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">framework_metadata</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;python_version&quot;</span><span class="p">:</span> <span class="n">platform</span><span class="o">.</span><span class="n">python_version</span><span class="p">(),</span>
+        <span class="s2">&quot;sparseml_version&quot;</span><span class="p">:</span> <span class="n">sparseml_version</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="n">framework_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">extra_metadata</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">stage_name</span><span class="p">,</span> <span class="n">stage_value</span> <span class="ow">in</span> <span class="n">metadata</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">stage_value</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">stage_metadata</span> <span class="o">=</span> <span class="p">{</span><span class="n">FRAMEWORK_METADATA_KEY</span><span class="p">:</span> <span class="n">framework_metadata</span><span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">FRAMEWORK_METADATA_KEY</span> <span class="ow">in</span> <span class="n">stage_value</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span> <span class="ow">and</span> <span class="n">stage_value</span><span class="p">[</span>
+                <span class="n">FRAMEWORK_METADATA_KEY</span>
+            <span class="p">]:</span>
+                <span class="n">shared_keys</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span>
+                    <span class="n">stage_value</span><span class="p">[</span><span class="n">FRAMEWORK_METADATA_KEY</span><span class="p">]</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">intersection</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">framework_metadata</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span>
+                <span class="n">warning_if_stage</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;stage (stage name: </span><span class="si">{</span><span class="n">stage_name</span><span class="si">}</span><span class="s2">)&quot;</span>
+                    <span class="k">if</span> <span class="n">stage_name</span> <span class="o">!=</span> <span class="n">RECIPE_METADATA_KEY</span>
+                    <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+                <span class="p">)</span>
+                <span class="n">warning_msg</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Overwriting metadata </span><span class="si">{</span><span class="n">warning_if_stage</span><span class="si">}</span><span class="s2"> key(s) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">shared_keys</span><span class="si">}</span><span class="s2"> with new value(s) &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span><span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span><span class="n">v</span> <span class="ow">in</span> <span class="n">framework_metadata</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">shared_keys</span><span class="p">}</span> <span class="si">}</span><span class="s2">&quot;</span>  <span class="c1"># noqa E501</span>
+                <span class="p">)</span>
+                <span class="n">logging</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="n">warning_msg</span><span class="p">)</span>
+            <span class="n">stage_metadata</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">stage_value</span><span class="p">)</span>
+            <span class="n">stage_metadata</span><span class="p">[</span><span class="n">FRAMEWORK_METADATA_KEY</span><span class="p">]</span> <span class="o">=</span> <span class="n">framework_metadata</span>
+        <span class="n">metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">stage_metadata</span>
+
+    <span class="k">return</span> <span class="n">metadata</span></div>
 
 
 <div class="viewcode-block" id="validate_metadata"><a class="viewcode-back" href="../../../api/sparseml.optim.html#sparseml.optim.helpers.validate_metadata">[docs]</a><span class="k">def</span> <span class="nf">validate_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">,</span> <span class="n">yaml_str</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
@@ -696,6 +749,7 @@
                         <span class="n">checkpoint_metadata</span><span class="p">[</span><span class="n">stage_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">_check_warn_dict_difference</span><span class="p">(</span>
                             <span class="n">container</span><span class="p">[</span><span class="n">stage_name</span><span class="p">][</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span> <span class="n">metadata</span>
                         <span class="p">)</span>
+
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">checkpoint_metadata</span> <span class="o">=</span> <span class="n">_check_warn_dict_difference</span><span class="p">(</span>
                     <span class="n">container</span><span class="p">[</span><span class="n">RECIPE_METADATA_KEY</span><span class="p">],</span> <span class="n">metadata</span>
@@ -709,6 +763,7 @@
 
     <span class="k">else</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">metadata</span><span class="p">:</span>
+
             <span class="k">return</span> <span class="p">(</span>
                 <span class="p">{</span>
                     <span class="n">stage_name</span><span class="p">:</span> <span class="n">metadata</span>
