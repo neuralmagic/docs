@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.pytorch.utils.model &mdash; SparseML 0.12.0.20220423 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.12
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.pytorch.utils.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.pytorch.utils.model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code related to interacting with a trained model such as saving, loading, etc</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">torch</span>
+<span class="kn">from</span> <span class="nn">torch.nn</span> <span class="kn">import</span> <span class="n">DataParallel</span><span class="p">,</span> <span class="n">Module</span>
+<span class="kn">from</span> <span class="nn">torch.optim.optimizer</span> <span class="kn">import</span> <span class="n">Optimizer</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.pytorch.utils.helpers</span> <span class="kn">import</span> <span class="n">thin_model_from_checkpoint</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils.helpers</span> <span class="kn">import</span> <span class="n">create_parent_dirs</span>
+<span class="kn">from</span> <span class="nn">sparsezoo</span> <span class="kn">import</span> <span class="n">Zoo</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">torch.nn.parallel</span> <span class="kn">import</span> <span class="n">DistributedDataParallel</span> <span class="k">as</span> <span class="n">DDP</span>
+
+    <span class="n">ddp_import_error</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">ddp_error</span><span class="p">:</span>
+    <span class="n">DDP</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">ddp_import_error</span> <span class="o">=</span> <span class="n">ddp_error</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;load_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_optimizer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;load_epoch&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;save_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;script_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;trace_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model_to_device&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;parallelize_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;device_to_name_ids&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_parallel_model&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="load_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.load_model">[docs]</a><span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">strict</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">ignore_error_tensors</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fix_data_parallel</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load the state dict into a model from a given file.</span>
+
+<span class="sd">    :param path: the path to the pth file to load the state dict from.</span>
+<span class="sd">        May also be a SparseZoo stub path preceded by &#39;zoo:&#39; with the optional</span>
+<span class="sd">        `?recipe_type=` argument. If given a recipe type, the base model weights</span>
+<span class="sd">        for that recipe will be loaded.</span>
+<span class="sd">    :param model: the model to load the state dict into</span>
+<span class="sd">    :param strict: True to enforce that all tensors match between the model</span>
+<span class="sd">        and the file; False otherwise</span>
+<span class="sd">    :param ignore_error_tensors: names of tensors to ignore if they are not found</span>
+<span class="sd">        in either the model or the file</span>
+<span class="sd">    :param fix_data_parallel: fix the keys in the model state dict if they</span>
+<span class="sd">        look like they came from DataParallel type setup (start with module.).</span>
+<span class="sd">        This removes &quot;module.&quot; all keys</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">path</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;zoo:&quot;</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;recipe_type=&quot;</span> <span class="ow">in</span> <span class="n">path</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">download_recipe_base_framework_files</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pth&quot;</span><span class="p">])[</span>
+                <span class="mi">0</span>
+            <span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="n">Zoo</span><span class="o">.</span><span class="n">load_model_from_stub</span><span class="p">(</span><span class="n">path</span><span class="p">)</span><span class="o">.</span><span class="n">download_framework_files</span><span class="p">(</span>
+                <span class="n">extensions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;.pth&quot;</span><span class="p">]</span>
+            <span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+    <span class="n">current_dict</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="s2">&quot;state_dict&quot;</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="p">:</span>
+        <span class="n">model_dict</span> <span class="o">=</span> <span class="n">model_dict</span><span class="p">[</span><span class="s2">&quot;state_dict&quot;</span><span class="p">]</span>
+
+    <span class="c1"># check if any keys were saved through DataParallel type setup and convert those</span>
+    <span class="k">if</span> <span class="n">fix_data_parallel</span><span class="p">:</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="p">[</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+        <span class="n">module_key</span> <span class="o">=</span> <span class="s2">&quot;module.&quot;</span>
+
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">key</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">module_key</span><span class="p">):</span>
+                <span class="n">new_key</span> <span class="o">=</span> <span class="n">key</span><span class="p">[</span><span class="nb">len</span><span class="p">(</span><span class="n">module_key</span><span class="p">)</span> <span class="p">:]</span>
+                <span class="n">model_dict</span><span class="p">[</span><span class="n">new_key</span><span class="p">]</span> <span class="o">=</span> <span class="n">model_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+                <span class="k">del</span> <span class="n">model_dict</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ignore_error_tensors</span><span class="p">:</span>
+        <span class="n">ignore_error_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">ignore</span> <span class="ow">in</span> <span class="n">ignore_error_tensors</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">ignore</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_dict</span> <span class="ow">and</span> <span class="n">ignore</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_dict</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">ignore</span> <span class="ow">in</span> <span class="n">model_dict</span>
+            <span class="ow">and</span> <span class="n">ignore</span> <span class="ow">in</span> <span class="n">current_dict</span>
+            <span class="ow">and</span> <span class="n">current_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">model_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+        <span class="p">):</span>
+            <span class="n">model_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">ignore</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">model_dict</span> <span class="ow">and</span> <span class="n">ignore</span> <span class="ow">in</span> <span class="n">current_dict</span><span class="p">:</span>
+            <span class="n">model_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span> <span class="o">=</span> <span class="n">current_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span>
+        <span class="k">elif</span> <span class="n">ignore</span> <span class="ow">in</span> <span class="n">model_dict</span> <span class="ow">and</span> <span class="n">ignore</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">current_dict</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">model_dict</span><span class="p">[</span><span class="n">ignore</span><span class="p">]</span>
+
+    <span class="c1"># safety pass for updating layer param shapes when loading a thinned model</span>
+    <span class="n">thin_model_from_checkpoint</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">model_dict</span><span class="p">)</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_dict</span><span class="p">,</span> <span class="n">strict</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="load_optimizer"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.load_optimizer">[docs]</a><span class="k">def</span> <span class="nf">load_optimizer</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span><span class="p">,</span> <span class="n">map_location</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load the state dict into an optimizer from a given file.</span>
+
+<span class="sd">    :param path: the path to the pth file to load the state dict from</span>
+<span class="sd">    :param optimizer: the optimizer to load the state dict into</span>
+<span class="sd">    :param map_location: the location to map the values to when loading the</span>
+<span class="sd">    :return: the epoch saved in the file, if any</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">map_location</span><span class="p">)</span>
+    <span class="n">optimizer</span><span class="o">.</span><span class="n">load_state_dict</span><span class="p">(</span><span class="n">model_dict</span><span class="p">[</span><span class="s2">&quot;optimizer&quot;</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="load_epoch"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.load_epoch">[docs]</a><span class="k">def</span> <span class="nf">load_epoch</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">map_location</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;cpu&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="n">model_dict</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">map_location</span><span class="o">=</span><span class="n">map_location</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="s2">&quot;epoch&quot;</span> <span class="ow">in</span> <span class="n">model_dict</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">model_dict</span><span class="p">[</span><span class="s2">&quot;epoch&quot;</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="trace_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.trace_model">[docs]</a><span class="k">def</span> <span class="nf">trace_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">sample_batch</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function which traces the provided module using the sample batch</span>
+<span class="sd">    into a TorchScript script and saves to provied path.</span>
+
+<span class="sd">    :param path: path to save torchscript</span>
+<span class="sd">    :param model: module to convert to TorchScript</span>
+<span class="sd">    :param sample_batch: sample batch to trace module with</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">trace_module</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;forward&quot;</span><span class="p">:</span> <span class="n">sample_batch</span><span class="p">})</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="script_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.script_model">[docs]</a><span class="k">def</span> <span class="nf">script_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience function which scripts the provided module into a TorchScript script</span>
+<span class="sd">    and saves to provied path.</span>
+
+<span class="sd">    :param path: path to save torchscript</span>
+<span class="sd">    :param model: module to convert to torchscript</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">script</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">script</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">torch</span><span class="o">.</span><span class="n">jit</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">script</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="save_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.save_model">[docs]</a><span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span>
+    <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">optimizer</span><span class="p">:</span> <span class="n">Optimizer</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">epoch</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">use_zipfile_serialization_if_available</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">include_modifiers</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">arch_key</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Save a model&#39;s state dict into a file at the given path.</span>
+<span class="sd">    Additionally can save an optimizer&#39;s state and the current epoch.</span>
+
+<span class="sd">    :param path: the path to save the file the states to</span>
+<span class="sd">    :param model: the model to save state for</span>
+<span class="sd">    :param optimizer: the optimizer, if any, to save state for</span>
+<span class="sd">    :param epoch: the epoch to save</span>
+<span class="sd">    :param use_zipfile_serialization_if_available: for torch &gt;= 1.6.0 only</span>
+<span class="sd">        exports the model&#39;s state dict using the new zipfile serialization</span>
+<span class="sd">    :param include_modifiers: if True, and a ScheduledOptimizer is provided</span>
+<span class="sd">        as the optimizer, the associated ScheduledModifierManager and its</span>
+<span class="sd">        Modifiers will be exported under the &#39;manager&#39; key. Default is False</span>
+<span class="sd">    :param arch_key: if provided, the `arch_key` will be saved in the</span>
+<span class="sd">        checkpoint</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">create_parent_dirs</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">is_parallel_model</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">module</span>
+
+    <span class="n">save_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;state_dict&quot;</span><span class="p">:</span> <span class="n">OrderedDict</span><span class="p">()}</span>
+
+    <span class="c1"># make sure we have the model state_dict on cpu</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">state</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">copy</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">state</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+        <span class="n">copy</span><span class="o">.</span><span class="n">copy_</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;state_dict&quot;</span><span class="p">][</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">copy</span>
+
+    <span class="k">if</span> <span class="n">optimizer</span><span class="p">:</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;optimizer&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;epoch&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">epoch</span>
+
+    <span class="k">if</span> <span class="n">include_modifiers</span> <span class="ow">and</span> <span class="n">optimizer</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">&quot;manager_state_dict&quot;</span><span class="p">):</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;manager&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">manager_state_dict</span><span class="p">()</span>
+    <span class="k">elif</span> <span class="n">include_modifiers</span> <span class="ow">and</span> <span class="n">optimizer</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">optimizer</span><span class="p">,</span> <span class="s2">&quot;wrapped_manager&quot;</span><span class="p">):</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;manager&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">optimizer</span><span class="o">.</span><span class="n">wrapped_manager</span><span class="o">.</span><span class="n">state_dict</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">arch_key</span><span class="p">:</span>
+        <span class="n">save_dict</span><span class="p">[</span><span class="s2">&quot;arch_key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">arch_key</span>
+
+    <span class="k">if</span> <span class="n">torch</span><span class="o">.</span><span class="n">__version__</span> <span class="o">&lt;</span> <span class="s2">&quot;1.6&quot;</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">save_dict</span><span class="p">,</span> <span class="n">path</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">torch</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">save_dict</span><span class="p">,</span>
+            <span class="n">path</span><span class="p">,</span>
+            <span class="n">_use_new_zipfile_serialization</span><span class="o">=</span><span class="n">use_zipfile_serialization_if_available</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">_DataParallel</span><span class="p">(</span><span class="n">DataParallel</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__getattr__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="n">module</span> <span class="o">=</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__getattr__</span><span class="p">(</span><span class="s2">&quot;module&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">item</span> <span class="o">==</span> <span class="s2">&quot;module&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">module</span>
+
+        <span class="k">return</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">module</span><span class="p">,</span> <span class="n">item</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="parallelize_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.parallelize_model">[docs]</a><span class="k">def</span> <span class="nf">parallelize_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span> <span class="n">ids</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="n">Module</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Data parallelize a model across multiple devices</span>
+
+<span class="sd">    :param model: the model to parallelize across multiple devices</span>
+<span class="sd">    :param ids: the ides of the devices to parallelize across</span>
+<span class="sd">    :return: a parallelized model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_DataParallel</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="model_to_device"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.model_to_device">[docs]</a><span class="k">def</span> <span class="nf">model_to_device</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">,</span>
+    <span class="n">device</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span>
+    <span class="n">ddp</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Module</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The model to push onto a device or multiple devices.</span>
+
+<span class="sd">    :param model: the model to push to a device</span>
+<span class="sd">    :param device: the device string to push to; ex: cpu, cuda, cuda:0,1. For</span>
+<span class="sd">        DDP, device should be the local_rank int value; ex: 0</span>
+<span class="sd">    :param ddp: set True to wrap module as a DDP object. If True, device should</span>
+<span class="sd">        be set to the local_rank int value. Default is False</span>
+<span class="sd">    :return: a tuple containing the model on desired device(s),</span>
+<span class="sd">        the device name, and the ids for the device</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">ddp</span><span class="p">:</span>
+        <span class="n">device</span><span class="p">,</span> <span class="n">ids</span> <span class="o">=</span> <span class="n">device_to_name_ids</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">ids</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">model</span> <span class="o">=</span> <span class="n">parallelize_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ids</span><span class="p">)</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">DDP</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">ddp_import_error</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">device</span><span class="p">,</span> <span class="nb">int</span>
+        <span class="p">),</span> <span class="s2">&quot;For DDP, device must be set to a local_rank int value&quot;</span>
+        <span class="k">assert</span> <span class="n">device</span> <span class="o">&lt;</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">(),</span> <span class="p">(</span>
+            <span class="s2">&quot;Device local rank must be less than the number of available cuda devices. &quot;</span>
+            <span class="s2">&quot;Received local rank </span><span class="si">{}</span><span class="s2"> with device count==</span><span class="si">{}</span><span class="s2">&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device</span><span class="p">,</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">())</span>
+
+        <span class="n">model</span> <span class="o">=</span> <span class="n">model</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">DDP</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">device_ids</span><span class="o">=</span><span class="p">[</span><span class="n">device</span><span class="p">],</span> <span class="n">output_device</span><span class="o">=</span><span class="n">device</span><span class="p">)</span>
+        <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">device</span><span class="p">]</span>
+        <span class="n">device</span> <span class="o">=</span> <span class="s2">&quot;cuda:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">device</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">model</span><span class="p">,</span> <span class="n">device</span><span class="p">,</span> <span class="n">ids</span></div>
+
+
+<div class="viewcode-block" id="device_to_name_ids"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.device_to_name_ids">[docs]</a><span class="k">def</span> <span class="nf">device_to_name_ids</span><span class="p">(</span><span class="n">device</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Split a device string into a device and ids</span>
+
+<span class="sd">    :param device: the device string to push to; ex: cpu, cuda, cuda:0,1</span>
+<span class="sd">    :return: a tuple containing the device string and devices</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">split</span> <span class="o">=</span> <span class="n">device</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;:&quot;</span><span class="p">)</span>
+    <span class="n">name</span> <span class="o">=</span> <span class="n">split</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="o">==</span> <span class="s2">&quot;cpu&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">name</span> <span class="o">!=</span> <span class="s2">&quot;cuda&quot;</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">is_available</span><span class="p">():</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> device not available on this system&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">split</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="kc">None</span>
+
+    <span class="n">ids</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">id_</span><span class="p">)</span> <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">split</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+    <span class="n">count</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">cuda</span><span class="o">.</span><span class="n">device_count</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">id_</span> <span class="ow">in</span> <span class="n">ids</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">id_</span> <span class="o">&gt;=</span> <span class="n">count</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> device id not available on this system&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">id_</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ids</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">:</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">ids</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">name</span><span class="p">,</span> <span class="n">ids</span></div>
+
+
+<div class="viewcode-block" id="is_parallel_model"><a class="viewcode-back" href="../../../../api/sparseml.pytorch.utils.html#sparseml.pytorch.utils.model.is_parallel_model">[docs]</a><span class="k">def</span> <span class="nf">is_parallel_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Module</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param model: the model to test</span>
+<span class="sd">    :return: True if the given model is wrapped as a DataPararallel or</span>
+<span class="sd">        DistributedDataParallel Module. False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">DataParallel</span><span class="p">)</span> <span class="ow">or</span> <span class="p">(</span>
+        <span class="n">DDP</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">DDP</span><span class="p">)</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.12.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="model.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>
