@@ -143,6 +143,8 @@
     <span class="s2">&quot;benchmark_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;analyze_model&quot;</span><span class="p">,</span>
     <span class="s2">&quot;Scheduler&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;Context&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MultiModelEngine&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
@@ -266,6 +268,7 @@
                     <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="kc">None</span><span class="p">,</span>
                 <span class="p">)</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
@@ -273,6 +276,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
 
     <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span>
@@ -606,6 +610,93 @@
             <span class="s2">&quot;cpu_avx_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_avx_type</span><span class="p">,</span>
             <span class="s2">&quot;cpu_vnni&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_vnni</span><span class="p">,</span>
         <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="Context"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context">[docs]</a><span class="k">class</span> <span class="nc">Context</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Contexts can be used to run multiple instances of the MultiModelEngine with the same</span>
+<span class="sd">    scheduler. This allows one scheduler to manage the resources of the system</span>
+<span class="sd">    effectively, keeping engines that are running different models from fighting over system</span>
+<span class="sd">    resources.</span>
+
+<span class="sd">    :param num_cores: The number of physical cores to run the model on. If more</span>
+<span class="sd">        cores are requested than are available on a single socket, the engine</span>
+<span class="sd">        will try to distribute them evenly across as few sockets as possible.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="s2">&quot;elastic&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_deepsparse_context</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_context</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Context.value"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.value">[docs]</a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deepsparse_context</span></div>
+
+<div class="viewcode-block" id="Context.num_cores"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.num_cores">[docs]</a>    <span class="k">def</span> <span class="nf">num_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span></div>
+
+<div class="viewcode-block" id="Context.scheduler"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.scheduler">[docs]</a>    <span class="k">def</span> <span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span></div></div>
+
+
+<div class="viewcode-block" id="MultiModelEngine"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.MultiModelEngine">[docs]</a><span class="k">class</span> <span class="nc">MultiModelEngine</span><span class="p">(</span><span class="n">Engine</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The MultiModelEngine, together with the Context class, can be used to run multiple models</span>
+<span class="sd">    on the same computer at once. The interface and behavior are both very similar to the Engine</span>
+<span class="sd">    class. The main difference is instead of taking in a scheduler and a number of cores as</span>
+<span class="sd">    arguments to the constructor, the MultiModelEngine takes in a Context. The Context contains</span>
+<span class="sd">    a shared scheduler along with other runtime information that will be used across instances</span>
+<span class="sd">    of the MultiModelEngine to provide optimal performance when running multiple models</span>
+<span class="sd">    concurrently.</span>
+
+<span class="sd">    :param model: Either a path to the model&#39;s onnx file, a SparseZoo model stub</span>
+<span class="sd">        prefixed by &#39;zoo:&#39;, a SparseZoo Model object, or a SparseZoo ONNX File</span>
+<span class="sd">        object that defines the neural network</span>
+<span class="sd">    :param batch_size: The batch size of the inputs to be used with the engine</span>
+<span class="sd">    :param context: See above. This object should be constructed with the desired number of</span>
+<span class="sd">        cores and passed into each instance of the MultiModelEngine.</span>
+<span class="sd">    :param input_shapes: The list of shapes to set the inputs to. Pass None to use model as-is.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="n">Context</span><span class="p">,</span>
+        <span class="n">input_shapes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span> <span class="o">=</span> <span class="n">model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">num_cores</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">scheduler</span><span class="p">())</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_shapes</span> <span class="o">=</span> <span class="n">input_shapes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_avx_type</span> <span class="o">=</span> <span class="n">AVX_TYPE</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_vnni</span> <span class="o">=</span> <span class="n">VNNI</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_shapes</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">override_onnx_input_shapes</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_shapes</span>
+            <span class="p">)</span> <span class="k">as</span> <span class="n">model_path</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
+                    <span class="n">model_path</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">context</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_eng_net</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_engine</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+                <span class="n">context</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
+            <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="compile_model"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.compile_model">[docs]</a><span class="k">def</span> <span class="nf">compile_model</span><span class="p">(</span>
