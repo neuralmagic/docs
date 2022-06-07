@@ -120,12 +120,14 @@
     <span class="s2">&quot;cpu_vnni_compatible&quot;</span><span class="p">,</span>
     <span class="s2">&quot;cpu_avx2_compatible&quot;</span><span class="p">,</span>
     <span class="s2">&quot;cpu_avx512_compatible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cpu_neon_compatible&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;cpu_sve_compatible&quot;</span><span class="p">,</span>
     <span class="s2">&quot;cpu_quantization_compatible&quot;</span><span class="p">,</span>
     <span class="s2">&quot;print_hardware_capability&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
 
-<span class="n">VALID_VECTOR_EXTENSIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;avx2&quot;</span><span class="p">,</span> <span class="s2">&quot;avx512&quot;</span><span class="p">}</span>
+<span class="n">VALID_VECTOR_EXTENSIONS</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;avx2&quot;</span><span class="p">,</span> <span class="s2">&quot;avx512&quot;</span><span class="p">,</span> <span class="s2">&quot;neon&quot;</span><span class="p">,</span> <span class="s2">&quot;sve&quot;</span><span class="p">}</span>
 
 
 <span class="k">class</span> <span class="nc">_Memoize</span><span class="p">:</span>
@@ -306,13 +308,34 @@
     <span class="k">return</span> <span class="n">cpu_architecture</span><span class="p">()</span><span class="o">.</span><span class="n">isa</span> <span class="o">==</span> <span class="s2">&quot;avx2&quot;</span> <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span></div>
 
 
+<div class="viewcode-block" id="cpu_neon_compatible"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.cpu_neon_compatible">[docs]</a><span class="k">def</span> <span class="nf">cpu_neon_compatible</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :return: True if the current cpu has the NEON instruction set,</span>
+<span class="sd">        used for running neural networks performantly</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cpu_architecture</span><span class="p">()</span><span class="o">.</span><span class="n">isa</span> <span class="o">==</span> <span class="s2">&quot;neon&quot;</span></div>
+
+
+<div class="viewcode-block" id="cpu_sve_compatible"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.cpu_sve_compatible">[docs]</a><span class="k">def</span> <span class="nf">cpu_sve_compatible</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :return: True if the current cpu has the SVE instruction set,</span>
+<span class="sd">        used for running neural networks performantly</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">cpu_architecture</span><span class="p">()</span><span class="o">.</span><span class="n">isa</span> <span class="o">==</span> <span class="s2">&quot;sve&quot;</span></div>
+
+
 <div class="viewcode-block" id="cpu_quantization_compatible"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.cpu_quantization_compatible">[docs]</a><span class="k">def</span> <span class="nf">cpu_quantization_compatible</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
     <span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    :return: True if the current cpu has the AVX2 or AVX512 instruction sets,</span>
+<span class="sd">    :return: True if the current cpu has the AVX2, AVX512, NEON or SVE instruction sets,</span>
 <span class="sd">        used for running quantized neural networks performantly.</span>
 <span class="sd">        (AVX2 &lt; AVX512 &lt; VNNI)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span> <span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span></div>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">cpu_avx2_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_neon_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_sve_compatible</span><span class="p">()</span>
+    <span class="p">)</span></div>
 
 
 <div class="viewcode-block" id="cpu_details"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.cpu.cpu_details">[docs]</a><span class="k">def</span> <span class="nf">cpu_details</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
@@ -344,32 +367,39 @@
     <span class="n">arch</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
 
     <span class="n">quantized_flag</span> <span class="o">=</span> <span class="s2">&quot;TRUE (emulated)&quot;</span> <span class="k">if</span> <span class="n">cpu_quantization_compatible</span><span class="p">()</span> <span class="k">else</span> <span class="s2">&quot;FALSE&quot;</span>
-    <span class="k">if</span> <span class="n">cpu_vnni_compatible</span><span class="p">():</span>
+    <span class="k">if</span> <span class="n">cpu_vnni_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_neon_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_sve_compatible</span><span class="p">():</span>
         <span class="n">quantized_flag</span> <span class="o">=</span> <span class="s2">&quot;TRUE&quot;</span>
+
+    <span class="n">fp32_flag</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">cpu_avx2_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_neon_compatible</span><span class="p">()</span>
+        <span class="ow">or</span> <span class="n">cpu_sve_compatible</span><span class="p">()</span>
+    <span class="p">)</span>
 
     <span class="n">message</span> <span class="o">=</span> <span class="p">(</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">vendor</span><span class="si">}</span><span class="s2"> CPU detected with </span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">num_available_physical_cores</span><span class="si">}</span><span class="s2"> cores. &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;(</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">available_sockets</span><span class="si">}</span><span class="s2"> sockets with &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">arch</span><span class="o">.</span><span class="n">available_cores_per_socket</span><span class="si">}</span><span class="s2"> cores each)</span><span class="se">\n</span><span class="s2">&quot;</span>
-        <span class="s2">&quot;DeepSparse FP32 model performance supported: &quot;</span>
-        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_avx512_compatible</span><span class="p">()</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="sa">f</span><span class="s2">&quot;DeepSparse FP32 model performance supported: </span><span class="si">{</span><span class="n">fp32_flag</span><span class="si">}</span><span class="s2">.</span><span class="se">\n</span><span class="s2">&quot;</span>
         <span class="s2">&quot;DeepSparse INT8 (quantized) model performance supported: &quot;</span>
         <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">quantized_flag</span><span class="si">}</span><span class="s2">.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
     <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cpu_avx512_compatible</span><span class="p">():</span>
-        <span class="n">message</span> <span class="o">+=</span> <span class="p">(</span>
-            <span class="s2">&quot;AVX2 instruction set detected. Performance speedups are available, &quot;</span>
-            <span class="s2">&quot;but inference time will be slower compared with an AVX-512 system.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">cpu_neon_compatible</span><span class="p">()</span> <span class="ow">or</span> <span class="n">cpu_sve_compatible</span><span class="p">()):</span>
+        <span class="k">if</span> <span class="n">cpu_avx2_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cpu_avx512_compatible</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s2">&quot;AVX2 instruction set detected. Performance speedups are available, &quot;</span>
+                <span class="s2">&quot;but inference time will be slower compared with an AVX-512 system.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
-    <span class="k">if</span> <span class="n">cpu_quantization_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cpu_vnni_compatible</span><span class="p">():</span>
-        <span class="n">message</span> <span class="o">+=</span> <span class="p">(</span>
-            <span class="s2">&quot;Non VNNI system detected. Performance speedups for INT8 (quantized) &quot;</span>
-            <span class="s2">&quot;models is available, but will be slower compared with a VNNI system. &quot;</span>
-            <span class="s2">&quot;Set NM_FAST_VNNI_EMULATION=True in the environment to enable faster &quot;</span>
-            <span class="s2">&quot;emulated inference which may have a minor effect on accuracy.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
-        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">cpu_quantization_compatible</span><span class="p">()</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">cpu_vnni_compatible</span><span class="p">():</span>
+            <span class="n">message</span> <span class="o">+=</span> <span class="p">(</span>
+                <span class="s2">&quot;Non VNNI system detected. Performance speedups for INT8 (quantized) &quot;</span>
+                <span class="s2">&quot;models is available, but will be slower compared with a VNNI system. &quot;</span>
+                <span class="s2">&quot;Set NM_FAST_VNNI_EMULATION=True in the environment to enable faster &quot;</span>
+                <span class="s2">&quot;emulated inference which may have a minor effect on accuracy.</span><span class="se">\n\n</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
 
     <span class="n">message</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;Additional CPU info: </span><span class="si">{</span><span class="n">arch</span><span class="si">}</span><span class="s2">&quot;</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">message</span><span class="p">)</span></div>
@@ -411,6 +441,7 @@
       <dd><a href="../../../v0.11.2/index.html">v0.11.2</a></dd>
       <dd><a href="../../../v0.12.0/index.html">v0.12.0</a></dd>
       <dd><a href="../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../v0.12.2/index.html">v0.12.2</a></dd>
       <dd><a href="../../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../../v0.3.1/index.html">v0.3.1</a></dd>
       <dd><a href="../../../v0.4.0/index.html">v0.4.0</a></dd>

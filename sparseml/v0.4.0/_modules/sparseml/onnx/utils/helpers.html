@@ -1,0 +1,1395 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.onnx.utils.helpers &mdash; SparseML 0.4.0.20220607 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.4
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.onnx.utils.helpers</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.onnx.utils.helpers</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utility / helper functions</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">functools</span> <span class="kn">import</span> <span class="n">reduce</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">onnx</span>
+<span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">TensorProto</span><span class="p">,</span> <span class="n">numpy_helper</span>
+<span class="kn">from</span> <span class="nn">onnx.helper</span> <span class="kn">import</span> <span class="n">get_attribute_value</span><span class="p">,</span> <span class="n">make_empty_tensor_value_info</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.onnx.base</span> <span class="kn">import</span> <span class="n">require_onnxruntime</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">clean_path</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;validate_onnx_file&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;check_load_model&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_node_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_by_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_nodes_by_input_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_nodes_by_output_id&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_shape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_numpy_dtype&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NodeShape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_nodes_shapes_ort&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_nodes_shapes_shape_inference&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;extract_node_shapes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_init_by_name&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_attr_float_val_for_node&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NodeParam&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;conv_node_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;gemm_node_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;matmul_node_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;BatchNormParams&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_batch_norm_params&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_attributes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_inputs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_outputs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_input_nodes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_node_output_nodes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_prunable_node&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;is_foldable_node&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_prunable_node_from_foldable&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_prunable_nodes&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;SparsityMeasurement&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;onnx_nodes_sparsities&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model_inputs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;model_outputs&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_kernel_shape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;calculate_flops&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_quantize_parent_for_dequantize_node&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_tensor_shape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;get_tensor_dim_shape&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;set_tensor_dim_shape&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="validate_onnx_file"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.validate_onnx_file">[docs]</a><span class="k">def</span> <span class="nf">validate_onnx_file</span><span class="p">(</span><span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Validate that a file at a given path is a valid ONNX model</span>
+
+<span class="sd">    :param path: the path of the file to validate</span>
+<span class="sd">    :raise ValueError: if not a valid ONNX model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">onnx_model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">onnx_model</span><span class="o">.</span><span class="n">opset_import</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;could not parse opset_import&quot;</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;file at </span><span class="si">{}</span><span class="s2"> is not a valid onnx model: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">err</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="check_load_model"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.check_load_model">[docs]</a><span class="k">def</span> <span class="nf">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">ModelProto</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load an ONNX model from a given file path if supplied.</span>
+<span class="sd">    If already a model proto, then returns.</span>
+
+<span class="sd">    :param model: the model proto or path to the model ONNX file to check for loading</span>
+<span class="sd">    :return: the loaded ONNX ModelProto</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">model</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">clean_path</span><span class="p">(</span><span class="n">model</span><span class="p">))</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;unknown type given for model: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">model</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="extract_node_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.extract_node_id">[docs]</a><span class="k">def</span> <span class="nf">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the node id for a given node from an ONNX model.</span>
+<span class="sd">    Grabs the first ouput id as the node id.</span>
+<span class="sd">    This is because is guaranteed to be unique for this node by the ONNX spec.</span>
+
+<span class="sd">    :param node: the node to grab an id for</span>
+<span class="sd">    :return: the id for the node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span>
+
+    <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="n">outputs</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="get_node_by_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_by_id">[docs]</a><span class="k">def</span> <span class="nf">get_node_by_id</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a node from a model by the node_id generated from extract_node_id</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param node_id: id of the node to get from the model</span>
+<span class="sd">    :return: the retrieved node or None if no node found</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span> <span class="o">==</span> <span class="n">node_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">node</span>
+
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="get_nodes_by_input_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_nodes_by_input_id">[docs]</a><span class="k">def</span> <span class="nf">get_nodes_by_input_id</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">input_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all the nodes in a model that have a given id as one of the inputs</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param input_id: id of the input to get nodes by</span>
+<span class="sd">    :return: the retrieved nodes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">get_node_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="get_nodes_by_output_id"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_nodes_by_output_id">[docs]</a><span class="k">def</span> <span class="nf">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">output_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all the nodes in a model that have a given id as one of the outputs</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param output_id: id of the output to get nodes by</span>
+<span class="sd">    :return: the retrieved nodes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="n">get_node_outputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">outputs</span><span class="p">:</span>
+            <span class="n">nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="extract_shape"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.extract_shape">[docs]</a><span class="k">def</span> <span class="nf">extract_shape</span><span class="p">(</span><span class="n">proto</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="o">...</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the shape info from a proto.</span>
+<span class="sd">    Convenient for inputs into a model for example to get the tensor dimension.</span>
+
+<span class="sd">    :param proto: the proto to get tensor shape info for</span>
+<span class="sd">    :return: a tuple containing shape info if found, else None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tensor_type</span> <span class="o">=</span> <span class="n">proto</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">tensor_type</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="s2">&quot;shape&quot;</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">shape</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dim</span><span class="o">.</span><span class="n">HasField</span><span class="p">(</span><span class="s2">&quot;dim_value&quot;</span><span class="p">):</span>
+            <span class="n">shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dim</span><span class="o">.</span><span class="n">dim_value</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">shape</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_numpy_dtype"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_numpy_dtype">[docs]</a><span class="k">def</span> <span class="nf">get_numpy_dtype</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">dtype</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract the NumPy dtype of an ONNX tensor.</span>
+<span class="sd">    Returns None if there is not a direct mapping from the ONNX data type</span>
+<span class="sd">    to a NumPy dtype.</span>
+
+<span class="sd">    :param tensor: the tensor to get the dtype of</span>
+<span class="sd">    :return: a NumPy dtype for the tensor if available otherwise None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">data_type_enum</span> <span class="o">=</span> <span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">elem_type</span>  <span class="c1"># type: int</span>
+    <span class="n">data_type</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="o">.</span><span class="n">DataType</span><span class="o">.</span><span class="n">Name</span><span class="p">(</span><span class="n">data_type_enum</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>  <span class="c1"># type: str</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">data_type</span><span class="p">):</span>
+        <span class="n">dtype</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">numpy</span><span class="p">,</span> <span class="n">data_type</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dtype</span> <span class="ow">is</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float</span><span class="p">:</span>  <span class="c1"># default to float32</span>
+            <span class="n">dtype</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">float32</span>
+        <span class="k">return</span> <span class="n">dtype</span>
+    <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Tuple containing a node id and its input and output shapes</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">NodeShape</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;NodeShape&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;id&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;input_shapes&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s2">&quot;output_shapes&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="extract_nodes_shapes_ort"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.extract_nodes_shapes_ort">[docs]</a><span class="nd">@require_onnxruntime</span><span class="p">()</span>
+<span class="k">def</span> <span class="nf">extract_nodes_shapes_ort</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a modified model to expose intermediate outputs and runs an ONNX Runtime</span>
+<span class="sd">    InferenceSession to obtain the output shape of each node.</span>
+
+<span class="sd">    :param model: an ONNX model</span>
+<span class="sd">    :return: a list of NodeArg with their shape exposed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">import</span> <span class="nn">onnxruntime</span>  <span class="c1"># import protected by @require_onnxruntime()</span>
+
+    <span class="n">model_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="n">intermediate_layer_value_info</span> <span class="o">=</span> <span class="n">make_empty_tensor_value_info</span><span class="p">(</span>
+            <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">model_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">intermediate_layer_value_info</span><span class="p">)</span>
+
+    <span class="n">sess_options</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
+    <span class="n">sess_options</span><span class="o">.</span><span class="n">log_severity_level</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="n">providers</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="p">[</span><span class="s2">&quot;CUDAExecutionProvider&quot;</span><span class="p">,</span> <span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">get_device</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;GPU&quot;</span>
+        <span class="k">else</span> <span class="p">[</span><span class="s2">&quot;CPUExecutionProvider&quot;</span><span class="p">]</span>
+    <span class="p">)</span>
+
+    <span class="n">sess</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span>
+        <span class="n">model_copy</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">(),</span>
+        <span class="n">sess_options</span><span class="o">=</span><span class="n">sess_options</span><span class="p">,</span>
+        <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">output_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">sess</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()</span> <span class="o">+</span> <span class="n">sess</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">():</span>
+        <span class="n">output_shapes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">node</span><span class="o">.</span><span class="n">shape</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">output_shapes</span></div>
+
+
+<div class="viewcode-block" id="extract_nodes_shapes_shape_inference"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.extract_nodes_shapes_shape_inference">[docs]</a><span class="k">def</span> <span class="nf">extract_nodes_shapes_shape_inference</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Creates a modified model to expose intermediate outputs and runs an ONNX shape</span>
+<span class="sd">    inference to obtain the output shape of each node.</span>
+
+<span class="sd">    NOTE: The ONNX docs on shape inference have the following</span>
+<span class="sd">    disclaimer on shape inference:</span>
+<span class="sd">    Shape inference is not guaranteed to be complete.</span>
+<span class="sd">    In particular, some dynamic behaviors block the flow of shape inference,</span>
+<span class="sd">    for example a Reshape to a dynamically-provide shape.</span>
+<span class="sd">    Also, all operators are not required to have a shape inference implementation.</span>
+
+<span class="sd">    :param model: an ONNX model</span>
+<span class="sd">    :return: a list of NodeProto with their shape exposed</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model_copy</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="n">model_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">onnx</span><span class="o">.</span><span class="n">helper</span><span class="o">.</span><span class="n">make_tensor_value_info</span><span class="p">(</span>
+                    <span class="n">output</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="o">.</span><span class="n">UNDEFINED</span><span class="p">,</span> <span class="kc">None</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">output</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">onnx</span><span class="p">,</span> <span class="s2">&quot;shape_inference&quot;</span><span class="p">):</span>
+        <span class="n">model_copy</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">shape_inference</span><span class="o">.</span><span class="n">infer_shapes</span><span class="p">(</span><span class="n">model_copy</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
+            <span class="s2">&quot;onnx.shape_inference not available for current version, &quot;</span>
+            <span class="s2">&quot;please upgrade to use this functionality&quot;</span>
+        <span class="p">)</span>
+
+    <span class="n">output_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model_copy</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+        <span class="n">node_shape</span> <span class="o">=</span> <span class="n">extract_shape</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">output_shapes</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="n">node_shape</span><span class="p">)</span> <span class="k">if</span> <span class="n">node_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">output_shapes</span></div>
+
+
+<div class="viewcode-block" id="extract_node_shapes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.extract_node_shapes">[docs]</a><span class="k">def</span> <span class="nf">extract_node_shapes</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeShape</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extracts the shape information for each node as a NodeShape object.</span>
+
+<span class="sd">    :param model: the loaded onnx.ModelProto to extract node shape information from</span>
+<span class="sd">    :return: a mapping of node id to a NodeShape object</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="c1"># Maps NodeArg to its inputs</span>
+    <span class="n">node_to_inputs</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="n">node_to_inputs</span><span class="p">[</span><span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)]</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span>
+
+    <span class="c1"># Obtains output shapes for each model&#39;s node</span>
+    <span class="n">output_shapes</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">output_shapes</span> <span class="o">=</span> <span class="n">extract_nodes_shapes_ort</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;Extracting shapes using ONNX Runtime session failed: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">output_shapes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">output_shapes</span> <span class="o">=</span> <span class="n">extract_nodes_shapes_shape_inference</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="s2">&quot;Extracting shapes using ONNX shape_inference failed: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="c1"># Obtains the input shapes for each node</span>
+    <span class="k">if</span> <span class="n">output_shapes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">output_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="n">input_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">output_shapes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">node_to_inputs</span><span class="p">:</span>
+            <span class="k">continue</span>
+        <span class="n">input_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">output_shapes</span><span class="p">[</span><span class="n">input_node</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">input_node</span> <span class="ow">in</span> <span class="n">node_to_inputs</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">input_node</span> <span class="ow">in</span> <span class="n">output_shapes</span> <span class="ow">and</span> <span class="n">output_shapes</span><span class="p">[</span><span class="n">input_node</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">input_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">input_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">])</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="c1"># Combines shape information into mapping of node id to a NodeShape object</span>
+    <span class="n">node_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">output_shapes</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+        <span class="n">node_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="n">NodeShape</span><span class="p">(</span>
+            <span class="n">node</span><span class="p">,</span>
+            <span class="n">input_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">input_shapes</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="p">[</span><span class="n">output_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]]</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">output_shapes</span> <span class="ow">and</span> <span class="n">output_shapes</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_fix_shapes</span><span class="p">(</span><span class="n">shapes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">]],</span> <span class="kc">None</span><span class="p">]]):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="k">for</span> <span class="n">shape</span> <span class="ow">in</span> <span class="n">shapes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">shape</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">index_shape</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shape</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">shape</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="nb">round</span><span class="p">(</span><span class="n">index_shape</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">index_shape</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="nb">int</span><span class="p">(</span><span class="n">index_shape</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="c1"># not parsable as an int (none or string)</span>
+                    <span class="c1"># set to None</span>
+                    <span class="n">shape</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">node_shape</span> <span class="ow">in</span> <span class="n">node_shapes</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">_fix_shapes</span><span class="p">(</span><span class="n">node_shape</span><span class="o">.</span><span class="n">input_shapes</span><span class="p">)</span>
+        <span class="n">_fix_shapes</span><span class="p">(</span><span class="n">node_shape</span><span class="o">.</span><span class="n">output_shapes</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">node_shapes</span></div>
+
+
+<div class="viewcode-block" id="get_init_by_name"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_init_by_name">[docs]</a><span class="k">def</span> <span class="nf">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">init_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get an initializer by name from the ONNX model proto graph</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param init_name: the name of the initializer to retrieve</span>
+<span class="sd">    :return: the initializer retrieved by name from the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">matching_inits</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">init</span> <span class="k">for</span> <span class="n">init</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span> <span class="k">if</span> <span class="n">init</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="n">init_name</span>
+    <span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching_inits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">matching_inits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;found duplicate inits in the ONNX graph for name </span><span class="si">{}</span><span class="s2"> in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">init_name</span><span class="p">,</span> <span class="n">model</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">matching_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_node_param_init_by_idx</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">idx</span><span class="p">:</span> <span class="nb">int</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">):</span>
+        <span class="n">initializer</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">initializer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">initializer</span><span class="p">)</span>
+    <span class="k">return</span> <span class="kc">None</span>
+
+
+<div class="viewcode-block" id="get_attr_float_val_for_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_attr_float_val_for_node">[docs]</a><span class="k">def</span> <span class="nf">get_attr_float_val_for_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">attr</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param node: Node to get the attribute value of</span>
+<span class="sd">    :param attr: Attribute name to match in the node</span>
+<span class="sd">    :return: The value of the attribute if the attribute found in the node and is</span>
+<span class="sd">        a float type. Otherwise returns None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">attr</span> <span class="o">=</span> <span class="n">attr</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">node_attr_matches</span> <span class="o">=</span> <span class="p">[</span><span class="n">att</span> <span class="k">for</span> <span class="n">att</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">attribute</span> <span class="k">if</span> <span class="n">attr</span> <span class="ow">in</span> <span class="n">att</span><span class="o">.</span><span class="n">name</span><span class="p">]</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">node_attr_matches</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+    <span class="n">node_attr</span> <span class="o">=</span> <span class="n">node_attr_matches</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">node_attr</span><span class="o">.</span><span class="n">f</span> <span class="k">if</span> <span class="n">node_attr</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">node_attr</span><span class="o">.</span><span class="n">FLOAT</span> <span class="k">else</span> <span class="kc">None</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Simple named tuple for mapping a node value to the init name it came from</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">NodeParam</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span><span class="s2">&quot;NodeParam&quot;</span><span class="p">,</span> <span class="p">[(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;val&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)])</span>
+
+<span class="n">_TRIVIAL_OP_TYPES</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Reshape&quot;</span><span class="p">,</span> <span class="s2">&quot;Transpose&quot;</span><span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_get_init_by_name_nested</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> <span class="n">weight_name</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span> <span class="n">Union</span><span class="p">[</span><span class="n">TensorProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="c1"># traverses graph if weights are reshaped / transposed before becoming layer input</span>
+    <span class="n">init</span> <span class="o">=</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">init</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">weight_name</span><span class="p">,</span> <span class="n">init</span>
+
+    <span class="n">nested</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+    <span class="n">parent_nodes</span> <span class="o">=</span> <span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">weight_name</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">parent_nodes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">nested</span>
+
+    <span class="k">for</span> <span class="n">parent</span> <span class="ow">in</span> <span class="n">parent_nodes</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">parent</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_TRIVIAL_OP_TYPES</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">nested</span> <span class="o">=</span> <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">parent</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">if</span> <span class="n">nested</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">nested</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">break</span>
+
+    <span class="k">return</span> <span class="n">nested</span>
+
+
+<div class="viewcode-block" id="conv_node_params"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.conv_node_params">[docs]</a><span class="k">def</span> <span class="nf">conv_node_params</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the params (weight and bias) for a conv node in an ONNX ModelProto</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param node: the conv node to get the params for</span>
+<span class="sd">    :param include_values: True to include the param values as NumPy arrays</span>
+<span class="sd">        in the returned NodeParam objects.</span>
+<span class="sd">        False to not load the values -- in this event NodeParam.val will be None</span>
+<span class="sd">    :return: a tuple containing the weight, bias (if it is present)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;conv&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;node_id of </span><span class="si">{}</span><span class="s2"> is not a conv: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+    <span class="n">weight_name</span><span class="p">,</span> <span class="n">weight_init</span> <span class="o">=</span> <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">NodeParam</span><span class="p">(</span>
+        <span class="n">weight_name</span><span class="p">,</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">weight_init</span><span class="p">)</span> <span class="k">if</span> <span class="n">include_values</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">bias_name</span><span class="p">,</span> <span class="n">bias_init</span> <span class="o">=</span> <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">NodeParam</span><span class="p">(</span>
+            <span class="n">bias_name</span><span class="p">,</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">bias_init</span><span class="p">)</span> <span class="k">if</span> <span class="n">include_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_matmul_gemm_weight</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">NodeParam</span><span class="p">:</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;gemm&quot;</span><span class="p">,</span> <span class="s2">&quot;matmul&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;node id of </span><span class="si">{}</span><span class="s2"> is not a gemm or matmul: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="c1"># for gemm, the positions of weights are not explicit in the definition</span>
+    <span class="n">weight_inits</span> <span class="o">=</span> <span class="p">[</span>
+        <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
+        <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span>
+    <span class="p">]</span>
+
+    <span class="c1"># putting this here in case it&#39;s changed in the future since the else case below</span>
+    <span class="c1"># falls to expecting only 2</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">weight_inits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span>
+
+    <span class="k">if</span> <span class="n">weight_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">weight_inits</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;could not find weight for gemm / matmul node with id </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">weight_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">weight_inits</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;found too many weight inputs for gemm / matmul node with id </span><span class="si">{}</span><span class="s2">: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">node_id</span><span class="p">,</span> <span class="n">node</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">weight_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">NodeParam</span><span class="p">(</span>
+            <span class="n">weight_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">weight_inits</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">include_values</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">NodeParam</span><span class="p">(</span>
+            <span class="n">weight_inits</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">weight_inits</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">])</span> <span class="k">if</span> <span class="n">include_values</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">weight</span>
+
+
+<div class="viewcode-block" id="gemm_node_params"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.gemm_node_params">[docs]</a><span class="k">def</span> <span class="nf">gemm_node_params</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the params (weight and bias) for a gemm node in an ONNX ModelProto</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param node: the conv node to get the params for</span>
+<span class="sd">    :param include_values: True to include the param values as NumPy arrays</span>
+<span class="sd">        in the returned NodeParam objects.</span>
+<span class="sd">        False to not load the values -- in this event NodeParam.val will be None</span>
+<span class="sd">    :return: a tuple containing the weight, bias (if it is present)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;gemm&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;node_id of </span><span class="si">{}</span><span class="s2"> is not a gemm: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">_get_matmul_gemm_weight</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="n">bias_name</span><span class="p">,</span> <span class="n">bias_init</span> <span class="o">=</span> <span class="n">_get_init_by_name_nested</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="n">NodeParam</span><span class="p">(</span>
+            <span class="n">bias_name</span><span class="p">,</span> <span class="n">numpy_helper</span><span class="o">.</span><span class="n">to_array</span><span class="p">(</span><span class="n">bias_init</span><span class="p">)</span> <span class="k">if</span> <span class="n">include_values</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">bias</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span></div>
+
+
+<div class="viewcode-block" id="matmul_node_params"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.matmul_node_params">[docs]</a><span class="k">def</span> <span class="nf">matmul_node_params</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the params (weight) for a matmul node in an ONNX ModelProto.</span>
+<span class="sd">    In the future will retrieve a following bias addition as the bias for the matmul.</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param node: the conv node to get the params for</span>
+<span class="sd">    :param include_values: True to include the param values as NumPy arrays</span>
+<span class="sd">        in the returned NodeParam objects.</span>
+<span class="sd">        False to not load the values -- in this event NodeParam.val will be None</span>
+<span class="sd">    :return: a tuple containing the weight, bias (if it is present)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># todo, expand this to grab a bias add if one occurs after the matmul for fcs</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">!=</span> <span class="s2">&quot;matmul&quot;</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;node_id of </span><span class="si">{}</span><span class="s2"> is not a matmul: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">))</span>
+
+    <span class="n">weight</span> <span class="o">=</span> <span class="n">_get_matmul_gemm_weight</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="p">)</span>
+    <span class="n">bias</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span></div>
+
+
+<div class="viewcode-block" id="get_node_params"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_params">[docs]</a><span class="k">def</span> <span class="nf">get_node_params</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">,</span> <span class="n">include_values</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeParam</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the params (weight and bias) for a node in an ONNX ModelProto.</span>
+<span class="sd">    Must be an op type of one of [conv, gemm, matmul]</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param node: the conv node to get the params for</span>
+<span class="sd">    :param include_values: True to include the param values as NumPy arrays</span>
+<span class="sd">        in the returned NodeParam objects.</span>
+<span class="sd">        False to not load the values -- in this event NodeParam.val will be None</span>
+<span class="sd">    :return: a tuple containing the weight, bias (if it is present)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;conv&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">conv_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;gemm&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">gemm_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="o">==</span> <span class="s2">&quot;matmul&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">matmul_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="p">)</span>
+
+    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+        <span class="p">(</span>
+            <span class="s2">&quot;node_id of </span><span class="si">{}</span><span class="s2"> is not a supported node (conv, gemm, matmul) &quot;</span>
+            <span class="s2">&quot;for params: </span><span class="si">{}</span><span class="s2">&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+    <span class="p">)</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Named tuple for defining the paramters of a batch normalization operator</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">BatchNormParams</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;BatchNormParams&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;epsilon&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;momentum&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;scale&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;bias&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;var&quot;</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_batch_norm_params"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_batch_norm_params">[docs]</a><span class="k">def</span> <span class="nf">get_batch_norm_params</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">ModelProto</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BatchNormParams</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the params and relevant attributes of a batch normalization operator.</span>
+<span class="sd">    Following the ONNX operators spec, will default epsilon and momentum to</span>
+<span class="sd">    1e-5 and 0.9 respectively when not defined.</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :param bn_node: the batch normalization node to get the params for</span>
+<span class="sd">    :return: a BatchNormParams named tuple</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">bn_attributes</span> <span class="o">=</span> <span class="n">get_node_attributes</span><span class="p">(</span><span class="n">bn_node</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">BatchNormParams</span><span class="p">(</span>
+        <span class="n">epsilon</span><span class="o">=</span><span class="p">(</span><span class="n">bn_attributes</span><span class="p">[</span><span class="s2">&quot;epsilon&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;epsilon&quot;</span> <span class="ow">in</span> <span class="n">bn_attributes</span> <span class="k">else</span> <span class="mf">1e-5</span><span class="p">),</span>
+        <span class="n">momentum</span><span class="o">=</span><span class="p">(</span><span class="n">bn_attributes</span><span class="p">[</span><span class="s2">&quot;momentum&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;momentum&quot;</span> <span class="ow">in</span> <span class="n">bn_attributes</span> <span class="k">else</span> <span class="mf">0.9</span><span class="p">),</span>
+        <span class="n">scale</span><span class="o">=</span><span class="n">_get_node_param_init_by_idx</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
+        <span class="n">bias</span><span class="o">=</span><span class="n">_get_node_param_init_by_idx</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">mean</span><span class="o">=</span><span class="n">_get_node_param_init_by_idx</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+        <span class="n">var</span><span class="o">=</span><span class="n">_get_node_param_init_by_idx</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">bn_node</span><span class="p">,</span> <span class="mi">4</span><span class="p">),</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_node_attributes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_attributes">[docs]</a><span class="k">def</span> <span class="nf">get_node_attributes</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param node: the ONNX node to get the attibutes for</span>
+<span class="sd">    :return: a dictionary containing all attributes for the node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">attributes</span> <span class="o">=</span> <span class="n">reduce</span><span class="p">(</span>
+        <span class="k">lambda</span> <span class="n">accum</span><span class="p">,</span> <span class="n">attribute</span><span class="p">:</span> <span class="n">accum</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span><span class="n">attribute</span><span class="o">.</span><span class="n">name</span><span class="p">:</span> <span class="n">get_attribute_value</span><span class="p">(</span><span class="n">attribute</span><span class="p">)}</span>
+        <span class="p">)</span>
+        <span class="ow">or</span> <span class="n">accum</span><span class="p">,</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">attribute</span><span class="p">,</span>
+        <span class="p">{},</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="nb">list</span><span class="p">(</span><span class="n">attributes</span><span class="o">.</span><span class="n">keys</span><span class="p">()):</span>
+        <span class="n">val</span> <span class="o">=</span> <span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="nb">dict</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="n">attributes</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="n">attributes</span></div>
+
+
+<div class="viewcode-block" id="get_node_inputs"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_inputs">[docs]</a><span class="k">def</span> <span class="nf">get_node_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param node: the node to get all inputs (non initializers) for</span>
+<span class="sd">    :return: the names of all the inputs to the node that are not initializers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">inp</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">inputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inp</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">inputs</span></div>
+
+
+<div class="viewcode-block" id="get_node_outputs"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_outputs">[docs]</a><span class="k">def</span> <span class="nf">get_node_outputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param node: the node to get all outputs (non initializers) for</span>
+<span class="sd">    :return: the names of all the outputs to the node that are not initializers</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">get_init_by_name</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">out</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">outputs</span></div>
+
+
+<div class="viewcode-block" id="get_node_input_nodes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_input_nodes">[docs]</a><span class="k">def</span> <span class="nf">get_node_input_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all of the nodes that share an output edge for the inputs to a given node</span>
+
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param node: the node to get all input nodes for</span>
+<span class="sd">    :return: the list of nodes that share an output edge</span>
+<span class="sd">        for the inputs to the given node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">]</span> <span class="o">+</span> <span class="p">[</span>
+        <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span>
+    <span class="p">]</span>
+
+    <span class="k">for</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">get_node_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">input_id</span> <span class="ow">in</span> <span class="n">inputs</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">nodes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">get_nodes_by_output_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">input_id</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="get_node_output_nodes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_node_output_nodes">[docs]</a><span class="k">def</span> <span class="nf">get_node_output_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get all of the nodes that share an input edge for the outputs from a given node</span>
+
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param node: the node to get all output nodes for</span>
+<span class="sd">    :return: the list of nodes that share an input edge</span>
+<span class="sd">        for the outputs from the given node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">nodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">output_id</span> <span class="ow">in</span> <span class="n">get_node_outputs</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+        <span class="n">nodes</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">get_nodes_by_input_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">output_id</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">nodes</span></div>
+
+
+<div class="viewcode-block" id="is_prunable_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.is_prunable_node">[docs]</a><span class="k">def</span> <span class="nf">is_prunable_node</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param node: an ONNX node or op_type string</span>
+<span class="sd">    :return: True if the given node is prunable, False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">prunable_types</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;conv&quot;</span><span class="p">,</span> <span class="s2">&quot;gemm&quot;</span><span class="p">,</span> <span class="s2">&quot;matmul&quot;</span><span class="p">]</span>
+
+    <span class="k">if</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">prunable_types</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">try</span><span class="p">:</span>
+        <span class="c1"># try to get the weight param, if this fails then</span>
+        <span class="c1"># it&#39;s not a trainable version of the node and therefore not prunable</span>
+        <span class="n">get_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">include_values</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="is_foldable_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.is_foldable_node">[docs]</a><span class="k">def</span> <span class="nf">is_foldable_node</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Foldable nodes as defined by ONNX Runtime and what it supports layerwise folding</span>
+<span class="sd">    in the ONNX graphs. More info can be found in their docs:</span>
+<span class="sd">    https://www.onnxruntime.ai/docs/resources/graph-optimizations.html</span>
+
+<span class="sd">    :param node: the node or node type to check if it is foldable or not</span>
+<span class="sd">        according to the ONNX Runtime specs</span>
+<span class="sd">    :return: True if the node is foldable and therefore can be combined with other</span>
+<span class="sd">        nodes, False otherwise</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">return</span> <span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">node</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span> <span class="ow">in</span> <span class="p">[</span>
+        <span class="s2">&quot;batchnormalization&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;add&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;mul&quot;</span><span class="p">,</span>
+    <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_prunable_node_from_foldable"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_prunable_node_from_foldable">[docs]</a><span class="k">def</span> <span class="nf">get_prunable_node_from_foldable</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span>
+    <span class="n">foldable_node</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">],</span>
+    <span class="n">traverse_previous</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_node_distance</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get a prunable node that is attached by foldable nodes to a given foldable node.</span>
+<span class="sd">    Returns None if nothing could be found.</span>
+<span class="sd">    Ex: get the convolution that would be folded for an attached BatchNormalization</span>
+
+<span class="sd">    :param model: the model the node is from</span>
+<span class="sd">    :param foldable_node: the foldable node or node id to find prunable node from</span>
+<span class="sd">    :param traverse_previous: True to only search for previous prunable nodes that the</span>
+<span class="sd">        foldable node could have been attached to for Conv -&gt; BN patterns.</span>
+<span class="sd">        False to only search for following prunable nodes that the foldable node</span>
+<span class="sd">        could have been attached to for BN -&gt; Conv patterns.</span>
+<span class="sd">    :param max_node_distance: The maximum distance</span>
+<span class="sd">        (and therefore number of foldable nodes) the prunable node must be within</span>
+<span class="sd">        to match. Ex: max_node_distance = 3, the prunable node must be within 3</span>
+<span class="sd">        other foldable nodes of the foldable node passed in to match</span>
+<span class="sd">    :return: the found prunable node</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">foldable_node</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">foldable_node</span> <span class="o">=</span> <span class="n">get_node_by_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">foldable_node</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">is_foldable_node</span><span class="p">(</span><span class="n">foldable_node</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;non foldable node passed in for foldable_node: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">extract_node_id</span><span class="p">(</span><span class="n">foldable_node</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">prunable_node</span> <span class="o">=</span> <span class="n">foldable_node</span>
+    <span class="n">num_steps</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">while</span> <span class="p">(</span>
+        <span class="n">prunable_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_prunable_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">prunable_node</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">is_foldable_node</span><span class="p">(</span><span class="n">prunable_node</span><span class="p">)</span>
+        <span class="ow">and</span> <span class="n">num_steps</span> <span class="o">&lt;</span> <span class="n">max_node_distance</span>
+    <span class="p">):</span>
+        <span class="n">next_nodes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">get_node_input_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">prunable_node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">traverse_previous</span>
+            <span class="k">else</span> <span class="n">get_node_output_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">prunable_node</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">num_steps</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">prunable_node</span> <span class="o">=</span> <span class="n">next_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">next_nodes</span> <span class="k">else</span> <span class="kc">None</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">prunable_node</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">is_prunable_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">prunable_node</span><span class="p">)</span>
+        <span class="k">else</span> <span class="n">prunable_node</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="get_prunable_nodes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_prunable_nodes">[docs]</a><span class="k">def</span> <span class="nf">get_prunable_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the prunable nodes in an ONNX model proto.</span>
+<span class="sd">    Prunable nodes are defined as any conv, gemm, or matmul</span>
+
+<span class="sd">    :param model: the model proto loaded from the ONNX file</span>
+<span class="sd">    :return: a list of nodes from the model proto</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">prunable_nodes</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">is_prunable_node</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">):</span>
+            <span class="n">prunable_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">prunable_nodes</span></div>
+
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">A measurement of the sparsity for a given ONNX node or model</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="n">SparsityMeasurement</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;SparsityMeasurement&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;node_id&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;params_count&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;params_zero_count&quot;</span><span class="p">,</span> <span class="nb">int</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;sparsity&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;density&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="onnx_nodes_sparsities"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.onnx_nodes_sparsities">[docs]</a><span class="k">def</span> <span class="nf">onnx_nodes_sparsities</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">SparsityMeasurement</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">SparsityMeasurement</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Retrieve the sparsities for each Conv or Gemm op in an ONNX graph</span>
+<span class="sd">    for the associated weight inputs.</span>
+
+<span class="sd">    :param model: ONNX model to use</span>
+<span class="sd">    :return: a tuple containing the overall sparsity measurement for the model,</span>
+<span class="sd">        each conv or gemm node found in the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">node_inp_sparsities</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">()</span>  <span class="c1"># type: Dict[str, SparsityMeasurement]</span>
+    <span class="n">params_count</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">params_zero_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">get_prunable_nodes</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+        <span class="n">node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+        <span class="n">node_key</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">(id=</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">op_type</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
+        <span class="n">weight</span><span class="p">,</span> <span class="n">bias</span> <span class="o">=</span> <span class="n">get_node_params</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">)</span>
+
+        <span class="n">zeros</span> <span class="o">=</span> <span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">numpy</span><span class="o">.</span><span class="n">count_nonzero</span><span class="p">(</span><span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="p">)</span>
+        <span class="n">sparsity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+        <span class="n">density</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">sparsity</span>
+        <span class="n">node_inp_sparsities</span><span class="p">[</span>
+            <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">_inp=</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_key</span><span class="p">,</span> <span class="n">weight</span><span class="o">.</span><span class="n">name</span><span class="p">)</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="n">SparsityMeasurement</span><span class="p">(</span><span class="n">node_id</span><span class="p">,</span> <span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">size</span><span class="p">,</span> <span class="n">zeros</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">density</span><span class="p">)</span>
+
+        <span class="n">params_count</span> <span class="o">+=</span> <span class="n">weight</span><span class="o">.</span><span class="n">val</span><span class="o">.</span><span class="n">size</span>
+        <span class="n">params_zero_count</span> <span class="o">+=</span> <span class="n">zeros</span>
+
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">SparsityMeasurement</span><span class="p">(</span>
+            <span class="s2">&quot;ModelProto&quot;</span><span class="p">,</span>
+            <span class="n">params_count</span><span class="p">,</span>
+            <span class="n">params_zero_count</span><span class="p">,</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">params_zero_count</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">params_count</span><span class="p">),</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">params_count</span> <span class="o">-</span> <span class="n">params_zero_count</span><span class="p">)</span> <span class="o">/</span> <span class="nb">float</span><span class="p">(</span><span class="n">params_count</span><span class="p">),</span>
+        <span class="p">),</span>
+        <span class="n">node_inp_sparsities</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="model_inputs"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.model_inputs">[docs]</a><span class="k">def</span> <span class="nf">model_inputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the input to the model from an ONNX model</span>
+
+<span class="sd">    :param model: the loaded model or a file path to the ONNX model</span>
+<span class="sd">        to get the model inputs for</span>
+<span class="sd">    :return: the input to the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">inputs_all</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span><span class="p">]</span>
+    <span class="n">inputs_init</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">initializer</span><span class="p">]</span>
+    <span class="n">input_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">inputs_all</span><span class="p">)</span> <span class="o">-</span> <span class="nb">set</span><span class="p">(</span><span class="n">inputs_init</span><span class="p">))</span>
+    <span class="n">inputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">input</span> <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">name</span> <span class="ow">in</span> <span class="n">input_names</span><span class="p">]</span>
+    <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_names</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">inputs</span></div>
+
+
+<div class="viewcode-block" id="model_outputs"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.model_outputs">[docs]</a><span class="k">def</span> <span class="nf">model_outputs</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the output from an ONNX model</span>
+
+<span class="sd">    :param model: the loaded model or a file path to the ONNX model</span>
+<span class="sd">        to get the model outputs for</span>
+<span class="sd">    :return: the output from the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">output</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">outputs</span></div>
+
+
+<div class="viewcode-block" id="get_kernel_shape"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_kernel_shape">[docs]</a><span class="k">def</span> <span class="nf">get_kernel_shape</span><span class="p">(</span><span class="n">attributes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get the kernel shape from a dictionary of a model&#39;s attributes</span>
+
+<span class="sd">    :param attributes: a dictionary of a model&#39;s attributes</span>
+<span class="sd">    :return: the kernel shape if attribute contains either the kernel or</span>
+<span class="sd">        kernel_shape field, otherwise None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="s2">&quot;kernel&quot;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">]</span>
+    <span class="k">elif</span> <span class="s2">&quot;kernel_shape&quot;</span> <span class="ow">in</span> <span class="n">attributes</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;kernel_shape&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="calculate_flops"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.calculate_flops">[docs]</a><span class="k">def</span> <span class="nf">calculate_flops</span><span class="p">(</span>
+    <span class="n">op_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">input_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">weight_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">kernel_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">bias_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">attributes</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculate flops based on operation type and shape of certain attributes.</span>
+<span class="sd">    If any fields necessary in operation are set to None, will return None</span>
+
+<span class="sd">    :param op_type: Operation type of flop calculation</span>
+<span class="sd">    :param input_shape: List of input shapes of operation</span>
+<span class="sd">    :param output_shape: List of output shapes of operation</span>
+<span class="sd">    :param weight_shape: Shape of weights in operation if any, else None</span>
+<span class="sd">    :param kernel_shape: Shape of kernel in operation if any, else None</span>
+<span class="sd">    :param bias_shape: Shape of bias in operation if any, else None</span>
+<span class="sd">    :param attributes: The node attributes if any, else None</span>
+<span class="sd">    :return: The amount of floating point operations in the operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">input_shape</span> <span class="o">=</span> <span class="n">_array_as_numeric</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
+    <span class="n">output_shape</span> <span class="o">=</span> <span class="n">_array_as_numeric</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="n">weight_shape</span> <span class="o">=</span> <span class="n">_array_as_numeric</span><span class="p">(</span><span class="n">weight_shape</span><span class="p">)</span>
+    <span class="n">kernel_shape</span> <span class="o">=</span> <span class="n">_array_as_numeric</span><span class="p">(</span><span class="n">kernel_shape</span><span class="p">)</span>
+    <span class="n">bias_shape</span> <span class="o">=</span> <span class="n">_array_as_numeric</span><span class="p">(</span><span class="n">bias_shape</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Add&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Mul&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Div&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Sub&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Clip&quot;</span>
+    <span class="p">):</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="p">(</span>
+        <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Relu&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;LeakyRelu&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Sigmoid&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Tanh&quot;</span>
+        <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;BatchNormalization&quot;</span>
+    <span class="p">):</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;GlobalAveragePool&quot;</span> <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;GlobalMaxPool&quot;</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;MaxPool&quot;</span> <span class="ow">or</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;AveragePool&quot;</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">kernel_shape</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">output_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">kernel_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;MatMul&quot;</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_calculate_flops_matmul</span><span class="p">(</span>
+            <span class="n">op_type</span><span class="p">,</span>
+            <span class="n">input_shape</span><span class="o">=</span><span class="n">input_shape</span><span class="p">,</span>
+            <span class="n">output_shape</span><span class="o">=</span><span class="n">output_shape</span><span class="p">,</span>
+            <span class="n">weight_shape</span><span class="o">=</span><span class="n">weight_shape</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Gemm&quot;</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">weight_shape</span><span class="p">)</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">flops</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">flops</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Conv&quot;</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">kernel_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">weight_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">output_shape</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">kernel_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">weight_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="ow">and</span> <span class="n">output_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">flops</span>
+            <span class="ow">and</span> <span class="n">attributes</span>
+            <span class="ow">and</span> <span class="s2">&quot;group&quot;</span> <span class="ow">in</span> <span class="n">attributes</span>
+            <span class="ow">and</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]</span>
+            <span class="ow">and</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="p">):</span>
+            <span class="c1"># adjust flops for group / depthwise convolutions</span>
+            <span class="n">flops</span> <span class="o">=</span> <span class="n">flops</span> <span class="o">/</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">if</span> <span class="n">flops</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">bias_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Conv&quot;</span><span class="p">:</span>
+            <span class="n">flops</span> <span class="o">+=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">bias_shape</span><span class="p">)</span> <span class="o">*</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="n">output_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">flops</span> <span class="o">+=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">bias_shape</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">flops</span></div>
+
+
+<span class="k">def</span> <span class="nf">_calculate_flops_matmul</span><span class="p">(</span>
+    <span class="n">op_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">input_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">output_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">weight_shape</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Calculates flops in an ONNX MatMul operation.</span>
+
+<span class="sd">    If input shape only contains 1 input, in otherwords the value of the</span>
+<span class="sd">    first index is 1, then the matrix operation is treated as a Gemm operation.</span>
+
+<span class="sd">    Otherwise the operation is treated like a NumPy operation.</span>
+
+<span class="sd">    Will return none if any required value is set to None</span>
+
+<span class="sd">    :param op_type: Operation type of flop calculation</span>
+<span class="sd">    :param input_shape: List of input shapes of operation</span>
+<span class="sd">    :param output_shape: List of output shapes of operation</span>
+<span class="sd">    :param weight_shape: Shape of weights in operation if any, else None</span>
+<span class="sd">    :return: The amount of floating point operations in the operation</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">flops</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">if</span> <span class="p">(</span>
+        <span class="n">input_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="n">output_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span>
+        <span class="ow">and</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span>
+    <span class="p">):</span>
+        <span class="n">matrix_ops</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">input_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">output_shape</span><span class="p">[</span><span class="mi">0</span><span class="p">][:</span><span class="o">-</span><span class="mi">2</span><span class="p">])</span> <span class="o">*</span> <span class="n">matrix_ops</span>
+    <span class="k">elif</span> <span class="n">input_shape</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">weight_shape</span><span class="p">)</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="n">flops</span> <span class="o">*</span> <span class="mi">2</span> <span class="k">if</span> <span class="n">flops</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">flops</span>
+
+
+<span class="k">def</span> <span class="nf">_numpy_prod_with_none_check</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param array: an array like list</span>
+<span class="sd">    :return: the product of the array if array is not None otherwise return None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">numpy</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">array</span><span class="p">)</span> <span class="k">if</span> <span class="n">array</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="kc">None</span>
+
+
+<span class="k">def</span> <span class="nf">_attempt_cast_as_float</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param vale: a value</span>
+<span class="sd">    :return: the value as a float if casting is possible, otherwise return 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+    <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+        <span class="k">return</span> <span class="mf">1.0</span>
+
+
+<span class="k">def</span> <span class="nf">_array_as_numeric</span><span class="p">(</span><span class="n">array</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param array: an array like list</span>
+<span class="sd">    :return: the array with any non numeric or None values replaced with 1</span>
+<span class="sd">        if array itself is not None, otherwise return None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">array</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="n">array</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">array</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">object</span><span class="p">)</span>
+    <span class="c1"># Check if the array datatype is a number</span>
+    <span class="k">if</span> <span class="n">numpy</span><span class="o">.</span><span class="n">issubdtype</span><span class="p">(</span><span class="n">array</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">number</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">array</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">to_float</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">vectorize</span><span class="p">(</span><span class="n">_attempt_cast_as_float</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">to_float</span><span class="p">(</span><span class="n">array</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="get_quantize_parent_for_dequantize_node"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_quantize_parent_for_dequantize_node">[docs]</a><span class="k">def</span> <span class="nf">get_quantize_parent_for_dequantize_node</span><span class="p">(</span>
+    <span class="n">quantized_model</span><span class="p">:</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">dequantize_node</span><span class="p">:</span> <span class="n">NodeProto</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="n">NodeProto</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Returns the first quantize node found by traversing the first node input of the</span>
+<span class="sd">    given de-quantize node&#39;s ancestors. All inputs to de-quantize nodes should have</span>
+<span class="sd">    a quantize node ancestor.</span>
+
+<span class="sd">    :param quantized_model: the model the de-quantize node is from</span>
+<span class="sd">    :param dequantize_node: the node to get an associated quantize node for</span>
+<span class="sd">    :return: the first quantize node found by traversing the first node input of the</span>
+<span class="sd">        given de-quantize node&#39;s ancestors. If no quantize node is found, returns None</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">curr_node</span> <span class="o">=</span> <span class="n">dequantize_node</span>
+    <span class="k">while</span> <span class="n">curr_node</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">curr_node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">!=</span> <span class="s2">&quot;QuantizeLinear&quot;</span><span class="p">:</span>
+        <span class="n">input_nodes</span> <span class="o">=</span> <span class="n">get_node_input_nodes</span><span class="p">(</span><span class="n">quantized_model</span><span class="p">,</span> <span class="n">curr_node</span><span class="p">)</span>
+        <span class="n">curr_node</span> <span class="o">=</span> <span class="n">input_nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="n">input_nodes</span> <span class="k">else</span> <span class="kc">None</span>
+    <span class="k">return</span> <span class="n">curr_node</span></div>
+
+
+<div class="viewcode-block" id="get_tensor_shape"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_tensor_shape">[docs]</a><span class="k">def</span> <span class="nf">get_tensor_shape</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param tensor: ONNX tensor to get the shape of</span>
+<span class="sd">    :return: shape of the tensor as a list</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="p">[</span><span class="n">dim</span><span class="o">.</span><span class="n">dim_value</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_tensor_dim_shape"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.get_tensor_dim_shape">[docs]</a><span class="k">def</span> <span class="nf">get_tensor_dim_shape</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param tensor: ONNX tensor to get the shape of a dimension of</span>
+<span class="sd">    :param dim: dimension index of the tensor to get the shape of</span>
+<span class="sd">    :return: shape of the tensor at the given dimension</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span></div>
+
+
+<div class="viewcode-block" id="set_tensor_dim_shape"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.helpers.set_tensor_dim_shape">[docs]</a><span class="k">def</span> <span class="nf">set_tensor_dim_shape</span><span class="p">(</span><span class="n">tensor</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">TensorProto</span><span class="p">,</span> <span class="n">dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Sets the shape of the tensor at the given dimension to the given value</span>
+
+<span class="sd">    :param tensor: ONNX tensor to modify the shape of</span>
+<span class="sd">    :param dim: dimension index of the tensor to modify the shape of</span>
+<span class="sd">    :param value: new shape for the given dimension</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">tensor</span><span class="o">.</span><span class="n">type</span><span class="o">.</span><span class="n">tensor_type</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">dim</span><span class="p">[</span><span class="n">dim</span><span class="p">]</span><span class="o">.</span><span class="n">dim_value</span> <span class="o">=</span> <span class="n">value</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.4.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../../v0.12.2/index.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="helpers.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

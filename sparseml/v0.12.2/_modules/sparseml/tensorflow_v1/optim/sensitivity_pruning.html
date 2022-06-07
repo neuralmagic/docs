@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.optim.sensitivity_pruning &mdash; SparseML 0.12.2.20220607 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.12
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.optim.sensitivity_pruning</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.optim.sensitivity_pruning</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Sensitivity analysis implementations for kernel sparsity on Graphs against loss funcs.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">namedtuple</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">auto</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.optim</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PruningLossSensitivityAnalysis</span><span class="p">,</span>
+    <span class="n">default_pruning_sparsities_loss</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim.mask_creator_pruning</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PruningMaskCreator</span><span class="p">,</span>
+    <span class="n">load_mask_creator</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.optim.mask_pruning</span> <span class="kn">import</span> <span class="n">PruningScope</span><span class="p">,</span> <span class="n">create_op_pruning</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">get_ops_and_inputs_by_name_or_regex</span><span class="p">,</span> <span class="n">tf_compat</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;SparsePruningOpVars&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pruning_loss_sens_magnitude&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pruning_loss_sens_op_vars&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;pruning_loss_sens_one_shot&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">SparsePruningOpVars</span> <span class="o">=</span> <span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;SparsePruningOpVars&quot;</span><span class="p">,</span> <span class="p">(</span><span class="s2">&quot;op_vars&quot;</span><span class="p">,</span> <span class="s2">&quot;sparsity&quot;</span><span class="p">))</span>
+
+
+<div class="viewcode-block" id="pruning_loss_sens_op_vars"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.sensitivity_pruning.pruning_loss_sens_op_vars">[docs]</a><span class="k">def</span> <span class="nf">pruning_loss_sens_op_vars</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">var_names</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;re:.*&quot;</span><span class="p">,),</span>
+    <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">PruningMaskCreator</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">SparsePruningOpVars</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Edit the graph for to inject pruning ops and vars to allow for a ks loss</span>
+<span class="sd">    sensitivity analysis.</span>
+
+<span class="sd">    Note: this must be run outside of a session for it to take effect.</span>
+
+<span class="sd">    :param graph: the graph to inject pruning ops and vars into,</span>
+<span class="sd">        if not supplied uses get_default_graph()</span>
+<span class="sd">    :param var_names: List of variable names or regex patterns of variables to get</span>
+<span class="sd">        the op vars for.  Defaults to matching all variables</span>
+<span class="sd">    :param mask_type: String to define type of sparsity (options: [&#39;unstructured&#39;,</span>
+<span class="sd">        &#39;channel&#39;, &#39;filter&#39;]), List to define block shape of a parameter&#39;s in and out</span>
+<span class="sd">        channels, or a SparsityMaskCreator object. default is &#39;unstructured&#39;</span>
+<span class="sd">    :return: the created pruning op vars to be used in approx_ks_loss_sensitivity and</span>
+<span class="sd">        one_shot_ks_loss_sensitivity</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_default_graph</span><span class="p">()</span>
+
+    <span class="n">mask_creator</span> <span class="o">=</span> <span class="n">mask_type</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">mask_type</span><span class="p">,</span> <span class="n">PruningMaskCreator</span><span class="p">):</span>
+        <span class="n">mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="n">mask_type</span><span class="p">)</span>
+
+    <span class="n">ks_group</span> <span class="o">=</span> <span class="n">pruning_loss_sens_one_shot</span><span class="o">.</span><span class="vm">__name__</span>
+    <span class="n">prunable_ops_and_inputs</span> <span class="o">=</span> <span class="n">get_ops_and_inputs_by_name_or_regex</span><span class="p">(</span><span class="n">var_names</span><span class="p">,</span> <span class="n">graph</span><span class="p">)</span>
+    <span class="n">op_vars</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="k">with</span> <span class="n">graph</span><span class="o">.</span><span class="n">as_default</span><span class="p">():</span>
+        <span class="k">for</span> <span class="n">prune_op</span><span class="p">,</span> <span class="n">prune_op_input</span> <span class="ow">in</span> <span class="n">prunable_ops_and_inputs</span><span class="p">:</span>
+            <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span>
+                <span class="n">PruningScope</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">prune_op</span><span class="p">,</span> <span class="n">ks_group</span><span class="p">,</span> <span class="n">trailing_slash</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">sparsity</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">placeholder</span><span class="p">(</span>
+                    <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;sparsity_placeholder&quot;</span>
+                <span class="p">)</span>
+                <span class="n">update</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">constant</span><span class="p">(</span><span class="kc">True</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">bool</span><span class="p">)</span>
+            <span class="n">prune_op_var</span> <span class="o">=</span> <span class="n">create_op_pruning</span><span class="p">(</span>
+                <span class="n">prune_op</span><span class="p">,</span>
+                <span class="n">prune_op_input</span><span class="p">,</span>
+                <span class="n">sparsity</span><span class="p">,</span>
+                <span class="n">update</span><span class="p">,</span>
+                <span class="kc">True</span><span class="p">,</span>
+                <span class="kc">None</span><span class="p">,</span>
+                <span class="n">ks_group</span><span class="p">,</span>
+                <span class="n">mask_creator</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">op_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">SparsePruningOpVars</span><span class="p">(</span><span class="n">prune_op_var</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">))</span>
+
+    <span class="k">return</span> <span class="n">op_vars</span></div>
+
+
+<div class="viewcode-block" id="pruning_loss_sens_magnitude"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.sensitivity_pruning.pruning_loss_sens_magnitude">[docs]</a><span class="k">def</span> <span class="nf">pruning_loss_sens_magnitude</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Graph</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sess</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Session</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sparsity_levels</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+        <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span>
+    <span class="p">]</span> <span class="o">=</span> <span class="n">default_pruning_sparsities_loss</span><span class="p">(</span><span class="kc">True</span><span class="p">),</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningLossSensitivityAnalysis</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Approximated kernel sparsity (pruning) loss analysis for a given model.</span>
+<span class="sd">    Returns the results for each prunable param (conv, linear) in the model.</span>
+<span class="sd">    Approximated by taking the magnitudes of the weights.</span>
+
+<span class="sd">    :param graph: the graph to inject pruning ops and vars into,</span>
+<span class="sd">        if not supplied uses get_default_graph()</span>
+<span class="sd">    :param sess: the session to use</span>
+<span class="sd">    :param sparsity_levels: the sparsity levels to calculate the loss for for each param</span>
+<span class="sd">    :return: the analysis results for the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">graph</span><span class="p">:</span>
+        <span class="n">graph</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_default_graph</span><span class="p">()</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sess</span><span class="p">:</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+
+    <span class="n">prunable_ops_and_inputs</span> <span class="o">=</span> <span class="n">get_ops_and_inputs_by_name_or_regex</span><span class="p">([</span><span class="s2">&quot;re:.*&quot;</span><span class="p">],</span> <span class="n">graph</span><span class="p">)</span>
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">PruningLossSensitivityAnalysis</span><span class="p">()</span>
+
+    <span class="k">for</span> <span class="n">op_index</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">op_tens</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">prunable_ops_and_inputs</span><span class="p">):</span>
+        <span class="n">weight</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">op_tens</span><span class="p">)</span>
+        <span class="n">values</span> <span class="o">=</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">numpy</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">weight</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)))</span>
+        <span class="n">prev_index</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sparsity_levels</span><span class="p">:</span>
+            <span class="n">val_index</span> <span class="o">=</span> <span class="nb">round</span><span class="p">(</span><span class="n">sparsity</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="n">val_index</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">):</span>
+                <span class="n">val_index</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">values</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&lt;=</span> <span class="mf">1e-9</span><span class="p">:</span>
+                <span class="n">baseline</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">sparsity</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">sparse_avg</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">baseline</span> <span class="o">=</span> <span class="kc">False</span>
+
+                <span class="k">if</span> <span class="n">val_index</span> <span class="o">&gt;</span> <span class="n">prev_index</span><span class="p">:</span>
+                    <span class="n">sparse_avg</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">prev_index</span><span class="p">:</span><span class="n">val_index</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="n">prev_index</span> <span class="o">=</span> <span class="n">val_index</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">sparse_avg</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="n">val_index</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                    <span class="n">prev_index</span> <span class="o">=</span> <span class="n">val_index</span> <span class="o">+</span> <span class="mi">1</span>
+
+            <span class="n">analysis</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span>
+                <span class="kc">None</span><span class="p">,</span> <span class="n">op_tens</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">op_index</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">sparse_avg</span><span class="p">,</span> <span class="n">baseline</span>
+            <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">analysis</span></div>
+
+
+<div class="viewcode-block" id="pruning_loss_sens_one_shot"><a class="viewcode-back" href="../../../../api/sparseml.tensorflow_v1.optim.html#sparseml.tensorflow_v1.optim.sensitivity_pruning.pruning_loss_sens_one_shot">[docs]</a><span class="k">def</span> <span class="nf">pruning_loss_sens_one_shot</span><span class="p">(</span>
+    <span class="n">op_vars</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">SparsePruningOpVars</span><span class="p">],</span>
+    <span class="n">loss_tensor</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="n">steps_per_measurement</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">add_ops_creator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">feed_dict_creator</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sess</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Session</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">sparsity_levels</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="n">default_pruning_sparsities_loss</span><span class="p">(</span><span class="kc">False</span><span class="p">),</span>
+    <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PruningLossSensitivityAnalysis</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Run a one shot sensitivity analysis for kernel sparsity.</span>
+<span class="sd">    It does not retrain, and instead puts the model to eval mode.</span>
+<span class="sd">    Moves operation by operation to calculate the sensitivity analysis for each and</span>
+<span class="sd">    resets the previously run layers.</span>
+<span class="sd">    Subsequent sparsity checks for layers and levels will be much faster.</span>
+
+<span class="sd">    Note: this should be run once a session has been created and</span>
+<span class="sd">    the variables have been created for the model.</span>
+
+<span class="sd">    Note: the graph should be recreated for later training as this creates</span>
+<span class="sd">    extra ops in the graph that should be reused before continuing in the system.</span>
+
+<span class="sd">    :param op_vars: the created pruning op vars from ks_loss_sensitivity_op_vars</span>
+<span class="sd">    :param loss_tensor: the loss tensor in the model to measure for the sensitivity</span>
+<span class="sd">    :param steps_per_measurement: the number of session.run calls to run through</span>
+<span class="sd">        for each sparsity level on each layer</span>
+<span class="sd">    :param add_ops_creator: a callback to create an op/tens list to be run through</span>
+<span class="sd">        the session for each measurement. Called for each measurement</span>
+<span class="sd">    :param feed_dict_creator: a callback to create a feed dict to be run through</span>
+<span class="sd">        the session for each measurement. Called for each measurement</span>
+<span class="sd">    :param sess: the session to use</span>
+<span class="sd">    :param sparsity_levels: the sparsity levels to check for each layer to calculate</span>
+<span class="sd">        sensitivity</span>
+<span class="sd">    :param show_progress: track progress of the runs if True</span>
+<span class="sd">    :return: the sensitivity results for every op that is prunable</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">sess</span><span class="p">:</span>
+        <span class="n">sess</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">get_default_session</span><span class="p">()</span>
+
+    <span class="n">analysis</span> <span class="o">=</span> <span class="n">PruningLossSensitivityAnalysis</span><span class="p">()</span>
+    <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">variables_initializer</span><span class="p">([</span><span class="n">var</span><span class="o">.</span><span class="n">op_vars</span><span class="o">.</span><span class="n">mask</span> <span class="k">for</span> <span class="n">var</span> <span class="ow">in</span> <span class="n">op_vars</span><span class="p">]))</span>
+    <span class="n">bar</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="n">auto</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span>
+            <span class="n">desc</span><span class="o">=</span><span class="s2">&quot;KS Analysis&quot;</span><span class="p">,</span>
+            <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">op_vars</span><span class="p">)</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">sparsity_levels</span><span class="p">)</span> <span class="o">*</span> <span class="n">steps_per_measurement</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">show_progress</span>
+        <span class="k">else</span> <span class="kc">None</span>
+    <span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">op_index</span><span class="p">,</span> <span class="n">sparse_op_vars</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">op_vars</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">sparsity_level</span> <span class="ow">in</span> <span class="n">sparsity_levels</span><span class="p">:</span>
+            <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+                <span class="n">sparse_op_vars</span><span class="o">.</span><span class="n">op_vars</span><span class="o">.</span><span class="n">update</span><span class="p">,</span>
+                <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">sparse_op_vars</span><span class="o">.</span><span class="n">sparsity</span><span class="p">:</span> <span class="n">sparsity_level</span><span class="p">},</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">steps_per_measurement</span><span class="p">):</span>
+                <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">loss_tensor</span><span class="p">]</span>
+                <span class="n">add_ops</span> <span class="o">=</span> <span class="n">add_ops_creator</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="k">if</span> <span class="n">add_ops_creator</span> <span class="k">else</span> <span class="kc">None</span>
+                <span class="n">feed_dict</span> <span class="o">=</span> <span class="n">feed_dict_creator</span><span class="p">(</span><span class="n">step</span><span class="p">)</span> <span class="k">if</span> <span class="n">feed_dict_creator</span> <span class="k">else</span> <span class="kc">None</span>
+
+                <span class="k">if</span> <span class="n">add_ops</span><span class="p">:</span>
+                    <span class="n">ops</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">add_ops</span><span class="p">)</span>
+
+                <span class="n">values</span> <span class="o">=</span> <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">ops</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="n">feed_dict</span><span class="p">)</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">values</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+                <span class="n">analysis</span><span class="o">.</span><span class="n">add_result</span><span class="p">(</span>
+                    <span class="kc">None</span><span class="p">,</span>
+                    <span class="n">sparse_op_vars</span><span class="o">.</span><span class="n">op_vars</span><span class="o">.</span><span class="n">op_input</span><span class="o">.</span><span class="n">name</span><span class="p">,</span>
+                    <span class="n">op_index</span><span class="p">,</span>
+                    <span class="n">sparsity_level</span><span class="p">,</span>
+                    <span class="n">loss</span><span class="p">,</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="n">sparsity_level</span> <span class="o">&lt;</span> <span class="mf">1e-9</span><span class="p">,</span>
+                <span class="p">)</span>
+
+                <span class="k">if</span> <span class="n">bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">bar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="n">sess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">sparse_op_vars</span><span class="o">.</span><span class="n">op_vars</span><span class="o">.</span><span class="n">update</span><span class="p">,</span> <span class="n">feed_dict</span><span class="o">=</span><span class="p">{</span><span class="n">sparse_op_vars</span><span class="o">.</span><span class="n">sparsity</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">}</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">bar</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">bar</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="n">analysis</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.12.2
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="sensitivity_pruning.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

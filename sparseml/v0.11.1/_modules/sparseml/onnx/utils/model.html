@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.onnx.utils.model &mdash; SparseML 0.11.1.20220607 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.11
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.onnx.utils.model</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.onnx.utils.model</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Utilities for ONNX models and running inference with them</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">tempfile</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span>
+<span class="kn">from</span> <span class="nn">copy</span> <span class="kn">import</span> <span class="n">deepcopy</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+<span class="kn">import</span> <span class="nn">psutil</span>
+<span class="kn">from</span> <span class="nn">onnx</span> <span class="kn">import</span> <span class="n">ModelProto</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">auto</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.onnx.base</span> <span class="kn">import</span> <span class="n">require_onnxruntime</span>
+<span class="kn">from</span> <span class="nn">sparseml.onnx.utils.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span> <span class="nn">sparseml.onnx.utils.graph_editor</span> <span class="kn">import</span> <span class="n">override_model_batch_size</span>
+<span class="kn">from</span> <span class="nn">sparseml.onnx.utils.helpers</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">check_load_model</span><span class="p">,</span>
+    <span class="n">extract_node_id</span><span class="p">,</span>
+    <span class="n">get_node_by_id</span><span class="p">,</span>
+    <span class="n">get_prunable_node_from_foldable</span><span class="p">,</span>
+    <span class="n">is_foldable_node</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.objects</span> <span class="kn">import</span> <span class="n">File</span><span class="p">,</span> <span class="n">Model</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">deepsparse</span>
+    <span class="kn">from</span> <span class="nn">deepsparse</span> <span class="kn">import</span> <span class="n">analyze_model</span><span class="p">,</span> <span class="n">compile_model</span>
+    <span class="kn">from</span> <span class="nn">deepsparse.cpu</span> <span class="kn">import</span> <span class="n">cpu_details</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">deepsparse</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">compile_model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">analyze_model</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">cpu_details</span> <span class="o">=</span> <span class="kc">None</span>
+
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">openvino.inference_engine</span> <span class="kn">import</span> <span class="n">IECore</span><span class="p">,</span> <span class="n">IENetwork</span><span class="p">,</span> <span class="n">StatusCode</span><span class="p">,</span> <span class="n">get_version</span>
+<span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+    <span class="n">IENetwork</span><span class="p">,</span> <span class="n">IECore</span><span class="p">,</span> <span class="n">get_version</span><span class="p">,</span> <span class="n">StatusCode</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;max_available_cores&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ModelRunner&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ORTModelRunner&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DeepSparseModelRunner&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OpenVINOModelRunner&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;correct_nm_analyze_model_node_ids&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;split_canonical_names&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DeepSparseAnalyzeModelRunner&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;args was not empty, cannot pass any additional args through: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">args</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="p">(</span>
+                <span class="s2">&quot;kwargs was not empty, cannot pass any additional args through: </span><span class="si">{}</span><span class="s2">&quot;</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="max_available_cores"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.max_available_cores">[docs]</a><span class="k">def</span> <span class="nf">max_available_cores</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :return: the maximum number of physical cores detected on the system</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">cpu_details</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+            <span class="s2">&quot;retrieving physical core count per socket &quot;</span>
+            <span class="s2">&quot;from deepsparse.cpu.cpu_details()&quot;</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">cpu_details</span><span class="p">()[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;retrieving physical core count using psutil&quot;</span><span class="p">)</span>
+    <span class="n">physical_cores</span> <span class="o">=</span> <span class="n">psutil</span><span class="o">.</span><span class="n">cpu_count</span><span class="p">(</span><span class="n">logical</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">physical_cores</span> <span class="k">if</span> <span class="n">physical_cores</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span></div>
+
+
+<div class="viewcode-block" id="ModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ModelRunner">[docs]</a><span class="k">class</span> <span class="nc">ModelRunner</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract class for handling running inference for a model</span>
+
+<span class="sd">    :param loss: the loss function, if any, to run for evaluation of the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span> <span class="o">=</span> <span class="n">loss</span>
+
+<div class="viewcode-block" id="ModelRunner.run"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ModelRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run inference for a model for the data given in the data_loader iterator</span>
+
+<span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
+<span class="sd">            run through the model</span>
+<span class="sd">        :param desc: str to display if show_progress is True</span>
+<span class="sd">        :param show_progress: True to show a tqdm bar when running, False otherwise</span>
+<span class="sd">        :param max_steps: maximum number of steps to take for the data_loader</span>
+<span class="sd">            instead of running over all the data</span>
+<span class="sd">        :return: a tuple containing the list of outputs and the list of times</span>
+<span class="sd">            for running the data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">outputs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">output</span><span class="p">,</span> <span class="n">pred_time</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">run_iter</span><span class="p">(</span>
+            <span class="n">data_loader</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">show_progress</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+        <span class="p">):</span>
+            <span class="n">outputs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+            <span class="n">times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pred_time</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">outputs</span><span class="p">,</span> <span class="n">times</span></div>
+
+<div class="viewcode-block" id="ModelRunner.run_iter"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ModelRunner.run_iter">[docs]</a>    <span class="k">def</span> <span class="nf">run_iter</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iteratively runs inference for a model for the data given in the</span>
+<span class="sd">        data_loader iterator</span>
+
+<span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
+<span class="sd">            run through the model</span>
+<span class="sd">        :param desc: str to display if show_progress is True</span>
+<span class="sd">        :param show_progress: True to show a tqdm bar when running, False otherwise</span>
+<span class="sd">        :param max_steps: maximum number of steps to take for the data_loader</span>
+<span class="sd">            instead of running over all the data</span>
+<span class="sd">        :return: an iterator to go through the tuples containing</span>
+<span class="sd">            the list of outputs and the list of times for running the data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">counter_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">data_loader</span><span class="o">.</span><span class="n">infinite</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">max_steps</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">counter_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">counter_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">progress_steps</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">max_steps</span><span class="p">,</span> <span class="n">counter_len</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">max_steps</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">progress_steps</span> <span class="o">=</span> <span class="n">max_steps</span>
+        <span class="k">elif</span> <span class="n">counter_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">counter_len</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">progress_steps</span> <span class="o">=</span> <span class="n">counter_len</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">progress_steps</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;running </span><span class="si">{}</span><span class="s2"> items through model&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">progress_steps</span><span class="p">))</span>
+        <span class="n">data_iter</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">enumerate</span><span class="p">(</span><span class="n">data_loader</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">show_progress</span>
+            <span class="k">else</span> <span class="n">auto</span><span class="o">.</span><span class="n">tqdm</span><span class="p">(</span><span class="nb">enumerate</span><span class="p">(</span><span class="n">data_loader</span><span class="p">),</span> <span class="n">desc</span><span class="o">=</span><span class="n">desc</span><span class="p">,</span> <span class="n">total</span><span class="o">=</span><span class="n">progress_steps</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">batch</span><span class="p">,</span> <span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span> <span class="ow">in</span> <span class="n">data_iter</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;calling batch_forward for batch </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">batch</span><span class="p">))</span>
+            <span class="n">pred</span><span class="p">,</span> <span class="n">pred_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_forward</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;prediction completed in </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">pred_time</span><span class="p">))</span>
+            <span class="n">output</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span><span class="p">(</span><span class="n">pred</span><span class="p">,</span> <span class="n">label</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">pred</span>
+            <span class="k">yield</span> <span class="n">output</span><span class="p">,</span> <span class="n">pred_time</span>
+            <span class="k">if</span> <span class="n">batch</span> <span class="o">&gt;=</span> <span class="n">max_steps</span> <span class="o">-</span> <span class="mi">1</span> <span class="ow">and</span> <span class="n">max_steps</span> <span class="o">&gt;</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">break</span></div>
+
+<div class="viewcode-block" id="ModelRunner.batch_forward"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ModelRunner.batch_forward">[docs]</a>    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Abstract method for subclasses to override to run a batch through the</span>
+<span class="sd">        inference engine for the ONNX model it was constructed with</span>
+
+<span class="sd">        :param batch: the batch to run through the ONNX model for inference</span>
+<span class="sd">        :return: a tuple containing the result of the inference,</span>
+<span class="sd">            the time to perform the inference</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span></div></div>
+
+
+<div class="viewcode-block" id="OpenVINOModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.OpenVINOModelRunner">[docs]</a><span class="k">class</span> <span class="nc">OpenVINOModelRunner</span><span class="p">(</span><span class="n">ModelRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    OpenVINO model runner class</span>
+
+<span class="sd">    :param model: The path to the IR xml file after conversion</span>
+<span class="sd">    :param loss: loss function to run evaluation</span>
+<span class="sd">    :param nthreads: number of threads to run the model</span>
+<span class="sd">    :param batch_size: Batch size value. If not specified, the batch size value is</span>
+<span class="sd">        determined from Intermediate Representation</span>
+<span class="sd">    :param shape: shape to be set for the input(s).</span>
+<span class="sd">        For example, &quot;input1[1,3,224,224],input2[1,4]&quot;</span>
+<span class="sd">        or &quot;[1,3,224,224]&quot; in case of one input size.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OpenVINOModelRunner.available"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.OpenVINOModelRunner.available">[docs]</a>    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">IECore</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>  <span class="c1"># TODO: accept ONNX as input</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">nthreads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">shape</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss</span> <span class="o">=</span> <span class="n">loss</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nthreads</span> <span class="o">=</span> <span class="n">nthreads</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span> <span class="o">=</span> <span class="n">shape</span>
+
+        <span class="c1"># Loading inference engine</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ie</span> <span class="o">=</span> <span class="n">IECore</span><span class="p">()</span>
+
+        <span class="c1"># Setting device configuration (for device &#39;CPU&#39;)</span>
+        <span class="n">cpu_threads_num</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nthreads</span><span class="p">)</span>
+        <span class="n">cpu_bind_thread</span> <span class="o">=</span> <span class="s2">&quot;YES&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;CPU_THREADS_NUM&quot;</span><span class="p">:</span> <span class="n">cpu_threads_num</span><span class="p">,</span>
+            <span class="s2">&quot;CPU_BIND_THREAD&quot;</span><span class="p">:</span> <span class="n">cpu_bind_thread</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ie</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="n">config</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Read the Intermediate Representation of the network</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_read_network</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="c1"># Resizing network to match image sizes and given batch</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_resize_network</span><span class="p">()</span>
+
+        <span class="c1"># Configuring input of the model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config_network_inputs</span><span class="p">()</span>
+
+        <span class="c1"># Load the model to the device</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_exe_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_network</span><span class="p">()</span>
+
+<div class="viewcode-block" id="OpenVINOModelRunner.batch_forward"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.OpenVINOModelRunner.batch_forward">[docs]</a>    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run a batch through the model</span>
+
+<span class="sd">        :param batch: batch of data</span>
+<span class="sd">        :return: result of the inference as dictionary, and the inference time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_inputs</span><span class="p">(</span><span class="n">batch</span><span class="p">)</span>
+        <span class="n">infer_request</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exe_network</span><span class="o">.</span><span class="n">requests</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">infer_request</span><span class="o">.</span><span class="n">infer</span><span class="p">()</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pred_time</span>
+
+        <span class="k">return</span> <span class="n">infer_request</span><span class="o">.</span><span class="n">output_blobs</span><span class="p">,</span> <span class="n">pred_time</span></div>
+
+<div class="viewcode-block" id="OpenVINOModelRunner.network_input_shapes"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.OpenVINOModelRunner.network_input_shapes">[docs]</a>    <span class="k">def</span> <span class="nf">network_input_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get network input shapes</span>
+<span class="sd">        :return: dictionary of shapes for each input key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">input_shapes</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">input_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">shape_with_batch</span> <span class="o">=</span> <span class="n">v</span><span class="o">.</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">input_shapes</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">shape_with_batch</span><span class="p">[</span><span class="mi">1</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">input_shapes</span></div>
+
+    <span class="k">def</span> <span class="nf">_read_network</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">model_file_path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read the IR into IE network</span>
+<span class="sd">        :param model_file_path: path to the IR file</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">model_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">model_file_path</span><span class="p">)</span>
+        <span class="n">head</span><span class="p">,</span> <span class="n">ext</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">splitext</span><span class="p">(</span><span class="n">model_filename</span><span class="p">)</span>
+        <span class="n">weights_filename</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">head</span> <span class="o">+</span> <span class="s2">&quot;.bin&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="n">ext</span> <span class="o">==</span> <span class="s2">&quot;.xml&quot;</span> <span class="k">else</span> <span class="s2">&quot;&quot;</span>
+        <span class="n">ie_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie</span><span class="o">.</span><span class="n">read_network</span><span class="p">(</span><span class="n">model_filename</span><span class="p">,</span> <span class="n">weights_filename</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">ie_network</span>
+
+    <span class="k">def</span> <span class="nf">_update_shapes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">shapes_string</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">inputs_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the network input shapes need update</span>
+
+<span class="sd">        :param shape: dictionary of input shapes; updated to new shapes if needed</span>
+<span class="sd">        :param shapes_string: string of shapes from user inputs</span>
+<span class="sd">        :param inputs_info: inputs of the network read from the IR file</span>
+
+<span class="sd">        :return: if the network input shapes need updated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">updated</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">matches</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(.*?)\[(.*?)\],?&quot;</span><span class="p">,</span> <span class="n">shapes_string</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">matches</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">match</span> <span class="ow">in</span> <span class="n">matches</span><span class="p">:</span>
+                <span class="n">input_name</span> <span class="o">=</span> <span class="n">match</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="n">parsed_shape</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span> <span class="k">for</span> <span class="n">dim</span> <span class="ow">in</span> <span class="n">match</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">)]</span>
+                <span class="k">if</span> <span class="n">input_name</span> <span class="o">!=</span> <span class="s2">&quot;&quot;</span><span class="p">:</span>
+                    <span class="n">shapes</span><span class="p">[</span><span class="n">input_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parsed_shape</span>
+                    <span class="n">updated</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">shapes</span><span class="o">.</span><span class="n">update</span><span class="p">({</span><span class="n">k</span><span class="p">:</span> <span class="n">parsed_shape</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">shapes</span><span class="o">.</span><span class="n">keys</span><span class="p">()})</span>
+                    <span class="n">updated</span> <span class="o">=</span> <span class="kc">True</span>
+                    <span class="k">break</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;Can&#39;t parse `shape` parameter: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">shapes_string</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">updated</span>
+
+    <span class="k">def</span> <span class="nf">_adjust_shapes_batch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">shapes</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">inputs_info</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check and change the shape of network input to fit the batch size</span>
+<span class="sd">        :param shapes: dictionary of input shapes; updated if needed</span>
+<span class="sd">        :param batch_size: batch size</span>
+<span class="sd">        :param inputs_info: inputs of the network read from the IR file</span>
+<span class="sd">        :return: if the network input shapes need updated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">updated</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">inputs_info</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">layout</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">input_data</span><span class="o">.</span><span class="n">layout</span>
+            <span class="n">batch_index</span> <span class="o">=</span> <span class="n">layout</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;N&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="s2">&quot;N&quot;</span> <span class="ow">in</span> <span class="n">layout</span> <span class="k">else</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="k">if</span> <span class="n">batch_index</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="n">shapes</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">batch_index</span><span class="p">]</span> <span class="o">!=</span> <span class="n">batch_size</span><span class="p">:</span>
+                <span class="n">shapes</span><span class="p">[</span><span class="n">name</span><span class="p">][</span><span class="n">batch_index</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch_size</span>
+                <span class="n">updated</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="n">updated</span>
+
+    <span class="k">def</span> <span class="nf">_resize_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Resize the network input shapes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">shapes</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">k</span><span class="p">:</span> <span class="n">v</span><span class="o">.</span><span class="n">input_data</span><span class="o">.</span><span class="n">shape</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">input_info</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">}</span>
+        <span class="n">reshape</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">:</span>
+            <span class="n">reshape</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_update_shapes</span><span class="p">(</span>
+                <span class="n">shapes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_shape</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">input_info</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">batch_size</span><span class="p">:</span>
+            <span class="n">reshape</span> <span class="o">|=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_adjust_shapes_batch</span><span class="p">(</span>
+                <span class="n">shapes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">input_info</span>
+            <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">reshape</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;Reshaping network: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="s2">&quot;&#39;</span><span class="si">{}</span><span class="s2">&#39;: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">v</span><span class="p">)</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">shapes</span><span class="o">.</span><span class="n">items</span><span class="p">())</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shapes</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_is_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">blob</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the input data is image</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">blob</span><span class="o">.</span><span class="n">layout</span> <span class="o">!=</span> <span class="s2">&quot;NCHW&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="n">channels</span> <span class="o">=</span> <span class="n">blob</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">channels</span> <span class="o">==</span> <span class="mi">3</span>
+
+    <span class="k">def</span> <span class="nf">_config_network_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Configure network inputs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">input_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="o">.</span><span class="n">input_info</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">input_info</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_image</span><span class="p">(</span><span class="n">input_info</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">input_data</span><span class="p">):</span>
+                <span class="c1"># Set the precision of input data provided by the user</span>
+                <span class="c1"># Should be called before load of the network to the plugin</span>
+                <span class="n">input_info</span><span class="p">[</span><span class="n">key</span><span class="p">]</span><span class="o">.</span><span class="n">precision</span> <span class="o">=</span> <span class="s2">&quot;U8&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_load_network</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Load the network with given device and request info</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">exe_network</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_ie</span><span class="o">.</span><span class="n">load_network</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_ie_network</span><span class="p">,</span> <span class="s2">&quot;CPU&quot;</span><span class="p">,</span> <span class="n">config</span><span class="o">=</span><span class="p">{},</span> <span class="n">num_requests</span><span class="o">=</span><span class="mi">1</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">exe_network</span>
+
+    <span class="k">def</span> <span class="nf">_set_inputs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Set the inputs for the infer request object</span>
+
+<span class="sd">        :param batch: batch of data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">infer_requests</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_exe_network</span><span class="o">.</span><span class="n">requests</span>
+        <span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><span class="n">infer_requests</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+        <span class="n">inputs</span> <span class="o">=</span> <span class="n">infer_requests</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">input_blobs</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">batch</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">k</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">inputs</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="k">raise</span> <span class="ne">Exception</span><span class="p">(</span><span class="s2">&quot;No input with name </span><span class="si">{}</span><span class="s2"> found!&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">k</span><span class="p">))</span>
+            <span class="n">inputs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">buffer</span><span class="p">[:]</span> <span class="o">=</span> <span class="n">v</span></div>
+
+
+<div class="viewcode-block" id="ORTModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ORTModelRunner">[docs]</a><span class="k">class</span> <span class="nc">ORTModelRunner</span><span class="p">(</span><span class="n">ModelRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for handling running inference for an ONNX model through onnxruntime</span>
+
+<span class="sd">    :param model: the path to the ONNX model file or the loaded onnx.ModelProto</span>
+<span class="sd">    :param loss: the loss function, if any, to run for evaluation of the model</span>
+<span class="sd">    :param overwrite_input_names: True to overwrite the input data names to what</span>
+<span class="sd">        is found in for the model inputs, False to keep as found in the loaded data</span>
+<span class="sd">    :param nthreads: number of threads used to run the model (single node);</span>
+<span class="sd">        default to 0 for onnxruntime to choose</span>
+<span class="sd">    :param batch_size: if provided, and the model has a hardcoded batch size, will</span>
+<span class="sd">        rewrite the model proto so that the model batch size matches batch_size</span>
+<span class="sd">    :param providers: list of ORT provider names. will default to</span>
+<span class="sd">        ort.get_available_providers()</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@require_onnxruntime</span><span class="p">()</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">overwrite_input_names</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">nthreads</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">providers</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="kn">import</span> <span class="nn">onnxruntime</span>  <span class="c1"># import protected by @require_onnxruntime()</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">override_model_batch_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">)</span>
+        <span class="c1"># default selected providers to ort default</span>
+        <span class="n">providers</span> <span class="o">=</span> <span class="n">providers</span> <span class="ow">or</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">get_available_providers</span><span class="p">()</span>
+
+        <span class="n">sess_options</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">SessionOptions</span><span class="p">()</span>
+
+        <span class="c1"># Note: If ORT was built with OpenMP, use OpenMP env variable such as</span>
+        <span class="c1"># OMP_NUM_THREADS to control the number of threads.</span>
+        <span class="c1"># See: https://github.com/microsoft/onnxruntime/blob/master/docs/ONNX_Runtime_Perf_Tuning.md  # noqa</span>
+        <span class="n">sess_options</span><span class="o">.</span><span class="n">intra_op_num_threads</span> <span class="o">=</span> <span class="n">nthreads</span>
+
+        <span class="n">sess_options</span><span class="o">.</span><span class="n">log_severity_level</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="n">sess_options</span><span class="o">.</span><span class="n">graph_optimization_level</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">onnxruntime</span><span class="o">.</span><span class="n">GraphOptimizationLevel</span><span class="o">.</span><span class="n">ORT_ENABLE_ALL</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span> <span class="o">=</span> <span class="n">onnxruntime</span><span class="o">.</span><span class="n">InferenceSession</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">()</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+            <span class="n">sess_options</span><span class="p">,</span>
+            <span class="n">providers</span><span class="o">=</span><span class="n">providers</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_overwrite_input_names</span> <span class="o">=</span> <span class="n">overwrite_input_names</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;created model in onnxruntime </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="p">)</span>
+
+<div class="viewcode-block" id="ORTModelRunner.run"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ORTModelRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run inference for a model for the data given in the data_loader iterator</span>
+<span class="sd">        through ONNX Runtime.</span>
+
+<span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
+<span class="sd">            run through the model</span>
+<span class="sd">        :param desc: str to display if show_progress is True</span>
+<span class="sd">        :param show_progress: True to show a tqdm bar when running, False otherwise</span>
+<span class="sd">        :param max_steps: maximum number of steps to take for the data_loader</span>
+<span class="sd">            instead of running over all the data</span>
+<span class="sd">        :return: a tuple containing the list of outputs and the list of times</span>
+<span class="sd">            for running the data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">show_progress</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="ORTModelRunner.batch_forward"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.ORTModelRunner.batch_forward">[docs]</a>    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param batch: the batch to run through the ONNX model for inference</span>
+<span class="sd">            iin onnxruntime</span>
+<span class="sd">        :return: a tuple containing the result of the inference,</span>
+<span class="sd">            the time to perform the inference</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_overwrite_input_names</span><span class="p">:</span>
+            <span class="n">sess_batch</span> <span class="o">=</span> <span class="n">batch</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sess_batch</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">batch_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;remapping input dict from </span><span class="si">{}</span><span class="s2"> to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">batch_keys</span><span class="p">,</span> <span class="p">[</span><span class="n">inp</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">inp</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">inp_index</span><span class="p">,</span> <span class="n">inp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get_inputs</span><span class="p">()):</span>
+                <span class="n">sess_batch</span><span class="p">[</span><span class="n">inp</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">batch</span><span class="p">[</span><span class="n">batch_keys</span><span class="p">[</span><span class="n">inp_index</span><span class="p">]]</span>
+
+        <span class="n">sess_outputs</span> <span class="o">=</span> <span class="p">[</span><span class="n">out</span><span class="o">.</span><span class="n">name</span> <span class="k">for</span> <span class="n">out</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get_outputs</span><span class="p">()]</span>
+
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">sess_outputs</span><span class="p">,</span> <span class="n">sess_batch</span><span class="p">)</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pred_time</span>
+
+        <span class="n">pred_dict</span> <span class="o">=</span> <span class="n">OrderedDict</span><span class="p">((</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">sess_outputs</span><span class="p">,</span> <span class="n">pred</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">pred_dict</span><span class="p">,</span> <span class="n">pred_time</span></div></div>
+
+
+<span class="k">class</span> <span class="nc">_DeepSparseBaseModelRunner</span><span class="p">(</span><span class="n">ModelRunner</span><span class="p">):</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">available</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if deepsparse package is available, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">compile_model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">],</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">_DeepSparseBaseModelRunner</span><span class="o">.</span><span class="n">available</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">ModuleNotFoundError</span><span class="p">(</span>
+                <span class="s2">&quot;deepsparse is not installed on the system, &quot;</span>
+                <span class="s2">&quot;must be installed before using any ModelRunner for deepsparse&quot;</span>
+            <span class="p">)</span>
+
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="n">model</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">num_cores</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">File</span><span class="p">)</span>
+            <span class="ow">or</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">Model</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span> <span class="o">=</span> <span class="n">tempfile</span><span class="o">.</span><span class="n">NamedTemporaryFile</span><span class="p">(</span><span class="n">delete</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="o">.</span><span class="n">SerializeToString</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">name</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model_tmp</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="DeepSparseModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseModelRunner">[docs]</a><span class="k">class</span> <span class="nc">DeepSparseModelRunner</span><span class="p">(</span><span class="n">_DeepSparseBaseModelRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for handling running inference for an ONNX model through Neural Magic</span>
+<span class="sd">    :param model: the path to the ONNX model file or the loaded onnx.ModelProto</span>
+<span class="sd">    :param batch_size: the size of the batch to create the model for</span>
+<span class="sd">    :param num_cores: the number of physical cores to run the model on. Defaults</span>
+<span class="sd">        to run on all available cores</span>
+<span class="sd">    :param loss: the loss function, if any, to run for evaluation of the model</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">loss</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span>
+            <span class="n">Callable</span><span class="p">[[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]],</span> <span class="n">Any</span><span class="p">],</span> <span class="kc">None</span>
+        <span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">loss</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span> <span class="o">=</span> <span class="n">compile_model</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="o">=</span><span class="n">num_cores</span>
+        <span class="p">)</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;created model in neural magic </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__del__</span><span class="p">()</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">pass</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_engine</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DeepSparseModelRunner.run"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseModelRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Any</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run inference for a model for the data given in the data_loader iterator</span>
+<span class="sd">        through neural magic inference engine.</span>
+<span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
+<span class="sd">            run through the model</span>
+<span class="sd">        :param desc: str to display if show_progress is True</span>
+<span class="sd">        :param show_progress: True to show a tqdm bar when running, False otherwise</span>
+<span class="sd">        :param max_steps: maximum number of steps to take for the data_loader</span>
+<span class="sd">            instead of running over all the data</span>
+<span class="sd">        :return: a tuple containing the list of outputs and the list of times</span>
+<span class="sd">            for running the data</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">data_loader</span><span class="p">,</span> <span class="n">desc</span><span class="p">,</span> <span class="n">show_progress</span><span class="p">,</span> <span class="n">max_steps</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeepSparseModelRunner.batch_forward"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseModelRunner.batch_forward">[docs]</a>    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param batch: the batch to run through the ONNX model for inference</span>
+<span class="sd">            in the DeepSparse Engine</span>
+<span class="sd">        :return: a tuple containing the result of the inference,</span>
+<span class="sd">            the time to perform the inference</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">nm_batch</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_engine</span><span class="o">.</span><span class="n">mapped_run</span><span class="p">(</span><span class="n">nm_batch</span><span class="p">)</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pred_time</span>
+
+        <span class="k">return</span> <span class="n">pred</span><span class="p">,</span> <span class="n">pred_time</span></div></div>
+
+
+<div class="viewcode-block" id="correct_nm_analyze_model_node_ids"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.correct_nm_analyze_model_node_ids">[docs]</a><span class="k">def</span> <span class="nf">correct_nm_analyze_model_node_ids</span><span class="p">(</span><span class="n">nm_result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">]):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Correct the node ids returned from the deepsparse.analyze_model api.</span>
+<span class="sd">    In some cases, it will return the ids for folded nodes due to ONNXRuntime folding.</span>
+<span class="sd">    This finds the corrected node ids from those folded nodes.</span>
+<span class="sd">    Additionally, ops that did not have an id are changed from the returned</span>
+<span class="sd">    string &lt;none&gt; to proper None python type</span>
+
+<span class="sd">    :param nm_result: the result from the deepsparse.analyze_model api</span>
+<span class="sd">    :param model: the onnx model proto or path to the onnx file that the</span>
+<span class="sd">        nm_result was for</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">check_load_model</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">nm_result</span><span class="p">[</span><span class="s2">&quot;layer_info&quot;</span><span class="p">]:</span>
+        <span class="n">node_id</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;&lt;none&gt;&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">node_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">continue</span>
+
+        <span class="n">node</span> <span class="o">=</span> <span class="n">get_node_by_id</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;node returned from deepsparse.analyze_model &quot;</span>
+                    <span class="s2">&quot;was not found in the model graph; node id </span><span class="si">{}</span><span class="s2">&quot;</span>
+                <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">is_foldable_node</span><span class="p">(</span><span class="n">node</span><span class="p">):</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                <span class="s2">&quot;foldable node of id </span><span class="si">{}</span><span class="s2"> returned from &quot;</span>
+                <span class="s2">&quot;deepsparse.analyze_model api, matching to prunable node&quot;</span>
+            <span class="p">)</span>
+            <span class="c1"># traverse previous because incorrect node id will only be returned</span>
+            <span class="c1"># for following foldable layers, not previous</span>
+            <span class="n">node</span> <span class="o">=</span> <span class="n">get_prunable_node_from_foldable</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">traverse_previous</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">node</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;could not find prunable node from a foldable node &quot;</span>
+                        <span class="s2">&quot;returned in the deepsparse.analyze_model api; &quot;</span>
+                        <span class="s2">&quot;node id: </span><span class="si">{}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">node_id</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prunable_node_id</span> <span class="o">=</span> <span class="n">extract_node_id</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="p">(</span>
+                        <span class="s2">&quot;matched prunable node of id </span><span class="si">{}</span><span class="s2"> to foldable node </span><span class="si">{}</span><span class="s2"> as &quot;</span>
+                        <span class="s2">&quot;returned from deepsparse.analyze_model api&quot;</span>
+                    <span class="p">)</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">prunable_node_id</span><span class="p">,</span> <span class="n">node_id</span><span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">prunable_node_id</span></div>
+
+
+<div class="viewcode-block" id="split_canonical_names"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.split_canonical_names">[docs]</a><span class="k">def</span> <span class="nf">split_canonical_names</span><span class="p">(</span><span class="n">nm_result</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Splits analysis layer results from grouped canonical names by individual nodes.</span>
+<span class="sd">    Stores the original grouped canonical name in the &#39;meta_canonical_name&#39; field.</span>
+
+<span class="sd">    Will split on any canonical_name that includes &#39;,&#39;.</span>
+
+<span class="sd">    :param nm_result: the result from the deepsparse.analyze_model api</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">split_layer_infos</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">nm_result</span><span class="p">[</span><span class="s2">&quot;layer_info&quot;</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="s2">&quot;,&quot;</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">sub_layer_name</span> <span class="ow">in</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;,&quot;</span><span class="p">):</span>
+                <span class="n">sub_layer_info</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+                <span class="n">sub_layer_info</span><span class="p">[</span><span class="s2">&quot;meta_canonical_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span>
+                <span class="n">sub_layer_info</span><span class="p">[</span><span class="s2">&quot;canonical_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">sub_layer_name</span>
+                <span class="n">split_layer_infos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sub_layer_info</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">layer</span><span class="p">[</span><span class="s2">&quot;meta_canonical_name&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">split_layer_infos</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+    <span class="n">nm_result</span><span class="p">[</span><span class="s2">&quot;layer_info&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">split_layer_infos</span></div>
+
+
+<div class="viewcode-block" id="DeepSparseAnalyzeModelRunner"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseAnalyzeModelRunner">[docs]</a><span class="k">class</span> <span class="nc">DeepSparseAnalyzeModelRunner</span><span class="p">(</span><span class="n">_DeepSparseBaseModelRunner</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Class for handling running inference for an ONNX model through Neural Magic&#39;s</span>
+<span class="sd">    analyze_model api</span>
+
+<span class="sd">    :param model: the path to the ONNX model file or the loaded onnx.ModelProto</span>
+<span class="sd">    :param batch_size: the size of the batch to create the model for</span>
+<span class="sd">    :param num_cores: the number of physical cores to run the model on. Defaults</span>
+<span class="sd">        to run on all available cores</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">ModelProto</span><span class="p">],</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="n">num_cores</span><span class="p">,</span> <span class="n">loss</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="DeepSparseAnalyzeModelRunner.run"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseAnalyzeModelRunner.run">[docs]</a>    <span class="k">def</span> <span class="nf">run</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_loader</span><span class="p">:</span> <span class="n">DataLoader</span><span class="p">,</span>
+        <span class="n">desc</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="n">show_progress</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">max_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
+        <span class="n">num_warmup_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+        <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">imposed_ks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">],</span> <span class="n">List</span><span class="p">[</span><span class="nb">float</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Run inference for a model for the data given in the data_loader iterator</span>
+<span class="sd">        through neural magic inference engine model analysis function.</span>
+<span class="sd">        The analysis function allows more granular control over how the</span>
+<span class="sd">        model is executed such as optimization levels and imposing kernel sparsity.</span>
+<span class="sd">        In addition, gives back layer by layer timings that were run through.</span>
+
+<span class="sd">        :param data_loader: the data_loader used to load batches of data to</span>
+<span class="sd">            run through the model</span>
+<span class="sd">        :param desc: str to display if show_progress is True</span>
+<span class="sd">        :param show_progress: True to show a tqdm bar when running, False otherwise</span>
+<span class="sd">        :param max_steps: maximum number of steps to take for the data_loader</span>
+<span class="sd">            instead of running over all the data</span>
+<span class="sd">        :param num_iterations: number of iterations to run the analysis benchmark for</span>
+<span class="sd">        :param num_warmup_iterations: number of iterations to run warmup for</span>
+<span class="sd">            before benchmarking</span>
+<span class="sd">        :param optimization_level: the optimization level to use in neural magic;</span>
+<span class="sd">            1 for optimizations on, 0 for limited optimizations</span>
+<span class="sd">        :param imposed_ks: kernel sparsity value to impose on all the prunable</span>
+<span class="sd">            layers in the model. None or no imposed sparsity</span>
+<span class="sd">        :return: a tuple containing the performance results for the run as returned</span>
+<span class="sd">            from the analyze_model function, total time to run them</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
+            <span class="n">data_loader</span><span class="p">,</span>
+            <span class="n">desc</span><span class="p">,</span>
+            <span class="n">show_progress</span><span class="p">,</span>
+            <span class="n">max_steps</span><span class="p">,</span>
+            <span class="n">num_iterations</span><span class="o">=</span><span class="n">num_iterations</span><span class="p">,</span>
+            <span class="n">num_warmup_iterations</span><span class="o">=</span><span class="n">num_warmup_iterations</span><span class="p">,</span>
+            <span class="n">optimization_level</span><span class="o">=</span><span class="n">optimization_level</span><span class="p">,</span>
+            <span class="n">imposed_ks</span><span class="o">=</span><span class="n">imposed_ks</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="DeepSparseAnalyzeModelRunner.batch_forward"><a class="viewcode-back" href="../../../../api/sparseml.onnx.utils.html#sparseml.onnx.utils.model.DeepSparseAnalyzeModelRunner.batch_forward">[docs]</a>    <span class="k">def</span> <span class="nf">batch_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">batch</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">num_warmup_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="n">optimization_level</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">imposed_ks</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="n">args</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param batch: the batch to run through the ONNX model for inference</span>
+<span class="sd">            benchmarking analysis in the neural magic system</span>
+<span class="sd">        :param num_iterations: number of iterations to run the analysis benchmark for</span>
+<span class="sd">        :param num_warmup_iterations: number of iterations to run warmup for</span>
+<span class="sd">            before benchmarking</span>
+<span class="sd">        :param optimization_level: the optimization level to use in neural magic;</span>
+<span class="sd">            1 for optimizations on, 0 for limited optimizations</span>
+<span class="sd">        :param imposed_ks: kernel sparsity value to impose on all the prunable</span>
+<span class="sd">            layers in the model. None or no imposed sparsity</span>
+<span class="sd">        :return: a tuple containing the result of the inference,</span>
+<span class="sd">            the time to perform the inference</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_check_args</span><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+        <span class="n">nm_batch</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">batch</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">nm_pred</span> <span class="o">=</span> <span class="n">analyze_model</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">,</span>
+            <span class="n">nm_batch</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+            <span class="n">num_iterations</span><span class="p">,</span>
+            <span class="n">num_warmup_iterations</span><span class="p">,</span>
+            <span class="n">optimization_level</span><span class="p">,</span>
+            <span class="n">imposed_ks</span><span class="o">=</span><span class="n">imposed_ks</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">pred_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">pred_time</span>
+        <span class="n">split_canonical_names</span><span class="p">(</span><span class="n">nm_pred</span><span class="p">)</span>
+        <span class="n">correct_nm_analyze_model_node_ids</span><span class="p">(</span><span class="n">nm_pred</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">nm_pred</span><span class="p">,</span> <span class="n">pred_time</span></div></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.11.1
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="model.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../../v0.12.2/index.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

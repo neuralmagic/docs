@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparsify.workers.manager &mdash; Sparsify 0.6.0.20220607 documentation</title><link rel="stylesheet" href="../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script src="../../../_static/jquery.js"></script>
+        <script src="../../../_static/underscore.js"></script>
+        <script src="../../../_static/doctools.js"></script>
+        <script src="../../../_static/clipboard.min.js"></script>
+        <script src="../../../_static/copybutton.js"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../index.html" class="icon icon-home"> Sparsify<img src="../../../_static/icon-sparsify.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.6
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../source/userguide/index.html">User Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../api/sparsify.html">sparsify package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsify/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Sparsify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+      <li>sparsify.workers.manager</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparsify.workers.manager</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code related to managing jobs in the server</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">concurrent.futures</span> <span class="kn">import</span> <span class="n">ThreadPoolExecutor</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">Singleton</span>
+<span class="kn">from</span> <span class="nn">sparsify.models</span> <span class="kn">import</span> <span class="n">Job</span><span class="p">,</span> <span class="n">JobStatus</span><span class="p">,</span> <span class="n">database</span>
+<span class="kn">from</span> <span class="nn">sparsify.workers.base</span> <span class="kn">import</span> <span class="n">JobWorker</span><span class="p">,</span> <span class="n">JobWorkerRegistry</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;JobNotFoundError&quot;</span><span class="p">,</span> <span class="s2">&quot;JobCancelationFailureError&quot;</span><span class="p">,</span> <span class="s2">&quot;JobWorkerManager&quot;</span><span class="p">]</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="JobNotFoundError"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobNotFoundError">[docs]</a><span class="k">class</span> <span class="nc">JobNotFoundError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Error raised if a job is not found in the database</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="JobCancelationFailureError"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobCancelationFailureError">[docs]</a><span class="k">class</span> <span class="nc">JobCancelationFailureError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Error raised if a job could not be canceled</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span></div>
+
+
+<span class="k">class</span> <span class="nc">JobCancelError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Error raised if a job was canceled</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="nb">object</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">)</span>
+
+
+<span class="n">_T</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;_T&quot;</span><span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_LockedVar</span><span class="p">(</span><span class="n">Generic</span><span class="p">[</span><span class="n">_T</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">initial</span><span class="p">:</span> <span class="n">_T</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">initial</span>
+
+    <span class="k">def</span> <span class="nf">get</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_T</span><span class="p">:</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_value</span>
+
+    <span class="k">def</span> <span class="nf">set</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="n">_T</span><span class="p">):</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_value</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<span class="k">class</span> <span class="nc">_JobExecutionState</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_canceled_check_time</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_progress_saved_time</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">db_canceled_check_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_canceled_check_time</span>
+
+    <span class="nd">@db_canceled_check_time</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">db_canceled_check_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_canceled_check_time</span> <span class="o">=</span> <span class="n">value</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">db_progress_saved_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_db_progress_saved_time</span>
+
+    <span class="nd">@db_progress_saved_time</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">db_progress_saved_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_db_progress_saved_time</span> <span class="o">=</span> <span class="n">value</span>
+
+
+<div class="viewcode-block" id="JobWorkerManager"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobWorkerManager">[docs]</a><span class="k">class</span> <span class="nc">JobWorkerManager</span><span class="p">(</span><span class="nb">object</span><span class="p">,</span> <span class="n">metaclass</span><span class="o">=</span><span class="n">Singleton</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Manager class for handling running job workers in the background.</span>
+<span class="sd">    Only one job worker can run at once.</span>
+<span class="sd">    Once one completes, the next oldest one marked as pending in the db is launched.</span>
+
+<span class="sd">    :param max_workers: The maximum number of workers to allow the ThreadPoolExecutor</span>
+<span class="sd">        to work with in parallel</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_workers</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span> <span class="o">=</span> <span class="n">ThreadPoolExecutor</span><span class="p">(</span><span class="n">max_workers</span><span class="o">=</span><span class="n">max_workers</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_canceled</span> <span class="o">=</span> <span class="n">_LockedVar</span><span class="p">(</span><span class="kc">False</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Lock</span><span class="p">()</span>
+
+<div class="viewcode-block" id="JobWorkerManager.start"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobWorkerManager.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Start the JobWorkerManager to begin processing any background jobs present</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Starting JobWorkerManager&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cancel_pending_jobs</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="JobWorkerManager.shutdown"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobWorkerManager.shutdown">[docs]</a>    <span class="k">def</span> <span class="nf">shutdown</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Shutdown the JobWorkerManager to stop processing any background jobs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Canceling JobWorkerManager&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_canceled</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">shutdown</span><span class="p">()</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Canceled JobWorkerManager&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="JobWorkerManager.refresh"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobWorkerManager.refresh">[docs]</a>    <span class="nd">@database</span><span class="o">.</span><span class="n">connection_context</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">refresh</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Refresh the available jobs and put any pending ones since last refresh</span>
+<span class="sd">        onto the ThreadPoolExecutor.</span>
+
+<span class="sd">        Otherwise will exit out without doing anything and</span>
+<span class="sd">        subsequent jobs will be launched after the current one completes.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># lock to make sure the queries are safe across threads and jobs are unique</span>
+        <span class="c1"># should be done with a DB transaction, but current setup with</span>
+        <span class="c1"># peewee and the connection pooling does not support transactions</span>
+        <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refresh_lock</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Refreshing JobWorkerManager&quot;</span><span class="p">)</span>
+            <span class="n">query</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">Job</span><span class="o">.</span><span class="n">select</span><span class="p">()</span>
+                <span class="o">.</span><span class="n">where</span><span class="p">(</span>
+                    <span class="n">Job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">pending</span>
+                    <span class="ow">and</span> <span class="n">Job</span><span class="o">.</span><span class="n">worker_ack</span> <span class="o">==</span> <span class="kc">False</span>  <span class="c1"># noqa: E712</span>
+                <span class="p">)</span>  <span class="c1"># noqa: E712</span>
+                <span class="o">.</span><span class="n">order_by</span><span class="p">(</span><span class="n">Job</span><span class="o">.</span><span class="n">created</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">job_ids</span> <span class="o">=</span> <span class="p">[</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span> <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">query</span><span class="p">]</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Found </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">job_ids</span><span class="p">)</span><span class="si">}</span><span class="s2"> pending jobs, adding to threadpool&quot;</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">job</span> <span class="ow">in</span> <span class="n">query</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Adding job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> to threadpool&quot;</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_pool</span><span class="o">.</span><span class="n">submit</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_execute_job</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_canceled</span><span class="p">)</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Updating jobs in db to ack that worker received them&quot;</span><span class="p">)</span>
+            <span class="n">Job</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">worker_ack</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Job</span><span class="o">.</span><span class="n">job_id</span><span class="o">.</span><span class="n">in_</span><span class="p">(</span><span class="n">job_ids</span><span class="p">))</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="JobWorkerManager.cancel_job"><a class="viewcode-back" href="../../../api/sparsify.workers.html#sparsify.workers.manager.JobWorkerManager.cancel_job">[docs]</a>    <span class="nd">@database</span><span class="o">.</span><span class="n">connection_context</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">cancel_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Cancel a job with the given job_id so it won&#39;t be run.</span>
+
+<span class="sd">        :param job_id: the job_id to cancel</span>
+<span class="sd">        :raise JobNotFoundError: if the job could not be found in the database</span>
+<span class="sd">        :raise JobCancelationFailureError: if the job could not be canceled</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Canceling job </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job_id</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Getting job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> from DB&quot;</span><span class="p">)</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">get_or_none</span><span class="p">(</span><span class="n">Job</span><span class="o">.</span><span class="n">job_id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">job</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not find job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> to cancel&quot;</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="n">JobNotFoundError</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">error</span>
+                <span class="ow">or</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">completed</span>
+                <span class="ow">or</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">canceled</span>
+            <span class="p">):</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Could not cancel job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> with status </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+                <span class="k">raise</span> <span class="n">JobCancelationFailureError</span><span class="p">(</span>
+                    <span class="s2">&quot;Job with status </span><span class="si">{}</span><span class="s2"> cannot be canceled&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">job</span><span class="o">.</span><span class="n">status</span><span class="p">)</span>
+                <span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_canceled</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="n">JobNotFoundError</span><span class="p">,</span> <span class="n">JobCancelationFailureError</span><span class="p">)</span> <span class="k">as</span> <span class="n">passthrough_err</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">passthrough_err</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error while canceling job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> in db: </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+    <span class="nd">@database</span><span class="o">.</span><span class="n">connection_context</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_cancel_pending_jobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;Canceling any pending jobs&quot;</span><span class="p">)</span>
+        <span class="n">query</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="n">status</span><span class="o">=</span><span class="n">JobStatus</span><span class="o">.</span><span class="n">canceled</span><span class="p">,</span>
+            <span class="n">error</span><span class="o">=</span><span class="p">(</span>
+                <span class="s2">&quot;Job was left in a stranded state and did not complete on last run, &quot;</span>
+                <span class="s2">&quot;canceled on server startup&quot;</span>
+            <span class="p">),</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">Job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">started</span> <span class="ow">or</span> <span class="n">Job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">pending</span><span class="p">)</span>
+        <span class="n">row_count</span> <span class="o">=</span> <span class="n">query</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">row_count</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Canceled </span><span class="si">{</span><span class="n">row_count</span><span class="si">}</span><span class="s2"> stranded jobs&quot;</span><span class="p">)</span>
+
+    <span class="nd">@database</span><span class="o">.</span><span class="n">connection_context</span><span class="p">()</span>
+    <span class="k">def</span> <span class="nf">_execute_job</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">canceled</span><span class="p">:</span> <span class="n">_LockedVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">]):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> in JobWorkerManager&quot;</span><span class="p">)</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">_JobExecutionState</span><span class="p">()</span>
+        <span class="n">job</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Getting job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> from DB&quot;</span><span class="p">)</span>
+            <span class="n">job</span> <span class="o">=</span> <span class="n">Job</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">Job</span><span class="o">.</span><span class="n">job_id</span> <span class="o">==</span> <span class="n">job_id</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_cancel_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">canceled</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> cancel requested before starting, canceling&quot;</span>
+                <span class="p">)</span>
+                <span class="k">raise</span> <span class="n">JobCancelError</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_started</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Creating worker for job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">worker</span> <span class="o">=</span> <span class="n">JobWorkerRegistry</span><span class="o">.</span><span class="n">create_worker</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>  <span class="c1"># type: JobWorker</span>
+
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Starting worker run for job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">progress</span> <span class="ow">in</span> <span class="n">worker</span><span class="o">.</span><span class="n">run</span><span class="p">():</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_cancel_job</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">canceled</span><span class="p">,</span> <span class="n">state</span><span class="p">):</span>
+                    <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> cancel requested, canceling&quot;</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">JobCancelError</span><span class="p">()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_progress</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">state</span><span class="p">,</span> <span class="n">progress</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_completed</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+        <span class="k">except</span> <span class="n">JobCancelError</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">job</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;job is None after JobCancelError&quot;</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_canceled</span><span class="p">(</span><span class="n">job</span><span class="p">)</span>
+            <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> canceled in JobWorkerManager&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="c1"># try to update the job in the DB in case the job doesn&#39;t exist</span>
+            <span class="c1"># or the job was deleted from the DB</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_update_job_error</span><span class="p">(</span><span class="n">job</span><span class="p">,</span> <span class="n">err</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">save_err</span><span class="p">:</span>
+                <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Could not update job state in db to errored &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;for job </span><span class="si">{</span><span class="n">job_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">save_err</span><span class="si">}</span><span class="s2">: for error </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_check_cancel_job</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">canceled</span><span class="p">:</span> <span class="n">_LockedVar</span><span class="p">[</span><span class="nb">bool</span><span class="p">],</span> <span class="n">state</span><span class="p">:</span> <span class="n">_JobExecutionState</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="c1"># cancel if overall system is being shutdown</span>
+        <span class="k">if</span> <span class="n">canceled</span><span class="o">.</span><span class="n">get</span><span class="p">()</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">threading</span><span class="o">.</span><span class="n">main_thread</span><span class="p">()</span><span class="o">.</span><span class="n">is_alive</span><span class="p">():</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="c1"># refresh job state at maximum one second intervals to see if job was canceled</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">db_canceled_check_time</span>
+            <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">db_canceled_check_time</span> <span class="o">&lt;</span> <span class="mf">1.0</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">job</span> <span class="o">=</span> <span class="n">job</span><span class="o">.</span><span class="n">refresh</span><span class="p">()</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">db_canceled_check_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">==</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">canceled</span>
+
+    <span class="k">def</span> <span class="nf">_update_job_started</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Updating job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> to started status&quot;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">started</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_update_job_progress</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">_JobExecutionState</span><span class="p">,</span> <span class="n">progress</span><span class="p">:</span> <span class="n">Dict</span><span class="p">):</span>
+        <span class="c1"># update the progress max 5 times a second to not hammer the DB</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">state</span><span class="o">.</span><span class="n">db_progress_saved_time</span>
+            <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">state</span><span class="o">.</span><span class="n">db_progress_saved_time</span> <span class="o">&lt;</span> <span class="mf">0.2</span>
+        <span class="p">):</span>
+            <span class="k">return</span>
+
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> saving progress to DB&quot;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="n">progress</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">state</span><span class="o">.</span><span class="n">db_progress_saved_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_update_job_completed</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> completed, saving DB state&quot;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">completed</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> completed in JobWorkerManager&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_job_canceled</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> cancel requested, saving in DB&quot;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">canceled</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> canceled in DB&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_update_job_error</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">job</span><span class="p">:</span> <span class="n">Job</span><span class="p">,</span> <span class="n">err</span><span class="p">:</span> <span class="n">Any</span><span class="p">):</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> errored, saving to DB&quot;</span><span class="p">)</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">status</span> <span class="o">=</span> <span class="n">JobStatus</span><span class="o">.</span><span class="n">canceled</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">error</span> <span class="o">=</span> <span class="n">err</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">progress</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">job</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Job </span><span class="si">{</span><span class="n">job</span><span class="o">.</span><span class="n">job_id</span><span class="si">}</span><span class="s2"> errored out </span><span class="si">{</span><span class="n">err</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.6.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="manager.html">v0.6.0</a></dd>
+      <dd><a href="../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

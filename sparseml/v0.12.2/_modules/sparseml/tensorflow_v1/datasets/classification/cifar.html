@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.tensorflow_v1.datasets.classification.cifar &mdash; SparseML 0.12.2.20220607 documentation</title><link rel="stylesheet" href="../../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../../" src="../../../../../_static/documentation_options.js"></script>
+        <script src="../../../../../_static/jquery.js"></script>
+        <script src="../../../../../_static/underscore.js"></script>
+        <script src="../../../../../_static/doctools.js"></script>
+        <script src="../../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../../_static/copybutton.js"></script>
+    <script src="../../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.12
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.tensorflow_v1.datasets.classification.cifar</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.tensorflow_v1.datasets.classification.cifar</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">pickle</span>
+<span class="kn">import</span> <span class="nn">tarfile</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="kn">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.datasets.classification.imagefolder</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ImageFolderDataset</span><span class="p">,</span>
+    <span class="n">SplitsTransforms</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.datasets.registry</span> <span class="kn">import</span> <span class="n">DatasetRegistry</span>
+<span class="kn">from</span> <span class="nn">sparseml.tensorflow_v1.utils</span> <span class="kn">import</span> <span class="n">tf_compat</span><span class="p">,</span> <span class="n">tf_compat_div</span>
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">create_dirs</span>
+<span class="kn">from</span> <span class="nn">sparsezoo.utils</span> <span class="kn">import</span> <span class="n">download_file</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Cifar10DataSet&quot;</span><span class="p">,</span> <span class="s2">&quot;Cifar100DataSet&quot;</span><span class="p">]</span>
+
+
+<span class="n">_CIFAR_IMAGE_SIZE</span> <span class="o">=</span> <span class="mi">32</span>
+<span class="n">_PADDING</span> <span class="o">=</span> <span class="mi">4</span>
+
+
+<span class="k">def</span> <span class="nf">preprocess_for_train</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The default preprocessing function for train set as defined in Resnet paper</span>
+<span class="sd">    for Cifar datasets</span>
+
+<span class="sd">    :param image: the image tensor</span>
+
+<span class="sd">    :return: the preprocessed image</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;train_preprocess&quot;</span><span class="p">):</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">rand_choice</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">random_uniform</span><span class="p">(</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[],</span> <span class="n">minval</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">maxval</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">int32</span>
+        <span class="p">)</span>
+        <span class="n">padding</span> <span class="o">=</span> <span class="n">_PADDING</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">tf_compat</span><span class="o">.</span><span class="n">equal</span><span class="p">(</span><span class="n">rand_choice</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">pad</span><span class="p">(</span>
+                <span class="n">image</span><span class="p">,</span> <span class="p">[[</span><span class="n">padding</span><span class="p">,</span> <span class="n">padding</span><span class="p">],</span> <span class="p">[</span><span class="n">padding</span><span class="p">,</span> <span class="n">padding</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]]</span>
+            <span class="p">),</span>
+            <span class="k">lambda</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">random_flip_left_right</span><span class="p">(</span><span class="n">image</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">distorted_image</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">random_crop</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">distorted_image</span>
+
+
+<span class="k">def</span> <span class="nf">preprocess_for_eval</span><span class="p">(</span><span class="n">image</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    The default preprocessing function for test set as defined in Resnet paper</span>
+<span class="sd">    for Cifar datasets</span>
+
+<span class="sd">    :param image: the image tensor</span>
+
+<span class="sd">    :return: the preprocessed image</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">name_scope</span><span class="p">(</span><span class="s2">&quot;test_preprocess&quot;</span><span class="p">):</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf_compat</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">tf_compat_div</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="mf">255.0</span><span class="p">)</span>
+        <span class="n">image</span> <span class="o">=</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">random_crop</span><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">image</span>
+
+
+<span class="k">class</span> <span class="nc">CifarDataSet</span><span class="p">(</span><span class="n">ImageFolderDataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for the Cifar datasets</span>
+
+<span class="sd">    :param root: The root folder to find the dataset at,</span>
+<span class="sd">        if not found will download here if download=True</span>
+<span class="sd">    :param split: &quot;train&quot; for train split, or &quot;test&quot; for test split</span>
+<span class="sd">    :param preprocess_fn: function to preprocess an image tensor,</span>
+<span class="sd">        returning a new tensor</span>
+<span class="sd">    :param download: True to download the images; False to reuse</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">pre_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_train</span><span class="p">,),</span> <span class="n">val</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_eval</span><span class="p">,)</span>
+        <span class="p">),</span>
+        <span class="n">post_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+            <span class="n">val</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="n">root</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;download&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;extract&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">root</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">download</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_download_and_extract</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_create_image_folders</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_per_pixel_mean</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">train</span><span class="p">,</span>
+            <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+            <span class="n">pre_resize_transforms</span><span class="o">=</span><span class="n">pre_resize_transforms</span><span class="p">,</span>
+            <span class="n">post_resize_transforms</span><span class="o">=</span><span class="n">post_resize_transforms</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Number of images</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_train</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">50000</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">10000</span>
+
+    <span class="k">def</span> <span class="nf">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_download_and_extract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_create_image_folders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_save_images</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">filenames</span><span class="p">,</span> <span class="n">image_dir</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save images into corresponding label folder</span>
+
+<span class="sd">        :param labels: list of labels of the images</span>
+<span class="sd">        :param data: an numpy array of images, shape (num_images, 3027)</span>
+<span class="sd">        :param filenames: list of file names of the images</span>
+<span class="sd">        :param image_dir: directory to save images</span>
+
+<span class="sd">        :return: the numpy array of images of shape (num_images, 32, 32, 3)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">n_images</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+        <span class="n">image_tensors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">empty</span><span class="p">((</span><span class="n">n_images</span><span class="p">,</span> <span class="n">_CIFAR_IMAGE_SIZE</span><span class="p">,</span> <span class="n">_CIFAR_IMAGE_SIZE</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">filename</span><span class="p">)</span> <span class="ow">in</span> <span class="n">tqdm</span><span class="p">(</span>
+            <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">labels</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">filenames</span><span class="p">))</span>
+        <span class="p">):</span>
+            <span class="n">img_array</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span>
+                <span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="n">_CIFAR_IMAGE_SIZE</span><span class="p">,</span> <span class="n">_CIFAR_IMAGE_SIZE</span><span class="p">)</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">transpose</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+            <span class="n">img</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">fromarray</span><span class="p">(</span><span class="n">img_array</span><span class="p">)</span>
+            <span class="n">image_tensors</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">img</span>
+            <span class="n">img</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">image_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">),</span> <span class="n">filename</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">image_tensors</span>
+
+    <span class="k">def</span> <span class="nf">per_pixel_mean</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get the per pixel mean of the training images</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_per_pixel_mean</span>
+
+    <span class="k">def</span> <span class="nf">_normalize_image</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">image</span><span class="p">:</span> <span class="n">tf_compat</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Normalize image</span>
+
+<span class="sd">        :param image: the input image of shape (32, 32, 3)</span>
+<span class="sd">        :return: the normalized image</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">image</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">per_pixel_mean</span><span class="p">()</span>
+
+
+<div class="viewcode-block" id="Cifar10DataSet"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.cifar.Cifar10DataSet">[docs]</a><span class="nd">@DatasetRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cifar10&quot;</span><span class="p">],</span> <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="mi">10</span><span class="p">})</span>
+<span class="k">class</span> <span class="nc">Cifar10DataSet</span><span class="p">(</span><span class="n">CifarDataSet</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">pre_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_train</span><span class="p">,),</span> <span class="n">val</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_eval</span><span class="p">,)</span>
+        <span class="p">),</span>
+        <span class="n">post_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">),</span>
+        <span class="n">download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">train</span><span class="p">,</span>
+            <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+            <span class="n">pre_resize_transforms</span><span class="o">=</span><span class="n">pre_resize_transforms</span><span class="p">,</span>
+            <span class="n">post_resize_transforms</span><span class="o">=</span><span class="n">post_resize_transforms</span><span class="p">,</span>
+            <span class="n">download</span><span class="o">=</span><span class="n">download</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_per_pixel_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s2">&quot;per_pixel_mean_image.npy&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Cifar10DataSet.name_scope"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.cifar.Cifar10DataSet.name_scope">[docs]</a>    <span class="k">def</span> <span class="nf">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Cifar10&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_download_and_extract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download and extract the dataset into root</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span><span class="p">)</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span><span class="p">,</span> <span class="s2">&quot;cifar-10-python.tar.gz&quot;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.cs.toronto.edu/~kriz/cifar-10-python.tar.gz&quot;</span>
+        <span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">file_path</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">progress_title</span><span class="o">=</span><span class="s2">&quot;downloading CIFAR-10&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+            <span class="n">tar</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_image_folders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">)</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">)</span>
+
+        <span class="n">batches_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">,</span> <span class="s2">&quot;cifar-10-batches-py&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Train</span>
+        <span class="n">image_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="p">[</span><span class="n">create_dirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)))</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]</span>
+        <span class="n">batch_files</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;data_batch_</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">6</span><span class="p">)]</span>
+        <span class="k">for</span> <span class="n">fname</span> <span class="ow">in</span> <span class="n">batch_files</span><span class="p">:</span>
+            <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">batches_dir</span><span class="p">,</span> <span class="n">fname</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing </span><span class="si">{}</span><span class="s2">...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Train data batch </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+                <span class="n">batch_dict</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fo</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;bytes&quot;</span><span class="p">)</span>
+            <span class="n">image_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_save_images</span><span class="p">(</span>
+                    <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;labels&quot;</span><span class="p">],</span>
+                    <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+                    <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;filenames&quot;</span><span class="p">],</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">image_tensors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">image_tensors</span><span class="p">)</span>
+        <span class="n">per_pixel_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">image_tensors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s2">&quot;per_pixel_mean_image.npy&quot;</span><span class="p">),</span>
+            <span class="n">per_pixel_mean</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">del</span> <span class="n">image_tensors</span>
+
+        <span class="c1"># Test</span>
+        <span class="p">[</span><span class="n">create_dirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)))</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">)]</span>
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">batches_dir</span><span class="p">,</span> <span class="s2">&quot;test_batch&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing </span><span class="si">{}</span><span class="s2">...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Test data batch </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+            <span class="n">batch_dict</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fo</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;bytes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_images</span><span class="p">(</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;labels&quot;</span><span class="p">],</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;filenames&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Cifar100DataSet"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.cifar.Cifar100DataSet">[docs]</a><span class="nd">@DatasetRegistry</span><span class="o">.</span><span class="n">register</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;cifar100&quot;</span><span class="p">],</span> <span class="n">attributes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;num_classes&quot;</span><span class="p">:</span> <span class="mi">100</span><span class="p">})</span>
+<span class="k">class</span> <span class="nc">Cifar100DataSet</span><span class="p">(</span><span class="n">CifarDataSet</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">root</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">train</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">image_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="n">pre_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_train</span><span class="p">,),</span> <span class="n">val</span><span class="o">=</span><span class="p">(</span><span class="n">preprocess_for_eval</span><span class="p">,)</span>
+        <span class="p">),</span>
+        <span class="n">post_resize_transforms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">SplitsTransforms</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="n">SplitsTransforms</span><span class="p">(</span>
+            <span class="n">train</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">val</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">),</span>
+        <span class="n">download</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">root</span><span class="p">,</span>
+            <span class="n">train</span><span class="p">,</span>
+            <span class="n">image_size</span><span class="o">=</span><span class="n">image_size</span><span class="p">,</span>
+            <span class="n">pre_resize_transforms</span><span class="o">=</span><span class="n">pre_resize_transforms</span><span class="p">,</span>
+            <span class="n">post_resize_transforms</span><span class="o">=</span><span class="n">post_resize_transforms</span><span class="p">,</span>
+            <span class="n">download</span><span class="o">=</span><span class="n">download</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_per_pixel_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s2">&quot;per_pixel_mean_image.npy&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="Cifar100DataSet.name_scope"><a class="viewcode-back" href="../../../../../api/sparseml.tensorflow_v1.datasets.classification.html#sparseml.tensorflow_v1.datasets.classification.cifar.Cifar100DataSet.name_scope">[docs]</a>    <span class="k">def</span> <span class="nf">name_scope</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+        <span class="k">return</span> <span class="s2">&quot;Cifar100&quot;</span></div>
+
+    <span class="k">def</span> <span class="nf">_download_and_extract</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download and extract the dataset into root</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span><span class="p">)</span>
+        <span class="n">file_path</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_download_dir</span><span class="p">,</span> <span class="s2">&quot;cifar-100-python.tar.gz&quot;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="s2">&quot;https://www.cs.toronto.edu/~kriz/cifar-100-python.tar.gz&quot;</span>
+        <span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">file_path</span><span class="p">,</span>
+            <span class="n">overwrite</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="n">progress_title</span><span class="o">=</span><span class="s2">&quot;downloading CIFAR-100&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">)</span>
+        <span class="k">with</span> <span class="n">tarfile</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">file_path</span><span class="p">,</span> <span class="s2">&quot;r:gz&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">tar</span><span class="p">:</span>
+            <span class="n">tar</span><span class="o">.</span><span class="n">extractall</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_create_image_folders</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">)</span>
+        <span class="n">create_dirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">)</span>
+
+        <span class="n">batches_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_extract_dir</span><span class="p">,</span> <span class="s2">&quot;cifar-100-python&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Train</span>
+        <span class="n">image_tensors</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="p">[</span><span class="n">create_dirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)))</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span>
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">batches_dir</span><span class="p">,</span> <span class="s2">&quot;train&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing </span><span class="si">{}</span><span class="s2">...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Train data batch </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+            <span class="n">batch_dict</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fo</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;bytes&quot;</span><span class="p">)</span>
+        <span class="n">image_tensors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_save_images</span><span class="p">(</span>
+                <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;fine_labels&quot;</span><span class="p">],</span>
+                <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+                <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;filenames&quot;</span><span class="p">],</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">image_tensors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">(</span><span class="n">image_tensors</span><span class="p">)</span>
+        <span class="n">per_pixel_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">image_tensors</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span>
+            <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_train_dir</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">pardir</span><span class="p">,</span> <span class="s2">&quot;per_pixel_mean_image.npy&quot;</span><span class="p">),</span>
+            <span class="n">per_pixel_mean</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">del</span> <span class="n">image_tensors</span>
+
+        <span class="c1"># Test</span>
+        <span class="p">[</span><span class="n">create_dirs</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">label</span><span class="p">)))</span> <span class="k">for</span> <span class="n">label</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span>
+        <span class="n">fpath</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">batches_dir</span><span class="p">,</span> <span class="s2">&quot;test&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Processing </span><span class="si">{}</span><span class="s2">...&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">fpath</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Test data batch </span><span class="si">{}</span><span class="s2"> not found&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">fpath</span><span class="p">))</span>
+        <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">fpath</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">fo</span><span class="p">:</span>
+            <span class="n">batch_dict</span> <span class="o">=</span> <span class="n">pickle</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">fo</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;bytes&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_save_images</span><span class="p">(</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;fine_labels&quot;</span><span class="p">],</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;data&quot;</span><span class="p">],</span>
+            <span class="n">batch_dict</span><span class="p">[</span><span class="sa">b</span><span class="s2">&quot;filenames&quot;</span><span class="p">],</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_test_dir</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.12.2
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="cifar.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

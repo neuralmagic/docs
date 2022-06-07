@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.onnx.optim.structured_pruning &mdash; SparseML 0.11.0.20220607 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.11
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.onnx.optim.structured_pruning</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.onnx.optim.structured_pruning</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Code to assist in the compression of structured-pruned models</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">onnx</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.onnx.utils</span> <span class="kn">import</span> <span class="n">ONNXGraph</span><span class="p">,</span> <span class="n">get_node_attributes</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;get_param_structured_pruning_group_dependencies&quot;</span><span class="p">]</span>
+
+
+<span class="n">_PRUNABLE_OP_TYPES</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;Conv&quot;</span><span class="p">,</span> <span class="s2">&quot;Gemm&quot;</span><span class="p">,</span> <span class="s2">&quot;MatMul&quot;</span><span class="p">]</span>
+<span class="n">_OUTPUT_CHANNEL_OP_TYPES</span> <span class="o">=</span> <span class="n">_PRUNABLE_OP_TYPES</span> <span class="o">+</span> <span class="p">[</span><span class="s2">&quot;BatchNormalization&quot;</span><span class="p">]</span>
+
+
+<div class="viewcode-block" id="get_param_structured_pruning_group_dependencies"><a class="viewcode-back" href="../../../../api/sparseml.onnx.optim.html#sparseml.onnx.optim.structured_pruning.get_param_structured_pruning_group_dependencies">[docs]</a><span class="k">def</span> <span class="nf">get_param_structured_pruning_group_dependencies</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">onnx</span><span class="o">.</span><span class="n">ModelProto</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span>
+    <span class="n">structure_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;filter&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    :param model: model to generate pruning groups and dependencies for</span>
+<span class="sd">    :param structure_type: valid options are &#39;filter&#39; and &#39;channel&#39;. Generates</span>
+<span class="sd">        dependency map for corresponding pruning scheme. Default is &#39;filter&#39;</span>
+<span class="sd">    :return: dictionary of parameter names that should be grouped during</span>
+<span class="sd">        structured pruning to a list of parameter names whose parameters should</span>
+<span class="sd">        be updated accordingly to the param group pruning results. prunable parameter</span>
+<span class="sd">        names will be represented as a comma separated string</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">structure_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;filter&quot;</span><span class="p">,</span> <span class="s2">&quot;channel&quot;</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;invalid structure_type </span><span class="si">{</span><span class="n">structure_type</span><span class="si">}</span><span class="s2">. not in [&#39;filter&#39;, &#39;channel&#39;]&quot;</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">model</span> <span class="o">=</span> <span class="n">onnx</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">ONNXGraph</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="n">param_name_to_dependents</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># Dict[str, Set[str]]</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">graph</span><span class="o">.</span><span class="n">node</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">_PRUNABLE_OP_TYPES</span> <span class="ow">or</span> <span class="p">(</span>
+            <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="ow">is</span> <span class="kc">None</span>
+        <span class="p">):</span>
+            <span class="c1"># main param not found or not prunable</span>
+            <span class="k">continue</span>
+
+        <span class="n">param_name_to_dependents</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span> <span class="o">=</span> <span class="n">_get_node_dependency_names</span><span class="p">(</span>
+            <span class="n">graph</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">structure_type</span>
+        <span class="p">)</span>
+
+    <span class="c1"># merge disjoint sets of dependencies (could improve with union-find)</span>
+    <span class="n">prunable_param_group_to_dep_params</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># List[Tuple[List, Set]]</span>
+    <span class="k">for</span> <span class="n">prunable_param_name</span><span class="p">,</span> <span class="n">dep_params</span> <span class="ow">in</span> <span class="n">param_name_to_dependents</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="n">intersected_group_idxs</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">idx</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">group_dep_params</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">prunable_param_group_to_dep_params</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">dep_params</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">group_dep_params</span><span class="p">)</span>
+        <span class="p">}</span>
+        <span class="n">new_group_val</span> <span class="o">=</span> <span class="p">([</span><span class="n">prunable_param_name</span><span class="p">],</span> <span class="n">dep_params</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">intersected_group_idxs</span><span class="p">:</span>
+            <span class="n">prunable_param_group_to_dep_params</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">new_group_val</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">non_intersected_vals</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="p">(</span><span class="n">prunable_param_group</span><span class="p">,</span> <span class="n">group_dep_params</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span>
+                <span class="n">prunable_param_group_to_dep_params</span>
+            <span class="p">):</span>
+                <span class="k">if</span> <span class="n">idx</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">intersected_group_idxs</span><span class="p">:</span>
+                    <span class="n">non_intersected_vals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="p">(</span><span class="n">prunable_param_group</span><span class="p">,</span> <span class="n">group_dep_params</span><span class="p">)</span>
+                    <span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">new_group_val</span> <span class="o">=</span> <span class="p">(</span>
+                        <span class="n">new_group_val</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">+</span> <span class="n">prunable_param_group</span><span class="p">,</span>
+                        <span class="n">new_group_val</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">union</span><span class="p">(</span><span class="n">group_dep_params</span><span class="p">),</span>
+                    <span class="p">)</span>
+            <span class="n">prunable_param_group_to_dep_params</span> <span class="o">=</span> <span class="n">non_intersected_vals</span> <span class="o">+</span> <span class="p">[</span><span class="n">new_group_val</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;,&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">prunable_param_group</span><span class="p">):</span> <span class="nb">list</span><span class="p">(</span><span class="n">dependent_params</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">prunable_param_group</span><span class="p">,</span> <span class="n">dependent_params</span> <span class="ow">in</span> <span class="n">prunable_param_group_to_dep_params</span>
+    <span class="p">}</span></div>
+
+
+<span class="k">def</span> <span class="nf">_get_next_layer_deps</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">ONNXGraph</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">structure_type</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="p">[</span>
+            <span class="n">parent_node</span>
+            <span class="k">for</span> <span class="n">parent_node</span> <span class="ow">in</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_parents</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">parent_node</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="k">if</span> <span class="n">structure_type</span> <span class="o">==</span> <span class="s2">&quot;channel&quot;</span>
+        <span class="k">else</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_node_children</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_get_node_output_ids</span><span class="p">(</span><span class="n">nodes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">):</span>
+        <span class="n">nodes</span> <span class="o">=</span> <span class="p">[</span><span class="n">nodes</span><span class="p">]</span>
+    <span class="n">ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+    <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+        <span class="n">ids</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">output</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">ids</span>
+
+
+<span class="k">def</span> <span class="nf">_get_node_dependency_names</span><span class="p">(</span>
+    <span class="n">graph</span><span class="p">:</span> <span class="n">ONNXGraph</span><span class="p">,</span> <span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">,</span> <span class="n">structure_type</span><span class="p">:</span> <span class="nb">str</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+    <span class="c1"># returns a list of parameters whose should be pruned to match</span>
+    <span class="c1"># the target dimensions of this node</span>
+    <span class="n">unchecked_nodes</span> <span class="o">=</span> <span class="n">_get_next_layer_deps</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">node</span><span class="p">,</span> <span class="n">structure_type</span><span class="p">)</span>
+    <span class="n">seen_output_ids</span> <span class="o">=</span> <span class="n">_get_node_output_ids</span><span class="p">(</span><span class="n">unchecked_nodes</span><span class="p">)</span>
+    <span class="n">dependent_params</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">structure_type</span> <span class="o">==</span> <span class="s2">&quot;filter&quot;</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="c1"># node bias depends on num filters</span>
+        <span class="n">dependent_params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+
+    <span class="k">while</span> <span class="n">unchecked_nodes</span><span class="p">:</span>
+        <span class="n">current_node</span> <span class="o">=</span> <span class="n">unchecked_nodes</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">):</span>
+            <span class="k">continue</span>
+
+        <span class="k">if</span> <span class="n">current_node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="n">_OUTPUT_CHANNEL_OP_TYPES</span><span class="p">:</span>
+            <span class="n">prunable</span> <span class="o">=</span> <span class="n">current_node</span><span class="o">.</span><span class="n">op_type</span> <span class="ow">in</span> <span class="n">_PRUNABLE_OP_TYPES</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">list</span><span class="p">(</span><span class="n">current_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">:])</span>  <span class="c1"># skip layer input tensor</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">prunable</span> <span class="ow">and</span> <span class="n">structure_type</span> <span class="o">!=</span> <span class="s2">&quot;filter&quot;</span><span class="p">)</span>
+                <span class="k">else</span> <span class="p">[</span><span class="n">current_node</span><span class="o">.</span><span class="n">input</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>  <span class="c1"># bias not dependent on prev filter</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">params</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">graph</span><span class="o">.</span><span class="n">get_init_by_name</span><span class="p">(</span><span class="n">param</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">dependent_params</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">param</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">prunable</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">_is_group_conv</span><span class="p">(</span><span class="n">current_node</span><span class="p">):</span>
+                <span class="c1"># continue on other branches, do not go past prunable nodes</span>
+                <span class="k">continue</span>
+        <span class="n">dep_nodes</span> <span class="o">=</span> <span class="n">_get_next_layer_deps</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">current_node</span><span class="p">,</span> <span class="n">structure_type</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">dep_node</span> <span class="ow">in</span> <span class="n">dep_nodes</span><span class="p">:</span>
+            <span class="n">dep_node_ids</span> <span class="o">=</span> <span class="n">_get_node_output_ids</span><span class="p">(</span><span class="n">dep_node</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dep_node_ids</span><span class="o">.</span><span class="n">isdisjoint</span><span class="p">(</span><span class="n">seen_output_ids</span><span class="p">):</span>
+                <span class="n">unchecked_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">dep_node</span><span class="p">)</span>
+                <span class="n">seen_output_ids</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">dep_node_ids</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">dependent_params</span>
+
+
+<span class="k">def</span> <span class="nf">_is_group_conv</span><span class="p">(</span><span class="n">node</span><span class="p">:</span> <span class="n">onnx</span><span class="o">.</span><span class="n">NodeProto</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="o">.</span><span class="n">op_type</span> <span class="o">==</span> <span class="s2">&quot;Conv&quot;</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="n">attrs</span> <span class="o">=</span> <span class="n">get_node_attributes</span><span class="p">(</span><span class="n">node</span><span class="p">)</span>
+    <span class="n">groups</span> <span class="o">=</span> <span class="n">attrs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;group&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">groups</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span>
+    <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.11.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="structured_pruning.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../../v0.12.2/index.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

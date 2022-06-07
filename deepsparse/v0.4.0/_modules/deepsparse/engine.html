@@ -104,6 +104,7 @@
 <span class="sd">Code related to interfacing with a Neural Network in the DeepSparse Engine using python</span>
 <span class="sd">&quot;&quot;&quot;</span>
 
+<span class="kn">import</span> <span class="nn">logging</span>
 <span class="kn">import</span> <span class="nn">time</span>
 <span class="kn">from</span> <span class="nn">enum</span> <span class="kn">import</span> <span class="n">Enum</span>
 <span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
@@ -148,9 +149,11 @@
     <span class="s2">&quot;MultiModelEngine&quot;</span><span class="p">,</span>
 <span class="p">]</span>
 
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
 <span class="n">ARCH</span> <span class="o">=</span> <span class="n">cpu_architecture</span><span class="p">()</span>
 <span class="n">NUM_CORES</span> <span class="o">=</span> <span class="n">ARCH</span><span class="o">.</span><span class="n">num_available_physical_cores</span>
+<span class="n">NUM_STREAMS</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># Default num-streams. Actual value is scheduler-dependent.</span>
 <span class="n">AVX_TYPE</span> <span class="o">=</span> <span class="n">ARCH</span><span class="o">.</span><span class="n">isa</span>
 <span class="n">VNNI</span> <span class="o">=</span> <span class="n">ARCH</span><span class="o">.</span><span class="n">vnni</span>
 
@@ -206,6 +209,22 @@
     <span class="k">return</span> <span class="n">num_cores</span>
 
 
+<span class="k">def</span> <span class="nf">_validate_num_streams</span><span class="p">(</span><span class="n">num_streams</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">int</span><span class="p">],</span> <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">num_streams</span><span class="p">:</span>
+        <span class="n">num_streams</span> <span class="o">=</span> <span class="n">NUM_STREAMS</span>
+
+    <span class="k">if</span> <span class="n">num_streams</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_streams must be greater than 0&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">num_streams</span> <span class="o">&gt;</span> <span class="n">num_cores</span><span class="p">:</span>
+        <span class="n">num_streams</span> <span class="o">=</span> <span class="n">num_cores</span>
+        <span class="n">_LOGGER</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span>
+            <span class="s2">&quot;num_streams exceeds num_cores - capping to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num_streams</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">num_streams</span>
+
+
 <span class="k">def</span> <span class="nf">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Scheduler</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Scheduler</span><span class="p">:</span>
     <span class="k">if</span> <span class="ow">not</span> <span class="n">scheduler</span><span class="p">:</span>
         <span class="n">scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">default</span>
@@ -240,6 +259,8 @@
 <span class="sd">    :param num_cores: The number of physical cores to run the model on. If more</span>
 <span class="sd">        cores are requested than are available on a single socket, the engine</span>
 <span class="sd">        will try to distribute them evenly across as few sockets as possible.</span>
+<span class="sd">    :param num_streams: The max number of requests the model can handle</span>
+<span class="sd">        concurrently.</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :param input_shapes: The list of shapes to set the inputs to. Pass None to use model as-is.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
@@ -248,13 +269,15 @@
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
         <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
-        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">input_shapes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span> <span class="o">=</span> <span class="n">model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span> <span class="o">=</span> <span class="n">_validate_num_streams</span><span class="p">(</span><span class="n">num_streams</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">scheduler</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_input_shapes</span> <span class="o">=</span> <span class="n">input_shapes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_avx_type</span> <span class="o">=</span> <span class="n">AVX_TYPE</span>
@@ -268,6 +291,7 @@
                     <span class="n">model_path</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="kc">None</span><span class="p">,</span>
                 <span class="p">)</span>
@@ -276,6 +300,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="kc">None</span><span class="p">,</span>
             <span class="p">)</span>
@@ -342,6 +367,14 @@
 <span class="sd">        :return: The number of physical cores the current instance is running on</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_streams</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: The max count of streams the current instance can handle</span>
+<span class="sd">           concurrently.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span> <span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Scheduler</span><span class="p">:</span>
@@ -607,6 +640,7 @@
             <span class="s2">&quot;onnx_file_path&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_path</span><span class="p">,</span>
             <span class="s2">&quot;batch_size&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
             <span class="s2">&quot;num_cores&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_cores</span><span class="p">,</span>
+            <span class="s2">&quot;num_streams&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_streams</span><span class="p">,</span>
             <span class="s2">&quot;scheduler&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scheduler</span><span class="p">,</span>
             <span class="s2">&quot;cpu_avx_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_avx_type</span><span class="p">,</span>
             <span class="s2">&quot;cpu_vnni&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">cpu_vnni</span><span class="p">,</span>
@@ -623,26 +657,37 @@
 <span class="sd">    :param num_cores: The number of physical cores to run the model on. If more</span>
 <span class="sd">        cores are requested than are available on a single socket, the engine</span>
 <span class="sd">        will try to distribute them evenly across as few sockets as possible.</span>
+<span class="sd">    :param num_streams: The max number of requests the model can handle</span>
+<span class="sd">        concurrently.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">num_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">_validate_num_cores</span><span class="p">(</span><span class="n">num_cores</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span> <span class="o">=</span> <span class="n">_validate_num_streams</span><span class="p">(</span><span class="n">num_streams</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">Scheduler</span><span class="o">.</span><span class="n">from_str</span><span class="p">(</span><span class="s2">&quot;elastic&quot;</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_deepsparse_context</span> <span class="o">=</span> <span class="n">LIB</span><span class="o">.</span><span class="n">deepsparse_context</span><span class="p">(</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span>
         <span class="p">)</span>
 
-<div class="viewcode-block" id="Context.value"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.value">[docs]</a>    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deepsparse_context</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">value</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_deepsparse_context</span>
 
-<div class="viewcode-block" id="Context.num_cores"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.num_cores">[docs]</a>    <span class="k">def</span> <span class="nf">num_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_cores</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span>
 
-<div class="viewcode-block" id="Context.scheduler"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.Context.scheduler">[docs]</a>    <span class="k">def</span> <span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span></div></div>
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">num_streams</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">scheduler</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span></div>
 
 
 <div class="viewcode-block" id="MultiModelEngine"><a class="viewcode-back" href="../../api/deepsparse.html#deepsparse.engine.MultiModelEngine">[docs]</a><span class="k">class</span> <span class="nc">MultiModelEngine</span><span class="p">(</span><span class="n">Engine</span><span class="p">):</span>
@@ -674,6 +719,7 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span> <span class="o">=</span> <span class="n">model_to_path</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span> <span class="o">=</span> <span class="n">_validate_batch_size</span><span class="p">(</span><span class="n">batch_size</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">num_cores</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span> <span class="o">=</span> <span class="n">context</span><span class="o">.</span><span class="n">num_streams</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span> <span class="o">=</span> <span class="n">_validate_scheduler</span><span class="p">(</span><span class="n">context</span><span class="o">.</span><span class="n">scheduler</span><span class="p">())</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_input_shapes</span> <span class="o">=</span> <span class="n">input_shapes</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_cpu_avx_type</span> <span class="o">=</span> <span class="n">AVX_TYPE</span>
@@ -687,6 +733,7 @@
                     <span class="n">model_path</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span><span class="p">,</span>
                     <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                     <span class="n">context</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
                 <span class="p">)</span>
@@ -695,6 +742,7 @@
                 <span class="bp">self</span><span class="o">.</span><span class="n">_model_path</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_batch_size</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_num_cores</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_num_streams</span><span class="p">,</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_scheduler</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
                 <span class="n">context</span><span class="o">.</span><span class="n">value</span><span class="p">(),</span>
             <span class="p">)</span></div>
@@ -704,6 +752,7 @@
     <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Model</span><span class="p">,</span> <span class="n">File</span><span class="p">],</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">scheduler</span><span class="p">:</span> <span class="n">Scheduler</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">input_shapes</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Engine</span><span class="p">:</span>
@@ -720,6 +769,9 @@
 <span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of cores for the current</span>
 <span class="sd">        machine; default None</span>
+<span class="sd">    :param num_streams: The max number of requests the model can handle</span>
+<span class="sd">        concurrently. None or 0 implies a scheduler-defined default value;</span>
+<span class="sd">        default None</span>
 <span class="sd">    :param scheduler: The kind of scheduler to execute with. Pass None for the default.</span>
 <span class="sd">    :param input_shapes: The list of shapes to set the inputs to. Pass None to use model as-is.</span>
 <span class="sd">    :return: The created Engine after compiling the model</span>
@@ -728,6 +780,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="o">=</span><span class="n">num_cores</span><span class="p">,</span>
+        <span class="n">num_streams</span><span class="o">=</span><span class="n">num_streams</span><span class="p">,</span>
         <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
         <span class="n">input_shapes</span><span class="o">=</span><span class="n">input_shapes</span><span class="p">,</span>
     <span class="p">)</span></div>
@@ -738,6 +791,7 @@
     <span class="n">inp</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">numpy</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
     <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
     <span class="n">num_cores</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">num_streams</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span>
     <span class="n">num_warmup_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
     <span class="n">include_inputs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
@@ -761,6 +815,9 @@
 <span class="sd">    :param num_cores: The number of physical cores to run the model on.</span>
 <span class="sd">        Pass None or 0 to run on the max number of cores</span>
 <span class="sd">        for the current machine; default None</span>
+<span class="sd">    :param num_streams: The max number of requests the model can handle</span>
+<span class="sd">        concurrently. None or 0 implies a scheduler-defined default value;</span>
+<span class="sd">        default None</span>
 <span class="sd">    :param inp: The list of inputs to pass to the engine for benchmarking.</span>
 <span class="sd">        The expected order is the inputs order as defined in the ONNX graph.</span>
 <span class="sd">    :param num_iterations: The number of iterations to run benchmarking for.</span>
@@ -781,6 +838,7 @@
         <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
         <span class="n">batch_size</span><span class="o">=</span><span class="n">batch_size</span><span class="p">,</span>
         <span class="n">num_cores</span><span class="o">=</span><span class="n">num_cores</span><span class="p">,</span>
+        <span class="n">num_streams</span><span class="o">=</span><span class="n">num_streams</span><span class="p">,</span>
         <span class="n">scheduler</span><span class="o">=</span><span class="n">scheduler</span><span class="p">,</span>
         <span class="n">input_shapes</span><span class="o">=</span><span class="n">input_shapes</span><span class="p">,</span>
     <span class="p">)</span>
@@ -896,6 +954,7 @@
       <dd><a href="../../../v0.11.2/index.html">v0.11.2</a></dd>
       <dd><a href="../../../v0.12.0/index.html">v0.12.0</a></dd>
       <dd><a href="../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../v0.12.2/index.html">v0.12.2</a></dd>
       <dd><a href="../../../v0.3.0/index.html">v0.3.0</a></dd>
       <dd><a href="../../../v0.3.1/index.html">v0.3.1</a></dd>
       <dd><a href="engine.html">v0.4.0</a></dd>

@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparsify.blueprints.utils.projects_optimizations_pruning &mdash; Sparsify 0.5.0.20220607 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> Sparsify<img src="../../../../_static/icon-sparsify.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                0.5
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/userguide/index.html">User Guide</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparsify.html">sparsify package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparsify/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://discuss.neuralmagic.com/">Support, General Q&amp;A Forums</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">Sparsify</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparsify.blueprints.utils.projects_optimizations_pruning</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparsify.blueprints.utils.projects_optimizations_pruning</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Helper functions and classes for flask blueprints specific to project optimizations</span>
+<span class="sd">for pruning</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="kn">import</span> <span class="n">OrderedDict</span><span class="p">,</span> <span class="n">defaultdict</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.utils</span> <span class="kn">import</span> <span class="n">interpolate_list_linear</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;PruningSettings&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PruningModelEvaluator&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<span class="n">_LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="n">PruningSettings</span> <span class="o">=</span> <span class="n">NamedTuple</span><span class="p">(</span>
+    <span class="s2">&quot;PruningSettings&quot;</span><span class="p">,</span>
+    <span class="p">[</span>
+        <span class="p">(</span><span class="s2">&quot;mask_type&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;sparsity&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s2">&quot;balance_perf_loss&quot;</span><span class="p">,</span> <span class="nb">float</span><span class="p">),</span>
+        <span class="p">(</span><span class="s2">&quot;filter_min_sparsity&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s2">&quot;filter_min_perf_gain&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]),</span>
+        <span class="p">(</span><span class="s2">&quot;filter_min_recovery&quot;</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_PruningPointRescaler</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Convenience class for normalizing / rescaling values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;_ValueRescaler(min_val=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="si">}</span><span class="s2">, max_val=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="n">val</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">val</span>
+
+        <span class="c1"># normalize the value such that it will fall in the range [0, max]</span>
+        <span class="c1"># by subtracting the min</span>
+        <span class="n">rescaled</span> <span class="o">=</span> <span class="n">val</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="k">else</span> <span class="n">val</span>
+
+        <span class="c1"># normalize the value such that it will fall in the range [0, 1.0]</span>
+        <span class="c1"># by dividing by the max range</span>
+        <span class="n">max_range</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+        <span class="n">rescaled</span> <span class="o">=</span> <span class="n">rescaled</span> <span class="o">/</span> <span class="n">max_range</span> <span class="k">if</span> <span class="n">max_range</span> <span class="k">else</span> <span class="n">rescaled</span>
+
+        <span class="k">return</span> <span class="n">rescaled</span>
+
+    <span class="k">def</span> <span class="nf">add_rescale_series</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_series_val</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">max_series_val</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">min_series_val</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">min_val</span> <span class="o">=</span> <span class="n">min_series_val</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">max_series_val</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">max_val</span> <span class="o">=</span> <span class="n">max_series_val</span>
+
+
+<span class="k">class</span> <span class="nc">_PruningNodeSeriesValue</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Simple data object to map the number of sparse params and the defined sparsity</span>
+<span class="sd">    at that level to a series value</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparse_params</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">node_id</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparse_params</span> <span class="o">=</span> <span class="n">sparse_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparsity</span> <span class="o">=</span> <span class="n">sparsity</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_id</span> <span class="o">=</span> <span class="n">node_id</span>
+
+    <span class="k">def</span> <span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;_PruningNodeSeriesValue(sparse_params=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_params</span><span class="si">}</span><span class="s2">, &quot;</span>
+            <span class="sa">f</span><span class="s2">&quot;sparsity=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">sparsity</span><span class="si">}</span><span class="s2">, value=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">, node_id=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">node_id</span><span class="si">}</span><span class="s2">)&quot;</span>
+        <span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">_PruningNodeSeries</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object to contain a series of data that allows estimations of values</span>
+<span class="sd">    and cleansing of the data for optimization tasks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsity_measurements</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">baseline_key</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">num_params</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">increasing</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparsity_measurements</span> <span class="o">=</span> <span class="n">sparsity_measurements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseline_key</span> <span class="o">=</span> <span class="n">baseline_key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">=</span> <span class="n">num_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">increasing</span> <span class="o">=</span> <span class="n">increasing</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_min</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_max</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_smoothed_min</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_smoothed_max</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_optimized_min</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_optimized_max</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: Union[None, float]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[_PruningNodeSeriesValue]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[_PruningNodeSeriesValue]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[_PruningNodeSeriesValue]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_set_data</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">estimated_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sparsity</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span>
+
+        <span class="n">measurements</span> <span class="o">=</span> <span class="p">[(</span><span class="n">val</span><span class="o">.</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">]</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">interpolated</span> <span class="o">=</span> <span class="n">interpolate_list_linear</span><span class="p">(</span><span class="n">measurements</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">interpolated</span>
+
+    <span class="k">def</span> <span class="nf">estimated_gain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param sparsity: the sparsity to get the gain value for</span>
+<span class="sd">        :return: the ratio of the predicted value at the given sparsity</span>
+<span class="sd">            as compared with the baseline value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sparsity</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_value</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">value</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span> <span class="o">/</span> <span class="n">value</span>
+
+    <span class="k">def</span> <span class="nf">estimated_sensitivity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param sparsity: the sparsity to get the sensitivity value for</span>
+<span class="sd">        :return: the sensitivity comparison (difference) of the measurement</span>
+<span class="sd">            at the given sparsity compared with the baseline</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">sparsity</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimated_value</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># subtract from baseline if decreasing so lower values = more sensitive: perf</span>
+        <span class="c1"># subtract from sparse val if increasing so higher values = more sensitive: loss</span>
+
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span> <span class="o">-</span> <span class="n">value</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">increasing</span>
+            <span class="k">else</span> <span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">costs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">rescaler</span><span class="p">:</span> <span class="n">_PruningPointRescaler</span><span class="p">,</span> <span class="n">use_max</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param rescaler: the rescaler to use to rescale the optimized values</span>
+<span class="sd">            to the [0.0, 1.0] range</span>
+<span class="sd">        :param use_max: True to use the max value for all measurements,</span>
+<span class="sd">            False to interpolate between. Max value is used for FLOPS performance</span>
+<span class="sd">            because the slopes for smaller convs are less and therefore prioritized</span>
+<span class="sd">            improperly by optimization</span>
+<span class="sd">        :return: a list of tuples containing (sparsity, cost)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="nb">float</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span>
+
+        <span class="k">def</span> <span class="nf">_get_val</span><span class="p">(</span><span class="n">v</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">rescaler</span><span class="p">(</span><span class="n">v</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">use_max</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_optimized_max</span><span class="p">)</span>
+
+        <span class="n">measurements</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">_get_val</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">value</span><span class="p">))</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span>
+        <span class="p">]</span>
+
+        <span class="c1"># creates the data at increments of 1% levels from 0 to 99</span>
+        <span class="n">costs</span> <span class="o">=</span> <span class="n">interpolate_list_linear</span><span class="p">(</span>
+            <span class="n">measurements</span><span class="p">,</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="n">index</span><span class="p">)</span> <span class="o">/</span> <span class="mf">100.0</span> <span class="k">for</span> <span class="n">index</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">costs</span>
+
+    <span class="k">def</span> <span class="nf">_set_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparsity_measurements</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># smoothed values will always keep with the trend given</span>
+        <span class="c1"># if set as increasing, value will always be equal to or greater than last value</span>
+        <span class="c1"># if set as decreasing, value will always be equal to or less than last value</span>
+        <span class="n">smoothed_val</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">meas</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sparsity_measurements</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_key</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">value_baseline</span> <span class="o">=</span> <span class="n">meas</span>
+
+            <span class="n">sparsity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+            <span class="n">sparse_params</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sparsity</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">_PruningNodeSeriesValue</span><span class="p">(</span><span class="n">sparse_params</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">meas</span><span class="p">))</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">smoothed_val</span> <span class="ow">is</span> <span class="kc">None</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">increasing</span> <span class="ow">and</span> <span class="n">meas</span> <span class="o">&gt;=</span> <span class="n">smoothed_val</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">increasing</span> <span class="ow">and</span> <span class="n">meas</span> <span class="o">&lt;=</span> <span class="n">smoothed_val</span><span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">smoothed_val</span> <span class="o">=</span> <span class="n">meas</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_PruningNodeSeriesValue</span><span class="p">(</span><span class="n">sparse_params</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">smoothed_val</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sparse_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sparse_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_smoothed_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_smoothed_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span><span class="p">])</span>
+
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_smoothed</span><span class="p">:</span>
+            <span class="n">optimize_value</span> <span class="o">=</span> <span class="n">val</span><span class="o">.</span><span class="n">value</span>
+
+            <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">increasing</span><span class="p">:</span>
+                <span class="c1"># need to invert the graph so the values are always increasing</span>
+                <span class="c1"># for the optimization algorithms.</span>
+                <span class="c1"># do this by reformulating as the difference from the smoothed max</span>
+                <span class="c1"># ex: -x^2 + 5 =&gt; 5 - (-x^2 + 5)</span>
+                <span class="n">optimize_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">value_smoothed_max</span> <span class="o">-</span> <span class="n">optimize_value</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_PruningNodeSeriesValue</span><span class="p">(</span><span class="n">val</span><span class="o">.</span><span class="n">sparse_params</span><span class="p">,</span> <span class="n">val</span><span class="o">.</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">optimize_value</span><span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">x</span><span class="p">:</span> <span class="n">x</span><span class="o">.</span><span class="n">sparse_params</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_optimized_min</span> <span class="o">=</span> <span class="nb">min</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">value_optimized_max</span> <span class="o">=</span> <span class="nb">max</span><span class="p">([</span><span class="n">val</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_optimization</span><span class="p">])</span>
+
+
+<span class="k">class</span> <span class="nc">_PruningNodeEvaluator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluator for a model&#39;s node for pruning.</span>
+<span class="sd">    Able to estimate the effect of pruning on the node for performance, loss, etc</span>
+
+<span class="sd">    :param node_id: id of the node to create the evaluator for</span>
+<span class="sd">    :param model_analysis: analysis of the model</span>
+<span class="sd">    :param perf_analysis: performance analysis of the model, if any</span>
+<span class="sd">    :param loss_analysis: loss analysis of the model, if any</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">model_analysis</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">perf_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span>
+        <span class="n">loss_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_id</span> <span class="o">=</span> <span class="n">node_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="o">=</span> <span class="n">_PruningNodeEvaluator</span><span class="o">.</span><span class="n">_extract_node_analysis</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="p">,</span> <span class="n">model_analysis</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_prunable_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;prunable_params&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_flops</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;flops&quot;</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span> <span class="o">=</span> <span class="n">_PruningNodeEvaluator</span><span class="o">.</span><span class="n">_extract_node_perf_analysis</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="p">,</span> <span class="n">perf_analysis</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span> <span class="o">=</span> <span class="n">_PruningNodeEvaluator</span><span class="o">.</span><span class="n">_extract_node_loss_analysis</span><span class="p">(</span>
+            <span class="n">node_id</span><span class="p">,</span> <span class="n">loss_analysis</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">series_params</span> <span class="o">=</span> <span class="n">_PruningNodeSeries</span><span class="p">(</span>
+            <span class="n">sparsity_measurements</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">(</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_prunable_params</span><span class="p">),</span>
+                <span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">baseline_key</span><span class="o">=</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span>
+            <span class="n">num_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">,</span>
+            <span class="n">increasing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span> <span class="o">=</span> <span class="n">_PruningNodeSeries</span><span class="p">(</span>
+            <span class="n">sparsity_measurements</span><span class="o">=</span><span class="p">(</span>
+                <span class="n">OrderedDict</span><span class="p">([(</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_flops</span><span class="p">),</span> <span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)])</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_flops</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">baseline_key</span><span class="o">=</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span>
+            <span class="n">num_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">,</span>
+            <span class="n">increasing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">series_perf</span> <span class="o">=</span> <span class="n">_PruningNodeSeries</span><span class="p">(</span>
+            <span class="n">sparsity_measurements</span><span class="o">=</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span><span class="p">[</span><span class="s2">&quot;measurements&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">baseline_key</span><span class="o">=</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span><span class="p">[</span><span class="s2">&quot;baseline_measurement_key&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">num_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">,</span>
+            <span class="n">increasing</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">series_loss</span> <span class="o">=</span> <span class="n">_PruningNodeSeries</span><span class="p">(</span>
+            <span class="n">sparsity_measurements</span><span class="o">=</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span><span class="p">[</span><span class="s2">&quot;measurements&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">baseline_key</span><span class="o">=</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span><span class="p">[</span><span class="s2">&quot;baseline_measurement_key&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span>
+                <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="n">num_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">,</span>
+            <span class="n">increasing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">series_loss_est</span> <span class="o">=</span> <span class="n">_PruningNodeSeries</span><span class="p">(</span>
+            <span class="n">sparsity_measurements</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="p">(</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">),</span>
+                    <span class="p">(</span><span class="s2">&quot;1.0&quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;prunable_equation_sensitivity&quot;</span><span class="p">]),</span>
+                <span class="p">]</span>
+            <span class="p">),</span>
+            <span class="n">baseline_key</span><span class="o">=</span><span class="s2">&quot;0.0&quot;</span><span class="p">,</span>
+            <span class="n">num_params</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">,</span>
+            <span class="n">increasing</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">available_series_perf</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_PruningNodeSeries</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the available performance series,</span>
+<span class="sd">            falls back on flops if perf sensitivity is not available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_perf</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_perf</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">available_series_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">_PruningNodeSeries</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: the available loss series,</span>
+<span class="sd">            falls back on estimated loss if loss sensitivity is not available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">series_loss</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis_loss</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_loss_est</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">structurally_pruned</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :return: True if the node is structurally pruned (group convolutions),</span>
+<span class="sd">            False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">attributes</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span><span class="p">[</span><span class="s2">&quot;attributes&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="s2">&quot;attributes&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">analysis</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">attributes</span> <span class="ow">and</span> <span class="s2">&quot;group&quot;</span> <span class="ow">in</span> <span class="n">attributes</span> <span class="ow">and</span> <span class="n">attributes</span><span class="p">[</span><span class="s2">&quot;group&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">1</span>
+
+    <span class="k">def</span> <span class="nf">eval_dict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">baseline_sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">overridden</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="n">sensitivity_sparsities</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.8</span><span class="p">,</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.99</span><span class="p">]</span>
+        <span class="n">perf_sensitivities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span><span class="n">sparsity</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sensitivity_sparsities</span>
+        <span class="p">]</span>
+        <span class="n">loss_sensitivities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span><span class="n">sparsity</span><span class="p">))</span>
+            <span class="k">for</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">sensitivity_sparsities</span>
+        <span class="p">]</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;node_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_id</span><span class="p">,</span>
+            <span class="s2">&quot;sparsity&quot;</span><span class="p">:</span> <span class="n">sparsity</span><span class="p">,</span>
+            <span class="s2">&quot;overridden&quot;</span><span class="p">:</span> <span class="n">overridden</span><span class="p">,</span>
+            <span class="s2">&quot;perf_sensitivities&quot;</span><span class="p">:</span> <span class="n">perf_sensitivities</span><span class="p">,</span>
+            <span class="s2">&quot;loss_sensitivities&quot;</span><span class="p">:</span> <span class="n">loss_sensitivities</span><span class="p">,</span>
+            <span class="s2">&quot;est_recovery&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">recovery</span><span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">baseline_sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;est_loss_sensitivity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span>
+                <span class="n">PruningModelEvaluator</span><span class="o">.</span><span class="n">EVAL_SENSITIVITY_SPARSITY</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;est_perf_sensitivity&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span>
+                <span class="n">PruningModelEvaluator</span><span class="o">.</span><span class="n">EVAL_SENSITIVITY_SPARSITY</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;est_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_perf</span><span class="o">.</span><span class="n">estimated_value</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;est_time_baseline&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_perf</span><span class="o">.</span><span class="n">value_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;est_time_gain&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_perf</span><span class="o">.</span><span class="n">estimated_gain</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;params_baseline&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_params</span><span class="o">.</span><span class="n">value_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_params</span><span class="o">.</span><span class="n">estimated_value</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;compression&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_params</span><span class="o">.</span><span class="n">estimated_gain</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;flops_baseline&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span><span class="o">.</span><span class="n">value_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;flops&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span><span class="o">.</span><span class="n">estimated_value</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+            <span class="s2">&quot;flops_gain&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span><span class="o">.</span><span class="n">estimated_gain</span><span class="p">(</span><span class="n">sparsity</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">recovery</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+        <span class="n">baseline_sparsity</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param sparsity: the sparsity to get recovery for</span>
+<span class="sd">        :param baseline_sparsity: the baseline sparsity to use for recovery</span>
+<span class="sd">        :return: the estimated confidence of recovery for the given sparsity</span>
+<span class="sd">            as compared to the baseline</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">baseline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span><span class="n">baseline_sparsity</span><span class="p">)</span>
+        <span class="n">estimated</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">estimated_sensitivity</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">baseline</span> <span class="o">==</span> <span class="n">estimated</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">sparsity</span><span class="p">:</span>
+            <span class="c1"># baseline equals estimated or layer is not pruned</span>
+            <span class="c1"># set recovery to 1</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">baseline</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">baseline_sparsity</span><span class="p">:</span>
+            <span class="c1"># baseline says layer should not be pruned and it is</span>
+            <span class="c1"># set recovery to 0</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># use percent difference to determine recovery between the</span>
+        <span class="c1"># loss optimal baseline sensitivity and the target sparsity sensitivity</span>
+        <span class="c1"># add 1 to it such that perfect recovery is predicted at 1.0</span>
+        <span class="c1"># less than 1.0 gives a worse chance of recovery</span>
+        <span class="c1"># greater than 1.0 gives a better chance of recovery</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="n">baseline</span> <span class="o">-</span> <span class="n">estimated</span><span class="p">)</span> <span class="o">/</span> <span class="n">baseline</span> <span class="o">+</span> <span class="mf">1.0</span>
+
+    <span class="k">def</span> <span class="nf">optimization_costs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">balance_perf_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">perf_rescaler</span><span class="p">:</span> <span class="n">_PruningPointRescaler</span><span class="p">,</span>
+        <span class="n">loss_rescaler</span><span class="p">:</span> <span class="n">_PruningPointRescaler</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">_PruningNodeSeriesValue</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        :param balance_perf_loss: the weight [0.0, 1.0] for balancing perf vs loss;</span>
+<span class="sd">            0.0 for all performance, 1.0 for all loss</span>
+<span class="sd">        :param perf_rescaler: rescaler to use to rescale vales for performance</span>
+<span class="sd">            before calculating cost</span>
+<span class="sd">        :param loss_rescaler: rescaler to use to rescale vales for loss</span>
+<span class="sd">            before calculating cost</span>
+<span class="sd">        :return: a list of tuples containing the sparsities from 0% to 99% and</span>
+<span class="sd">            their associated cost for pruning the node to that sparsity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">loss_costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">costs</span><span class="p">(</span><span class="n">loss_rescaler</span><span class="p">,</span> <span class="n">use_max</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="n">perf_costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">costs</span><span class="p">(</span>
+            <span class="n">perf_rescaler</span><span class="p">,</span>
+            <span class="n">use_max</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">available_series_perf</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">series_flops</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="n">costs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="p">((</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">loss_cost</span><span class="p">),</span> <span class="p">(</span><span class="n">_</span><span class="p">,</span> <span class="n">perf_cost</span><span class="p">))</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">loss_costs</span><span class="p">,</span> <span class="n">perf_costs</span><span class="p">):</span>
+            <span class="n">loss_cost</span> <span class="o">=</span> <span class="n">loss_cost</span> <span class="ow">or</span> <span class="mi">0</span>
+            <span class="n">perf_cost</span> <span class="o">=</span> <span class="n">perf_cost</span> <span class="ow">or</span> <span class="mi">0</span>
+            <span class="n">cost</span> <span class="o">=</span> <span class="n">balance_perf_loss</span> <span class="o">*</span> <span class="n">loss_cost</span> <span class="o">+</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">balance_perf_loss</span><span class="p">)</span> <span class="o">*</span> <span class="n">perf_cost</span>
+            <span class="n">costs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">_PruningNodeSeriesValue</span><span class="p">(</span>
+                    <span class="nb">round</span><span class="p">(</span><span class="n">sparsity</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_params</span><span class="p">),</span> <span class="n">sparsity</span><span class="p">,</span> <span class="n">cost</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_id</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">costs</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_node_analysis</span><span class="p">(</span><span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">model_analysis</span><span class="p">:</span> <span class="n">Dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">:</span>
+        <span class="n">analysis</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model_analysis</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">node_id</span><span class="p">:</span>
+                <span class="n">analysis</span> <span class="o">=</span> <span class="n">node</span>
+                <span class="k">break</span>
+        <span class="k">assert</span> <span class="n">analysis</span>
+
+        <span class="k">return</span> <span class="n">analysis</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_node_perf_analysis</span><span class="p">(</span>
+        <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">perf_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">perf_analysis</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">analysis</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">perf_analysis</span><span class="p">[</span><span class="s2">&quot;pruning&quot;</span><span class="p">][</span><span class="s2">&quot;ops&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">node_id</span><span class="p">:</span>
+                <span class="n">analysis</span> <span class="o">=</span> <span class="n">op</span>
+
+        <span class="k">return</span> <span class="n">analysis</span>
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span> <span class="nf">_extract_node_loss_analysis</span><span class="p">(</span>
+        <span class="n">node_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">loss_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Dict</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">loss_analysis</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">analysis</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">loss_analysis</span><span class="p">[</span><span class="s2">&quot;pruning&quot;</span><span class="p">][</span><span class="s2">&quot;ops&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="n">op</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="n">node_id</span><span class="p">:</span>
+                <span class="n">analysis</span> <span class="o">=</span> <span class="n">op</span>
+
+        <span class="k">return</span> <span class="n">analysis</span>
+
+
+<span class="k">class</span> <span class="nc">_PruningNodeSetting</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseline_sparsity</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sparsity</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">overridden</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="PruningModelEvaluator"><a class="viewcode-back" href="../../../../api/sparsify.blueprints.utils.html#sparsify.blueprints.utils.projects_optimizations_pruning.PruningModelEvaluator">[docs]</a><span class="k">class</span> <span class="nc">PruningModelEvaluator</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Evaluator for a model for pruning.</span>
+<span class="sd">    Able to estimate the effect of pruning on a model and each prunable node in a model</span>
+<span class="sd">    for performance, loss, etc</span>
+
+<span class="sd">    :param model_analysis: analysis of the model</span>
+<span class="sd">    :param perf_analysis: performance analysis of the model, if any</span>
+<span class="sd">    :param loss_analysis: loss analysis of the model, if any</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">MAX_NODE_SPARSITY</span> <span class="o">=</span> <span class="mf">0.95</span>
+    <span class="n">EVAL_SENSITIVITY_SPARSITY</span> <span class="o">=</span> <span class="mf">0.95</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">model_analysis</span><span class="p">:</span> <span class="n">Dict</span><span class="p">,</span>
+        <span class="n">perf_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span>
+        <span class="n">loss_analysis</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">Dict</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_analysis</span> <span class="o">=</span> <span class="n">model_analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_perf_analysis</span> <span class="o">=</span> <span class="n">perf_analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss_analysis</span> <span class="o">=</span> <span class="n">loss_analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_time</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">perf_analysis</span><span class="p">[</span><span class="s2">&quot;baseline&quot;</span><span class="p">][</span><span class="s2">&quot;model&quot;</span><span class="p">][</span><span class="s2">&quot;measurement&quot;</span><span class="p">]</span> <span class="k">if</span> <span class="n">perf_analysis</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_pruning_time</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">perf_analysis</span><span class="p">[</span><span class="s2">&quot;pruning&quot;</span><span class="p">][</span><span class="s2">&quot;model&quot;</span><span class="p">][</span><span class="s2">&quot;measurements&quot;</span><span class="p">][</span>
+                <span class="n">perf_analysis</span><span class="p">[</span><span class="s2">&quot;pruning&quot;</span><span class="p">][</span><span class="s2">&quot;model&quot;</span><span class="p">][</span><span class="s2">&quot;baseline_measurement_key&quot;</span><span class="p">]</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">perf_analysis</span> <span class="ow">and</span> <span class="n">perf_analysis</span><span class="p">[</span><span class="s2">&quot;pruning&quot;</span><span class="p">]</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># type: List[_PruningNodeEvaluator]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span> <span class="o">=</span> <span class="p">{}</span>  <span class="c1"># type: Dict[str, _PruningNodeSetting]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_perf_rescaler</span> <span class="o">=</span> <span class="n">_PruningPointRescaler</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_loss_rescaler</span> <span class="o">=</span> <span class="n">_PruningPointRescaler</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">model_analysis</span><span class="p">[</span><span class="s2">&quot;nodes&quot;</span><span class="p">]:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;prunable&quot;</span><span class="p">]:</span>
+                <span class="k">continue</span>
+
+            <span class="n">pruning_node</span> <span class="o">=</span> <span class="n">_PruningNodeEvaluator</span><span class="p">(</span>
+                <span class="n">node</span><span class="p">[</span><span class="s2">&quot;id&quot;</span><span class="p">],</span> <span class="n">model_analysis</span><span class="p">,</span> <span class="n">perf_analysis</span><span class="p">,</span> <span class="n">loss_analysis</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pruning_node</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">pruning_node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">_PruningNodeSetting</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_perf_rescaler</span><span class="o">.</span><span class="n">add_rescale_series</span><span class="p">(</span>
+                    <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">value_optimized_min</span><span class="p">,</span>
+                    <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">value_optimized_max</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">data</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loss_rescaler</span><span class="o">.</span><span class="n">add_rescale_series</span><span class="p">(</span>
+                    <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">value_optimized_min</span><span class="p">,</span>
+                    <span class="n">pruning_node</span><span class="o">.</span><span class="n">available_series_loss</span><span class="o">.</span><span class="n">value_optimized_max</span><span class="p">,</span>
+                <span class="p">)</span>
+
+<div class="viewcode-block" id="PruningModelEvaluator.eval_baseline"><a class="viewcode-back" href="../../../../api/sparsify.blueprints.utils.html#sparsify.blueprints.utils.projects_optimizations_pruning.PruningModelEvaluator.eval_baseline">[docs]</a>    <span class="k">def</span> <span class="nf">eval_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">baseline_sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the baseline (no performance data, only loss) recommended sparsities</span>
+<span class="sd">        to assign for each node to best maximize recovery.</span>
+
+<span class="sd">        :param baseline_sparsity: the baseline_sparsity to use and evaluate with</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node_sparsities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_nodes_optimized_sparsities</span><span class="p">(</span>
+            <span class="n">baseline_sparsity</span><span class="p">,</span> <span class="n">balance_perf_loss</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">settings</span><span class="o">=</span><span class="kc">None</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node_id</span><span class="p">,</span> <span class="n">sparsity</span> <span class="ow">in</span> <span class="n">node_sparsities</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">baseline_sparsity</span> <span class="o">=</span> <span class="n">sparsity</span></div>
+
+<div class="viewcode-block" id="PruningModelEvaluator.eval_pruning"><a class="viewcode-back" href="../../../../api/sparsify.blueprints.utils.html#sparsify.blueprints.utils.projects_optimizations_pruning.PruningModelEvaluator.eval_pruning">[docs]</a>    <span class="k">def</span> <span class="nf">eval_pruning</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">settings</span><span class="p">:</span> <span class="n">PruningSettings</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Evaluate the model to assign the evaluate sparsity levels for each node</span>
+<span class="sd">        in the model given the input pruning settings.</span>
+
+<span class="sd">        :param settings: the pruning settings to use and evaluate with</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node_sparsities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_nodes_optimized_sparsities</span><span class="p">(</span>
+            <span class="n">settings</span><span class="o">.</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">balance_perf_loss</span><span class="p">,</span> <span class="n">settings</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">sparsity</span> <span class="o">=</span> <span class="n">node_sparsities</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">overridden</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+<div class="viewcode-block" id="PruningModelEvaluator.apply_node_overrides"><a class="viewcode-back" href="../../../../api/sparsify.blueprints.utils.html#sparsify.blueprints.utils.projects_optimizations_pruning.PruningModelEvaluator.apply_node_overrides">[docs]</a>    <span class="k">def</span> <span class="nf">apply_node_overrides</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node_overrides</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply any node override sparsity levels to the current evaluated nodes.</span>
+<span class="sd">        Must be called after eval_pruning if eval_pruning is invoked at all</span>
+<span class="sd">        to have any effect.</span>
+
+<span class="sd">        :param node_overrides: the override sparsity levels for nodes to set with</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">override</span> <span class="ow">in</span> <span class="n">node_overrides</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">override</span><span class="p">[</span><span class="s2">&quot;node_id&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">sparsity</span> <span class="o">=</span> <span class="n">override</span><span class="p">[</span><span class="s2">&quot;sparsity&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">override</span><span class="p">[</span><span class="s2">&quot;node_id&quot;</span><span class="p">]]</span><span class="o">.</span><span class="n">overridden</span> <span class="o">=</span> <span class="kc">True</span></div>
+
+<div class="viewcode-block" id="PruningModelEvaluator.to_dict_values"><a class="viewcode-back" href="../../../../api/sparsify.blueprints.utils.html#sparsify.blueprints.utils.projects_optimizations_pruning.PruningModelEvaluator.to_dict_values">[docs]</a>    <span class="k">def</span> <span class="nf">to_dict_values</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Create the dictionary values containing the recommended sparsity levels</span>
+<span class="sd">        for pruning and their estimated times.</span>
+<span class="sd">        eval_baseline and (eval_pruning and/or apply_node_overrides)</span>
+<span class="sd">        must be called before</span>
+
+<span class="sd">        :return: a tuple containing (model info, list of node info)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">node_values</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">:</span>
+            <span class="n">settings</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span>
+            <span class="n">node_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">node</span><span class="o">.</span><span class="n">eval_dict</span><span class="p">(</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">baseline_sparsity</span><span class="p">,</span> <span class="n">settings</span><span class="o">.</span><span class="n">overridden</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+        <span class="n">recoveries</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_recovery&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_recovery&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">loss_sensitivities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_loss_sensitivity&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_loss_sensitivity&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">perf_sensitivities</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_perf_sensitivity&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_perf_sensitivity&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">est_time_deltas</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_time_baseline&quot;</span><span class="p">]</span> <span class="o">-</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_time&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_time_baseline&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;est_time&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">params_baseline</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;params_baseline&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;params_baseline&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">flops_baseline</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">node</span><span class="p">[</span><span class="s2">&quot;flops_baseline&quot;</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span>
+            <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;flops_baseline&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="p">]</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span> <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;params&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="p">[</span><span class="n">node</span><span class="p">[</span><span class="s2">&quot;flops&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">node_values</span> <span class="k">if</span> <span class="n">node</span><span class="p">[</span><span class="s2">&quot;flops&quot;</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">est_time_deltas</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_time</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_pruning_time</span><span class="p">:</span>
+            <span class="n">est_pruning_time</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_pruning_time</span> <span class="o">-</span> <span class="n">numpy</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">est_time_deltas</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="n">est_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_time</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="n">est_pruning_time</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_pruning_time</span>
+            <span class="p">)</span>
+            <span class="n">est_time_gain</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_time</span> <span class="o">/</span> <span class="n">est_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">est_time</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="n">est_time_gain</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">params_baseline</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">params_baseline</span><span class="p">)</span>
+        <span class="n">params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+        <span class="n">compression</span> <span class="o">=</span> <span class="n">params_baseline</span> <span class="o">/</span> <span class="n">params</span> <span class="k">if</span> <span class="n">params</span> <span class="ow">and</span> <span class="n">params_baseline</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">flops_baseline</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">flops_baseline</span><span class="p">)</span>
+        <span class="n">flops</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">flops</span><span class="p">)</span>
+        <span class="n">flops_gain</span> <span class="o">=</span> <span class="n">flops_baseline</span> <span class="o">/</span> <span class="n">flops</span> <span class="k">if</span> <span class="n">flops</span> <span class="ow">and</span> <span class="n">flops_baseline</span> <span class="k">else</span> <span class="kc">None</span>
+
+        <span class="n">model_values</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;est_recovery&quot;</span><span class="p">:</span> <span class="n">numpy</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">recoveries</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">recoveries</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;est_loss_sensitivity&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">numpy</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">loss_sensitivities</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">loss_sensitivities</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;est_perf_sensitivity&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="n">numpy</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">perf_sensitivities</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span> <span class="k">if</span> <span class="n">perf_sensitivities</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;est_time&quot;</span><span class="p">:</span> <span class="n">est_time</span><span class="p">,</span>
+            <span class="s2">&quot;est_time_baseline&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_baseline_time</span><span class="p">,</span>
+            <span class="s2">&quot;est_time_gain&quot;</span><span class="p">:</span> <span class="n">est_time_gain</span><span class="p">,</span>
+            <span class="s2">&quot;params_baseline&quot;</span><span class="p">:</span> <span class="n">params_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="n">params</span><span class="p">,</span>
+            <span class="s2">&quot;compression&quot;</span><span class="p">:</span> <span class="n">compression</span><span class="p">,</span>
+            <span class="s2">&quot;flops_baseline&quot;</span><span class="p">:</span> <span class="n">flops_baseline</span><span class="p">,</span>
+            <span class="s2">&quot;flops&quot;</span><span class="p">:</span> <span class="n">flops</span><span class="p">,</span>
+            <span class="s2">&quot;flops_gain&quot;</span><span class="p">:</span> <span class="n">flops_gain</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">node_values</span><span class="p">,</span> <span class="n">model_values</span></div>
+
+    <span class="k">def</span> <span class="nf">_get_nodes_optimized_sparsities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">balance_perf_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">PruningSettings</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]]:</span>
+        <span class="n">sparsities</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">:</span> <span class="kc">None</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">}</span>
+        <span class="n">nodes_costs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimize_sparsity_get_costs</span><span class="p">(</span><span class="n">balance_perf_loss</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nodes_costs</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">sparsities</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optimize_sparsity_update_from_costs</span><span class="p">(</span><span class="n">sparsities</span><span class="p">,</span> <span class="n">nodes_costs</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optimize_sparsity_update_from_restrictions</span><span class="p">(</span><span class="n">sparsities</span><span class="p">,</span> <span class="n">settings</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">sparsities</span>
+
+    <span class="k">def</span> <span class="nf">_optimize_sparsity_get_costs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">balance_perf_loss</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">_PruningNodeSeriesValue</span><span class="p">]:</span>
+        <span class="n">nodes_costs</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">):</span>
+            <span class="n">costs</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">optimization_costs</span><span class="p">(</span>
+                <span class="n">balance_perf_loss</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_perf_rescaler</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_loss_rescaler</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># make sure we have sensitivity data for the node to add for consideration</span>
+            <span class="k">if</span> <span class="n">costs</span> <span class="ow">and</span> <span class="n">costs</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">nodes_costs</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">costs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">nodes_costs</span>
+
+    <span class="k">def</span> <span class="nf">_optimize_sparsity_update_from_costs</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]],</span>
+        <span class="n">costs</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">_PruningNodeSeriesValue</span><span class="p">],</span>
+        <span class="n">sparsity</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="c1"># all costs are assumed to be on the same scale across layers,</span>
+        <span class="c1"># normalized, and always increasing.</span>
+        <span class="c1"># therefore we can simply sort by the values to get the desired sparsity dist</span>
+        <span class="n">costs</span><span class="o">.</span><span class="n">sort</span><span class="p">(</span><span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">c</span><span class="p">:</span> <span class="n">c</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+        <span class="n">total_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">([</span><span class="n">node</span><span class="o">.</span><span class="n">num_params</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">])</span>
+        <span class="n">target_sparse_params</span> <span class="o">=</span> <span class="n">sparsity</span> <span class="o">*</span> <span class="n">total_params</span>
+        <span class="n">sparse_params</span> <span class="o">=</span> <span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">cost</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">costs</span><span class="p">):</span>
+            <span class="n">sparse_params</span><span class="p">[</span><span class="n">cost</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="o">.</span><span class="n">sparse_params</span>
+            <span class="n">current_sparse_params</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">sparse_params</span><span class="o">.</span><span class="n">values</span><span class="p">())</span>
+
+            <span class="k">if</span> <span class="n">current_sparse_params</span> <span class="o">&gt;</span> <span class="n">target_sparse_params</span><span class="p">:</span>
+                <span class="k">break</span>
+
+            <span class="c1"># if we&#39;re not above our sparse param target, set the sparsity for the node</span>
+            <span class="n">sparsities</span><span class="p">[</span><span class="n">cost</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">cost</span><span class="o">.</span><span class="n">sparsity</span>
+
+    <span class="k">def</span> <span class="nf">_optimize_sparsity_update_from_restrictions</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">sparsities</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Union</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="kc">None</span><span class="p">]],</span>
+        <span class="n">settings</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="kc">None</span><span class="p">,</span> <span class="n">PruningSettings</span><span class="p">],</span>
+    <span class="p">):</span>
+        <span class="k">for</span> <span class="n">index</span><span class="p">,</span> <span class="n">node</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_nodes</span><span class="p">):</span>
+            <span class="n">node_id</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">node_id</span>
+            <span class="n">sparsity</span> <span class="o">=</span> <span class="n">sparsities</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">sparsity</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># clip the max sparsity for everything</span>
+            <span class="k">if</span> <span class="n">sparsity</span> <span class="o">&gt;</span> <span class="n">PruningModelEvaluator</span><span class="o">.</span><span class="n">MAX_NODE_SPARSITY</span><span class="p">:</span>
+                <span class="n">sparsities</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">PruningModelEvaluator</span><span class="o">.</span><span class="n">MAX_NODE_SPARSITY</span>
+
+            <span class="c1"># if there aren&#39;t any pruning settings provided, then don&#39;t filter</span>
+            <span class="c1"># the desired sparsities</span>
+            <span class="k">if</span> <span class="n">settings</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="n">index</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">node</span><span class="o">.</span><span class="n">structurally_pruned</span><span class="p">:</span>
+                <span class="c1"># skip the first node in a graph since this is almost always &#39;</span>
+                <span class="c1"># one of the most sensitive for loss.</span>
+                <span class="c1"># additionally skip any structurally pruned nodes (group convolutions)</span>
+                <span class="c1"># since those already have removed connections</span>
+                <span class="n">sparsities</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># if the desired sparsity is too low for any of the filters metrics</span>
+            <span class="c1"># (minimum sparsity, minimum perf gain, minimum recovery)</span>
+            <span class="c1"># then set to None so we don&#39;t prune the layer that didn&#39;t reach</span>
+            <span class="c1"># a high enough sparsity for the desired effects</span>
+            <span class="n">baseline_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_nodes_settings</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span><span class="o">.</span><span class="n">baseline_sparsity</span>
+            <span class="n">est_perf_gain</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">available_series_perf</span><span class="o">.</span><span class="n">estimated_gain</span><span class="p">(</span><span class="n">sparsity</span><span class="p">)</span>
+            <span class="n">est_recovery</span> <span class="o">=</span> <span class="n">node</span><span class="o">.</span><span class="n">recovery</span><span class="p">(</span><span class="n">sparsity</span><span class="p">,</span> <span class="n">baseline_sparsity</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_sparsity</span>
+                    <span class="ow">and</span> <span class="n">sparsities</span><span class="p">[</span><span class="n">node</span><span class="o">.</span><span class="n">node_id</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_sparsity</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_perf_gain</span>
+                    <span class="ow">and</span> <span class="n">est_perf_gain</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">est_perf_gain</span> <span class="o">&lt;</span> <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_perf_gain</span>
+                <span class="p">)</span>
+                <span class="ow">or</span> <span class="p">(</span>
+                    <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_recovery</span>
+                    <span class="ow">and</span> <span class="n">est_recovery</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                    <span class="ow">and</span> <span class="n">est_recovery</span> <span class="o">&lt;</span> <span class="n">settings</span><span class="o">.</span><span class="n">filter_min_recovery</span>
+                <span class="p">)</span>
+            <span class="p">):</span>
+                <span class="n">sparsities</span><span class="p">[</span><span class="n">node_id</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v0.5.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="projects_optimizations_pruning.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

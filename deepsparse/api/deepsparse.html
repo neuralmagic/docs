@@ -4,7 +4,7 @@
   <meta charset="utf-8"/>
   <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
   <title>
-   deepsparse package — DeepSparse 0.12.1 documentation
+   deepsparse package — DeepSparse 0.12.2 documentation
   </title>
   <link href="../_static/css/theme.css" rel="stylesheet" type="text/css"/>
   <link href="../_static/pygments.css" rel="stylesheet" type="text/css"/>
@@ -894,6 +894,53 @@ set detection
            </dd>
           </dl>
           <dl class="py function">
+           <dt id="deepsparse.cpu.cpu_neon_compatible">
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              deepsparse.cpu.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              cpu_neon_compatible
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <span class="sig-paren">
+             )
+            </span>
+            →
+            <span class="pre">
+             bool
+            </span>
+            <a class="reference internal" href="../_modules/deepsparse/cpu.html#cpu_neon_compatible">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#deepsparse.cpu.cpu_neon_compatible" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Returns
+             </dt>
+             <dd class="field-odd">
+              <p>
+               True if the current cpu has the NEON instruction set,
+used for running neural networks performantly
+              </p>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py function">
            <dt id="deepsparse.cpu.cpu_quantization_compatible">
             <code class="sig-prename descclassname">
              <span class="pre">
@@ -933,9 +980,56 @@ set detection
              </dt>
              <dd class="field-odd">
               <p>
-               True if the current cpu has the AVX2 or AVX512 instruction sets,
+               True if the current cpu has the AVX2, AVX512, NEON or SVE instruction sets,
 used for running quantized neural networks performantly.
 (AVX2 &lt; AVX512 &lt; VNNI)
+              </p>
+             </dd>
+            </dl>
+           </dd>
+          </dl>
+          <dl class="py function">
+           <dt id="deepsparse.cpu.cpu_sve_compatible">
+            <code class="sig-prename descclassname">
+             <span class="pre">
+              deepsparse.cpu.
+             </span>
+            </code>
+            <code class="sig-name descname">
+             <span class="pre">
+              cpu_sve_compatible
+             </span>
+            </code>
+            <span class="sig-paren">
+             (
+            </span>
+            <span class="sig-paren">
+             )
+            </span>
+            →
+            <span class="pre">
+             bool
+            </span>
+            <a class="reference internal" href="../_modules/deepsparse/cpu.html#cpu_sve_compatible">
+             <span class="viewcode-link">
+              <span class="pre">
+               [source]
+              </span>
+             </span>
+            </a>
+            <a class="headerlink" href="#deepsparse.cpu.cpu_sve_compatible" title="Permalink to this definition">
+             
+            </a>
+           </dt>
+           <dd>
+            <dl class="field-list simple">
+             <dt class="field-odd">
+              Returns
+             </dt>
+             <dd class="field-odd">
+              <p>
+               True if the current cpu has the SVE instruction set,
+used for running neural networks performantly
               </p>
              </dd>
             </dl>
@@ -1070,7 +1164,71 @@ model performance within the DeepSparse Engine.
              </span>
              <span class="n">
               <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
                int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               num_streams
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
               </span>
              </span>
             </em>
@@ -1108,36 +1266,41 @@ resources.
               Parameters
              </dt>
              <dd class="field-odd">
-              <p>
-               <strong>
-                num_cores
-               </strong>
-               – The number of physical cores to run the model on. If more
+              <ul class="simple">
+               <li>
+                <p>
+                 <strong>
+                  num_cores
+                 </strong>
+                 – The number of physical cores to run the model on. If more
 cores are requested than are available on a single socket, the engine
 will try to distribute them evenly across as few sockets as possible.
-              </p>
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  num_streams
+                 </strong>
+                 – The max number of requests the model can handle
+concurrently.
+                </p>
+               </li>
+              </ul>
              </dd>
             </dl>
             <dl class="py method">
              <dt id="deepsparse.engine.Context.num_cores">
+              <em class="property">
+               <span class="pre">
+                property
+               </span>
+              </em>
               <code class="sig-name descname">
                <span class="pre">
                 num_cores
                </span>
               </code>
-              <span class="sig-paren">
-               (
-              </span>
-              <span class="sig-paren">
-               )
-              </span>
-              <a class="reference internal" href="../_modules/deepsparse/engine.html#Context.num_cores">
-               <span class="viewcode-link">
-                <span class="pre">
-                 [source]
-                </span>
-               </span>
-              </a>
               <a class="headerlink" href="#deepsparse.engine.Context.num_cores" title="Permalink to this definition">
                
               </a>
@@ -1146,25 +1309,36 @@ will try to distribute them evenly across as few sockets as possible.
              </dd>
             </dl>
             <dl class="py method">
+             <dt id="deepsparse.engine.Context.num_streams">
+              <em class="property">
+               <span class="pre">
+                property
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                num_streams
+               </span>
+              </code>
+              <a class="headerlink" href="#deepsparse.engine.Context.num_streams" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+             </dd>
+            </dl>
+            <dl class="py method">
              <dt id="deepsparse.engine.Context.scheduler">
+              <em class="property">
+               <span class="pre">
+                property
+               </span>
+              </em>
               <code class="sig-name descname">
                <span class="pre">
                 scheduler
                </span>
               </code>
-              <span class="sig-paren">
-               (
-              </span>
-              <span class="sig-paren">
-               )
-              </span>
-              <a class="reference internal" href="../_modules/deepsparse/engine.html#Context.scheduler">
-               <span class="viewcode-link">
-                <span class="pre">
-                 [source]
-                </span>
-               </span>
-              </a>
               <a class="headerlink" href="#deepsparse.engine.Context.scheduler" title="Permalink to this definition">
                
               </a>
@@ -1174,24 +1348,16 @@ will try to distribute them evenly across as few sockets as possible.
             </dl>
             <dl class="py method">
              <dt id="deepsparse.engine.Context.value">
+              <em class="property">
+               <span class="pre">
+                property
+               </span>
+              </em>
               <code class="sig-name descname">
                <span class="pre">
                 value
                </span>
               </code>
-              <span class="sig-paren">
-               (
-              </span>
-              <span class="sig-paren">
-               )
-              </span>
-              <a class="reference internal" href="../_modules/deepsparse/engine.html#Context.value">
-               <span class="viewcode-link">
-                <span class="pre">
-                 [source]
-                </span>
-               </span>
-              </a>
               <a class="headerlink" href="#deepsparse.engine.Context.value" title="Permalink to this definition">
                
               </a>
@@ -1299,7 +1465,71 @@ will try to distribute them evenly across as few sockets as possible.
              </span>
              <span class="n">
               <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
                int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               num_streams
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
               </span>
              </span>
             </em>
@@ -1489,6 +1719,15 @@ object that defines the neural network
                  – The number of physical cores to run the model on. If more
 cores are requested than are available on a single socket, the engine
 will try to distribute them evenly across as few sockets as possible.
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
+                  num_streams
+                 </strong>
+                 – The max number of requests the model can handle
+concurrently.
                 </p>
                </li>
                <li>
@@ -2407,6 +2646,39 @@ over the inputs
              <dd>
               <p>
                The number of physical cores the current instance is running on
+              </p>
+              <dl class="field-list simple">
+               <dt class="field-odd">
+                Type
+               </dt>
+               <dd class="field-odd">
+                <p>
+                 return
+                </p>
+               </dd>
+              </dl>
+             </dd>
+            </dl>
+            <dl class="py method">
+             <dt id="deepsparse.engine.Engine.num_streams">
+              <em class="property">
+               <span class="pre">
+                property
+               </span>
+              </em>
+              <code class="sig-name descname">
+               <span class="pre">
+                num_streams
+               </span>
+              </code>
+              <a class="headerlink" href="#deepsparse.engine.Engine.num_streams" title="Permalink to this definition">
+               
+              </a>
+             </dt>
+             <dd>
+              <p>
+               The max count of streams the current instance can handle
+concurrently.
               </p>
               <dl class="field-list simple">
                <dt class="field-odd">
@@ -4030,6 +4302,47 @@ Beneficial for seeing how pruning affects the performance of the model.
             <em class="sig-param">
              <span class="n">
               <span class="pre">
+               num_streams
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
                num_iterations
               </span>
              </span>
@@ -4341,6 +4654,16 @@ for the current machine; default None
                <li>
                 <p>
                  <strong>
+                  num_streams
+                 </strong>
+                 – The max number of requests the model can handle
+concurrently. None or 0 implies a scheduler-defined default value;
+default None
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
                   inp
                  </strong>
                  – The list of inputs to pass to the engine for benchmarking.
@@ -4508,6 +4831,47 @@ will be added to the results. Default is False
              <span class="n">
               <span class="pre">
                num_cores
+              </span>
+             </span>
+             <span class="p">
+              <span class="pre">
+               :
+              </span>
+             </span>
+             <span class="n">
+              <span class="pre">
+               Optional
+              </span>
+              <span class="p">
+               <span class="pre">
+                [
+               </span>
+              </span>
+              <span class="pre">
+               int
+              </span>
+              <span class="p">
+               <span class="pre">
+                ]
+               </span>
+              </span>
+             </span>
+             <span class="o">
+              <span class="pre">
+               =
+              </span>
+             </span>
+             <span class="default_value">
+              <span class="pre">
+               None
+              </span>
+             </span>
+            </em>
+            ,
+            <em class="sig-param">
+             <span class="n">
+              <span class="pre">
+               num_streams
               </span>
              </span>
              <span class="p">
@@ -4718,6 +5082,16 @@ machine; default None
                <li>
                 <p>
                  <strong>
+                  num_streams
+                 </strong>
+                 – The max number of requests the model can handle
+concurrently. None or 0 implies a scheduler-defined default value;
+default None
+                </p>
+               </li>
+               <li>
+                <p>
+                 <strong>
                   scheduler
                  </strong>
                  – The kind of scheduler to execute with. Pass None for the default.
@@ -4877,7 +5251,7 @@ for Neural Networks on commodity CPUs.
     <span class="fa fa-book">
      Other Versions
     </span>
-    v: v0.12.1
+    v: v0.12.2
     <span class="fa fa-caret-down">
     </span>
    </span>
@@ -4912,8 +5286,13 @@ for Neural Networks on commodity CPUs.
       </a>
      </dd>
      <dd>
-      <a href="deepsparse.html">
+      <a href="../v0.12.1/api/deepsparse.html">
        v0.12.1
+      </a>
+     </dd>
+     <dd>
+      <a href="deepsparse.html">
+       v0.12.2
       </a>
      </dd>
      <dd>
