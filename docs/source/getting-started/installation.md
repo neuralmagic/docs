@@ -1,0 +1,82 @@
+# Installation
+
+All of the packages below have been tested on Python 3.6-3.9 and on x86 Linux systems.
+It is recommended to install in a [virtual environment](https://docs.python.org/3/library/venv.html) to encapsulate your local environment.
+
+## DeepSparse
+
+[DeepSparse Engine](https://github.com/neuralmagic/deepsparse) is a runtime that takes advantage of sparsity within neural networks to reduce compute, delivering GPU-class performance on CPUs.
+It is able to integrate into popular deep learning libraries (e.g., Hugging Face, Ultralytics) allowing you to leverage DeepSparse for loading and deploying sparse models with ONNX. ONNX gives the flexibility to serve your model in a framework-agnostic environment. Support includes [PyTorch,](https://pytorch.org/docs/stable/onnx.html) [TensorFlow,](https://github.com/onnx/tensorflow-onnx) [Keras,](https://github.com/onnx/keras-onnx) and [many other frameworks](https://github.com/onnx/onnxmltools).
+Currently DeepSparse is tested on Python 3.6-3.9, ONNX 1.5.0-1.10.1, ONNX opset version 11+ and is manylinux compliant.
+
+Install with pip using:
+
+```bash
+pip install deepsparse
+```
+
+#### Optional Dependencies
+
+[DeepSparse Server](https://github.com/neuralmagic/deepsparse/tree/main/src/deepsparse/server) allows you to serve models and pipelines from the terminal using the `deepsparse.server` CLI. The server runs on top of the popular FastAPI web framework and Uvicorn web server. Install the server using the following command:
+
+```bash
+pip install deepsparse[server]
+```
+
+## SparseML
+
+SparseML is a toolkit that includes APIs, CLIs, scripts and libraries that apply state-of-the-art sparsification algorithms such as pruning and quantization to any neural network.
+Currently supported ML Frameworks are the following: `torch>=1.1.0,<=1.8.0`, `tensorflow>=1.8.0,<=2.0.0`, `tensorflow.keras >= 2.2.0`.
+
+Install with pip using:
+
+```bash
+pip install sparseml
+```
+
+#### Optional Dependencies
+
+Additionally, optional dependencies can be installed based on the framework you are using.
+
+PyTorch:
+
+```bash
+pip install sparseml[torch]
+```
+
+Keras:
+
+```bash
+pip install sparseml[tf_keras]
+```
+
+TensorFlow V1:
+
+```bash
+pip install sparseml[tf_v1]
+```
+
+TensorFlow V1 with GPU operations enabled:
+
+```bash
+pip install sparseml[tf_v1_gpu]
+```
+
+Depending on your device and CUDA version, you may need to install additional dependencies for using TensorFlow V1 with GPU operations. You can find these steps [here.](https://www.tensorflow.org/install/gpu#older_versions_of_tensorflow)
+
+Note, TensorFlow V1 is no longer being built for newer operating systems such as Ubuntu 20.04. 
+Therefore, SparseML with TensorFlow V1 is unsupported on these operating systems as well.
+
+## SparseZoo
+
+[SparseZoo is a constantly-growing repository](https://sparsezoo.neuralmagic.com) of sparsified (pruned and pruned-quantized) models with matching sparsification recipes for neural networks. 
+It simplifies and accelerates your time-to-value in building performant deep learning models with a collection of inference-optimized models and recipes to prototype from. 
+
+Available via API and hosted in the cloud, the SparseZoo contains both baseline and models sparsified to different degrees of inference performance vs. baseline loss recovery. 
+Recipe-driven approaches built around sparsification algorithms allow you to use the models as given, transfer-learn from the models onto private datasets, or transfer the recipes to your architectures.
+
+Install with pip using:
+
+```bash
+pip install sparsezoo
+```
