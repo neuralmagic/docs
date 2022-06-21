@@ -17,15 +17,37 @@ With this command you can easily compare the performance between any ONNX or Spa
 Here we'll be showing the performance gain on a DistilBERT trained on the SST2 dataset, going from dense to sparse to sparse quantized:
 
 ```
-deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 30.4652
+Latency Mean (ms/batch): 65.6297
+Latency Median (ms/batch): 65.5720
+Latency Std (ms/batch): 2.0056
+Iterations: 306
 ```
 
 ```
-deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned90-none
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned90B
+atch Size: 1
+Scenario: multistream
+Throughput (items/sec): 129.9941
+Latency Mean (ms/batch): 15.3544
+Latency Median (ms/batch): 15.3251
+Latency Std (ms/batch): 0.5403
+Iterations: 1301-none
+
 ```
 
 ```
-deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 203.2273
+Latency Mean (ms/batch): 9.8183
+Latency Median (ms/batch): 9.7477
+Latency Std (ms/batch): 0.4578
+Iterations: 2034
 ```
 
 #### Object Detection with YOLOv5
@@ -33,13 +55,34 @@ deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingf
 Here we'll be showing the performance gain on a YOLOv5s trained on the COCO dataset, going from dense to sparse to sparse quantized:
 
 ```
-deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 19.8214
+Latency Mean (ms/batch): 100.8466
+Latency Median (ms/batch): 98.2990
+Latency Std (ms/batch): 12.7740
+Iterations: 199
 ```
 
 ```
-deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned-aggressive_96
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned-aggressive_96
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 25.4929
+Latency Mean (ms/batch): 78.3545
+Latency Median (ms/batch): 70.1088
+Latency Std (ms/batch): 16.6151
+Iterations: 256
 ```
 
 ```
-deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 46.8014
+Latency Mean (ms/batch): 42.6616
+Latency Median (ms/batch): 42.5918
+Latency Std (ms/batch): 1.4122
+Iterations: 469
 ```
