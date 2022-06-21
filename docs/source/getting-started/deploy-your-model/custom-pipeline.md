@@ -1,5 +1,4 @@
-
-# Deploy your model in DeepSparse
+# Deploy your model: Custom Pipelines
 
 The DeepSparse Engine made for easy integration into your inference environment and pipeline of choice. 
 If there isn't an existing pipeline for your specific task or model, this page will help you learn how to leverage DeepSparse for loading and deploying sparse models with ONNX. 
