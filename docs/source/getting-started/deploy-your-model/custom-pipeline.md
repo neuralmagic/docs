@@ -1,13 +1,14 @@
 # Deploy your model: Custom Pipelines
 
-The DeepSparse Engine made for easy integration into your inference environment and pipeline of choice. 
+The DeepSparse Engine makes for easy integration into your task and inference environment of choice. 
 If there isn't an existing pipeline for your specific task or model, this page will help you learn how to leverage DeepSparse for loading and deploying sparse models with ONNX. 
 
 ONNX is an open format built to represent machine learning models and gives us flexibility to serve your model in a framework-agnostic environment. 
 Support includes exporting from training frameworks such as [PyTorch,](https://pytorch.org/docs/stable/onnx.html) [TensorFlow,](https://github.com/onnx/tensorflow-onnx) [Keras,](https://github.com/onnx/keras-onnx) and [many other frameworks](https://github.com/onnx/onnxmltools).
 
-Once you have an ONNX file, it is as simple as plugging it into the DeepSparse Engine and into your pipeline.
+Once you have an ONNX file, it is as simple as plugging it into the DeepSparse Engine and wrapping it with your pipeline.
 
+## Image Classification Custom Pipeline
 
 Here is an example writing an image classification pipeline around a MobileNetV2 ONNX file with an example image.
 
