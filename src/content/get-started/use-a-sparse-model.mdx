@@ -1,9 +1,95 @@
 ---
 title: "Use a Sparse Model"
 metaTitle: "Use a Sparse Model"
-metaDescription: "Use a Sparse Model"
+metaDescription: "Use a Sparse Model with DeepSparse to deploy for faster and cheaper inference on CPUs"
 githubURL: ""
 index: 2000
 ---
 
 # Use a Sparse Model
+
+The DeepSparse Engine takes advantage of sparsity within neural networks to reduce compute as well as accelerate memory-bound workloads, leveraging sparsification
+methods such as [pruning](https://neuralmagic.com/blog/pruning-overview/) and [quantization](https://arxiv.org/abs/1609.07061).
+These techniques result in significantly more performant and smaller models with limited to no effect on the baseline metrics.
+
+You can skip the process of training your own model by searching for a pre-sparsified model for your task on [SparseZoo](https://sparsezoo.neuralmagic.com/). The SparseZoo stubs enable you to reference any model on the SparseZoo in a convenient and predictable way. All of the framework weights, recipes, and ONNX files ready for inference are available for use.
+
+## Benchmark
+
+After executing `pip install deepsparse`, the benchmark tool `deepsparse.benchmark` will be available on your command-line interface.
+
+With this command you can easily compare the performance between any ONNX or SparseZoo models.
+
+#### Sentiment Analysis with DistilBERT
+
+Here we'll be showing the performance gain on a DistilBERT trained on the SST2 dataset, going from dense to sparse to sparse quantized:
+
+```
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 30.4652
+Latency Mean (ms/batch): 65.6297
+Latency Median (ms/batch): 65.5720
+Latency Std (ms/batch): 2.0056
+Iterations: 306
+```
+
+```
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned90B
+atch Size: 1
+Scenario: multistream
+Throughput (items/sec): 129.9941
+Latency Mean (ms/batch): 15.3544
+Latency Median (ms/batch): 15.3251
+Latency Std (ms/batch): 0.5403
+Iterations: 1301-none
+```
+
+```
+> deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 203.2273
+Latency Mean (ms/batch): 9.8183
+Latency Median (ms/batch): 9.7477
+Latency Std (ms/batch): 0.4578
+Iterations: 2034
+```
+
+#### Object Detection with YOLOv5
+
+Here we'll be showing the performance gain on a YOLOv5s trained on the COCO dataset, going from dense to sparse to sparse quantized:
+
+```
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 19.8214
+Latency Mean (ms/batch): 100.8466
+Latency Median (ms/batch): 98.2990
+Latency Std (ms/batch): 12.7740
+Iterations: 199
+```
+
+```
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned-aggressive_96
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 25.4929
+Latency Mean (ms/batch): 78.3545
+Latency Median (ms/batch): 70.1088
+Latency Std (ms/batch): 16.6151
+Iterations: 256
+```
+
+```
+> deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94
+Batch Size: 1
+Scenario: multistream
+Throughput (items/sec): 46.8014
+Latency Mean (ms/batch): 42.6616
+Latency Median (ms/batch): 42.5918
+Latency Std (ms/batch): 1.4122
+Iterations: 469
+```
