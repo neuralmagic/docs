@@ -18,21 +18,21 @@ limitations under the License.
 
 ## Overview
 
-Neural Magic’s novel algorithms enable convolutional neural networks to run on commodity CPUs – at GPU speeds and better. Data scientists no longer have to compromise on model design and input size, or deal with scarce and costly GPU resources. Neural Magic is making the power of deep learning simple, accessible, and affordable for anyone. 
+Neural Magic’s novel algorithms enable convolutional neural networks to run on commodity CPUs – at GPU speeds and better. Data scientists no longer have to compromise on model design and input size, or deal with scarce and costly GPU resources. Neural Magic is making the power of deep learning simple, accessible, and affordable for anyone.
 
 Neural Magic’s Deep Sparse architecture is designed to mimic, on commodity hardware, the way brains compute. It uses neural network sparsity combined with locality of communication by utilizing the CPU’s large fast caches and its very large memory.
 
-Sparsification through pruning is a broadly studied ML technique, allowing reductions of 10x or more in the size and the theoretical compute needed to execute a neural network, without losing much accuracy. So, while a GPU runs networks faster using more FLOPs, Neural Magic runs them faster via a reduction in the necessary FLOPs. 
+Sparsification through pruning is a broadly studied ML technique, allowing reductions of 10x or more in the size and the theoretical compute needed to execute a neural network, without losing much accuracy. So, while a GPU runs networks faster using more FLOPs, Neural Magic runs them faster via a reduction in the necessary FLOPs.
 
 
 ## Sparsification
- 
+
 Sparsification is the process of taking a trained deep learning model and removing redundant information from the overprecise and over-parameterized network resulting in a faster and smaller model. Techniques for sparsification are all encompassing including everything from inducing sparsity using [pruning](https://neuralmagic.com/blog/pruning-overview/) and [quantization](https://arxiv.org/abs/1609.07061) to enabling naturally occurring sparsity using [activation sparsity](http://proceedings.mlr.press/v119/kurtz20a.html) or [winograd/FFT](https://arxiv.org/abs/1509.09308). When implemented correctly, these techniques result in significantly more performant and smaller models with limited to no effect on the baseline metrics.
 
 ## Software Components
 
 The Deep Sparse product suite builds on top of sparsification enabling you to easily apply the techniques to your datasets and models using recipe-driven approaches. Recipes encode the directions for how to sparsify a model into a simple, easily editable format.
- 
+
 - Download a sparsification recipe and sparsified model from the [SparseZoo](https://github.com/neuralmagic/sparsezoo).
 - Alternatively, create a recipe for your model using [Sparsify](https://github.com/neuralmagic/sparsify).
 - Apply your recipe with only a few lines of code using [SparseML](https://github.com/neuralmagic/sparseml).
@@ -40,9 +40,9 @@ The Deep Sparse product suite builds on top of sparsification enabling you to ea
 
 Our Sparsify and SparseML tools allow us to easily reach industry leading levels of sparsity while preserving baseline accuracy, and the DeepSparse Engine’s breakthrough sparse kernels execute this computation effectively.
 
-**Full Deep Sparse Platform flow:**  
+**Full Deep Sparse Platform flow:**
 
-<img src="https://docs.neuralmagic.com/docs/source/sparsification/flow-overview.svg" width="960px">
+<img src="https://docs.neuralmagic.com/archive/docs/source/sparsification/flow-overview.svg" width="960px">
 
 ## Supported Architectures & Frameworks
 
@@ -82,13 +82,13 @@ We are continuously exploring models to add to the SparseZoo including model arc
 
 #### PyTorch and ONNX
 
-Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. PyTorch has native ONNX export and requires fewer steps than other supported frameworks, such as [Keras or TensorFlow](https://docs.neuralmagic.com/sparseml/source/onnx_export.html). If you have flexibility in frameworks, consider PyTorch to start.
+Sparsify and the DeepSparse Engine inputs are standardized on the ONNX format. PyTorch has native ONNX export and requires fewer steps than other supported frameworks, such as [Keras or TensorFlow](https://docs.neuralmagic.com/archive/sparseml/source/onnx_export.html). If you have flexibility in frameworks, consider PyTorch to start.
 
 #### Model Considerations
 
 Dynamic shape is currently not supported; be sure to use models with fixed inputs and compile the model for a particular batch size. Dynamic shape and dynamic batch sizes are on the Neural Magic roadmap; [subscribe for updates](http://neuralmagic.com/subscribe).
 
-Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy](https://docs.neuralmagic.com/deepsparse/main/source/scheduler.html). 
+Model inferences are executed as a single stream by default; concurrent execution [can be enabled depending on the engine execution strategy](https://docs.neuralmagic.com/archive/deepsparse/main/source/scheduler.html).
 
 ## Try it Out
 

@@ -53,16 +53,16 @@ More information on the available recipes, formats, and arguments can be found [
 
 Pre-configured recipes and the resulting models can be explored and downloaded from the [SparseZoo](https://github.com/neuralmagic/sparsezoo). Also, [Sparsify](https://github.com/neuralmagic/sparsify) enables autoML style creation of optimization recipes for use with SparseML.
 
-For a more in-depth read, check out [SparseML documentation](https://docs.neuralmagic.com/sparseml/).
+For a more in-depth read, check out [SparseML documentation](https://docs.neuralmagic.com/archive/sparseml/).
 
 ### PyTorch Sparsification
 
 The PyTorch sparsification libraries are located under the `sparseml.pytorch.optim` package.
 Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into PyTorch training pipelines.
 
-The integration is done using the `ScheduledOptimizer` class. 
-It is intended to wrap your current optimizer and its step function. 
-The step function then calls into the `ScheduledModifierManager` class which can be created from a recipe file. 
+The integration is done using the `ScheduledOptimizer` class.
+It is intended to wrap your current optimizer and its step function.
+The step function then calls into the `ScheduledModifierManager` class which can be created from a recipe file.
 With this setup, the training process can then be modified as desired to sparsify the model.
 
 To enable all of this, the integration code you'll need to write is only a handful of lines:
@@ -118,7 +118,7 @@ save_model = manager.finalize(model)
 
 ### TensorFlow V1 Sparsification
 
-The TensorFlow sparsification libraries for TensorFlow version 1.X are located under the `sparseml.tensorflow_v1.optim` package. 
+The TensorFlow sparsification libraries for TensorFlow version 1.X are located under the `sparseml.tensorflow_v1.optim` package.
 Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into TensorFlow V1 training pipelines.
 
 The integration is done using the `ScheduledModifierManager` class which can be created from a recipe file.
@@ -160,16 +160,16 @@ from sparseml.tensorflow_v1.optim import ScheduledModifierManager
 with tf_compat.Graph().as_default() as graph:
     # Normal graph setup....
     num_train_batches = len(train_data) / batch_size  # your number of batches per training epoch
-    
+
     # Modifying graphs, be sure his is called after graph is created and before session is created
     manager = ScheduledModifierManager.from_yaml("/PATH/TO/config.yaml")
     mod_ops, mod_extras = manager.create_ops(steps_per_epoch=num_train_batches)
-    
+
     with tf_compat.Session() as sess:
         # Normal training code...
         # Call sess.run with the mod_ops after every batch update
         sess.run(mod_ops)
-    
+
         # Call into complete_graph after training is done
         manager.complete_graph()
 ```
