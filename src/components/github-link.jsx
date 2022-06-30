@@ -12,7 +12,8 @@ const LinkStyle = styled(Link)`
   align-content: center;
   border: 1px solid black;
   border-radius: 4px;
-
+  text-decoration: none;
+  cursor: pointer;
 `;
 
 const GithubImg = styled.img`
@@ -23,6 +24,7 @@ const GithubImg = styled.img`
 
 const TextStyle = styled.div`
   font-size: 16px;
+  color: ${props => props.theme.textPrimary};
 `;
 
 const GithubLink = ({ link, text }) => {

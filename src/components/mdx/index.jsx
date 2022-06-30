@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 
 import CodeBlock from './code-block';
 import AnchorTag from './anchor';
+import {LinkCards, LinkCard} from "./link-cards";
 
 const StyledPre = styled('pre')`
   padding: 16px;
@@ -28,6 +29,8 @@ const appendString = (children) => {
 };
 
 export default {
+  LinkCards: LinkCards,
+  LinkCard: LinkCard,
   h1: (props) => (
     <h1
       className="heading1"
