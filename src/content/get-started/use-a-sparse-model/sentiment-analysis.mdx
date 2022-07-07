@@ -1,0 +1,81 @@
+---
+title: "Sentiment Analysis"
+metaTitle: "Use a Sparse Sentiment Analysis Model"
+metaDescription: "Use a Sparse Sentiment Analysis Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/use-a-sparse-model/sentiment-analysis.mdx"
+index: 1000
+---
+
+# Use a Sparse Sentiment Analysis Model
+
+The SparseZoo [contains models](https://sparsezoo.neuralmagic.com/?page=1&domain=nlp&sub_domain=sentiment_analysis) trained on the [SST-2 dataset](https://nlp.stanford.edu/sentiment/) for [sentiment analysis](https://en.wikipedia.org/wiki/Sentiment_analysis) use cases.
+One of the common models used for this task is [DistilBERT](https://arxiv.org/abs/1910.01108) and the SparseZoo contains a more performant [pruned, quantized version](https://sparsezoo.neuralmagic.com/models/nlp%2Fsentiment_analysis%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fsst2%2Fpruned80_quant-none-vnni) along with the dense, FP32 baseline among others.
+By leveraging one of these models, you can performantly determine the general sentiment of text sequences.
+The SparseZoo stubs for the DistilBERT models listed can be found either on their SparseZoo model pages or below:
+- [Sparse-quantized DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Fsentiment_analysis%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fsst2%2Fpruned80_quant-none-vnni)
+  ```bash
+  zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+  ```
+- [Dense DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Fsentiment_analysis%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fsst2%2Fbase-none)
+  ```bash
+  zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+  ```
+
+## Inference
+
+To test out a model in an inference setting, use the sparse-quantized DistilBERT's SparseZoo stub with a [DeepSparse Engine](../../products/deepsparse) **pipeline** [installed with the deepsparse package](../../install/deepsparse).
+To instantiate a pipeline for the desired model, the SparseZoo stub is passed in for the model_path argument.
+This will automatically download the model from the SparseZoo to your local machine and then compile it with the DeepSparse Engine.
+Once compiled, the model pipeline is ready for inference with any sentence.
+
+```python
+from deepsparse import Pipeline
+
+sa_pipeline = Pipeline.create(
+    task="sentiment-analysis",
+    model_path="zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni"
+)
+inference = sa_pipeline("Snorlax loves my Tesla!")
+print(inference)
+
+> labels=['positive'] scores=[0.685024619102478]
+```
+
+## Benchmarking
+
+The benefits from using a sparsified model in the DeepSparse Engine are most easily realized when running many inferences consecutively such as when [deploying](../../../use-cases/deploying-with-deepsparse) and when [benchmarking](../../../user-guide/benchmark).
+Benchmarking is quicker and easier to test, though, as it doesn't involve a full orchestration system.
+To measure the performance gains, we utilize the **deepsparse.benchmark** CLI [installed with the deepsparse package](../../install/deepsparse).
+
+The dense baseline achieves 32.6 items per second on a 4-core CPU server:
+
+```bash
+$ deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 32.2806
+> Latency Mean (ms/batch): 61.9034
+> Latency Median (ms/batch): 61.7760
+> Latency Std (ms/batch): 0.4792
+> Iterations: 324
+```
+
+The sparse-quantized model, though, achieves 221.0 items per second on the same 4-core CPU server.
+A **6.8X increase** in performance:
+
+```bash
+$ deepsparse.benchmark zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 220.9794
+> Latency Mean (ms/batch): 9.0147
+> Latency Median (ms/batch): 9.0085
+> Latency Std (ms/batch): 0.1037
+> Iterations: 2210
+```
