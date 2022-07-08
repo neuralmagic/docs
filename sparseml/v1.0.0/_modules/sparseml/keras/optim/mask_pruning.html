@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" >
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>sparseml.keras.optim.mask_pruning &mdash; SparseML 1.0.0.20220708 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+    <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
+      <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
+  <!--[if lt IE 9]>
+    <script src="../../../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  <script id="documentation_options" data-url_root="../../../../" src="../../../../_static/documentation_options.js"></script>
+        <script src="../../../../_static/jquery.js"></script>
+        <script src="../../../../_static/underscore.js"></script>
+        <script src="../../../../_static/doctools.js"></script>
+        <script src="../../../../_static/clipboard.min.js"></script>
+        <script src="../../../../_static/copybutton.js"></script>
+    <script src="../../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+            <a href="../../../../index.html" class="icon icon-home"> SparseML<img src="../../../../_static/icon-sparseml.png" class="logo" alt="Logo"/>
+          </a>
+              <div class="version">
+                1.0
+              </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption"><span class="caption-text">General</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/code.html">Sparsification Code</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/recipes.html">Sparsification Recipes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../source/onnx_export.html">ONNX Export</a></li>
+</ul>
+<p class="caption"><span class="caption-text">API</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api/sparseml.html">sparseml package</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Connect Online</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic/sparseml/issues">Bugs, Feature Requests</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ">Deep Sparse Community Slack</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/neuralmagic">Neural Magic GitHub</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://docs.neuralmagic.com">Neural Magic Docs</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../index.html">SparseML</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../index.html" class="icon icon-home"></a> &raquo;</li>
+          <li><a href="../../../index.html">Module code</a> &raquo;</li>
+      <li>sparseml.keras.optim.mask_pruning</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for sparseml.keras.optim.mask_pruning</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.</span>
+<span class="c1">#</span>
+<span class="c1"># Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</span>
+<span class="c1"># you may not use this file except in compliance with the License.</span>
+<span class="c1"># You may obtain a copy of the License at</span>
+<span class="c1">#</span>
+<span class="c1">#    http://www.apache.org/licenses/LICENSE-2.0</span>
+<span class="c1">#</span>
+<span class="c1"># Unless required by applicable law or agreed to in writing,</span>
+<span class="c1"># software distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</span>
+<span class="c1"># WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</span>
+<span class="c1"># See the License for the specific language governing permissions and</span>
+<span class="c1"># limitations under the License.</span>
+
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">List</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">tensorflow</span>
+
+<span class="kn">from</span> <span class="nn">sparseml.keras.optim.mask_pruning_creator</span> <span class="kn">import</span> <span class="p">(</span>
+    <span class="n">PruningMaskCreator</span><span class="p">,</span>
+    <span class="n">load_mask_creator</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span> <span class="nn">sparseml.keras.utils</span> <span class="kn">import</span> <span class="n">keras</span>
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;MaskedLayer&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PruningScheduler&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;remove_pruning_masks&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+
+
+<div class="viewcode-block" id="PruningScheduler"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.PruningScheduler">[docs]</a><span class="k">class</span> <span class="nc">PruningScheduler</span><span class="p">(</span><span class="n">abc</span><span class="o">.</span><span class="n">ABC</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Abstract pruning scheduler</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_REGISTRY</span> <span class="o">=</span> <span class="p">{}</span>
+
+    <span class="k">def</span> <span class="nf">__init_subclass__</span><span class="p">(</span><span class="bp">cls</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">__init_subclass__</span><span class="p">()</span>
+        <span class="n">PruningScheduler</span><span class="o">.</span><span class="n">_register_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
+
+<div class="viewcode-block" id="PruningScheduler.should_prune"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.PruningScheduler.should_prune">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">should_prune</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Check if the given step is a right time for pruning</span>
+
+<span class="sd">        :param step: training step</span>
+<span class="sd">        :return: True if pruning should take place; False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PruningScheduler.target_sparsity"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.PruningScheduler.target_sparsity">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">target_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the target sparsity at the given step</span>
+
+<span class="sd">        :param step: training step</span>
+<span class="sd">        :param kwargs: optional keyword params that a specific scheduler might need</span>
+<span class="sd">        :return: target sparsity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PruningScheduler.get_config"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.PruningScheduler.get_config">[docs]</a>    <span class="nd">@abc</span><span class="o">.</span><span class="n">abstractmethod</span>
+    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span><span class="s2">&quot;Not implemented&quot;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="PruningScheduler.deserialize"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.PruningScheduler.deserialize">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">deserialize</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Deserialize a pruning scheduler from config returned by scheduler&#39;s</span>
+<span class="sd">        get_config method</span>
+
+<span class="sd">        :param config: a pruning scheduler&#39;s config</span>
+<span class="sd">        :return: a pruning scheduler instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;class_name&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The &#39;class_name&#39; not found in config: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">config</span><span class="p">))</span>
+        <span class="n">class_name</span> <span class="o">=</span> <span class="n">config</span><span class="p">[</span><span class="s2">&quot;class_name&quot;</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">keras</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">deserialize_keras_object</span><span class="p">(</span>
+            <span class="n">config</span><span class="p">,</span>
+            <span class="n">module_objects</span><span class="o">=</span><span class="nb">globals</span><span class="p">(),</span>
+            <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="n">class_name</span><span class="p">:</span> <span class="n">PruningScheduler</span><span class="o">.</span><span class="n">_REGISTRY</span><span class="p">[</span><span class="n">class_name</span><span class="p">]},</span>
+        <span class="p">)</span></div>
+
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">_register_class</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">target_cls</span><span class="p">):</span>
+        <span class="n">PruningScheduler</span><span class="o">.</span><span class="n">_REGISTRY</span><span class="p">[</span><span class="n">target_cls</span><span class="o">.</span><span class="vm">__name__</span><span class="p">]</span> <span class="o">=</span> <span class="n">target_cls</span></div>
+
+
+<span class="n">MaskedParamInfo</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span>
+    <span class="s2">&quot;MaskedParamInfo&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;param&quot;</span><span class="p">,</span> <span class="s2">&quot;mask&quot;</span><span class="p">,</span> <span class="s2">&quot;sparsity&quot;</span><span class="p">]</span>
+<span class="p">)</span>
+
+
+<span class="k">class</span> <span class="nc">MaskAndWeightUpdater</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Core logic of updating masks and weights</span>
+
+<span class="sd">    :param pruning_vars: a list of tuples where each element contains weight tensor,</span>
+<span class="sd">        mask and sparsity</span>
+<span class="sd">    :param pruning_scheduler: a pruning scheduler</span>
+<span class="sd">    :param mask_creator: a mask creator</span>
+<span class="sd">    :param global_step: a global step tensor</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">pruning_vars</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">MaskedParamInfo</span><span class="p">],</span>
+        <span class="n">pruning_scheduler</span><span class="p">:</span> <span class="n">PruningScheduler</span><span class="p">,</span>
+        <span class="n">mask_creator</span><span class="p">:</span> <span class="n">PruningMaskCreator</span><span class="p">,</span>
+        <span class="n">global_step</span><span class="p">:</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span> <span class="o">=</span> <span class="n">pruning_vars</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span> <span class="o">=</span> <span class="n">pruning_scheduler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">mask_creator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span> <span class="o">=</span> <span class="n">global_step</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_ready</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_is_pruning_step</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+        <span class="n">global_step_val</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="n">global_step_val</span> <span class="o">&gt;=</span> <span class="mi">0</span>
+        <span class="n">update_ready</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span><span class="o">.</span><span class="n">should_prune</span><span class="p">(</span><span class="n">global_step_val</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">update_ready</span>
+
+    <span class="k">def</span> <span class="nf">_conditional_training_update</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">def</span> <span class="nf">_no_update_masks_and_weights</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="s2">&quot;no_update&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_update_masks_and_weights</span><span class="p">():</span>
+            <span class="n">assignments</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">global_step_val</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">get_value</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">masked_param_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span><span class="p">:</span>
+                <span class="n">new_sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span><span class="o">.</span><span class="n">target_sparsity</span><span class="p">(</span><span class="n">global_step_val</span><span class="p">)</span>
+                <span class="n">new_mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="o">.</span><span class="n">create_sparsity_mask</span><span class="p">(</span>
+                    <span class="n">masked_param_info</span><span class="o">.</span><span class="n">param</span><span class="p">,</span> <span class="n">new_sparsity</span>
+                <span class="p">)</span>
+                <span class="n">assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">masked_param_info</span><span class="o">.</span><span class="n">mask</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">new_mask</span><span class="p">))</span>
+                <span class="n">assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">masked_param_info</span><span class="o">.</span><span class="n">sparsity</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">new_sparsity</span><span class="p">))</span>
+                <span class="n">masked_param</span> <span class="o">=</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+                    <span class="n">masked_param_info</span><span class="o">.</span><span class="n">param</span><span class="p">,</span> <span class="n">masked_param_info</span><span class="o">.</span><span class="n">mask</span>
+                <span class="p">)</span>
+                <span class="n">assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">masked_param_info</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">masked_param</span><span class="p">))</span>
+            <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+
+        <span class="n">update_ready</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_pruning_step</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_update_ready</span> <span class="o">=</span> <span class="n">update_ready</span>
+        <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">tensorflow</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">update_ready</span><span class="p">,</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
+            <span class="n">_update_masks_and_weights</span><span class="p">,</span>
+            <span class="n">_no_update_masks_and_weights</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">apply_masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Apply masks to the weights</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">assignments</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">masked_param_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span><span class="p">:</span>
+            <span class="n">masked_param</span> <span class="o">=</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">math</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span>
+                <span class="n">masked_param_info</span><span class="o">.</span><span class="n">param</span><span class="p">,</span> <span class="n">masked_param_info</span><span class="o">.</span><span class="n">mask</span>
+            <span class="p">)</span>
+            <span class="n">assignments</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">masked_param_info</span><span class="o">.</span><span class="n">param</span><span class="o">.</span><span class="n">assign</span><span class="p">(</span><span class="n">masked_param</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">group</span><span class="p">(</span><span class="n">assignments</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">conditional_update</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Conditionally update masks and weights</span>
+
+<span class="sd">        :param training: if in training mode</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span> <span class="nf">_update</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">control_dependencies</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_conditional_training_update</span><span class="p">()]):</span>
+                <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="s2">&quot;update&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_no_update</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="s2">&quot;no_update&quot;</span><span class="p">)</span>
+
+        <span class="n">training</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">()</span> <span class="k">if</span> <span class="n">training</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">training</span>
+        <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">tensorflow</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">training</span><span class="p">,</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span> <span class="n">_update</span><span class="p">,</span> <span class="n">_no_update</span>
+        <span class="p">)</span>
+
+
+<span class="n">_LAYER_PRUNABLE_PARAMS_MAP</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv1D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv2DTranspose</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv3D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Conv3DTranspose</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Embedding</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;embeddings&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LocallyConnected1D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">LocallyConnected2D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">SeparableConv1D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pointwise_kernel&quot;</span><span class="p">],</span>
+    <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">SeparableConv2D</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;pointwise_kernel&quot;</span><span class="p">],</span>
+<span class="p">}</span>
+
+
+<span class="k">def</span> <span class="nf">_get_default_prunable_params</span><span class="p">(</span><span class="n">layer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span> <span class="ow">in</span> <span class="n">_LAYER_PRUNABLE_PARAMS_MAP</span><span class="p">:</span>
+        <span class="n">prunable_param_names</span> <span class="o">=</span> <span class="n">_LAYER_PRUNABLE_PARAMS_MAP</span><span class="p">[</span><span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span><span class="p">]</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">/</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">param_name</span><span class="p">):</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">param_name</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">prunable_param_names</span>
+        <span class="p">}</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">expected_layers</span> <span class="o">=</span> <span class="p">[</span><span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span> <span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">_LAYER_PRUNABLE_PARAMS_MAP</span><span class="p">]</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;Layer </span><span class="si">{}</span><span class="s2"> cannot be pruned. Expected layers: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="n">layer</span><span class="p">,</span> <span class="n">expected_layers</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+
+<div class="viewcode-block" id="MaskedLayer"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer">[docs]</a><span class="k">class</span> <span class="nc">MaskedLayer</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Wrapper</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Masked layer is a layer wrapping around another layer with a mask; the mask however</span>
+<span class="sd">    is shared if the enclosed layer is again of MaskedLayer type</span>
+
+<span class="sd">    :param layer: either a MaskedLayer or a keras layer</span>
+<span class="sd">    :param pruning_scheduler: a pruning scheduler</span>
+<span class="sd">    :param mask_creator: a mask creator</span>
+<span class="sd">    :param kwargs: optional params for keras layer constructor, e.g. layer name</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">layer</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">,</span>
+        <span class="n">pruning_scheduler</span><span class="p">:</span> <span class="n">PruningScheduler</span><span class="p">,</span>
+        <span class="n">mask_type</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">List</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;unstructured&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">MaskedLayer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Invalid layer passed in, expected MaskedLayer or a keras Layer, &quot;</span>
+                <span class="s2">&quot;but got </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaskedLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span> <span class="o">=</span> <span class="n">layer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span> <span class="o">=</span> <span class="n">pruning_scheduler</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span> <span class="o">=</span> <span class="n">mask_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_updater</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MaskedLayer.build"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer.build">[docs]</a>    <span class="k">def</span> <span class="nf">build</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MaskedLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">build</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span> <span class="o">=</span> <span class="n">load_mask_creator</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_reuse_or_create_pruning_vars</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span>
+            <span class="s2">&quot;global_step&quot;</span><span class="p">,</span>
+            <span class="n">shape</span><span class="o">=</span><span class="p">[],</span>
+            <span class="n">initializer</span><span class="o">=</span><span class="n">keras</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">Constant</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">),</span>
+            <span class="n">dtype</span><span class="o">=</span><span class="n">tensorflow</span><span class="o">.</span><span class="n">int64</span><span class="p">,</span>
+            <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_mask_updater</span> <span class="o">=</span> <span class="n">MaskAndWeightUpdater</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_mask_creator</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_reuse_or_create_pruning_vars</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">MaskedParamInfo</span><span class="p">]:</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">,</span> <span class="n">MaskedLayer</span><span class="p">):</span>
+            <span class="c1"># All nested masked layers reused pruning vars created</span>
+            <span class="c1"># for the &quot;core&quot;, inner-most, Keras built-in layer</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">pruning_vars</span>
+
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">)</span>
+        <span class="n">prunable_params</span> <span class="o">=</span> <span class="n">_get_default_prunable_params</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">)</span>
+
+        <span class="n">pruning_vars</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">param</span> <span class="ow">in</span> <span class="n">prunable_params</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span>
+                <span class="s2">&quot;mask&quot;</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+                <span class="n">initializer</span><span class="o">=</span><span class="n">keras</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;ones&quot;</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">sparsity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">add_weight</span><span class="p">(</span>
+                <span class="s2">&quot;sparsity&quot;</span><span class="p">,</span>
+                <span class="n">shape</span><span class="o">=</span><span class="p">[],</span>
+                <span class="n">initializer</span><span class="o">=</span><span class="n">keras</span><span class="o">.</span><span class="n">initializers</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;zeros&quot;</span><span class="p">),</span>
+                <span class="n">dtype</span><span class="o">=</span><span class="n">param</span><span class="o">.</span><span class="n">dtype</span><span class="p">,</span>
+                <span class="n">trainable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">pruning_vars</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MaskedParamInfo</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">param</span><span class="p">,</span> <span class="n">mask</span><span class="p">,</span> <span class="n">sparsity</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">pruning_vars</span>
+
+<div class="viewcode-block" id="MaskedLayer.call"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer.call">[docs]</a>    <span class="k">def</span> <span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">Tensor</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Forward function for calling layer instance as function</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">training</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">backend</span><span class="o">.</span><span class="n">learning_phase</span><span class="p">()</span> <span class="k">if</span> <span class="n">training</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">training</span>
+
+        <span class="k">def</span> <span class="nf">_apply_masks_to_weights</span><span class="p">():</span>
+            <span class="k">with</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">control_dependencies</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_mask_updater</span><span class="o">.</span><span class="n">apply_masks</span><span class="p">()]):</span>
+                <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="s2">&quot;update&quot;</span><span class="p">)</span>
+
+        <span class="k">def</span> <span class="nf">_no_apply_masks_to_weights</span><span class="p">():</span>
+            <span class="k">return</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">no_op</span><span class="p">(</span><span class="s2">&quot;no_update_masks&quot;</span><span class="p">)</span>
+
+        <span class="n">tensorflow</span><span class="o">.</span><span class="n">cond</span><span class="p">(</span>
+            <span class="n">tensorflow</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">training</span><span class="p">,</span> <span class="n">tensorflow</span><span class="o">.</span><span class="n">bool</span><span class="p">),</span>
+            <span class="n">_apply_masks_to_weights</span><span class="p">,</span>
+            <span class="n">_no_apply_masks_to_weights</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">args</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">getfullargspec</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">call</span><span class="p">)</span><span class="o">.</span><span class="n">args</span>
+        <span class="k">if</span> <span class="s2">&quot;training&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">inputs</span><span class="p">,</span> <span class="n">training</span><span class="o">=</span><span class="n">training</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">call</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="MaskedLayer.get_config"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer.get_config">[docs]</a>    <span class="k">def</span> <span class="nf">get_config</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Get layer config</span>
+<span class="sd">        Serialization and deserialization should be done using</span>
+<span class="sd">        keras.serialize/deserialize, which create and retrieve the &quot;class_name&quot;</span>
+<span class="sd">        field automatically.</span>
+<span class="sd">        The resulting config below therefore does not contain the field.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">MaskedLayer</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">get_config</span><span class="p">()</span>
+        <span class="k">if</span> <span class="s2">&quot;layer&quot;</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">config</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Expected &#39;layer&#39; field not found in config&quot;</span><span class="p">)</span>
+        <span class="n">config</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;pruning_scheduler&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_scheduler</span><span class="o">.</span><span class="n">get_config</span><span class="p">(),</span>
+                <span class="s2">&quot;mask_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_type</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">config</span></div>
+
+<div class="viewcode-block" id="MaskedLayer.from_config"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer.from_config">[docs]</a>    <span class="nd">@classmethod</span>
+    <span class="k">def</span> <span class="nf">from_config</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">config</span><span class="p">):</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">layer</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;layer&quot;</span><span class="p">),</span> <span class="n">custom_objects</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;MaskedLayer&quot;</span><span class="p">:</span> <span class="n">MaskedLayer</span><span class="p">}</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">MaskedLayer</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unexpected layer created from config&quot;</span><span class="p">)</span>
+        <span class="n">pruning_scheduler</span> <span class="o">=</span> <span class="n">PruningScheduler</span><span class="o">.</span><span class="n">deserialize</span><span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;pruning_scheduler&quot;</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">pruning_scheduler</span><span class="p">,</span> <span class="n">PruningScheduler</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unexpected pruning scheduler type created from config&quot;</span><span class="p">)</span>
+        <span class="n">mask_type</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;mask_type&quot;</span><span class="p">)</span>
+        <span class="n">masked_layer</span> <span class="o">=</span> <span class="n">MaskedLayer</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">pruning_scheduler</span><span class="p">,</span> <span class="n">mask_type</span><span class="p">,</span> <span class="o">**</span><span class="n">config</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">masked_layer</span></div>
+
+<div class="viewcode-block" id="MaskedLayer.compute_output_shape"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.MaskedLayer.compute_output_shape">[docs]</a>    <span class="k">def</span> <span class="nf">compute_output_shape</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">input_shape</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">compute_output_shape</span><span class="p">(</span><span class="n">input_shape</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">global_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_global_step</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mask_updater</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_mask_updater</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">masks</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">masked_param_info</span><span class="o">.</span><span class="n">mask</span> <span class="k">for</span> <span class="n">masked_param_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span><span class="p">]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pruning_vars</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pruning_vars</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pruned_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">,</span> <span class="n">MaskedLayer</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="o">.</span><span class="n">pruned_layer</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_layer</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Unrecognized layer&quot;</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">masked_layer</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_layer</span></div>
+
+
+<div class="viewcode-block" id="remove_pruning_masks"><a class="viewcode-back" href="../../../../api/sparseml.keras.optim.html#sparseml.keras.optim.mask_pruning.remove_pruning_masks">[docs]</a><span class="k">def</span> <span class="nf">remove_pruning_masks</span><span class="p">(</span><span class="n">model</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Remove pruning masks from a model that was pruned using the MaskedLayer logic</span>
+<span class="sd">    :param model: a model that was pruned using MaskedLayer</span>
+<span class="sd">    :return: the original model with pruned weights</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_pruned_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">):</span>
+        <span class="c1"># If the model is loaded through SavedFormat, the layer of type</span>
+        <span class="c1"># MaskedLayer would belong to a special package, hence the</span>
+        <span class="c1"># second check below based simply on class name</span>
+        <span class="n">is_masked_layer</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">MaskedLayer</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;MaskedLayer&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_masked_layer</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_get_pruned_layer</span><span class="p">(</span><span class="n">layer</span><span class="o">.</span><span class="n">layer</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">layer</span><span class="p">,</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Layer</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">layer</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Unknown layer type&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_remove_pruning_masks</span><span class="p">(</span><span class="n">layer</span><span class="p">):</span>
+        <span class="n">is_masked_layer</span> <span class="o">=</span> <span class="nb">isinstance</span><span class="p">(</span>
+            <span class="n">layer</span><span class="p">,</span> <span class="n">MaskedLayer</span>
+        <span class="p">)</span> <span class="ow">or</span> <span class="n">layer</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s2">&quot;MaskedLayer&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">is_masked_layer</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">_get_pruned_layer</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">layer</span>
+
+    <span class="c1"># TODO: while the resulting model could be exported to ONNX, its built status</span>
+    <span class="c1"># is removed</span>
+    <span class="k">return</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">clone_model</span><span class="p">(</span>
+        <span class="n">model</span><span class="p">,</span> <span class="n">input_tensors</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">clone_function</span><span class="o">=</span><span class="n">_remove_pruning_masks</span>
+    <span class="p">)</span></div>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021 - present / Neuralmagic, Inc. All Rights Reserved. Licensed under the Apache License, Version 2.0 (the &#34;License&#34;).</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  
+<div class="rst-versions" data-toggle="rst-versions" role="note" aria-label="versions">
+  <span class="rst-current-version" data-toggle="rst-current-version">
+    <span class="fa fa-book"> Other Versions</span>
+    v: v1.0.0
+    <span class="fa fa-caret-down"></span>
+  </span>
+  <div class="rst-other-versions">
+    <dl>
+      <dt>Tags</dt>
+      <dd><a href="../../../../../v0.10.0/index.html">v0.10.0</a></dd>
+      <dd><a href="../../../../../v0.10.1/index.html">v0.10.1</a></dd>
+      <dd><a href="../../../../../v0.11.0/index.html">v0.11.0</a></dd>
+      <dd><a href="../../../../../v0.11.1/index.html">v0.11.1</a></dd>
+      <dd><a href="../../../../../v0.12/index.html">v0.12</a></dd>
+      <dd><a href="../../../../../v0.12.0/index.html">v0.12.0</a></dd>
+      <dd><a href="../../../../../v0.12.1/index.html">v0.12.1</a></dd>
+      <dd><a href="../../../../../v0.12.2/index.html">v0.12.2</a></dd>
+      <dd><a href="../../../../../v0.3.0/index.html">v0.3.0</a></dd>
+      <dd><a href="../../../../../v0.3.1/index.html">v0.3.1</a></dd>
+      <dd><a href="../../../../../v0.4.0/index.html">v0.4.0</a></dd>
+      <dd><a href="../../../../../v0.5.0/index.html">v0.5.0</a></dd>
+      <dd><a href="../../../../../v0.5.1/index.html">v0.5.1</a></dd>
+      <dd><a href="../../../../../v0.6.0/index.html">v0.6.0</a></dd>
+      <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
+      <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
+      <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+      <dd><a href="mask_pruning.html">v1.0.0</a></dd>
+    </dl>
+    <dl>
+      <dt>Branches</dt>
+      <dd><a href="../../../../../main/index.html">main</a></dd>
+    </dl>
+  </div>
+</div><script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+    <!-- Theme Analytics -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-128364174-1"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'UA-128364174-1', {
+          'anonymize_ip': false,
+      });
+    </script> 
+
+</body>
+</html>

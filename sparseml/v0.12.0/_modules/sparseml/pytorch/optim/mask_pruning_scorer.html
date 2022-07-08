@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>sparseml.pytorch.optim.mask_pruning_scorer &mdash; SparseML 0.12.0.20220630 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
+  <title>sparseml.pytorch.optim.mask_pruning_scorer &mdash; SparseML 0.12.0.20220708 documentation</title><link rel="stylesheet" href="../../../../_static/css/theme.css" type="text/css" />
     <link rel="stylesheet" href="../../../../_static/pygments.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/copybutton.css" type="text/css" />
       <link rel="stylesheet" href="../../../../_static/css/nm-theme-adjustment.css" type="text/css" /><link rel="shortcut icon" href="../../../../_static/favicon.ico"/>
@@ -107,7 +107,7 @@
 
 
 <span class="kn">from</span> <span class="nn">abc</span> <span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
-<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span>
 
 <span class="kn">import</span> <span class="nn">torch</span>
 <span class="kn">import</span> <span class="nn">torch.distributed</span> <span class="k">as</span> <span class="nn">dist</span>
@@ -198,18 +198,23 @@
 <span class="sd">    Adds extra abstraction for handling gradient sharing between parameters</span>
 
 <span class="sd">    :param params: list of model Parameters to track and score</span>
+<span class="sd">    :param dist_backend: to communicate gradients between processes</span>
 <span class="sd">    &quot;&quot;&quot;</span>
 
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">]):</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">params</span><span class="p">:</span> <span class="n">List</span><span class="p">[</span><span class="n">Parameter</span><span class="p">],</span> <span class="n">dist_backend</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">params</span><span class="o">=</span><span class="n">params</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">is_initialized</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_is_main_proc</span> <span class="o">=</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span> <span class="ow">or</span> <span class="n">dist</span><span class="o">.</span><span class="n">get_rank</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span>
 
         <span class="c1"># create group to broadcast gradients across processes</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_gloo_handle</span> <span class="o">=</span> <span class="n">dist</span><span class="o">.</span><span class="n">new_group</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;gloo&quot;</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span> <span class="k">else</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dist_group</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">dist</span><span class="o">.</span><span class="n">new_group</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="n">dist_backend</span><span class="p">)</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span> <span class="ow">and</span> <span class="n">dist_backend</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+            <span class="k">else</span> <span class="kc">None</span>
+        <span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_exclude_params</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_is_ddp&quot;</span><span class="p">,</span> <span class="s2">&quot;_is_main_proc&quot;</span><span class="p">,</span> <span class="s2">&quot;_gloo_handle&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pickle_exclude_params</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;_is_ddp&quot;</span><span class="p">,</span> <span class="s2">&quot;_is_main_proc&quot;</span><span class="p">,</span> <span class="s2">&quot;_dist_group&quot;</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">__getstate__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -227,13 +232,13 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="n">on_pruning_end</span><span class="p">()</span>
 
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span><span class="p">:</span>
-            <span class="n">dist</span><span class="o">.</span><span class="n">destroy_process_group</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_gloo_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_dist_group</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">dist</span><span class="o">.</span><span class="n">destroy_process_group</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_dist_group</span><span class="p">)</span>
 
     <span class="k">def</span> <span class="nf">_broadcast_list_from_main</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">val</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_ddp</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">val</span>
-        <span class="n">dist</span><span class="o">.</span><span class="n">broadcast_object_list</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_gloo_handle</span><span class="p">)</span>
+        <span class="n">dist</span><span class="o">.</span><span class="n">broadcast_object_list</span><span class="p">(</span><span class="n">val</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">group</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dist_group</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">val</span>
 
 
@@ -437,6 +442,7 @@
       <dd><a href="../../../../../v0.7.0/index.html">v0.7.0</a></dd>
       <dd><a href="../../../../../v0.8.0/index.html">v0.8.0</a></dd>
       <dd><a href="../../../../../v0.9.0/index.html">v0.9.0</a></dd>
+      <dd><a href="../../../../../v1.0.0/index.html">v1.0.0</a></dd>
     </dl>
     <dl>
       <dt>Branches</dt>
