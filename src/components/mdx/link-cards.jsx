@@ -2,6 +2,7 @@ import React from 'react';
 import styled from '@emotion/styled';
 
 import Link from '../link';
+import Button from "../button";
 
 
 const LinkCards = styled.div`
@@ -14,17 +15,16 @@ const LinkCards = styled.div`
 `;
 
 const StyledLink = styled(Link)`
-  width: calc(50% - 2*20px - 2*1px - 8px);
+  width: calc(50% - 8px);
   margin-bottom: 16px;
-  padding: 20px;
-  border: 1px solid ${props => props.theme.dividerFaded};
-  border-radius: 8px;
   text-decoration: none;
-  cursor: pointer;
+  position: relative;
+`;
 
-  :hover {
-    background-color: ${props => props.theme.primaryFaded};
-  }
+const StyledButton = styled(Button)`
+  min-height: 100%;
+  padding: 20px;
+  box-sizing: border-box;
 `;
 
 const LinkHeading = styled.div`
@@ -42,8 +42,10 @@ const LinkDescription = styled.div`
 const LinkCard = ({href, heading, children}) => {
   return (
     <StyledLink to={href}>
-      <LinkHeading>{heading}</LinkHeading>
-      <LinkDescription>{children}</LinkDescription>
+      <StyledButton>
+        <LinkHeading>{heading}</LinkHeading>
+        <LinkDescription>{children}</LinkDescription>
+      </StyledButton>
     </StyledLink>
   );
 }

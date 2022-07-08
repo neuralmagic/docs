@@ -5,33 +5,35 @@ import GithubLink from '../github-link';
 import SlackLink from '../slack-link';
 
 const Container = styled.div`
-  height: calc(100% - 24px);
-  padding-top: 24px;
+  height: 100%;
+  padding-top: 40px;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 `;
 
 const ContentsContainer = styled.div`
   display: flex;
   flex-direction: column;
+  margin-bottom: 40px;
 `;
 
-const ContentText = styled.div`
-  padding-top: 16px;
+const Header = styled.div`
   color: ${props => props.theme.textPrimary};
   font-weight: bold;
   font-size: 12px;
 `;
 
-const ContentDiv = styled.div`
+const HeaderDivider = styled.div`
   height: 1px;
-  margin-top: 8px;
+  margin-top: 4px;
+  margin-bottom: 12px;
   width: 100%;
   background-color: black;
 `;
 
 const StyledLink = styled(Link)`
-  margin-top: 16px;
+  margin-bottom: 8px;
   color: ${props => props.theme.textSecondary};
   text-decoration: none;
 
@@ -41,7 +43,6 @@ const StyledLink = styled(Link)`
 `;
 
 const ButtonContainer = styled.div`
-  margin-top: 40px;
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -67,14 +68,16 @@ const DocsSidebarRight = ({ currentSlug, mdxTOC, githubURL }) => {
     <Container>
       {h2s.length > 0 ?
         <ContentsContainer>
-          <ContentText>CONTENTS</ContentText>
-          <ContentDiv />
+          <Header>CONTENT</Header>
+          <HeaderDivider />
           {h2s.map((h2Obj) => (
             <StyledLink key={h2Obj.title} to={h2Obj.link}>{h2Obj.title}</StyledLink>
           ))}
         </ContentsContainer>
       : ""}
       <ButtonContainer>
+        <Header>ACTIONS</Header>
+        <HeaderDivider />
         {githubURL ? <GithubLink link={githubURL} text="Edit on GitHub" /> : ""}
         <Padding />
         <SlackLink text="Ask on Slack" />

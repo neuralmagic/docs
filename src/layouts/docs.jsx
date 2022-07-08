@@ -7,6 +7,7 @@ import DocsSidebarLeft from '../components/docs-sidebar-left';
 import DocsSidebarRight from '../components/docs-sidebar-right';
 import mdxComponents from '../components/mdx';
 import DocsContentHeader from '../components/docs-content-header';
+import DocsNextPrevButtons from "../components/docs-next-prev-buttons";
 
 
 const ContainerDiv = styled.div`
@@ -132,6 +133,7 @@ const DocsLayout = ({ mdxFields, mdxFrontMatter, mdxTOC, allMdx, children }) => 
              {children}
            </MDXRenderer>
          </MDXProvider>
+         <DocsNextPrevButtons currentId={mdxFields.id} nestedMdxEdges={nestedMdxEdges} />
        </MainContentContainer>
      </MainContainer>
      <SidebarRightContainer>

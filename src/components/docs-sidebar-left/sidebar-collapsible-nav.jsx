@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import styled from '@emotion/styled';
 import Link from '../link';
 import AnimateHeight from 'react-animate-height';
@@ -25,18 +25,6 @@ const ChildContainer = styled.div`
   flex-direction: column;
 `;
 
-const SidebarText = styled.div`
-  font-size: 16px;
-  padding-top: 4px;
-  padding-bottom: 4px;
-`;
-
-const SidebarHeaderText = styled(SidebarText)`
-  color: ${props => props.theme.primary};
-  font-weight: bold;
-  font-size: 18px;
-`;
-
 const SidebarIcon = styled.div`
   height: ${props => props.iconSmall ? '6px' : '12px'};
   width: ${props => props.iconSmall ? '6px' : '12px'};
@@ -52,7 +40,6 @@ const SidebarIcon = styled.div`
 
 const SidebarItemText = styled.div`
   padding-top: ${props => props.rootLevel ? "16px" : "4px"};
-  padding-bottom: 4px;
   text-decoration: none;
   font-size: 16px;
   font-weight: ${props => props.selected || props.rootLevel ? 'bold' : 'normal'};

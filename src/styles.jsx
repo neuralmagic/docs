@@ -10,6 +10,8 @@ const globalStyles = css`
 
   body {
     font-family: "Helvetica Neue", Helvetica, sans-serif;
+    color: rgb(40, 48, 61);
+    line-height: 150%;
   }
 
   a {

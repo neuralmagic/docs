@@ -2,18 +2,19 @@ import * as React from 'react';
 import styled from '@emotion/styled';
 
 import Link from "../components/link";
+import Button from "./button";
 
 const githubIconSrc = require('../images/github.svg').default;
 
 const LinkStyle = styled(Link)`
+  text-decoration: none;
+`;
+
+const ButtonStyle = styled(Button)`
   padding: 8px 0 8px 0;
   display: flex;
   justify-content: center;
   align-content: center;
-  border: 1px solid black;
-  border-radius: 4px;
-  text-decoration: none;
-  cursor: pointer;
 `;
 
 const GithubImg = styled.img`
@@ -30,8 +31,10 @@ const TextStyle = styled.div`
 const GithubLink = ({ link, text }) => {
   return (
     <LinkStyle to={link}>
-      <GithubImg src={githubIconSrc} alt={"github"} />
-      <TextStyle>{text}</TextStyle>
+      <ButtonStyle>
+        <GithubImg src={githubIconSrc} alt={"github"} />
+        <TextStyle>{text}</TextStyle>
+      </ButtonStyle>
     </LinkStyle>
   );
 };
