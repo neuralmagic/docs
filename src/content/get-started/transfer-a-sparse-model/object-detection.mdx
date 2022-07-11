@@ -1,0 +1,55 @@
+---
+title: "Object Detection"
+metaTitle: "Transfer a Sparse Object Detection Model"
+metaDescription: "Transfer a Sparse Object Detection Model to your dataset enabling performant deep learning deployments in a faster amount of time"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/transfer-a-sparse-model/object-detection.mdx"
+index: 2000
+---
+
+# Transfer a Sparse Object Detection Model
+
+The SparseZoo [contains models](https://sparsezoo.neuralmagic.com/?domain=cv&sub_domain=detection&page=1) pre-trained and sparsified on [COCO](https://cocodataset.org/) for transferring to datasets such as [VOC](http://host.robots.ox.ac.uk/pascal/VOC/).
+One of the common models used for this task is [YOLOv5](https://docs.ultralytics.com/) and the SparseZoo contains a more performant [pruned, quantized version](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95) along with the dense, FP32 baseline among others.
+By transferring from one of these models, you can performantly apply object detection to your datasets.
+The SparseZoo stubs for the YOLOv5 models listed can be found either on their SparseZoo model pages or below:
+- [Sparse-quantized YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95)
+  ```bash
+  zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+  ```
+- [Dense YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none)
+  ```bash
+  zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+  ```
+
+## Transfer
+
+To create the sparse YOLO model on your dataset, use the CLI tools for training object detection models that are [installed with the sparseml package](../../../install/sparseml).
+The below command pulls down the weights for a sparse, pre-trained YOLOv5l, finetunes it using the sparsification [recipe](../../../user-guide/recipes) onto the VOC dataset, and saves the results to a *yolov5/sparse_quantized_transfer* directory.
+
+```bash
+sparseml.yolov5.train \
+    --project yolov5l \
+    --name sparse_quantized_transfer \
+    --data VOC.yaml \
+    --cfg models_v5.0/yolov5l.yaml \
+    --weights zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95?recipe_type=transfer \
+    --hyp data/hyps/hyp.finetune.yaml \
+    --recipe recipes/yolov5.transfer_learn_pruned_quantized.md
+```
+
+## Deploy
+
+With the model successfully trained, it is now time export it and deploy it for inference.
+With the SparseML training commands, an [ONNX](https://onnx.ai/) export command is additionally installed.
+This export command is specifically designed to export the training graph for performance in runtimes like the [DeepSparse Engine](../../../products/deepsparse).
+Run the below command to export the trained model for a dynamic image size.
+
+```bash
+sparseml.yolov5.export_onnx \
+    --weights yolov5/sparse_quantized_transfer/weights/best.pt\
+    --dynamic
+```
+
+A *model.onnx* file is created in the *models/sparse_quantized_transfer/weights* folder that is used for deployment.
+See the [use a sparse model](../../use-a-sparse-model/object-detection) to plugin the exported model ONNX for the *model_path* argument in the DeepSparse pipelines.
+
