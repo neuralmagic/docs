@@ -1,0 +1,89 @@
+---
+title: "Object Detection"
+metaTitle: "Use a Sparse Object Detection Model"
+metaDescription: "Use a Sparse Object Detection Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/use-a-sparse-model/object-detection.mdx"
+index: 2000
+---
+
+# Use a Sparse Object Detection Model
+
+The SparseZoo [contains models](https://sparsezoo.neuralmagic.com/?page=1&domain=cv&sub_domain=detection) trained on the [COCO dataset](https://cocodataset.org/) for [object detection](https://en.wikipedia.org/wiki/Object_detection) use cases.
+One of the common models used for this task is [YOLOv5](https://docs.ultralytics.com/) and the SparseZoo contains a more performant pruned, quantized version along with the dense, FP32 baseline among others.
+By leveraging one of these models, you can performantly detect objects within images and videos.
+The SparseZoo stubs for the YOLOv5s models listed can be found either on their SparseZoo model pages or below:
+- [Sparse-quantized YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95)
+  ```bash
+  zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+  ```
+- [Dense DistilBERT](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none)
+  ```bash
+  zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+  ```
+
+## Inference
+
+To test out a model in an inference setting, use the sparse-quantized YOLOv5s's SparseZoo stub with a [DeepSparse Engine](../../products/deepsparse) **pipeline** [installed with the deepsparse package yolo version](../../install/deepsparse).
+To instantiate a pipeline for the desired model, the SparseZoo stub is passed in for the model_path argument.
+This will automatically download the model from the SparseZoo to your local machine and then compile it with the DeepSparse Engine.
+Once compiled, the model pipeline is ready for inference with any image.
+
+To use the pipeline, first run the following to download the sample image used in this example:
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, instantiate the pipeline and pass the image in using the images argument:
+
+```python
+from deepsparse import Pipeline
+
+yolo_pipeline = Pipeline.create(
+    task="yolo",
+    model_path="zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95"
+)
+inference = yolo_pipeline(images=['basilica'], iou_thres=0.6, conf_thres=0.001)
+print(inference)
+
+> predictions=[[[174.3507843017578, 478.4552917480469, 346.09051513671875, 618.4129638671875, ...
+```
+
+## Benchmarking
+
+The benefits from using a sparsified model in the DeepSparse Engine are most easily realized when running many inferences consecutively such as when [deploying](../../../use-cases/deploying-with-deepsparse) and when [benchmarking](../../../user-guide/benchmark).
+Benchmarking is quicker and easier to test, though, as it doesn't involve a full orchestration system.
+To measure the performance gains, we utilize the **deepsparse.benchmark** CLI [installed with the deepsparse package](../../install/deepsparse).
+
+The dense baseline achieves 5.3 items per second on a 4-core CPU server:
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 5.2836
+> Latency Mean (ms/batch): 378.2448
+> Latency Median (ms/batch): 378.1490
+> Latency Std (ms/batch): 2.5183
+> Iterations: 54
+```
+
+The sparse-quantized model, though, achieves 19.0 items per second on the same 4-core CPU server.
+A **3.6X increase** in performance:
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 18.9863
+> Latency Mean (ms/batch): 105.2613
+> Latency Median (ms/batch): 105.0656
+> Latency Std (ms/batch): 1.6043
+> Iterations: 190
+```
