@@ -11,7 +11,7 @@ const LinkStyle = styled(Link)`
 `;
 
 const ButtonStyle = styled(Button)`
-  padding: 8px 0 8px 0;
+  padding: ${props => props.small ? '4px' : '8px'};
   display: flex;
   justify-content: center;
   align-content: center;
@@ -21,6 +21,7 @@ const GithubImg = styled.img`
   height: 16px;
   width: 16px;
   margin-right: 8px;
+  align-self: center;
 `;
 
 const TextStyle = styled.div`
@@ -28,10 +29,10 @@ const TextStyle = styled.div`
   color: ${props => props.theme.textPrimary};
 `;
 
-const GithubLink = ({ link, text }) => {
+const GithubLink = ({ link, text, small }) => {
   return (
     <LinkStyle to={link}>
-      <ButtonStyle>
+      <ButtonStyle small={small}>
         <GithubImg src={githubIconSrc} alt={"github"} />
         <TextStyle>{text}</TextStyle>
       </ButtonStyle>

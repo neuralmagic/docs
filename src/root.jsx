@@ -3,6 +3,7 @@ import styled from '@emotion/styled';
 import { ThemeProvider, Global } from '@emotion/react';
 import Helmet from 'react-helmet';
 import { graphql } from 'gatsby';
+import { transitions, positions, Provider as AlertProvider } from 'react-alert'
 
 import lightTheme from './themes';
 import styles from './styles';
@@ -15,6 +16,31 @@ const RootDiv = styled.div`
   width: 100vw;
   height: 100vh;
 `;
+
+
+const AlertContainer = styled.div`
+  border-radius: 32px;
+  overflow: hidden;
+  background-color: ${props => props.theme.notificationBackground};
+  color: ${props => props.theme.notificationTextPrimary};
+  padding: 16px 32px 16px 32px;
+  font-size: 1em;
+`;
+
+
+const AlertTemplate = ({ style, options, message, close }) => (
+  <AlertContainer style={style}>
+    {message}
+  </AlertContainer>
+)
+
+
+const alertOptions = {
+  position: positions.BOTTOM_CENTER,
+  timeout: 3000,
+  offset: '24px',
+  transition: transitions.FADE,
+};
 
 
 const Root = ({ data, pageContext }) => {
@@ -36,14 +62,16 @@ const Root = ({ data, pageContext }) => {
        ) : null}
      </Helmet>
      <ThemeProvider theme={lightTheme}>
-       <Global styles={styles} />
-       <Header />
-       <DocsLayout mdxFields={data.mdx.fields}
-                   mdxFrontMatter={data.mdx.frontmatter}
-                   mdxTOC={data.mdx.tableOfContents}
-                   allMdx={data.allMdx}>
-         {data.mdx.body}
-       </DocsLayout>
+       <AlertProvider template={AlertTemplate} {...alertOptions}>
+         <Global styles={styles} />
+         <Header />
+         <DocsLayout mdxFields={data.mdx.fields}
+                     mdxFrontMatter={data.mdx.frontmatter}
+                     mdxTOC={data.mdx.tableOfContents}
+                     allMdx={data.allMdx}>
+           {data.mdx.body}
+         </DocsLayout>
+       </AlertProvider>
      </ThemeProvider>
    </RootDiv>
   );
@@ -92,6 +120,8 @@ export const pageQuery = graphql`
             index
             targetURL
             skipToChild
+            metaTitle
+            metaDescription
           }
         }
       }

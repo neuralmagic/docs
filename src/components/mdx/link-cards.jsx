@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { maxMediaQueries, minMediaQueries } from "../../styles";
 
 import Link from '../link';
 import Button from "../button";
@@ -19,6 +20,10 @@ const StyledLink = styled(Link)`
   margin-bottom: 16px;
   text-decoration: none;
   position: relative;
+
+  ${maxMediaQueries["sm"]} {
+    width: 100%;
+  }
 `;
 
 const StyledButton = styled(Button)`

@@ -15,7 +15,7 @@ const Container = styled.div`
 const ContentsContainer = styled.div`
   display: flex;
   flex-direction: column;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 `;
 
 const Header = styled.div`
@@ -46,6 +46,7 @@ const ButtonContainer = styled.div`
   width: 100%;
   display: flex;
   flex-direction: column;
+  margin-bottom: 32px;
 `;
 
 const Padding = styled.div`
@@ -75,11 +76,16 @@ const DocsSidebarRight = ({ currentSlug, mdxTOC, githubURL }) => {
           ))}
         </ContentsContainer>
       : ""}
+      {githubURL ?
+        <ButtonContainer>
+          <Header>ACTIONS</Header>
+          <HeaderDivider />
+          <GithubLink link={githubURL} text="Edit on GitHub" />
+        </ButtonContainer>
+      : ""}
       <ButtonContainer>
-        <Header>ACTIONS</Header>
+        <Header>SUPPORT</Header>
         <HeaderDivider />
-        {githubURL ? <GithubLink link={githubURL} text="Edit on GitHub" /> : ""}
-        <Padding />
         <SlackLink text="Ask on Slack" />
       </ButtonContainer>
     </Container>

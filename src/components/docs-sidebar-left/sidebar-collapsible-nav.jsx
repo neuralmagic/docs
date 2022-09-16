@@ -39,7 +39,6 @@ const SidebarIcon = styled.div`
 `;
 
 const SidebarItemText = styled.div`
-  padding-top: ${props => props.rootLevel ? "16px" : "4px"};
   text-decoration: none;
   font-size: 16px;
   font-weight: ${props => props.selected || props.rootLevel ? 'bold' : 'normal'};
@@ -54,6 +53,7 @@ const SidebarItemText = styled.div`
 `;
 
 const SidebarTextContainer = styled.div`
+  padding-top: ${props => props.rootLevel ? "16px" : "4px"};
   display: flex;
   align-items: center;
 `;
@@ -81,7 +81,7 @@ const SidebarLink = ( {title, link, rootLevel, selected, selectedPath, hasChildr
   }
 
   return (
-    <SidebarTextContainer to={link}>
+    <SidebarTextContainer to={link} rootLevel={rootLevel}>
       {Icon ? <SidebarIcon iconSmall={iconSmall} selected={selected} onClick={onClick}>
         <Icon css={{height: '100%', width: '100%'}} />
       </SidebarIcon> : ""}

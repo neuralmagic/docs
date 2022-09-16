@@ -1,16 +1,9 @@
 import * as React from 'react';
 import styled from '@emotion/styled';
 
-import CodeBlock from './code-block';
+import CodeBlock from '../code-block';
 import AnchorTag from './anchor';
 import {LinkCards, LinkCard} from "./link-cards";
-
-const StyledPre = styled('pre')`
-  padding: 16px;
-  background: #1F1E1E;
-  overflow: hidden;
-  border-radius: 4px;
-`;
 
 const appendString = (children) => {
   if (Array.isArray(children)) {
@@ -28,62 +21,77 @@ const appendString = (children) => {
   }
 };
 
+const headingId = (children) => {
+  return appendString(children).replace(/\s+/g, '-').toLowerCase()
+}
+
+const Table = styled.table`
+  border-collapse: collapse;
+`;
+
+const BorderedTh = styled.th`
+  border: solid 1px ${props => props.theme.divider};
+  margin: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+`;
+
+const BorderedTd = styled.td`
+  border: solid 1px ${props => props.theme.divider};
+  margin: 0;
+  padding-left: 8px;
+  padding-right: 8px;
+`;
+
 export default {
   LinkCards: LinkCards,
   LinkCard: LinkCard,
   h1: (props) => (
     <h1
       className="heading1"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   h2: (props) => (
     <h2
       className="heading2"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   h3: (props) => (
     <h3
       className="heading3"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   h4: (props) => (
     <h4
       className="heading4"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   h5: (props) => (
     <h5
       className="heading5"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   h6: (props) => (
     <h6
       className="heading6"
-      id={appendString(props.children).replace(/\s+/g, '').toLowerCase()}
+      id={headingId(props.children)}
       {...props}
     />
   ),
   p: (props) => <p className="paragraph" {...props} />,
-  pre: (props) => (
-    <StyledPre>
-      <pre {...props} />
-    </StyledPre>
-  ),
   code: CodeBlock,
   a: AnchorTag,
-  // TODO add `img`
-  // TODO add `blockquote`
-  // TODO add `ul`
-  // TODO add `li`
-  // TODO add `table`
+  td: BorderedTd,
+  th: BorderedTh,
+  table: Table,
 };

@@ -1,5 +1,6 @@
 import React from 'react';
 import styled from '@emotion/styled';
+import { maxMediaQueries, minMediaQueries } from "../../styles";
 
 import IconArrowBack from '../../images/icons/icon-arrow-back.svg';
 import IconArrowForward from '../../images/icons/icon-arrow-forward.svg';
@@ -13,12 +14,22 @@ const Container = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: end;
+
+  ${maxMediaQueries["sm"]} {
+    flex-direction: column;
+    align-items: center;
+  }
 `;
 
 const StyledLink = styled(Link)`
   align-content: space-between;
   text-decoration: none;
   color: ${props => props.theme.textPrimary};
+
+  ${maxMediaQueries["sm"]} {
+    width: 100%;
+    margin-bottom: 24px;
+  }
 `;
 
 const StyledButton = styled(Button)`
@@ -30,6 +41,12 @@ const StyledButton = styled(Button)`
   border: none;
   border-radius: 0;
   border-bottom: solid blue;
+  box-sizing: border-box;
+
+  ${maxMediaQueries["sm"]} {
+    width: 100%;
+    max-width: 100%;
+  }
 `;
 
 const StyledRightButton = styled(StyledButton)`
@@ -38,6 +55,10 @@ const StyledRightButton = styled(StyledButton)`
 
 const Spacer = styled.div`
   width: 8px;
+
+  ${maxMediaQueries["sm"]} {
+    flex: 1 0;
+  }
 `;
 
 const IconStyle = styled.div`
@@ -74,7 +95,6 @@ const getNextPrevMdxEdges = (currentId, flattenedEdges) => {
       cleanedEdges.push(edge);
     }
   });
-  console.log(cleanedEdges);
 
   let currentIndex = -1;
   let current = null;
@@ -115,8 +135,7 @@ const getNextPrevMdxEdges = (currentId, flattenedEdges) => {
 
 
 const DocsNextPrevButtons = ({currentId, nestedMdxEdges}) => {
-  const flattenedEdges = flattenMdxEdges(nestedMdxEdges, [])
-  console.log(flattenedEdges);
+  const flattenedEdges = flattenMdxEdges(nestedMdxEdges, []);
   const {prev, next} = getNextPrevMdxEdges(currentId, flattenedEdges);
   console.log(prev);
   console.log(next);
@@ -130,7 +149,7 @@ const DocsNextPrevButtons = ({currentId, nestedMdxEdges}) => {
               <IconArrowBack />
             </IconStyle>
             <Spacer />
-            <div>{prev.title}</div>
+            <div>{prev.metaTitle}</div>
           </StyledButton>
       </StyledLink>
       ) : ""}
@@ -138,7 +157,7 @@ const DocsNextPrevButtons = ({currentId, nestedMdxEdges}) => {
       {next ? (
         <StyledLink to={next.navLink}>
           <StyledRightButton>
-            <div>{next.title}</div>
+            <div>{next.metaTitle}</div>
             <Spacer />
             <IconStyle>
               <IconArrowForward />

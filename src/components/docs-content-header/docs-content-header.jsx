@@ -4,7 +4,16 @@ import styled from '@emotion/styled';
 import IconHome from '../../images/icons/icon-home.svg';
 import IconRight from '../../images/icons/icon-arrow-right.svg';
 
+import { maxMediaQueries, minMediaQueries } from "../../styles";
+import GithubLink from "../github-link";
+import SlackLink from "../slack-link";
+
 const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const NavContainer = styled.div`
   display: flex;
   align-items: center;
 `;
@@ -40,6 +49,21 @@ const LinkArrowContainer = styled.div`
 const LinkText = styled.div`
   font-size: 12px;
   color: ${props => props.theme.textPrimary};
+  line-height: 1.2em;
+`;
+
+const ButtonsContainer = styled.div`
+  display: flex;
+  margin-top: 16px;
+  justify-items: stretch;
+
+  ${minMediaQueries["xl"]} {
+    display: none;
+  }
+`;
+
+const Spacer = styled.div`
+  width: 8px;
 `;
 
 const getPagesRecursive = (currentId, nestedMdxEdges) => {
@@ -65,20 +89,30 @@ const getPagesRecursive = (currentId, nestedMdxEdges) => {
   return matches;
 }
 
-const DocsContentHeader = ({ currentId, nestedMdxEdges }) => {
+const DocsContentHeader = ({ currentId, nestedMdxEdges, githubURL }) => {
   const pages = getPagesRecursive(currentId, nestedMdxEdges);
 
   return (
     <Container>
-      <IconHomeStyle />
-      <LinkPathsContainer>
-        {pages.map((page) => (
-          <LinkArrowContainer key={page.id}>
-            <LinkText>{page.title}</LinkText>
-            {page.id !== currentId ? <IconRightStyle /> : ""}
-          </LinkArrowContainer>
-        ))}
-      </LinkPathsContainer>
+      <NavContainer>
+        <IconHomeStyle />
+        <LinkPathsContainer>
+          {pages.map((page) => (
+            <LinkArrowContainer key={page.id}>
+              <LinkText>{page.title}</LinkText>
+              {page.id !== currentId ? <IconRightStyle /> : ""}
+            </LinkArrowContainer>
+          ))}
+        </LinkPathsContainer>
+      </NavContainer>
+
+      <ButtonsContainer>
+        {githubURL ?
+          <GithubLink link={githubURL} text="Edit on GitHub" small={true} />
+          : ""}
+        {githubURL ? <Spacer /> : ""}
+        <SlackLink text="Ask on Slack" small={true} />
+      </ButtonsContainer>
     </Container>
   );
 }

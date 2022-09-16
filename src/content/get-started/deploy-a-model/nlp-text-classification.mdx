@@ -1,0 +1,90 @@
+---
+title: "NLP Text Classification"
+metaTitle: "Deploy a Text Classification Model"
+metaDescription: "Deploy a text classification model with DeepSparse Server for easier, faster, and cheaper inference on CPUs"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/deploy-a-model/nlp-sentiment-analysis.mdx"
+index: 1000
+---
+
+# Deploy a Text Classification Model
+
+The DeepSparse Server wraps pipelines, including the sentiment analysis pipeline.
+Therefore, the server supports raw text sequences as inputs and outputs the labeled predictions without extra effort.
+With all of this built on top of the DeepSparse Engine, the simplicity of servable pipelines is combined with GPU class performance on CPUs for sparse models.
+
+## Start the Server
+
+Before starting the server, the model must be set up in the format expected for DeepSparse Pipelines.
+The expectations for this are found in the [Test a Model](../../test-a-model) section.
+With that expectation set, the **deepsparse.server** command can be used with either a local model or a SparseZoo stub.
+
+The command below shows how to start up the DeepSparse Server for a sparsified DistilBERT model trained on the SST-2 dataset for sentiment analysis from the SparseZoo.
+The output confirms the server was started on port `:5543` with a `/docs` route for general info and a `/predict` route for inference.
+
+```bash
+$ deepsparse.server \
+    --task "sentiment-analysis" \
+    --model_path "zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni"
+
+> deepsparse.server.main INFO     created FastAPI app for inference serving
+> deepsparse.server.main INFO     created general routes, visit `/docs` to view available
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.1.0 COMMUNITY EDITION (a436ca67) (release) (optimized) (system=avx512_vnni, binary=avx512)
+> deepsparse.server.main INFO     created route /predict
+> INFO:deepsparse.server.main:created route /predict
+> INFO:uvicorn.error:Started server process [23146]
+> INFO:uvicorn.error:Waiting for application startup.
+> INFO:uvicorn.error:Application startup complete.
+> INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:5543 (Press CTRL+C to quit)
+```
+
+## View the Request Specs
+
+As noted in the startup command, a **/docs route** was created; it contains OpenAPI specs and definitions for the expected inputs and responses.
+Visiting the `http://localhost:5543/docs` in a browser shows the available routes on the server.
+For the /predict route specifically, it shows the following as the expected input schema:
+
+```text
+TextClassificationInput{
+    description: Schema for inputs to text_classification pipelines
+    sequences* Sequences{
+        description: A string or List of strings representing input totext_classification task
+        anyOf ->
+            [[string]]
+            [string]
+            string
+    }
+}
+```
+
+Utilizing the request spec, a valid input for the sentiment analysis would be:
+```json
+{
+  "sequences": [
+    "Snorlax loves my Tesla!"
+  ]
+}
+```
+
+## Make a Request
+
+With the expected input payload and method type defined, any HTTP request package can be used to make the request.
+For simplicity and generality, the curl command is used.
+The command below shows how to request the same instance the server was started.
+Specifically, it makes a POST method request to the /predict pathway on localhost:5543 with the JSON payload created above.
+The predicted outputs from the model are then printed in the terminal.
+
+```bash
+$ curl 'http://localhost:5543/predict' \
+    -XPOST \
+    -H 'Content-type: application/json' \
+    -d '{"sequences": ["Snorlax loves my Tesla!"]}'
+
+> {"labels":["positive"],"scores":[0.992590069770813]}
+```
+
+After that request completes, the server will also log the request as the following:
+
+```bash
+> INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:5543 (Press CTRL+C to quit)
+> INFO:     127.0.0.1:50588 - "POST /predict HTTP/1.1" 200 OK
+```
