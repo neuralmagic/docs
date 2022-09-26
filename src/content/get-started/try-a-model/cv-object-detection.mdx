@@ -1,0 +1,130 @@
+---
+title: "CV Object Detection"
+metaTitle: "Try an Object Detection Model"
+metaDescription: "Try an Object Detection Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/test-a-model/cv-object-detection.mdx"
+index: 2000
+---
+
+# Try an Object Detection Model
+
+This page explains how to run a trained model on the DeepSparse Engine for Object Detection inside a Python API called `Pipelines.`
+
+`Pipelines` wrap key utilities around the DeepSparse Engine for easy testing and deployment.
+
+The object detection `Pipeline`, for example, wraps a trained model with the proper preprocessing and postprocessing pipelines such as NMS.
+This enables the passing of raw images and receiving the bounding boxes from the DeepSparse Engine without any extra effort. 
+With all of this built on top of the DeepSparse Engine, the simplicity of `Pipelines` is combined with GPU class performance on CPUs for sparse models.
+
+## Model Setup
+
+The object detection `Pipeline` uses Ultralytics YOLOv5 standards and configurations for model setup.
+The possible files/variables that can be passed in are the following:
+- `model.onnx` - The exported YOLOv5 model in the ONNX format.
+- `model.yaml` - The Ultralytics model config file containing configuration information about the model and its post-processing.
+- `class_names` - A list, dictionary, or file containing the index to class name mappings for the trained model.
+
+`model.onnx` is the only required file.
+The pipeline will default to a standard setup for the COCO dataset if the model config file or class names are not provided.
+
+There are two options for passing these files to DeepSparse:
+
+#### 1) Using The SparseZoo
+
+SparseZoo is a repository of pre-trained and pre-sparsified models. DeepSparse supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+These models include dense and sparsified versions of YOLOv5 trained on the COCO dataset for performant and general detection, among others.
+The SparseZoo stubs can be found on SparseZoo model pages, and YOLOv5l examples are provided below:
+- [Sparse-quantized YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95)
+```bash
+zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+  ```
+- [Dense YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none)
+```bash
+zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+  ```
+
+These SparseZoo stubs can be passed as arguments to the `Pipeline` constructor in the examples below.
+
+#### 2) Using a Custom Local Model
+
+# MARK: CLARIFY STEPS HERE
+
+There are three steps to using a local model with `Pipelines`:
+1. Create the `model.onnx` file (if you used sparseml to train, the [SparseML ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/ultralytics-yolov5#exporting-the-sparse-model-to-onnx) creates the `model.onnx` file).
+2. Collect the config file and class names listed above.
+3. Pass the local paths of the files in place of the SparseZoo stubs utilized throughout this document.
+
+## Inference Pipelines
+
+With the object detection model setup, it can then be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
+The SparseZoo stub for the sparse-quantized YOLOv5l model given at the beginning is used in the sample code below.
+It will automatically download the necessary files for the model from the SparseZoo and then compile them on your local machine in the DeepSparse engine.
+Once compiled, the model `Pipeline` is ready for inference with images.
+
+First, a sample image is downloaded that will be run through the example to test the pipeline.
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, instantiate the `Pipeline` and pass the image in using the images argument:
+
+# MARK: DEMONSTRATE HOW TO PASS CUSTOM MODEL IN ADDITION TO ZOO STUB
+
+```python
+from deepsparse import Pipeline
+
+yolo_pipeline = Pipeline.create(
+    task="yolo",
+    model_path="zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95", # if using custom model, pass in local path to model.onnx
+    class_names=None,   # if using custom model, pass in a list of classes the model will clasify or a path to a json file containing them
+    model_config=None,  # if using custom model, pass in the path to a local model config file here
+)
+inference = yolo_pipeline(images=['basilica'], iou_thres=0.6, conf_thres=0.001)
+print(inference)
+
+> predictions=[[[174.3507843017578, 478.4552917480469, 346.09051513671875, 618.4129638671875, ...
+```
+
+## Benchmarking
+
+The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: `deepsparse.benchmark`.
+The CLI takes both SparseZoo stubs and paths to a local `model.onnx` file.
+
+### Dense YOLOv5l
+
+The code below provides an example for benchmarking a dense YOLOv5l model in the DeepSparse Engine.
+The output shows that the model achieved 5.3 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 5.2836
+> Latency Mean (ms/batch): 378.2448
+> Latency Median (ms/batch): 378.1490
+> Latency Std (ms/batch): 2.5183
+> Iterations: 54
+```
+
+### Sparsified YOLOv5l
+
+Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of YOLOv5l.
+It achieved 19.0 items per second, a **3.6X** increase in performance over the dense baseline.
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 18.9863
+> Latency Mean (ms/batch): 105.2613
+> Latency Median (ms/batch): 105.0656
+> Latency Std (ms/batch): 1.6043
+> Iterations: 190
+```

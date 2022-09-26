@@ -1,0 +1,146 @@
+---
+title: "NLP Text Classification"
+metaTitle: "Try a Text Classification Model"
+metaDescription: "Try a NLP Text Classification Model with the DeepSparse Engine for faster and cheaper inference on CPUs"
+githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/test-a-model/nlp-sentiment-analysis.mdx"
+index: 1000
+---
+
+# Try a Text Classification Model
+
+This page explains how to run a trained model with the DeepSparse Engine for NLP inside a Python API called `Pipelines.`
+
+`Pipelines` wrap key utilities around the DeepSparse Engine for easy testing and deployment.
+
+The text classification `Pipeline`, for example, wraps an NLP model with the proper preprocessing and postprocessing pipelines, such as tokenization.
+This enables passing in raw text sequences and receiving the labeled predictions from the DeepSparse Engine without any extra effort.
+With all of this built on top of the DeepSparse Engine, the simplicity of `Pipelines` is combined with GPU class performance on CPUs for sparse models.
+
+## Model Setup
+
+The first step is collecting the necessary configuration files. The text classification `Pipeline` is integrated with HuggingFace, and Therefore
+uses HuggingFace Transformer's standards and configurations for model setup. The following files are required:
+- `model.onnx` - The exported Transformers model in the ONNX format.
+- `tokenizer.json` - The HuggingFace compatible tokenizer used with the model.
+- `tokenizer_config.json` - The HuggingFace compatible tokenizer configuration used with the model.
+- `config.json` - The HuggingFace compatible configuration file used with the model.
+
+There are two options for passing these files to DeepSparse:
+
+#### 1) Using the SparseZoo
+SparseZoo contains several pre-sparsified Transformer models, including the config files listed above. DeepSparse is integrated
+with SparseZoo, and supports supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+
+The SparseZoo stubs can be found on SparseZoo model pages, and DistilBERT examples are provided below:
+- [Sparse-quantized DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fpruned80_quant-none-vnni)
+```bash
+zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+  ```
+- [Dense DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fbase-none)
+```bash
+zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+  ```
+
+These SparseZoo stubs are passed arguments to the `Pipeline` constructor in the examples below.
+
+#### 2) Using a Local Model
+
+Alternatively, you can use a custom or fine-tuned model from your local drive.
+There are three steps to using a local model with `Pipelines`:
+
+# MARK: CLARIFY STEPS HERE
+
+1. Create the `model.onnx` file (if you uses SparseML to train, the [ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx) creates the `model.onnx` file).
+2. Collect the configuration files listed above. These are generally stored with the resulting model files from HuggingFace training pipelines.
+3. Place the files into a directory and pass the local path to `model_path` in place of the SparseZoo stubs utilized below.
+
+## Inference Pipelines
+
+With the text classification model setup, it can then be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
+The SparseZoo stub for the sparse-quantized DistilBERT model given at the beginning is used in the sample code below.
+The `Pipeline` automatically downloads the necessary files for the model from the SparseZoo and compiles them on your local machine in the DeepSparse engine.
+Once compiled, the model `Pipeline` is ready for inference with text sequences.
+
+# MARK: DEMONSTRATE HOW TO PASS CUSTOM MODEL IN ADDITION TO ZOO STUB
+
+```python
+from deepsparse import Pipeline
+
+classification_pipeline = Pipeline.create(
+    task="text-classification",
+    model_path="zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni",
+)
+inference = classification_pipeline(
+    [[
+        "Fun for adults and children.",
+        "Fun for only children.",
+    ]]
+)
+print(inference)
+
+> labels=['contradiction'] scores=[0.9983579516410828]
+```
+
+Because DistilBERT is a language model trained on the MNLI dataset, it can additionally be used to perform zero-shot text classification for any text sequences.
+The code below gives an example of a zero-shot text classification pipeline.
+
+```python
+from deepsparse import Pipeline
+
+zero_shot_pipeline = Pipeline.create(
+    task="zero_shot_text_classification",
+    model_path="zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni",
+    model_scheme="mnli",
+    model_config={"hypothesis_template": "This text is related to {}"},
+)
+inference = zero_shot_pipeline(
+    sequences='Who are you voting for in 2020?',
+    labels=['politics', 'public health', 'Europe'],
+)
+print(inference)
+
+> sequences='Who are you voting for in 2020?' labels=['politics', 'Europe', 'public health'] scores=[0.9345628619194031, 0.039115309715270996, 0.026321841403841972]
+```
+
+## Benchmarking
+
+The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: `deepsparse.benchmark`.
+The CLI takes in both SparseZoo stubs and paths to a local `model.onnx` file.
+
+### Dense DistilBERT
+
+The code below provides an example for benchmarking a dense DistilBERT model in the DeepSparse Engine.
+The output shows that the model achieved 32.6 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 32.2806
+> Latency Mean (ms/batch): 61.9034
+> Latency Median (ms/batch): 61.7760
+> Latency Std (ms/batch): 0.4792
+> Iterations: 324
+```
+
+### Sparsified DistilBERT
+
+Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of DistilBERT.
+It achieved 221.0 items per second, a **6.8X increase** in performance over the dense baseline.
+
+```bash
+$ deepsparse.benchmark zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 220.9794
+> Latency Mean (ms/batch): 9.0147
+> Latency Median (ms/batch): 9.0085
+> Latency Std (ms/batch): 0.1037
+> Iterations: 2210
+```
