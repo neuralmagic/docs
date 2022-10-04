@@ -8,29 +8,36 @@ index: 2000
 
 # Creating a Custom Integration for Sparsifying Models
 
-In addition to supported integrations, SparseML is set up as a framework to enable easy inclusion into custom pipelines to create a custom integration.
-This flexibility enables easy sparsification for any neural network architecture for custom models and use cases.
-Once SparseML is installed, the necessary code is importable through Python and can be plugged into most pipelines with only a few lines of code and recipes.
+In this page, we will explain how to apply a recipe to a custom model. For more details on the concepts of pruning/quantization 
+as well as how to create recipes, see the [prior page](/get-started/transfer-a-sparsified-model).
+
+In addition to supported integrations describes on the prior page, SparseML is set to enable easy integration in custom training pipelines. 
+This flexibility enables easy sparsification for any neural network architecture for custom models and use cases. Once SparseML is installed, 
+the necessary code can be plugged into most PyTorch/Keras training pipelines with only a few lines of code.
 
 ## Integrate SparseML
 
 To enable sparsification of models with recipes, a few edits to the training pipeline code need to be made.
-Specifically, a ScheduledModifierManager instance is used to take over and inject the desired sparsification algorithms into the training process.
-To do this properly in PyTorch, the ScheduledModifierManager requires the instance of the model to modify, the optimizer used for training, and the number of steps per epoch to ensure algorithms are applied at the right time.
+Specifically, a `ScheduledModifierManager` instance is used to take over and inject the desired sparsification algorithms into the training process.
+To do this properly in PyTorch, the `ScheduledModifierManager` requires the instance of the `model` to modify, the `optimizer` used for training, 
+and the number of `steps_per_epoch` to ensure algorithms are applied at the right time.
 
 For the integration, the following code illustrates all that is needed:
 ```Python
 from sparseml.pytorch.optim import ScheduledModifierManager
 manager = ScheduledModifierManager.from_yaml(recipe_path)
 optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# your typical training loop, using model/optimizer as usual
+
 manager.finalize(model)
 ```
 Walking through this code:
-1. The ScheduledModifierManager is imported from the SparseML Python package.
-2. An instance of the ScheduledModifierManager is created from a recipe stored as a local file or on the SparseZoo.
-3. The optimizer and model are modified by ScheduledModifierManager so that the recipe will be applied while training.
+1. The `ScheduledModifierManager` is imported from the SparseML Python package.
+2. An instance of the `ScheduledModifierManager` is created from a recipe stored as a local file or on the SparseZoo.
+3. The optimizer and model are modified by `ScheduledModifierManager` so that the recipe will be applied while training.
 A wrapped instance of the training optimizer is returned.
-4. After training has been completed, a finalize call is invoked on the ScheduledModifierManager to release all resources.
+4. After training has been completed, a finalize call is invoked on the `ScheduledModifierManager` to release all resources.
 
 A simple training example utilizing PyTorch and Torchvision with this SparseML integration is provided below:
 ```Python
@@ -90,7 +97,7 @@ manager.finalize(model)
 ## Create a Recipe
 
 The recipe used in the supported integrations page will also work for custom integrations.
-To dive into the details of this recipe and how to edit it, visit that doc.
+To dive into the details of this recipe and how to edit it, visit [the prior page](/get-started/supported-integrations).
 The resulting recipe is included here for easy integration and testing.
 
 ```yaml
