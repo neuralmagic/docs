@@ -52,12 +52,20 @@ sparseml.transformers.text_classification \
   --recipe zoo:nlp/text_classification/bert-base/pytorch/huggingface/mnli/12layer_pruned90-none
 ```
 
-The most important arguments are `model_name_or_path`, `task_name`, and `recipe`:
-- `--model_name_or_path` indicates which model to start the pruning process from. It can be a model name, SparseZoo stub, or a path to a local model.
-- `--recipe` argument instructs SparseML to run the sparsification process during the training loop. It can either be the stub of a recipe in the SparseZoo or a path to a local custom recipe. For more on creating a recipe see [here](/user-guide/recipes/creating).
-- `--task_name` indicates that we should fine tune on the MNLI dataset.
+The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts), and 
+usage for most arguments follows the HuggingFace. The most important arguments for SparseML are:
+- `model_name_or_path`: specifies starting model. It can be a SparseZoo stub, HF model identifier, or a local directory 
+with `model.pt`, `tokenizer.json` and `config.json`
+- `recipe`: recipe containing the training hyperparamters (SparseZoo stub or a local file)
+- `task_name`: specifies the sentiment analysis task for the MNLI dataset
 
-# MARK: EXPLAIN HOW TO PASS CUSTOM DATASET OR MODEL
+To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`. 
+See the [HF Docs](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
+
+Run the following to see the full list of options:
+```bash
+$ sparseml.transformers.text_classification -h
+```
 
 ### Sparse Transfer Learning
 
@@ -76,17 +84,18 @@ sparseml.transformers.text_classification \
     --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/12layer_pruned80_quant-none-vnni?recipe_type=transfer-text_classification
 ```
 
-The most important arguments are `model_name_or_path`, `task_name`, and `recipe`:
-- `--model_name_or_path` indicates which model to start the pruning process from. It can be a model name, SparseZoo stub, or a path to a local model.
-- `--recipe` argument instructs SparseML to run the sparsification process during the training loop. It can either be the stub of a recipe in the SparseZoo or a path to a local custom recipe. For more on creating a recipe see [here](/user-guide/recipes/creating).
-- `--task_name` indicates that we should fine tune on the SST2 dataset.
+This usage of the script is the same as the above.
 
-# MARK: EXPLAIN HOW TO PASS CUSTOM DATASET OR MODEL
+
+In this example, however, the starting model is a pruned-quantized version of BERT from SparseZoo (rather than a dense BERT)
+and the recipe is a transfer learning recipe, which instructs Transformers to maintain sparsity (rather than a sparsification recipe
+that sparsifies the model from scratch). 
+
+Additionally, this example uses the SST2 task (which uses the SST2 dataset).
 
 #### Knowledge Distillation
 By modifying the `distill_teacher` argument, you can enable [Knowledge Distillation](https://neptune.ai/blog/knowledge-distillation) (KD) functionality.
 KD provides additional support to the sparsification process, enabling higher accuracy at higher levels of sparsity.
-
 
 For example, the `--distill_teacher` argument can be set to pull a dense SST2 model from the SparseZoo to support the training process:
 ```bash
@@ -132,7 +141,7 @@ output:
 ...
 ```
 
-To learn about the Hugging Face Transformers parameters in more detail, refer to [Hugging Face Transformers documentation](https://huggingface.co/docs/transformers/main_classes/trainer#transformers.TrainingArguments).
+To learn about the Hugging Face Transformers run-scripts in more detail, refer to [Hugging Face Transformers documentation](https://huggingface.co/docs/transformers/run_scripts).
 
 ## Deploying with DeepSparse
 

@@ -37,31 +37,45 @@ To deploy a Transformer using DeepSparse Engine, pass the model in the ONNX form
 This grants the engine the flexibility to serve any model in a framework-agnostic environment.
 
 The DeepSparse `Pipelines` require the following files within a folder on the local server to properly load a Transformers model:
-- `model.onnx`: The exported Transformers model in the [ONNX format](https://github.com/onnx/onnx).
-- `tokenizer.json`: The [HuggingFace compatible tokenizer configuration](https://huggingface.co/docs/transformers/fast_tokenizers) used with the model.
-- `config.json`: The [HuggingFace compatible configuration file](https://huggingface.co/docs/transformers/main_classes/configuration) used with the model.
+- `model.onnx` - The exported Transformers model in the ONNX format
+- `tokenizer.json` - The [HuggingFace tokenizer file](https://huggingface.co/docs/transformers/fast_tokenizers)
+- `config.json` - The [HuggingFace configuration file](https://huggingface.co/docs/transformers/main_classes/configuration)
 
-Below we describe two possibilities to obtain the required structure.
+There are two options to collecting these files:
 
-#### Exporting the ONNX File From the Contents of a Local Directory
-This pathway is relevant if you intend to deploy a model created using [SparseML](https://github.com/neuralmagic/sparseml) library.
+
+<details>
+
+<summary><b>1) Export the ONNX/Config Files From SparseML</b></summary>
+
+This pathway is relevant if you intend to deploy a model created using SparseML.
 
 After training your model with SparseML, locate the `.pt` file for the model you'd like to export and run the SparseML integrated Transformers ONNX export script below.
+For example, if you wanted to export a model you had trained to do question answering, use the below:
 
 ```bash
 sparseml.transformers.export_onnx --task question-answering --model_path model_path
 ```
 
-This creates `model.onnx` file and exports it to **XXXXXXX** (e.g. `/trained_model/model.onnx`). `tokenizer.json` and `config.json` are also stored in this directory.
-All of the examples below use SparseZoo stubs, but you can pass **XXXXXXX** to use the local custom model.
+This creates `model.onnx` file and exports it to the local filesystem. `tokenizer.json` and `config.json` are also stored in this directory.
+All of the examples below use SparseZoo stubs, but you can pass the path to the local directory in its place.
 
-# MARK: CONFIRM ABOVE IS TRUE AND FILL IN XXXXX
+</details>
 
-####  Using the ONNX File in the SparseZoo Stub
+
+<details>
+
+<summary><b>2) Pass a SparseZoo Stub To DeepSparse</b></summary>
 
 This pathway is relevant if you plan to use an off-the-shelf model from the SparseZoo. 
 
-All of DeepSparse's pipelines and APIs can use a SparseZoo stub in place of a local folder. The Deployment APIs examples use SparseZoo stubs to highlight this pathway.
+All of DeepSparse's `Pipelines` and APIs can use a SparseZoo stub in place of a local folder. 
+The `Pipelines` use the stubs to locate and download the ONNX and config files from the SparseZoo repo.
+
+</details>
+
+The examples below use option 2. However, you can pass the local path to the directory containing the config files in place 
+of the SparseZoo stub.
 
 ## Deployment APIs
 
@@ -106,7 +120,7 @@ The following section includes example usage of the Pipeline and server APIs for
 ### Question Answering
 The question answering tasks accepts a `question` and a `context`. The pipeline will predict an answer
 for the `question` as a substring of the `context`.  The following examples use a pruned and quantized
-question answering BERT model trained on the `SQuAD` dataset downloaded by default from the SparseZoo.
+question answering BERT model trained on the SQuAD dataset downloaded by default from the SparseZoo.
 
 #### Python Pipeline
 

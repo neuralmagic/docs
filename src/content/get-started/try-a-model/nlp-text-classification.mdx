@@ -18,18 +18,24 @@ With all of this built on top of the DeepSparse Engine, the simplicity of `Pipel
 
 ## Model Setup
 
-The first step is collecting the necessary configuration files. The text classification `Pipeline` is integrated with HuggingFace, and Therefore
-uses HuggingFace Transformer's standards and configurations for model setup. The following files are required:
+The first step is collecting an ONNX representaiton of the model and required configuration files. 
+The text classification `Pipeline` is integrated with HuggingFace and uses HuggingFace's standards 
+and configurations for model setup. The following files are required:
 - `model.onnx` - The exported Transformers model in the ONNX format.
-- `tokenizer.json` - The HuggingFace compatible tokenizer used with the model.
-- `tokenizer_config.json` - The HuggingFace compatible tokenizer configuration used with the model.
-- `config.json` - The HuggingFace compatible configuration file used with the model.
+- `tokenizer.json` - The HuggingFace tokenizer used with the model.
+- `tokenizer_config.json` - The HuggingFace tokenizer configuration used with the model.
+- `config.json` - The HuggingFace configuration file used with the model.
+
+For an example of the config files, checkout [BERT's model page on HuggingFace](https://huggingface.co/bert-base-uncased/tree/main).
 
 There are two options for passing these files to DeepSparse:
 
-#### 1) Using the SparseZoo
+<details>
+
+<summary><b>1) Using SparseZoo Stubs (Reccomended Starting Point)</b></summary>
+
 SparseZoo contains several pre-sparsified Transformer models, including the config files listed above. DeepSparse is integrated
-with SparseZoo, and supports supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+with SparseZoo, and supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
 
 The SparseZoo stubs can be found on SparseZoo model pages, and DistilBERT examples are provided below:
 - [Sparse-quantized DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fpruned80_quant-none-vnni)
@@ -43,16 +49,24 @@ zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
 
 These SparseZoo stubs are passed arguments to the `Pipeline` constructor in the examples below.
 
-#### 2) Using a Local Model
+</details>
+
+
+<details>
+
+<summary><b>2) Using a Local Model</b></summary>
 
 Alternatively, you can use a custom or fine-tuned model from your local drive.
+
 There are three steps to using a local model with `Pipelines`:
 
-# MARK: CLARIFY STEPS HERE
+1. Export model to `model.onnx` (if you trained with SparseML, use [ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx))
+2. Collect the configuration files listed above. These are generally stored with the resulting model files from HuggingFace training pipelines (as is the case with SparseML)
+3. Place the files into a directory
 
-1. Create the `model.onnx` file (if you uses SparseML to train, the [ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx) creates the `model.onnx` file).
-2. Collect the configuration files listed above. These are generally stored with the resulting model files from HuggingFace training pipelines.
-3. Place the files into a directory and pass the local path to `model_path` in place of the SparseZoo stubs utilized below.
+Pass the path the local directory in the `--model_path` in place of the SparseZoo stubs in the examples below.
+
+</details>
 
 ## Inference Pipelines
 
@@ -60,8 +74,6 @@ With the text classification model setup, it can then be passed into a DeepSpars
 The SparseZoo stub for the sparse-quantized DistilBERT model given at the beginning is used in the sample code below.
 The `Pipeline` automatically downloads the necessary files for the model from the SparseZoo and compiles them on your local machine in the DeepSparse engine.
 Once compiled, the model `Pipeline` is ready for inference with text sequences.
-
-# MARK: DEMONSTRATE HOW TO PASS CUSTOM MODEL IN ADDITION TO ZOO STUB
 
 ```python
 from deepsparse import Pipeline
@@ -105,7 +117,7 @@ print(inference)
 ## Benchmarking
 
 The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: `deepsparse.benchmark`.
-The CLI takes in both SparseZoo stubs and paths to a local `model.onnx` file.
+The CLI takes in either a SparseZoo stub or a path to a local `model.onnx` file.
 
 ### Dense DistilBERT
 

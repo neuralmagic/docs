@@ -29,11 +29,15 @@ pip install deepsparse
 To deploy an image classification model using DeepSparse Engine, pass the model in the ONNX format.
 This grants the engine the flexibility to serve any model in a framework-agnostic environment.
 
-Below we describe two possibilities to obtain the required ONNX model.
+There are two options to creating the model in ONNX format:
 
-#### Exporting the ONNX File From the Contents of a Local Directory
+<details>
+
+<summary><b>1) Export the ONNX/Config Files From SparseML</b></summary>
+
 This pathway is relevant if you intend to deploy a model created using SparseML library.
-After training your model with `SparseML`, locate the `.pth` file for the checkpoint you'd like to export and run the `SparseML` integrated export script below.
+
+After training your model with SparseML, locate the `.pth` file for the checkpoint you'd like to export and run the `SparseML` integrated export script below.
 
 ```bash
 sparseml.image_classification.export_onnx \
@@ -46,33 +50,23 @@ This creates `model.onnx` file.
 
 The examples below use SparseZoo stubs, but simply pass the path to `model.onnx` in place of the stubs to use the local model.
 
-# MARK: CONFIRM ABOVE IS TRUE
-# MARK: WHY DO WE HAVE TO PASS DATASET?
-# MARK: WHAT DO YOU DO IF YOU HAVE CUSTOM CLASSES (i.e. it is all faces)?
+</details>
 
-#### Using the ONNX File in the SparseZoo Stub
+<details>
 
-This pathway is relevant if you plan to use an off-the-shelf model from the SparseZoo.
-Simply download the model from the SparseZoo using the relevant stub.
+<summary><b>2) Pass a SparseZoo Stub To DeepSparse</b></summary>
 
-Example:
-```python
-from sparsezoo import Model
+This pathway is relevant if you plan to use an off-the-shelf model from the SparseZoo. 
 
-# you can lookup an appropriate model stub here: https://sparsezoo.neuralmagic.com/
-model_stub = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none"
-model = Model(model_stub)
+All of DeepSparse's `Pipelines` and APIs can use a SparseZoo stub in place of a local folder. 
+The `Pipelines` use the stubs to locate and download the ONNX and config files from the SparseZoo repo.
 
-# directly download the model data to your local directory
-model_path = model.path
+All of DeepSparse's pipelines and APIs can use a SparseZoo stub in place of a local folder. 
+The examples use SparseZoo stubs to highlight this pathway.
 
-# the onnx model file is there, ready for deployment
-import os
-os.path.isfile(model.onnx_model.path)
->>>True
-```
+</details>
 
-All of DeepSparse's pipelines and APIs can use a SparseZoo stub in place of a local folder. The Deployment APIs examples use SparseZoo stubs to highlight this pathway.
+The examples below use option 2. However, you can pass the local path to the ONNX file as needed.
 
 ## Deployment APIs
 
@@ -87,7 +81,7 @@ for configurations and support a variety of Image Classification models.
 DeepSparse Engine.
 
 Once a model is obtained, either through SparseML training or directly from SparseZoo,
-`deepsparse.Pipeline` can be used to easily facilitate end to end inference and deployment
+a `Pipeline` can be used to easily facilitate end to end inference and deployment
 of the sparsified image classification model.
 
 If no model is specified to the `Pipeline` for a given task, the `Pipeline` will automatically
@@ -102,7 +96,7 @@ serve ONNX models and pipelines in HTTP. Configuring the server uses the same pa
 enabling simple deployment. Once launched, a `/docs` endpoint is created with full
 endpoint descriptions and support for making sample requests.
 
-Example deployment using a 95% pruned ResNet50 is given below.
+An example deployment using a 95% pruned ResNet50 is given below.
 
 For full documentation on deploying sparse image classification models with the
 DeepSparse Server, see the [documentation for DeepSparse Server](https://github.com/neuralmagic/deepsparse/tree/main/src/deepsparse/server).
@@ -122,13 +116,15 @@ but a local path to an ONNX file can also be passed as the `model_path`.
 
 ### Python API
 
-Create a `Pipeline` and run inference with the following.
+Create a `Pipeline` to run inference with the following code. The `Pipeline` handles the pre-processing (e.g. subtracting by ImageNet 
+means, dividing by ImageNet standard deviation) and post-processing so you can pass an raw image and recieve an class without any extra code.
 
 ```python
 from deepsparse import Pipeline
 cv_pipeline = Pipeline.create(
   task='image_classification',
   model_path='zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none',  # Path to checkpoint or SparseZoo stub
+  class_names=None # optional dict / json mapping class ids to labels (if not using ImageNet classes)
 )
 input_image = "my_image.png" # path to input image
 inference = cv_pipeline(images=input_image)
