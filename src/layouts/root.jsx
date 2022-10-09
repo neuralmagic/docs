@@ -5,11 +5,10 @@ import Helmet from 'react-helmet';
 import { graphql } from 'gatsby';
 import { transitions, positions, Provider as AlertProvider } from 'react-alert'
 
-import lightTheme from './themes';
-import styles from './styles';
+import lightTheme from '../themes';
+import styles from '../styles';
 
-import { DocsLayout } from './layouts';
-import Header from './components/header';
+import Header from '../components/header';
 
 
 const RootDiv = styled.div`
@@ -47,34 +46,35 @@ const Root = ({ data, pageContext }) => {
   const isDocsPage = data && data.mdx;
   const metaTitle = data && data.mdx ? data.mdx.frontmatter.metaTitle : null;
   const metaDescription = data && data.mdx ? data.mdx.frontmatter.metaDescription : null;
+  console.log(pageContext);
 
   return (
-   <RootDiv>
-     <Helmet>
-       {metaTitle ? <title>{metaTitle}</title> : null}
-       {metaTitle ? <meta name="title" content={metaTitle} /> : null}
-       {metaDescription ? <meta name="description" content={metaDescription} /> : null}
-       {metaTitle ? <meta property="og:title" content={metaTitle} /> : null}
-       {metaDescription ? <meta property="og:description" content={metaDescription} /> : null}
-       {metaTitle ? <meta property="twitter:title" content={metaTitle} /> : null}
-       {metaDescription ? (
-         <meta property="twitter:description" content={metaDescription} />
-       ) : null}
-     </Helmet>
-     <ThemeProvider theme={lightTheme}>
-       <AlertProvider template={AlertTemplate} {...alertOptions}>
-         <Global styles={styles} />
-         <Header />
-         {isDocsPage ?
-           <DocsLayout mdxFields={data.mdx.fields}
-                     mdxFrontMatter={data.mdx.frontmatter}
-                     mdxTOC={data.mdx.tableOfContents}
-                     allMdx={data.allMdx}>
-            {data.mdx.body}
-           </DocsLayout>: ""}
-       </AlertProvider>
-     </ThemeProvider>
-   </RootDiv>
+    <RootDiv>
+      <Helmet>
+        {metaTitle ? <title>{metaTitle}</title> : null}
+        {metaTitle ? <meta name="title" content={metaTitle} /> : null}
+        {metaDescription ? <meta name="description" content={metaDescription} /> : null}
+        {metaTitle ? <meta property="og:title" content={metaTitle} /> : null}
+        {metaDescription ? <meta property="og:description" content={metaDescription} /> : null}
+        {metaTitle ? <meta property="twitter:title" content={metaTitle} /> : null}
+        {metaDescription ? (
+          <meta property="twitter:description" content={metaDescription} />
+        ) : null}
+      </Helmet>
+      <ThemeProvider theme={lightTheme}>
+        <AlertProvider template={AlertTemplate} {...alertOptions}>
+          <Global styles={styles} />
+          <Header />
+          {isDocsPage ?
+            <DocsLayout mdxFields={data.mdx.fields}
+                        mdxFrontMatter={data.mdx.frontmatter}
+                        mdxTOC={data.mdx.tableOfContents}
+                        allMdx={data.allMdx}>
+              {data.mdx.body}
+            </DocsLayout>: ""}
+        </AlertProvider>
+      </ThemeProvider>
+    </RootDiv>
   );
 }
 
