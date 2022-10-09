@@ -1,38 +1,42 @@
 ---
 title: "NLP Text Classification"
-metaTitle: "Test a Text Classification Model"
-metaDescription: "Test a NLP Text Classification Model with the DeepSparse Engine for faster and cheaper inference on CPUs"
+metaTitle: "Try a Text Classification Model"
+metaDescription: "Try a NLP Text Classification Model with the DeepSparse Engine for faster and cheaper inference on CPUs"
 githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/test-a-model/nlp-sentiment-analysis.mdx"
 index: 1000
 ---
 
-# Test a Text Classification Model
+# Try a Text Classification Model
 
-The text classification DeepSparse pipeline wraps an NLP model with the proper preprocessing and postprocessing pipelines, such as tokenization.
-After a simple pipeline constructor call, this enables passing in raw text sequences and receiving the labeled predictions without any extra effort.
-With all of this built on top of the DeepSparse Engine, the simplicity of pipelines is combined with GPU class performance on CPUs for sparse models.
+This page explains how to run a trained model with the DeepSparse Engine for NLP inside a Python API called `Pipelines.`
+
+`Pipelines` wrap key utilities around the DeepSparse Engine for easy testing and deployment.
+
+The text classification `Pipeline`, for example, wraps an NLP model with the proper preprocessing and postprocessing pipelines, such as tokenization.
+This enables passing in raw text sequences and receiving the labeled predictions from the DeepSparse Engine without any extra effort.
+With all of this built on top of the DeepSparse Engine, the simplicity of `Pipelines` is combined with GPU-class performance on CPUs for sparse models.
 
 ## Model Setup
 
-The text classification pipeline utilizes the HuggingFace Transformer's standards and configurations for model setup.
-Therefore, the minimum required for a model deployment are the following files, all stored in a flat structure under the same directory:
-- **model.onnx** - The exported Transformers model in the ONNX format.
-- **tokenizer.json** - The HuggingFace compatible tokenizer used with the model.
-- **tokenizer_config.json** - The HuggingFace compatible tokenizer configuration used with the model.
-- **config.json** - The HuggingFace compatible configuration file used with the model.
+The first step is collecting an ONNX representaiton of the model and required configuration files. 
+The text classification `Pipeline` is integrated with HuggingFace and uses HuggingFace's standards 
+and configurations for model setup. The following files are required:
+- `model.onnx` - The exported Transformers model in the ONNX format.
+- `tokenizer.json` - The HuggingFace tokenizer used with the model.
+- `tokenizer_config.json` - The HuggingFace tokenizer configuration used with the model.
+- `config.json` - The HuggingFace configuration file used with the model.
 
-### Local Model
+For an example of the config files, checkout [BERT's model page on HuggingFace](https://huggingface.co/bert-base-uncased/tree/main).
 
-First, to test your local model with DeepSparse pipelines, collect the configuration files listed above.
-These are generally stored with the resulting model files from HuggingFace training pipelines.
-Next, utilize those model files with the [SparseML ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx) processes to create the model.onnx file.
-Finally, collect the required files into a directory and pass the local path in place of the SparseZoo stubs utilized throughout this document.
+There are two options for passing these files to DeepSparse:
 
-### SparseZoo
+<details>
 
-The SparseZoo contains different models trained and sparsified through HuggingFace pipelines with the files listed above.
-DeepSparse supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
-These models include dense and sparsified versions of DistilBERT trained on the MNLI for performant text classification, among others.
+<summary><b>1) Using SparseZoo Stubs (Reccomended Starting Point)</b></summary>
+
+SparseZoo contains several pre-sparsified Transformer models, including the config files listed above. DeepSparse is integrated
+with SparseZoo, and supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+
 The SparseZoo stubs can be found on SparseZoo model pages, and DistilBERT examples are provided below:
 - [Sparse-quantized DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fpruned80_quant-none-vnni)
 ```bash
@@ -43,12 +47,33 @@ zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_qu
 zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
   ```
 
+These SparseZoo stubs are passed arguments to the `Pipeline` constructor in the examples below.
+
+</details>
+
+
+<details>
+
+<summary><b>2) Using a Local Model</b></summary>
+
+Alternatively, you can use a custom or fine-tuned model from your local drive.
+
+There are three steps to using a local model with `Pipelines`:
+
+1. Export model to `model.onnx` (if you trained with SparseML, use [ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx))
+2. Collect the configuration files listed above. These are generally stored with the resulting model files from HuggingFace training pipelines (as is the case with SparseML)
+3. Place the files into a directory
+
+Pass the path the local directory in the `--model_path` in place of the SparseZoo stubs in the examples below.
+
+</details>
+
 ## Inference Pipelines
 
-With the text classification model setup, it can then be passed into a DeepSparse pipeline utilizing the **model_path** argument.
+With the text classification model setup, it can then be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
 The SparseZoo stub for the sparse-quantized DistilBERT model given at the beginning is used in the sample code below.
-It will automatically download the necessary files for the model from the SparseZoo and then compile them on your local machine in the DeepSparse engine.
-Once compiled, the model pipeline is ready for inference with text sequences.
+The `Pipeline` automatically downloads the necessary files for the model from the SparseZoo and compiles them on your local machine in the DeepSparse engine.
+Once compiled, the model `Pipeline` is ready for inference with text sequences.
 
 ```python
 from deepsparse import Pipeline
@@ -68,7 +93,7 @@ print(inference)
 > labels=['contradiction'] scores=[0.9983579516410828]
 ```
 
-Because it is a language model trained on the MNLI dataset, it can additionally be used to perform zero-shot text classification for any text sequences.
+Because DistilBERT is a language model trained on the MNLI dataset, it can additionally be used to perform zero-shot text classification for any text sequences.
 The code below gives an example of a zero-shot text classification pipeline.
 
 ```python
@@ -91,8 +116,8 @@ print(inference)
 
 ## Benchmarking
 
-The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: **deepsparse.benchmark**.
-The CLI takes in both SparseZoo stubs and paths to a local model.onnx file.
+The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: `deepsparse.benchmark`.
+The CLI takes in either a SparseZoo stub or a path to a local `model.onnx` file.
 
 ### Dense DistilBERT
 

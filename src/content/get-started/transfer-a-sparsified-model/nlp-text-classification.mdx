@@ -8,24 +8,31 @@ index: 1000
 
 # Transfer a Sparsified Model for Text Classification
 
-SparseML enables advanced sparse transfer techniques packaged in convenient, recipe-powered CLIs and APIs.
-The SparseZoo contains many different sparsified NLP models and recipes that plug directly into the SparseML CLIs and APIs.
-The combination enables quick and easy creation of performant models with limited training and hyperparameter tuning.
-The rest of the document walks through the process of transferring a sparsified model to your dataset for sentiment analysis.
+This page walks through an example of fine-tuning a pre-sparsified model onto a new dataset for sentiment analysis. 
 
-## Creating a Teacher
+For NLP tasks, model distillation from a dense teacher to a sparse student model is helpful to achieve higher sparsity and accuracy. 
+We will follow two steps using SparseML:
+1. Fine-tune a dense teacher model (BERT) onto a new dataset (SST2)
+2. Transfer learn a pre-sparsified model (DistilBERT) from the SparseZoo onto SST2, distilling from the dense teacher model trained in step 1
 
-For NLP tasks, distillation from a teacher to a student model is core to enabling highly sparse and compressed models.
-With it, the learned knowledge from a dense, baseline model is distilled into a smaller student model enabling higher accuracies than training the student on its own.
+If you already have a trained teacher model ready to go, you can skip step 1.
 
-To create a teacher for the desired text classification dataset, a dense BERT model and transfer recipe are used from the SparseZoo:
+An example of transfer learning without model distillation is in the [Use Cases Page](/use-cases/natural-language-processing/text-classification).
+
+Make sure you install SparseML before getting started:
+```bash
+pip install sparseml
+```
+
+## Train a Teacher
+
+To create a teacher for the desired text classification dataset, we will fine-tune a dense BERT model from the SparseZoo, the stub of which is below:
 ```bash
 zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/base-none
 ```
 
-The **sparseml.transformers.text_classification** command installed with SparseML is used to train the dense teacher on the SST-2 dataset for sentiment analysis.
+The following script fine-tunes the dense teacher onto the SST2 dataset for sentiment analysis.
 After the command completes, the trained model will be around 92.7% accurate on SST-2 and stored in the local `models/teacher` directory.
-To utilize your dataset, pass in the appropriate text files for the `--train_file` and `--validation_file` arguments.
 
 ```bash
 $ sparseml.transformers.text_classification \
@@ -40,21 +47,35 @@ $ sparseml.transformers.text_classification \
     --save_strategy epoch --save_total_limit 1
 ```
 
-## Transferring
+The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts), and 
+usage for most arguments follows the HuggingFace. The most important arguments for SparseML are:
+- `model_name_or_path`: specifies starting model. It can be a SparseZoo stub, HF model identifier, or a local directory 
+with `model.pt`, `tokenizer.json` and `config.json`
+- `recipe`: recipe containing the training hyperparamters (SparseZoo stub or a local file)
+- `task_name`: specifies the sentiment analysis task. If not provided, also specifies the dataset, pipelines, and eval metrics.
 
-With the teacher model trained, it is then ready to distill into the sparsified student model.
-The SparseZoo contains many different sparsified NLP models ready for sparse transfer.
-A sparsified DistilBERT model and sparse transfer recipe are used for this example.
+To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`. 
+See the [HF Docs](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
+
+Run the following to see the full list of options:
+```bash
+$ sparseml.transformers.text_classification -h
+```
+
+## Transfer Learning
+
+With the teacher model trained, it is ready to be distilled into a sparsified student model.
+
+SparseZoo contains several pre-sparsified NLP models and recipes ready to be used as the student. This example uses the SparseZoo stub for a pruned-quantized DistilBERT:
 ```bash
 zoo:nlp/masked_language_modeling/distilbert-none/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni
 ```
 
-The **sparseml.transformers.text_classification** command is now used to transfer the sparsified DistilBERT onto the SST-2 dataset for sentiment analysis.
-After the command completes, the trained model will be around 90.5% accurate on SST-2 and stored in the local `models/sparsified` directory.
-To utilize your dataset, pass in the appropriate text files for the `--train_file` and `--validation_file` arguments.
+The following script then transfers the sparsified DistilBERT onto the SST2 dataset for sentiment analysis with the help of the teacher from above.
+After the command completes, the trained sparse model will be around 90.5% accurate on SST2 and stored in the local `models/sparsified` directory.
 
 ```bash
-$ sparseml.transformers.train.text_classification \
+$ sparseml.transformers.text_classification \
     --output_dir models/sparsified \
     --model_name_or_path "zoo:nlp/masked_language_modeling/distilbert-none/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni" \
     --recipe "zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni" \
@@ -66,12 +87,20 @@ $ sparseml.transformers.train.text_classification \
     --save_strategy epoch --save_total_limit 1
 ```
 
+Usage is the same as above. The `--distill_teacher` argument instructs SparseML to perform model distillation from the 
+teacher saved at `models/teacher`.
+
+There are many additional command line arguments that can be passed to tweak your fine-tuning process. Run the following to see the full list of options:
+```bash
+$ sparseml.transformers.text_classification -h
+```
+
 ## Exporting for Inference
 
 With the sparsified model successfully trained, it is time to export it for inference.
-The **sparseml.transformers.export_onnx** command is used to export the training graph to a performant inference one.
+The `sparseml.transformers.export_onnx` command is used to export the training graph to a performant inference one.
 After the command completes, a `model.onnx` file is created in `models/sparsified` folder.
-It is now ready for deployment with the DeepSparse Engine utilizing its pipelines.
+It is now ready for deployment with the DeepSparse Engine.
 
 ```bash
 $ sparseml.transformers.export_onnx \

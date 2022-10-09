@@ -8,22 +8,30 @@ index: 1000
 
 # Sparsifying a model for SparseML Integrations
 
-SparseML is integrated with many popular deep learning repositories, including HuggingFace Transformers and Ultralytics YOLOv5.
-These integrations enable easy sparsification for many top neural network architectures for different use cases and domains.
-Once SparseML is installed, the integrations are available through CLI commands, and all that is needed is to create a sparsification recipe.
+This page walks through an example of creating a sparsification recipe to prune a dense model from scratch and applying a recipe to a supported integration.
 
-## Pruning Recipe
+SparseML has pre-made integrations with many popular model repositories, such as with HuggingFace Transformers and Ultralytics YOLOv5. 
+For these integrations, a sparsification recipe is all you need, and you can apply state-of-the-art sparsification algorithms, including 
+pruning, distillation, and quantization, with a single command line call.
 
-A pruning recipe applies a systematic way of removing redundant weights and connections within a neural network.
-An applied pruning algorithm must determine which weights are redundant and will not affect the accuracy.
-Additionally, the algorithm is generally applied such that only a small number of weights are removed simultaneously.
-This iterative process enables the model to adjust to a new optimization space after pathways are removed before pruning again.
+## Pruning and Pruning Recipes
+
+Pruning is a systematic way of removing redundant weights and connections within a neural network. An applied pruning algorithm must determine which 
+weights are redundant and will not affect the accuracy.
 
 A standard algorithm for pruning is gradual magnitude pruning, or GMP for short.
-With it, the weights closest to zero are iteratively removed over several epochs or training steps.
-Important hyperparameters that need to be set are the layers to prune and their sparsity levels to prune to, the number of epochs to prune for, how frequently to prune, how long to fine tune after, and the learning rates to (LR) to prune and finetune at.
+With it, the weights closest to zero are iteratively removed over several epochs or training steps. The non-zero weights are then fine-tuned to the objective function.
+This iterative process enables the model to adjust to a new optimization space after pathways are removed before pruning again.
+
+Important hyperparameters that need to be set are the following:
+ - The layers to prune and their target sparsity levels
+ - The number of epochs for pruning
+ - The frequency of pruning
+ - The length of time to fine tune after pruning
+ - The the learning rates to (LR) for pruning and finetuning
+
 The proper hyperparameter values will differ for different model architectures, training schemes, and domains, but there is some general intuition for safe starting values.
-The following are reasonably good values to start with:
+The following are reasonably default values to start with:
   - The final sparsity is set to 80% sparsity applied globally across all layers.
   - The running frequency is set to pruning once per epoch (up to a few times per epoch for shorter schedules).
   - The number of pruning epochs is set to 1/3 the original training epochs.
@@ -31,7 +39,9 @@ The following are reasonably good values to start with:
   - The pruning LR is set to the midrange from the model's training start and final LRs.
   - The finetuning LRs cycle from the pruning LR to the final LR is used for training.
 
-Plugging the above methodology into a recipe.yaml file results in the following that can be applied utilizing SparseML:
+SparseML conveniently encodes these hyperparameters into a YAML-based **Recipe** file. The rest of the system parses the arguments in the YAML file to set the parameters of the algorithm.
+
+For example, the following `recipe.yaml` file for the default values listed above: 
 ```yaml
 modifiers:
     !GlobalMagnitudePruningModifier
@@ -59,18 +69,19 @@ modifiers:
 ```
 
 In this recipe:
-  - The GlobalMagnitudePruningModifier applies gradual magnitude pruning globally across all the prunable parameters/weights in a model.
-  - The GlobalMagnitudePruningModifier starts at 5% sparsity at epoch 0 and gradually ramps up to 80% sparsity at epoch 30, pruning at the start of each epoch.
-  - The SetLearningRateModifier sets the pruning LR to 0.05 (midpoint between the original 0.1 and 0.001 training LRs).
-  - The LearningRateFunctionModifier cycles the finetuning LR from the pruning LR to 0.001 with a cosine curve (0.001 was the final original training LR).
-  - The EpochRangeModifier expands the training time to continue finetuning for an additional 20 epochs after pruning has ended.
-  - The 30 pruning epochs and 20 finetuning epochs were chosen based on a 90 epoch training schedule -- be sure to adjust based on the number of epochs used for the initial training for your use case.
+  - `GlobalMagnitudePruningModifier` applies gradual magnitude pruning globally across all the prunable parameters/weights in a model.
+  - `GlobalMagnitudePruningModifier` starts at 5% sparsity at epoch 0 and gradually ramps up to 80% sparsity at epoch 30, pruning at the start of each epoch.
+  - `SetLearningRateModifier` sets the pruning LR to 0.05 (midpoint between the original 0.1 and 0.001 training LRs).
+  - `LearningRateFunctionModifier` cycles the finetuning LR from the pruning LR to 0.001 with a cosine curve (0.001 was the final original training LR).
+  - `EpochRangeModifier` expands the training time to continue finetuning for an additional 20 epochs after pruning has ended.
+  - 30 pruning epochs and 20 finetuning epochs were chosen based on a 90 epoch training schedule -- be sure to adjust based on the number of epochs used for the initial training for your use case.
 
-## Quantization Recipe
+## Quantization and Quantization Recipes
 
-A quantization recipe systematically reduces the precision for weights and activations within a neural network, generally from FP32 to INT8.
-A standard algorithm is quantization aware training (QAT) to do this.
-With QAT, fake quantization operators are injected into the graph before quantizable nodes for activations, and weights are wrapped with fake quantization operators.
+A quantization recipe systematically reduces the precision for weights and activations within a neural network, generally from `FP32` to `INT8`. Running a quantized 
+model increases speed and reduces memory consumption while sacrificing very little in terms of accuracy.
+
+Quantization aware training (QAT) is the standard algorithm. With QAT, fake quantization operators are injected into the graph before quantizable nodes for activations, and weights are wrapped with fake quantization operators.
 The fake quantization operators interpolate the weights and activations down to INT8 on the forward pass but enable a full update of the weights at FP32 on the backward pass.
 The updates to the weights at FP32 throughout the training process allow the model to adapt to the loss of information from quantization on the forward pass.
 QAT generally guarantees better recovery for a given model compared with post-training quantization (PTQ), where training is not used.
@@ -83,7 +94,7 @@ The following are reasonably good values to start with:
   - The number of quantized training epochs is set to 5.
   - The batch normalization statistics are frozen at the start of the third epoch.
 
-Plugging the above methodology into a recipe.yaml file results in the following that can be applied utilizing SparseML:
+For example, the following `recipe.yaml` file for the default values listed above: 
 ```yaml
 modifiers:
     !QuantizationModifier
@@ -101,11 +112,11 @@ modifiers:
 ```
 
 In this recipe:
-  - The QuantizationModifier applies QAT to all quantizable modules under the `model` scope.
+  - The `QuantizationModifier` applies QAT to all quantizable modules under the `model` scope.
 Note the `model` is used here as a general placeholder; to determine the name of the root module for your model, print out the root module and use that root name.
-  - The QuantizationModifier starts at epoch 0 and freezes batch normalization statistics at the start of epoch 3.
-  - The SetLearningRateModifier sets the quantization LR to 10e-6 (0.01 times the example final LR of 0.001).
-  - The EpochRangeModifier sets the training time to continue training for the desired 5 epochs.
+  - The `QuantizationModifier` starts at epoch 0 and freezes batch normalization statistics at the start of epoch 3.
+  - The `SetLearningRateModifier` sets the quantization LR to 10e-6 (0.01 times the example final LR of 0.001).
+  - The `EpochRangeModifier` sets the training time to continue training for the desired 5 epochs.
 
 ## Pruning plus Quantization Recipe
 
@@ -158,12 +169,15 @@ To view instructions for the CLI, run the following command:
 sparseml.yolov5.train --help
 ```
 
-To use the recipe given in the previous section, save it locally as a recipe.yaml file.
+To use the recipe given in the previous section, save it locally as a `recipe.yaml` file.
 Next, it can be passed in for the `--recipe` argument in the YOLOv5 train CLI.
-An example command that begins training and utilizes the recipe is then the following:
+
+By running the following command, you will apply the GMP and QAT algorithms encoded in the recipe to the dense version of YOLOv5s 
+(which is pulled down from the SparseZoo). In this example, the fine-tuning is done onto the COCO dataset.
+
 ```bash
 sparseml.yolov5.train \
-  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none \
+  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none \ 
   --data coco.yaml \
   --hyp data/hyps/hyp.scratch.yaml \
   --recipe recipe.yaml

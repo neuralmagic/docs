@@ -8,23 +8,25 @@ index: 2000
 
 # Transfer a Sparsified Model for Object Detection
 
-SparseML enables advanced sparse transfer techniques packaged in convenient, recipe-powered CLIs and APIs.
-The SparseZoo contains many different sparsified object detection models and recipes that plug directly into the SparseML CLIs and APIs.
-The combination enables quick and easy creation of performant models with limited training and hyperparameter tuning.
-The rest of the document walks through transferring a sparsified model onto your dataset for object detection.
+This page walks through an example of fine-tuning a pre-sparsified model from the SparseZoo onto a new dataset for object detection.
 
-## Transferring
+We will use SparseZoo to pull down a pre-sparsified YOLOv5l and will use SparseML to fine-tune onto the VOC dataset while preserving sparsity.
 
-The SparseZoo contains many different sparsified object detection models ready for sparse transfer.
-A sparsified YOLOv5l model and sparse transfer recipe is used for this example.
+Make sure you install SparseML with torchvision before getting started:
+```bash
+pip install sparseml[torchvision]
+```
+
+## Transfer Learning
+
+The SparseZoo contains several sparsified object detection models and transfer learning recipes, including YOLOv5l, which is used in this example. The SparseZoo stub is below:
 
 ```bash
 zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
 ```
 
-The **sparseml.yolov5.train** command is now used to transfer the sparsified YOLOv5 model onto the VOC dataset for object detection.
-After the command completes, the trained model will have a mAP@0.5 of around 0.80 on VOC and stored in the local `models/sparsified` directory.
-To utilize your dataset, set up the appropriate image dataset structure and pass the path to the directory for the `--data` argument.
+The `sparseml.yolov5.train` CLI command kicks off a run to fine-tune the sparsified YOLOv5 model onto the VOC dataset for object detection.
+After the command completes, the trained model will reamin sparse, achieve an mAP@0.5 of around 0.80 on VOC, and will be stored in the local `models/sparsified` directory.
 
 ```bash
 $ sparseml.yolov5.train \
@@ -37,15 +39,31 @@ $ sparseml.yolov5.train \
     --recipe recipes/yolov5.transfer_learn_pruned_quantized.md
 ```
 
+The most important arguments are `--data`, `--weights`, and `--recipe`:
+- `--data` specifies the dataset onto which the model will be fine-tuned
+- `--weights` specifies the base model used to start the transfer learning process (can be a SparseZoo stub or local custom model path)
+- `--recipe` specifies the hyperparameters of the fine-tuning process (can be a SparseZoo stub or a local custom recipe)
+
+To utilize your own dataset, set up the appropriate image dataset structure and pass the path as the `--data` argument. 
+An example for VOC is on [GitHub](https://github.com/neuralmagic/sparseml/blob/main/src/sparseml/yolov5/data/VOC.yaml).
+
+The `--cfg` and `--hyp` are configuration files. You can checkout the examples on [GitHub](https://github.com/neuralmagic/sparseml/tree/main/src/sparseml/yolov5).
+
+There are many additional command line arguments that can be passed to tweak your fine-tuning process. Run the following to see the full list of options:
+
+```bash
+$ sparseml.yolov5.train -h
+```
+
 ## Exporting for Inference
 
 With the sparsified model successfully trained, it is time to export it for inference.
-The **sparseml.yolov5.export_onnx** command is used to export the training graph to a performant inference one.
-After the command completes, a model.onnx file is created in `yolov5/sparsified` folder.
+The `sparseml.yolov5.export_onnx` command is used to export the training graph to a performant inference one.
+After the command completes, a `model.onnx` file is created in `yolov5/sparsified` folder.
 It is now ready for deployment with the DeepSparse Engine utilizing its pipelines.
 
 ```bash
 $ sparseml.yolov5.export_onnx \
-    --weights yolov5/sparsified/weights/best.pt\
+    --weights yolov5/sparsified/weights/best.pt \
     --dynamic
 ```

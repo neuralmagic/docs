@@ -1,39 +1,40 @@
 ---
 title: "CV Object Detection"
-metaTitle: "Test an Object Detection Model"
-metaDescription: "Test an Object Detection Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
+metaTitle: "Try an Object Detection Model"
+metaDescription: "Try an Object Detection Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
 githubURL: "https://github.com/neuralmagic/docs/blob/main/src/content/get-started/test-a-model/cv-object-detection.mdx"
 index: 2000
 ---
 
-# Test an Object Detection Model
+# Try an Object Detection Model
 
-The object detection DeepSparse pipeline wraps the execution of a trained OD model with the proper preprocessing and postprocessing pipelines such as NMS.
-After a simple pipeline constructor call, this enables passing in raw images and receiving the bounding boxes without any extra effort.
-With all of this built on top of the DeepSparse Engine, the simplicity of pipelines is combined with GPU class performance on CPUs for sparse models.
+This page explains how to run a trained model on the DeepSparse Engine for Object Detection inside a Python API called `Pipelines.`
+
+`Pipelines` wrap key utilities around the DeepSparse Engine for easy testing and deployment.
+
+The object detection `Pipeline`, for example, wraps a trained model with the proper preprocessing and postprocessing pipelines such as NMS.
+This enables the passing of raw images and receiving the bounding boxes from the DeepSparse Engine without any extra effort. 
+With all of this built on top of the DeepSparse Engine, the simplicity of `Pipelines` is combined with GPU-class performance on CPUs for sparse models.
 
 ## Model Setup
 
-The object detection pipeline uses Ultralytics YOLOv5 standards and configurations for model setup.
+The object detection `Pipeline` uses Ultralytics YOLOv5 standards and configurations for model setup.
 The possible files/variables that can be passed in are the following:
-- **model.onnx** - The exported YOLOv5 model in the ONNX format.
-- **model.yaml** - The Ultralytics model config file containing configuration information about the model and its post-processing.
-- **class names** - A list, dictionary, or file containing the index to class name mappings for the trained model.
+- `model.onnx` - The exported YOLOv5 model in the ONNX format.
+- `model.yaml` - The Ultralytics model config file containing configuration information about the model and its post-processing.
+- `class_names` - A list, dictionary, or file containing the index to class name mappings for the trained model.
 
-model.onnx is the only required file.
+`model.onnx` is the only required file.
 The pipeline will default to a standard setup for the COCO dataset if the model config file or class names are not provided.
 
-### Local Model
+There are two options for passing these files to DeepSparse:
 
-First, to test your own local model with DeepSparse pipelines, collect the config file and class names listed above.
-These can be found or determined from the Ultralytics training pipeline and its outputs.
-Next, utilize those model files with the [SparseML ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/ultralytics-yolov5#exporting-the-sparse-model-to-onnx) processes to create the model.onnx file.
-Finally, collect the required files into a directory and pass the local path in place of the SparseZoo stubs utilized throughout this document.
+<details>
+<summary><b>1) Using The SparseZoo</b></summary>
 
-### SparseZoo
+This pathway is relevant if you want to use a pre-sparsified state-of-the-art model off the shelpf.
 
-The SparseZoo contains different models trained and sparsified through Ultralytics pipelines with the files listed above.
-DeepSparse supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+SparseZoo is a repository of pre-trained and pre-sparsified models. DeepSparse supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
 These models include dense and sparsified versions of YOLOv5 trained on the COCO dataset for performant and general detection, among others.
 The SparseZoo stubs can be found on SparseZoo model pages, and YOLOv5l examples are provided below:
 - [Sparse-quantized YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95)
@@ -45,12 +46,30 @@ zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
 zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
   ```
 
+These SparseZoo stubs can be passed as arguments to the `Pipeline` constructor in the examples below.
+
+</details>
+
+<details>
+<summary><b>2) Using a Custom Local Model</b></summary>
+
+This pathway is relevant if you want to use a model fine-tuned on your data with SparseML or a custom model.
+
+There are three steps to using a local model with `Pipelines`:
+1. Create the `model.onnx` file (if you trained with SparseML, use the [ONNX export script](https://github.com/neuralmagic/sparseml/tree/main/integrations/ultralytics-yolov5#exporting-the-sparse-model-to-onnx))
+2. Collect the `model.yaml` file and `class_names` listed above.
+3. Pass the local paths of the files in place of the SparseZoo stubs.
+
+</details>
+
+The examples below use the SparseZoo stubs. Pass the path to the local model in place of the stubs if you want to use a custom model.
+
 ## Inference Pipelines
 
-With the object detection model setup, it can then be passed into a DeepSparse pipeline utilizing the model_path argument.
+With the object detection model setup, it can then be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
 The SparseZoo stub for the sparse-quantized YOLOv5l model given at the beginning is used in the sample code below.
 It will automatically download the necessary files for the model from the SparseZoo and then compile them on your local machine in the DeepSparse engine.
-Once compiled, the model pipeline is ready for inference with images.
+Once compiled, the model `Pipeline` is ready for inference with images.
 
 First, a sample image is downloaded that will be run through the example to test the pipeline.
 
@@ -58,16 +77,16 @@ First, a sample image is downloaded that will be run through the example to test
 wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
 ```
 
-Next, instantiate the pipeline and pass the image in using the images argument:
+Next, instantiate the `Pipeline` and pass the image in using the images argument:
 
 ```python
 from deepsparse import Pipeline
 
 yolo_pipeline = Pipeline.create(
     task="yolo",
-    model_path="zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95",
-    class_names=None,  # pass in a list of classes the model will clasify or a path to a json file containing them
-    model_config=None,  # pass in the path to a local model config file here
+    model_path="zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95", # if using custom model, pass in local path to model.onnx
+    class_names=None,   # if using custom model, pass in a list of classes the model will clasify or a path to a json file containing them
+    model_config=None,  # if using custom model, pass in the path to a local model config file here
 )
 inference = yolo_pipeline(images=['basilica'], iou_thres=0.6, conf_thres=0.001)
 print(inference)
@@ -77,8 +96,8 @@ print(inference)
 
 ## Benchmarking
 
-The DeepSparse install includes a benchmark CLI for convenient and easy inference benchmarking: **deepsparse.benchmark**.
-The CLI takes both SparseZoo stubs and paths to a local model.onnx file.
+The DeepSparse install includes a CLI for convenient performance benchmarking.
+You can pass a SparseZoo stub or a local `model.onnx` file.
 
 ### Dense YOLOv5l
 

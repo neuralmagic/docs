@@ -8,7 +8,7 @@ index: 2000
 
 # SparseML
 
-### Libraries for applying sparsification recipes to neural networks with a few lines of code, enabling faster and smaller models
+### Libraries enabling creation of sparse deep-neural networks trained on your data with just a few lines of code
 
 <p>
   <a href="https://docs.neuralmagic.com/sparseml/">
@@ -45,10 +45,19 @@ index: 2000
 
 ## Overview
 
-SparseML is a toolkit that includes APIs, CLIs, scripts and libraries that apply state-of-the-art [sparsification](https://docs.neuralmagic.com/main/source/getstarted.html#sparsification) algorithms such as pruning and quantization to any neural network.
-General, recipe-driven approaches built around these algorithms enable the simplification of creating faster and smaller models for the ML performance community at large.
+SparseML is a toolkit that includes APIs, CLIs, scripts and libraries that enable you to create sparse models trained on your data.
 
-The [GitHub repository](https://github.com/neuralmagic/sparseml) contains integrations within the PyTorch, Keras, and TensorFlow V1 ecosystems, allowing for seamless model sparsification.
+SparseML provides two options to accomplish this goal: 
+- **Sparse Transfer Learning**: Fine-tune state-of-the-art pre-sparsified models from the SparseZoo onto your dataset while preserving sparsity.
+
+- **Sparsifying from Scratch**: Apply state-of-the-art [sparsification](https://docs.neuralmagic.com/main/source/getstarted.html#sparsification) algorithms such as pruning and quantization to any neural network.
+
+These options are useful for different situations:
+- **Sparse Transfer Learning** is the easiest path to creating a sparse model trained on your data. Pull down a sparse model from SparseZoo and point our training scripts at your data without any hyperparameter search. This is the recommended pathway for supported use cases like Image Classification, Object Detection, and several NLP tasks. 
+
+- **Sparsifying from Scratch** gives you the flexibility to prune any neural network for any use case, but requires more training epochs and hand-tuning hyperparameters.
+
+Each of these avenues use YAML-based **recipes** that simplify integration with popular deep learning libraries and framrworks.
 
 <img alt="SparseML Flow" src="https://docs.neuralmagic.com/docs/source/infographics/sparseml.png" width="100%" style={{maxWidth: "100%"}} />
 
@@ -148,18 +157,61 @@ More information on installation such as optional dependencies and requirements 
 
 ## Quick Tour
 
-To enable flexibility, ease of use, and repeatability, sparsifying a model is done using a recipe.
+SparseML enables you to create a sparse model with **Sparse Transfer Learning** and **Sparsification from Scratch**.
+
+To enable flexibility, ease of use, and repeatability, each piece of functionality is accomplished via recipes.
   The recipes encode the instructions needed for modifying the model and/or training process as a list of modifiers.
   Example modifiers can be anything from setting the learning rate for the optimizer to gradual magnitude pruning.
   The files are written in [YAML](https://yaml.org/) and stored in YAML or [markdown](https://www.markdownguide.org/) files using [YAML front matter.](https://assemble.io/docs/YAML-front-matter.html) The rest of the SparseML system is coded to parse the recipes into a native format for the desired framework and apply the modifications to the model and training pipeline.
 
-`ScheduledModifierManager` classes can be created from recipes in all supported ML frameworks.
-  The manager classes handle overriding the training graphs to apply the modifiers as described in the desired recipe.
+To give a sense of the flavor of what recipes encode, some examples are below:
+- Recipes for **Sparse Transfer Learning** usually include the `!ConstantPruningModifier`, which instructs SparseML to maintian the starting level of sparsity while fine-tuning.
+
+- Recipes for **Sparsification from Scratch** usually include the `!GMPruningModifier`, which instructs SparseML to iteratively prune the layers of the model to certain levels (e.g. 80%) over which epochs.
+
+Recipes are then integrated into deep learning training workflows in one of two ways:
+
+#### For Supported Use Cases: CLI
+
+SparseML provides command line scripts that accept recipes as arguments and perform Sparse Transfer Learning and Sparsification from Scratch. We highly
+reccomended using the command line scripts. Appending `--help` to the commands demonstrates the full list of arguments.
+
+For example, the following command kicks off **Sparse Transfer Learning** from pre-sparsified YOLOv5 onto the VOC dataset using the pre-made recipes in the SparseZoo:
+
+```bash
+$ sparseml.yolov5.train \
+    --data VOC.yaml \
+    --cfg models_v5.0/yolov5l.yaml \
+    --weights zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95?recipe_type=transfer \
+    --hyp data/hyps/hyp.finetune.yaml \
+    --recipe zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95?recipe_type=transfer
+```
+
+For example, the following command kicks off **Sparsification of a dense YOLOv5 model from Scratch** using the pre-made recipes in the SparseZoo:
+
+```bash
+$ sparseml.yolov5.train \  
+    --cfg models_v5.0/yolov5l.yaml \
+    --weights yolov5l.pt \
+    --data coco.yaml \
+    --hyp data/hyps/hyp.scratch.yaml \
+    --recipe zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+```
+
+For more details on the above as well as examples for more supported use cases see [here](/use-cases/natural-language-processing/question-answering).
+
+#### For Custom Use Cases / Supported Use Cases: Python Integration
+
+The `ScheduledModifierManager` class is used to modify the standard training workflows for both Sparse Transfer Learning
+and Sparsification from Scratch. It can be used in PyTorch and TensorFlow/Keras.
+
+The manager classes works by overriding the `model` and `optimizers` to encode sparsity logic.
   Managers can apply recipes in one shot or training aware ways.
   One shot is invoked by calling `.apply(...)` on the manager while training aware requires calls into `initialize(...)` (optional), `modify(...)`, and `finalize(...)`.
+  This means only a few lines of code need to be added to begin transfer learning or sparsifying from scratch with pruning and quantization.
+  
+For example, the following applies a recipe in a training-aware manner:
 
-For the frameworks, this means only a few lines of code need to be added to begin supporting pruning, quantization, and other modifications to most training pipelines.
-  For example, the following applies a recipe in a training aware manner:
   ```python
 model = Model()  # model definition
 optimizer = Optimizer()  # optimizer definition
@@ -171,7 +223,7 @@ steps_per_epoch = len(train_data) // batch_size
   manager = ScheduledModifierManager.from_yaml(PATH_TO_RECIPE)
   optimizer = manager.modify(model, optimizer, steps_per_epoch)
 
-  # PyTorch training code
+  # ... PyTorch training loop as usual ...
 
   manager.finalize(model)
 ```
@@ -186,9 +238,10 @@ model = Model()  # model definition
 ```
 
 More information on the codebase and contained processes can be found in the SparseML docs:
-  - [Sparsification Code](https://docs.neuralmagic.com/sparseml/source/code)
-- [Sparsification Recipes](https://docs.neuralmagic.com/sparseml/source/recipes)
-- [Exporting to ONNX](https://docs.neuralmagic.com/sparseml/source/onnx_export)
+- [Sparse Transfer Learning](/get-started/transfer-a-sparsified-model)
+- [Sparsification Code](/get-started/sparsify-a-model)
+- [Sparsification Recipes](/user-guide/recipes)
+- [Exporting to ONNX](/user-guide/sparsification)
 
 ## Resources
 

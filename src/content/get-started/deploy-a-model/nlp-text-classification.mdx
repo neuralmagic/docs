@@ -8,17 +8,21 @@ index: 1000
 
 # Deploy a Text Classification Model
 
-The DeepSparse Server wraps pipelines, including the sentiment analysis pipeline.
-Therefore, the server supports raw text sequences as inputs and outputs the labeled predictions without extra effort.
-With all of this built on top of the DeepSparse Engine, the simplicity of servable pipelines is combined with GPU class performance on CPUs for sparse models.
+This page walks through an example of deploying a text-classification model with DeepSparse Server.
+
+The DeepSparse Server is a server wrapper around `Pipelines`, including the sentiment analysis pipeline. As such,
+the server provides an HTTP interface that accepts raw text sequences as inputs and responds with the labeled predictions.
+With all of this built on top of the DeepSparse Engine, the simplicity of servable pipelines is combined with GPU-class performance on CPUs for sparse models.
 
 ## Start the Server
 
-Before starting the server, the model must be set up in the format expected for DeepSparse Pipelines.
-The expectations for this are found in the [Test a Model](../../test-a-model) section.
-With that expectation set, the **deepsparse.server** command can be used with either a local model or a SparseZoo stub.
+Before starting the server, the model must be set up in the format expected for DeepSparse `Pipelines`.
+See an example of how to set up `Pipelines` in the [Try a Model](../../try-a-model) section.
 
-The command below shows how to start up the DeepSparse Server for a sparsified DistilBERT model trained on the SST-2 dataset for sentiment analysis from the SparseZoo.
+Once the `Pipelines` are set up, the `deepsparse.server` command launches a server with the model at `--model_path` inside. The `model_path` can either
+be a SparseZoo stub or a local model path.
+
+The command below starts up the DeepSparse Server for a sparsified DistilBERT model (from the SparseZoo) trained on the SST2 dataset for sentiment analysis.
 The output confirms the server was started on port `:5543` with a `/docs` route for general info and a `/predict` route for inference.
 
 ```bash
@@ -39,9 +43,9 @@ $ deepsparse.server \
 
 ## View the Request Specs
 
-As noted in the startup command, a **/docs route** was created; it contains OpenAPI specs and definitions for the expected inputs and responses.
+As noted in the startup command, a `/docs route` was created; it contains OpenAPI specs and definitions for the expected inputs and responses.
 Visiting the `http://localhost:5543/docs` in a browser shows the available routes on the server.
-For the /predict route specifically, it shows the following as the expected input schema:
+For the `/predict` route specifically, it shows the following as the expected input schema:
 
 ```text
 TextClassificationInput{
@@ -68,9 +72,9 @@ Utilizing the request spec, a valid input for the sentiment analysis would be:
 ## Make a Request
 
 With the expected input payload and method type defined, any HTTP request package can be used to make the request.
-For simplicity and generality, the curl command is used.
-The command below shows how to request the same instance the server was started.
-Specifically, it makes a POST method request to the /predict pathway on localhost:5543 with the JSON payload created above.
+For simplicity and generality, the `curl` command is used.
+
+The code below makes a POST method request to the `/predict` pathway on `localhost:5543` with the JSON payload created above.
 The predicted outputs from the model are then printed in the terminal.
 
 ```bash
