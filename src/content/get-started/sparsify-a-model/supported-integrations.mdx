@@ -10,13 +10,13 @@ index: 1000
 
 This page walks through an example of creating a sparsification recipe to prune a dense model from scratch and applying a recipe to a supported integration.
 
-SparseML has pre-made integrations with many popular model repositories, such as with HuggingFace Transformers and Ultralytics YOLOv5. 
-For these integrations, a sparsification recipe is all you need, and you can apply state-of-the-art sparsification algorithms, including 
+SparseML has pre-made integrations with many popular model repositories, such as with HuggingFace Transformers and Ultralytics YOLOv5.
+For these integrations, a sparsification recipe is all you need, and you can apply state-of-the-art sparsification algorithms, including
 pruning, distillation, and quantization, with a single command line call.
 
 ## Pruning and Pruning Recipes
 
-Pruning is a systematic way of removing redundant weights and connections within a neural network. An applied pruning algorithm must determine which 
+Pruning is a systematic way of removing redundant weights and connections within a neural network. An applied pruning algorithm must determine which
 weights are redundant and will not affect the accuracy.
 
 A standard algorithm for pruning is gradual magnitude pruning, or GMP for short.
@@ -41,10 +41,10 @@ The following are reasonably default values to start with:
 
 SparseML conveniently encodes these hyperparameters into a YAML-based **Recipe** file. The rest of the system parses the arguments in the YAML file to set the parameters of the algorithm.
 
-For example, the following `recipe.yaml` file for the default values listed above: 
+For example, the following `recipe.yaml` file for the default values listed above:
 ```yaml
 modifiers:
-    !GlobalMagnitudePruningModifier
+    - !GlobalMagnitudePruningModifier
         init_sparsity: 0.05
         final_sparsity: 0.8
         start_epoch: 0.0
@@ -52,18 +52,18 @@ modifiers:
         update_frequency: 1.0
         params: __ALL_PRUNABLE__
 
-    !SetLearningRateModifier
+    - !SetLearningRateModifier
         start_epoch: 0.0
         learning_rate: 0.05
 
-    !LearningRateFunctionModifier
+    - !LearningRateFunctionModifier
         start_epoch: 30.0
         end_epoch: 50.0
         lr_func: cosine
         init_lr: 0.05
         final_lr: 0.001
 
-    !EpochRangeModifier
+    - !EpochRangeModifier
         start_epoch: 0.0
         end_epoch: 50.0
 ```
@@ -78,7 +78,7 @@ In this recipe:
 
 ## Quantization and Quantization Recipes
 
-A quantization recipe systematically reduces the precision for weights and activations within a neural network, generally from `FP32` to `INT8`. Running a quantized 
+A quantization recipe systematically reduces the precision for weights and activations within a neural network, generally from `FP32` to `INT8`. Running a quantized
 model increases speed and reduces memory consumption while sacrificing very little in terms of accuracy.
 
 Quantization aware training (QAT) is the standard algorithm. With QAT, fake quantization operators are injected into the graph before quantizable nodes for activations, and weights are wrapped with fake quantization operators.
@@ -94,19 +94,19 @@ The following are reasonably good values to start with:
   - The number of quantized training epochs is set to 5.
   - The batch normalization statistics are frozen at the start of the third epoch.
 
-For example, the following `recipe.yaml` file for the default values listed above: 
+For example, the following `recipe.yaml` file for the default values listed above:
 ```yaml
 modifiers:
-    !QuantizationModifier
+    - !QuantizationModifier
         start_epoch: 0.0
         submodules: ['model']
         freeze_bn_stats_epoch: 3.0
 
-    !SetLearningRateModifier
+    - !SetLearningRateModifier
         start_epoch: 0.0
         learning_rate: 10e-6
 
-    !EpochRangeModifier
+    - !EpochRangeModifier
         start_epoch: 0.0
         end_epoch: 5.0
 ```
@@ -127,7 +127,7 @@ This prevents stability issues from lacking precision when pruning and utilizing
 Combining the two previous recipes creates the following new recipe.yaml file:
 ```yaml
 modifiers:
-    !GlobalMagnitudePruningModifier
+    - !GlobalMagnitudePruningModifier
         init_sparsity: 0.05
         final_sparsity: 0.8
         start_epoch: 0.0
@@ -135,27 +135,27 @@ modifiers:
         update_frequency: 1.0
         params: __ALL_PRUNABLE__
 
-    !SetLearningRateModifier
+    - !SetLearningRateModifier
         start_epoch: 0.0
         learning_rate: 0.05
 
-    !LearningRateFunctionModifier
+    - !LearningRateFunctionModifier
         start_epoch: 30.0
         end_epoch: 50.0
         lr_func: cosine
         init_lr: 0.05
         final_lr: 0.001
 
-    !QuantizationModifier
+    - !QuantizationModifier
         start_epoch: 50.0
         submodules: ['model']
         freeze_bn_stats_epoch: 3.0
 
-    !SetLearningRateModifier
+    - !SetLearningRateModifier
         start_epoch: 50.0
         learning_rate: 10e-6
 
-    !EpochRangeModifier
+    - !EpochRangeModifier
         start_epoch: 0.0
         end_epoch: 55.0
 ```
@@ -172,12 +172,12 @@ sparseml.yolov5.train --help
 To use the recipe given in the previous section, save it locally as a `recipe.yaml` file.
 Next, it can be passed in for the `--recipe` argument in the YOLOv5 train CLI.
 
-By running the following command, you will apply the GMP and QAT algorithms encoded in the recipe to the dense version of YOLOv5s 
+By running the following command, you will apply the GMP and QAT algorithms encoded in the recipe to the dense version of YOLOv5s
 (which is pulled down from the SparseZoo). In this example, the fine-tuning is done onto the COCO dataset.
 
 ```bash
 sparseml.yolov5.train \
-  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none \ 
+  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none \
   --data coco.yaml \
   --hyp data/hyps/hyp.scratch.yaml \
   --recipe recipe.yaml
