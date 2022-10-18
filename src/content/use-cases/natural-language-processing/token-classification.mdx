@@ -38,7 +38,7 @@ There are some additional tutorials for this functionality on GitHub.
 
 ### Sparsifying Popular Transformer Models
 
-In the example below, a dense BERT model is sparsified and fine-tuned on the CoNLL-2003 dataset. 
+In the example below, a dense BERT model is sparsified and fine-tuned on the CoNLL-2003 dataset.
 
 ```bash
 sparseml.transformers.token_classification \
@@ -52,14 +52,14 @@ sparseml.transformers.token_classification \
   --recipe zoo:nlp/token_classification/bert-base/pytorch/huggingface/conll2003/12layer_pruned80_quant-none-vnni
 ```
 
-The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts), 
+The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts),
 and usage for most arguments follows the HuggingFace. The most important arguments for SparseML are:
 
 - `--model_name_or_path` indicates which model to start the pruning process from. It can be a SparseZoo stub, HF model identifier, or a path to a local model.
 - `--recipe` points to recipe file containing the sparsification hyperparamters. It can be a SparseZoo stub or a local file. For more on creating a recipe see [here](/user-guide/recipes/creating).
 - `--dataset_name` indicates that we should fine tune on the CoNLL-2003 dataset.
 
-To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`. 
+To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`.
 See the [HF Docs](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
 
 Run the following to see the full list of options:
@@ -84,10 +84,10 @@ sparseml.transformers.token_classification \
     --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/12layer_pruned80_quant-none-vnni?recipe_type=transfer-token_classification
 ```
 
-This usage of the script is the same as the above. 
+This usage of the script is the same as the above.
 
 In this example, however, the starting model is a pruned-quantized version of BERT from SparseZoo (rather than a dense BERT)
-and the recipe is a transfer learning recipe, which instructs Transformers to maintain sparsity of the base model (rather than 
+and the recipe is a transfer learning recipe, which instructs Transformers to maintain sparsity of the base model (rather than
 a recipe that sparsifies a model from scratch).
 
 #### Knowledge Distillation
@@ -108,10 +108,11 @@ sparseml.transformers.token_classification \
     --do_train \
     --do_eval \
     --output_dir models/teacher \
-    --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/12layer_pruned80_quant-none-vnni?recipe_type=transfer-token_classification
+    --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/12layer_pruned80_quant-none-vnni?recipe_type=transfer-token_classification \
+    --distill_teacher zoo:nlp/token_classification/bert-base/pytorch/huggingface/conll2003/base-none
 ```
 
-Once the dense teacher is trained we may reuse it for KD in Sparsification or Sparse Transfer learning. 
+Once the dense teacher is trained we may reuse it for KD in Sparsification or Sparse Transfer learning.
 Simply pass the path to the directory with the teacher model to the `--distill_teacher` argument. For example:
 
 ```bash
