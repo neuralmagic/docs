@@ -29,7 +29,28 @@ const SidebarIcon = styled.div`
 const CopyButton = ({text, ...props}) => {
   const alert = useAlert()
   const clicked = () => {
-    navigator.clipboard.writeText(text).then(() => {
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert.show('Copied to clipboard');
+      });
+
+      return;
+    }
+
+    let textArea = document.createElement("textarea");
+    textArea.value = text;
+    // make the textarea out of viewport
+    textArea.style.position = "fixed";
+    textArea.style.left = "-999999px";
+    textArea.style.top = "-999999px";
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    return new Promise((res, rej) => {
+      // here the magic happens
+      document.execCommand('copy') ? res() : rej();
+      textArea.remove();
       alert.show('Copied to clipboard');
     });
   }
