@@ -8,9 +8,9 @@ index: 1000
 
 # Transfer a Sparsified Model for Text Classification
 
-This page walks through an example of fine-tuning a pre-sparsified model onto a new dataset for sentiment analysis. 
+This page walks through an example of fine-tuning a pre-sparsified model onto a new dataset for sentiment analysis.
 
-For NLP tasks, model distillation from a dense teacher to a sparse student model is helpful to achieve higher sparsity and accuracy. 
+For NLP tasks, model distillation from a dense teacher to a sparse student model is helpful to achieve higher sparsity and accuracy.
 We will follow two steps using SparseML:
 1. Fine-tune a dense teacher model (BERT) onto a new dataset (SST2)
 2. Transfer learn a pre-sparsified model (DistilBERT) from the SparseZoo onto SST2, distilling from the dense teacher model trained in step 1
@@ -47,14 +47,14 @@ $ sparseml.transformers.text_classification \
     --save_strategy epoch --save_total_limit 1
 ```
 
-The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts), and 
+The SparseML train script is a wrapper around a [HuggingFace script](https://huggingface.co/docs/transformers/run_scripts), and
 usage for most arguments follows the HuggingFace. The most important arguments for SparseML are:
-- `model_name_or_path`: specifies starting model. It can be a SparseZoo stub, HF model identifier, or a local directory 
+- `model_name_or_path`: specifies starting model. It can be a SparseZoo stub, HF model identifier, or a local directory
 with `model.pt`, `tokenizer.json` and `config.json`
 - `recipe`: recipe containing the training hyperparamters (SparseZoo stub or a local file)
 - `task_name`: specifies the sentiment analysis task. If not provided, also specifies the dataset, pipelines, and eval metrics.
 
-To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`. 
+To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the HuggingFace hub, use `--dataset_name`.
 See the [HF Docs](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
 
 Run the following to see the full list of options:
@@ -87,7 +87,7 @@ $ sparseml.transformers.text_classification \
     --save_strategy epoch --save_total_limit 1
 ```
 
-Usage is the same as above. The `--distill_teacher` argument instructs SparseML to perform model distillation from the 
+Usage is the same as above. The `--distill_teacher` argument instructs SparseML to perform model distillation from the
 teacher saved at `models/teacher`.
 
 There are many additional command line arguments that can be passed to tweak your fine-tuning process. Run the following to see the full list of options:
@@ -99,12 +99,12 @@ $ sparseml.transformers.text_classification -h
 
 With the sparsified model successfully trained, it is time to export it for inference.
 The `sparseml.transformers.export_onnx` command is used to export the training graph to a performant inference one.
-After the command completes, a `model.onnx` file is created in `models/sparsified` folder.
+After the command completes, a `model.onnx` file is created in `models/deployment` folder.
 It is now ready for deployment with the DeepSparse Engine.
 
 ```bash
 $ sparseml.transformers.export_onnx \
-    --model_path models/sparse_quantized \
+    --model_path models/sparsified \
     --task 'text-classification' --finetuning_task sst2 \
     --sequence_length 128
 ```
