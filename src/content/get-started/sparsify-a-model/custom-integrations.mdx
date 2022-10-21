@@ -46,19 +46,18 @@ A wrapped instance of the training optimizer is returned.
 A simple training example utilizing PyTorch and Torchvision with this SparseML integration is provided below:
 ```Python
 import torch
-from torchvision.models import resnet50
 from torch.nn import Linear
 from torch.utils.data import DataLoader
 from torch.nn import CrossEntropyLoss
 from torch.optim import SGD
 
+from sparseml.pytorch.models import resnet50
 from sparseml.pytorch.datasets import ImagenetteDataset, ImagenetteSize
 from sparseml.pytorch.optim import ScheduledModifierManager
 
 # Model creation
-model = resnet50(pretrained=True)
 NUM_CLASSES = 10  # number of imagenette classes
-model.fc = Linear(in_features=model.fc.in_features, out_features=NUM_CLASSES, bias=True)
+model = resnet50(pretrained=True, num_classes=NUM_CLASSES)
 
 # Dataset creation
 batch_size = 64
@@ -74,7 +73,7 @@ criterion = CrossEntropyLoss()
 optimizer = SGD(model.parameters(), lr=10e-6, momentum=0.9)
 
 # Recipe - in this case, we pull down a recipe from the SparseZoo for ResNet50
-# This can be a be a path to a local recipe
+# This can be a be a path to a local file
 recipe_path = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none?recipe_type=original"
 
 # SparseML Integration
@@ -82,15 +81,15 @@ manager = ScheduledModifierManager.from_yaml(recipe_path)
 optimizer = manager.modify(model, optimizer, steps_per_epoch=len(train_loader))
 
 # Training Loop
-running_loss = 0.0
-running_corrects = 0.0
 for epoch in range(manager.max_epochs):
-    for inputs, labels in train_loader[epoch]:
+    running_loss = 0.0
+    running_corrects = 0.0
+    for inputs, labels in train_loader:
         inputs = inputs.to(device)
         labels = labels.to(device)
         optimizer.zero_grad()
         with torch.set_grad_enabled(True):
-            outputs = model(inputs)
+            outputs, _ = model(inputs)
             loss = criterion(outputs, labels)
             _, preds = torch.max(outputs, 1)
             loss.backward()
@@ -134,8 +133,7 @@ modifiers:
 
     - !QuantizationModifier
         start_epoch: 50.0
-        submodules: ['model']
-        freeze_bn_stats_epoch: 3.0
+        freeze_bn_stats_epoch: 53.0
 
     - !SetLearningRateModifier
         start_epoch: 50.0
