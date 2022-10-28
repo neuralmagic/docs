@@ -48,7 +48,8 @@ To file a docs issue for a specific software component, use its repo issue track
 | [SparseML](https://docs.neuralmagic.com/products/sparseml/)            | [Repo](https://github.com/neuralmagic/sparseml/)   | [Queue](https://github.com/neuralmagic/sparseml/issues/)   | [Index](https://github.com/neuralmagic/sparseml/releases/)   | Apache 2.0          |
 | [Sparsify](https://docs.neuralmagic.com//products/sparsify/)            | [Repo](https://github.com/neuralmagic/sparsify/)   | [Queue](https://github.com/neuralmagic/sparsify/issues/)   | [Index](https://github.com/neuralmagic/sparsify/releases/)   | Apache 2.0          |
 | [SparseZoo](https://docs.neuralmagic.com/products/sparsezoo/)          | [Repo](https://github.com/neuralmagic/sparsezoo/)  | [Queue](https://github.com/neuralmagic//products/sparsezoo/issues/)  | [Index](https://github.com/neuralmagic/sparsezoo/releases/)  | Apache 2.0          |
-| [DeepSparse Engine](https://docs.neuralmagic.com//products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | Neural Magic Engine (Community Edition) |
+| [DeepSparse Engine](https://docs.neuralmagic.com//products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | Neural Magic Engine (Community Edition)  
+  MSLSA (Enterprise Edition) |
 
 For user help or questions, sign up or log in to our [**Deep Sparse Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
 
