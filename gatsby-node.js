@@ -3,7 +3,7 @@ const path = require('path');
 const startCase = require('lodash.startcase');
 
 exports.createPages = ({ graphql, actions }) => {
-  const { createPage } = actions;
+  const { createPage, createRedirect } = actions;
 
   return new Promise((resolve, reject) => {
     resolve(
@@ -42,6 +42,12 @@ exports.createPages = ({ graphql, actions }) => {
             },
           });
         });
+
+        // create redirect pages
+        createRedirect({ fromPath: '/deepsparse', toPath: '/products/deepsparse', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/sparseml', toPath: '/products/sparseml', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/sparsezoo', toPath: '/products/sparsezoo', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/sparsify', toPath: '/archive/sparsify', isPermanent: true });
       })
     );
   });
@@ -103,3 +109,9 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
     });
   }
 };
+
+exports.onPostBuild = ({ store }) => {
+  const { redirects } = store.getState();
+
+  console.log(redirects);
+}

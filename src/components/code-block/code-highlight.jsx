@@ -39,7 +39,8 @@ const CodeHighlight = ({ codeLines, language, displayType }) => {
         <Pre className={className} style={style}>
           {
             tokens.map((line, i) => (
-              <CodeBlockLine index={i}
+              <CodeBlockLine key={i}
+                             index={i}
                              line={line}
                              getLineProps={getLineProps}
                              getTokenProps={getTokenProps}

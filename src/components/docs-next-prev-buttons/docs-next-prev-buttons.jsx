@@ -137,8 +137,6 @@ const getNextPrevMdxEdges = (currentId, flattenedEdges) => {
 const DocsNextPrevButtons = ({currentId, nestedMdxEdges}) => {
   const flattenedEdges = flattenMdxEdges(nestedMdxEdges, []);
   const {prev, next} = getNextPrevMdxEdges(currentId, flattenedEdges);
-  console.log(prev);
-  console.log(next);
 
   return (
     <Container>

@@ -44,7 +44,7 @@ const MobileMenuItem = ({text, to, subItems}) => {
       <SubItemsContainer>
         {
           subItems.map((subConfig) => (
-            <SubItemLink to={subConfig.link}>{subConfig.title}</SubItemLink>
+            <SubItemLink key={subConfig.title} to={subConfig.link}>{subConfig.title}</SubItemLink>
           ))
         }
       </SubItemsContainer>

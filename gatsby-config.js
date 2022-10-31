@@ -37,11 +37,15 @@ const plugins = [
     }
   },
   {
-    resolve: `gatsby-plugin-gtag`,
+    resolve: `gatsby-plugin-google-gtag`,
     options: {
-      trackingId: config.gatsby.gaTrackingId,
-      head: true,
-      anonymize: false,
+      trackingIds: [
+        "G-L2QW513YN1", // Google Analytics / GA
+      ],
+      pluginConfig: {
+        // Puts tracking script in the head instead of the body
+        head: true
+      },
     },
   },
   'gatsby-plugin-remove-serviceworker',
@@ -54,6 +58,7 @@ const plugins = [
       }
     }
   },
+  `gatsby-plugin-meta-redirect`, // keep it in last in list
 ];
 
 module.exports = {
@@ -64,12 +69,7 @@ module.exports = {
     docsLocation: config.siteMetadata.docsLocation,
     ogImage: config.siteMetadata.ogImage,
     favicon: config.siteMetadata.favicon,
-    logo: { link: config.header.logoLink ? config.header.logoLink : '/', image: config.header.logo }, // backwards compatible
-    headerTitle: config.header.title,
-    githubUrl: config.header.githubUrl,
-    helpUrl: config.header.helpUrl,
-    tweetText: config.header.tweetText,
-    headerLinks: config.header.links,
+    logo: { link: config.siteMetadata.logo }, // backwards compatible
     siteUrl: config.gatsby.siteUrl,
   },
   plugins: plugins,

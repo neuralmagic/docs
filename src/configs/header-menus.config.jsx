@@ -29,19 +29,19 @@ const HeaderMenusConfig = {
           title: 'DeepSparse Engine',
           desc: 'Sparsity-aware neural network inference engine for GPU-class performance on CPUs.',
           img: ImgDeepSparseEngine,
-          link: 'https://github.com/neuralmagic/deepsparse',
+          link: 'https://neuralmagic.com/deepsparse-engine',
         },
         {
           title: 'SparseML',
           desc: 'Open-source libraries for applying sparsification recipes to neural networks with a few lines of code.',
           img: ImgSparseML,
-          link: 'https://github.com/neuralmagic/sparseml',
+          link: 'https://neuralmagic.com/sparseml',
         },
         {
           title: 'SparseZoo',
           desc: 'Open-source model repository for sparse and sparse-quantized models.',
           img: ImgSparseZoo,
-          link: 'https://github.com/neuralmagic/sparsezoo',
+          link: 'https://sparsezoo.neuralmagic.com/',
         },
       ]
     },
@@ -95,7 +95,7 @@ const HeaderMenusConfig = {
           title: 'Labs by Neural Magic',
           desc: 'Partner with experts to ensure your ML training and deployment pipelines are optimized with SOTA research and industry best practices.',
           img: ImgLabs,
-          link: 'https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ',
+          link: 'https://neuralmagic.com/labs',
         },
       ]
     },

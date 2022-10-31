@@ -63,7 +63,7 @@ const SidebarLinkText = styled(Link)`
 `;
 
 
-const SidebarLink = ( {title, link, rootLevel, selected, selectedPath, hasChildren, childrenOpen, onClick} ) => {
+const SidebarLink = ( {title, link, linkTarget, rootLevel, selected, selectedPath, hasChildren, childrenOpen, onClick} ) => {
   let Icon;
   let iconSmall = false;
 
@@ -85,7 +85,7 @@ const SidebarLink = ( {title, link, rootLevel, selected, selectedPath, hasChildr
       {Icon ? <SidebarIcon iconSmall={iconSmall} selected={selected} onClick={onClick}>
         <Icon css={{height: '100%', width: '100%'}} />
       </SidebarIcon> : ""}
-      <SidebarLinkText to={link}>
+      <SidebarLinkText to={link} target={linkTarget ? linkTarget : "_self"}>
         <SidebarItemText selected={selected} selectedPath={selectedPath} rootLevel={rootLevel}>
           {title}
         </SidebarItemText>
@@ -124,6 +124,7 @@ const SidebarItem = ({ currentId, rootLevel, edge, pathIds }) => {
       <SidebarLink onClick={() => setChildrenOpen(!childrenOpen)}
                    title={edge.title}
                    link={edge.targetURL ? edge.targetURL : edge.navLink}
+                   linkTarget={edge.targetURL ? "_blank" : null}
                    rootLevel={rootLevel}
                    selected={selected}
                    selectedPath={selectedPath}
