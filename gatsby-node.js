@@ -44,6 +44,7 @@ exports.createPages = ({ graphql, actions }) => {
         });
 
         // create redirect pages
+        createRedirect({ fromPath: '/deepsparse/source/hardware.html', toPath: '/user-guide/deepsparse-engine/hardware-support', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/deepsparse', toPath: '/products/deepsparse', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparseml', toPath: '/products/sparseml', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparsezoo', toPath: '/products/sparsezoo', redirectInBrowser: true, isPermanent: true });
