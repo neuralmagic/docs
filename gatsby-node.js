@@ -44,11 +44,20 @@ exports.createPages = ({ graphql, actions }) => {
         });
 
         // create redirect pages
-        createRedirect({ fromPath: '/deepsparse/source/hardware.html', toPath: '/user-guide/deepsparse-engine/hardware-support', redirectInBrowser: true, isPermanent: true });
+        // product page redirects
         createRedirect({ fromPath: '/deepsparse', toPath: '/products/deepsparse', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparseml', toPath: '/products/sparseml', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparsezoo', toPath: '/products/sparsezoo', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparsify', toPath: '/archive/sparsify', isPermanent: true });
+        createRedirect({ fromPath: '/products/deepsparse-ent', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/products/deepsparse-enterprise', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
+
+        // archived pages redirect
+        createRedirect({ fromPath: '/source/getstarted.html', toPath: '/', isPermanent: true });
+        createRedirect({ fromPath: '/deepsparse/source/hardware.html', toPath: '/user-guide/deepsparse-engine/hardware-support', isPermanent: true });
+        createRedirect({ fromPath: '/sparsezoo/source/models.html', toPath: 'https://github.com/neuralmagic/sparsezoo/blob/main/docs/source/models.md', isPermanent: true });
+        createRedirect({ fromPath: '/sparsezoo/source/recipes.html', toPath: 'https://github.com/neuralmagic/sparsezoo/blob/main/docs/source/recipes.md', isPermanent: true });
+        createRedirect({ fromPath: '/sparsify/source/userguide/01-intro.html', toPath: '/archive/sparsify/source/userguide/01-intro.html', isPermanent: true })
       })
     );
   });
@@ -107,6 +116,19 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
       name: 'groupIndex',
       node,
       value: node.frontmatter.groupIndex,
+    });
+
+    // set githubURL from file path
+    const srcSearchString = '/src/content/';
+    let githubURL = null;
+    if (node.fileAbsolutePath.indexOf(srcSearchString) > -1) {
+      const fileStub = node.fileAbsolutePath.substr(node.fileAbsolutePath.indexOf(srcSearchString));
+      githubURL = 'https://github.com/neuralmagic/docs/blob/main' + fileStub;
+    }
+    createNodeField({
+      name: 'githubURL',
+      node,
+      value: githubURL,
     });
   }
 };

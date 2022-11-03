@@ -174,7 +174,7 @@ const DocsLayout = ({ mdxFields, mdxFrontMatter, mdxTOC, allMdx, children }) => 
          <SidebarDivLeft />
        </SidebarDivLeftContainer>
        <MainContentContainer>
-         <DocsContentHeader currentId={mdxFields.id} nestedMdxEdges={nestedMdxEdges} githubURL={mdxFrontMatter.githubURL} />
+         <DocsContentHeader currentId={mdxFields.id} nestedMdxEdges={nestedMdxEdges} githubURL={mdxFields.githubURL} />
          <MDXProvider components={mdxComponents}>
            <MDXRenderer>
              {children}
@@ -184,7 +184,7 @@ const DocsLayout = ({ mdxFields, mdxFrontMatter, mdxTOC, allMdx, children }) => 
        </MainContentContainer>
      </MainContainer>
      <SidebarRightContainer>
-       <DocsSidebarRight currentSlug={mdxFields.slug} mdxTOC={mdxTOC} githubURL={mdxFrontMatter.githubURL} />
+       <DocsSidebarRight currentSlug={mdxFields.slug} mdxTOC={mdxTOC} githubURL={mdxFields.githubURL} />
      </SidebarRightContainer>
    </ContainerDiv>
   );

@@ -47,6 +47,7 @@ const Root = ({ data, pageContext }) => {
   const isDocsPage = data && data.mdx;
   const metaTitle = data && data.mdx ? data.mdx.frontmatter.metaTitle : null;
   const metaDescription = data && data.mdx ? data.mdx.frontmatter.metaDescription : null;
+  console.log(data);
 
   return (
    <RootDiv>
@@ -93,6 +94,7 @@ export const pageQuery = graphql`
         id
         title
         slug
+        githubURL
       }
       body
       tableOfContents
@@ -104,7 +106,6 @@ export const pageQuery = graphql`
       frontmatter {
         metaTitle
         metaDescription
-        githubURL
         index
         skipToChild
       }

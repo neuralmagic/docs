@@ -31,7 +31,7 @@ const TextStyle = styled.div`
 
 const GithubLink = ({ link, text, small }) => {
   return (
-    <LinkStyle to={link}>
+    <LinkStyle to={link} target={"_blank"}>
       <ButtonStyle small={small}>
         <GithubImg src={githubIconSrc} alt={"github"} />
         <TextStyle>{text}</TextStyle>

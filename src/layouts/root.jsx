@@ -92,6 +92,7 @@ export const pageQuery = graphql`
         id
         title
         slug
+        githubURL
       }
       body
       tableOfContents
@@ -103,7 +104,6 @@ export const pageQuery = graphql`
       frontmatter {
         metaTitle
         metaDescription
-        githubURL
         index
         skipToChild
       }
