@@ -21,15 +21,15 @@ export default class HTML extends React.Component {
           <meta name="description" content="Documentation for the Neural Magic DeepSparse Platform. Use Neural Magic, a sparsity-aware inference engine and open-source sparsification tools, for maximum CPU speedups of NLP and computer vision models." />
           <meta property="og:description" content="Documentation for the Neural Magic DeepSparse Platform. Use Neural Magic, a sparsity-aware inference engine and open-source sparsification tools, for maximum CPU speedups of NLP and computer vision models." />
           <meta property="og:url" content="https://docs.neuralmagic.com/" />
-          <link rel="shortcut icon" type="image/svg" href={favico} />
-          <meta property="og:image" content={logo} />
+          <link rel="shortcut icon" type="image/svg" href="https://docs.neuralmagic.com/favicon.ico" />
+          <meta property="og:image" content="https://docs.neuralmagic.com/logo.svg" />
           <meta property="og:image:secure_url" content={logo} />
           <meta property="og:image:width" content="500" />
           <meta property="og:image:height" content="460" />
           <meta name="twitter:card" content="summary_large_image" />
           <meta name="twitter:title" content="Neural Magic Docs" />
           <meta name="twitter:description" content="Documentation for the Neural Magic DeepSparse Platform. Use Neural Magic, a sparsity-aware inference engine and open-source sparsification tools, for maximum CPU speedups of NLP and computer vision models." />
-          <meta name="twitter:image" content={logo} />
+          <meta name="twitter:image" content="https://docs.neuralmagic.com/logo.svg" />
           <noscript key="noscript"></noscript>
           {this.props.headComponents}
         </head>

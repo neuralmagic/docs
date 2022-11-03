@@ -135,6 +135,4 @@ exports.onCreateNode = ({ node, getNode, actions }) => {
 
 exports.onPostBuild = ({ store }) => {
   const { redirects } = store.getState();
-
-  console.log(redirects);
 }
