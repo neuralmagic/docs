@@ -1,0 +1,578 @@
+# [XXX]
+
+This page contains the details of usage for the **[XXX]** Use Case with working code examples.
+
+We will demonstrate each workflow in the DeepSparse Platform:
+- (1) Optimize a Model for Inference [(Follow Along In Google Colab)](https://colab.research.google.com/drive/13VSuy5PoH8wPZXuhowX4TPUoFCHIGBHQ#scrollTo=YNDMQPNrt836)
+- (2) Deploy on CPUs
+
+## Installation
+
+Section 1 requires [SparseML XXX Install](/get-started/install/sparseml).
+
+Section 2 requires [DeepSparse XXX Install](/get-started/install/deepsparse).
+
+## 1. Optimize for Inference
+
+SparseML allows you to optimize your model for inference with techniques like pruning and 
+quantization (which together we call "sparsity"). When paired with a sparsity-aware runtime like
+DeepSparse, sparse models can gain signficiant performance improvements.
+
+There are two pathways for creating a sparse model with SparseML:
+- **Sparse Transfer Learning**: fine-tune from pre-sparsified models in the SparseZoo
+- **Sparsification From Scratch**: apply pruning and quantization to any model
+
+Sparse Transfer Learning is the easiest pathway and is highly recommended for use 
+cases where there is a pre-sparsified model in the SparseZoo. Sparsification from Scratch requires
+experimentation with hyperparameters to reach high levels of sparsity with high accuracy, but enables
+you to create a sparse version of any model.
+
+SparseML uses "Recipes" to apply both pathways. Recipes are YAML files which encode the hyperparameters of 
+the algorithms run by SparseML. We will show some examples of what Recipes are below (to give intuition)
+and there is a full [user guide](user-guide/recipes/creating) on the details. For the purpose of this demo, 
+it is just important to understand that Recipes are the way we will tell SparseML which algorithms to apply.
+
+Let's walk through an example of each.
+
+### Sparse Transfer Learning
+
+In Sparse Transfer Learning, you start with a sparsified foundation model and fine-tune it onto a new 
+dataset. Importantly, during the fine-tuning process, we maintain sparsity.
+
+For the **[XXX]** use case, SparseZoo has a sparsified version of **[XXX]** available off the shelf 
+along with a pre-made transfer learning recipe. We will use SparseML to apply this transfer learning 
+recipe.
+
+Generally, you can use Sparse Transfer Learning recipes from SparseZoo off the shelf, possibly
+tweaking the number of epochs and learning rate depending on your dataset size.
+
+We have a [full guide on recipes](user-guide/recipes/creating), but to give some intuition, 
+a Sparse Transfer Learning recipe uses two important modifiers:
+- `ConstantPruningModifier` tells SparseML to maintain sparsity as it fine tunes to all layers 
+- `QuantizationModifier` tells SparseML to quantize the model over the last few epochs
+
+<details>
+    <summary>Click to see the transfer learning recipe for [XXX] model</summary>
+
+```yaml
+# Epoch and Learning-Rate variables
+num_epochs: 10.0
+init_lr: 0.0005
+lr_min: 0.00001
+
+# quantization variables
+quantization_start_epoch: 4.0
+ 
+# Sets Number of Epochs + Learning Rate
+training_modifiers:
+  - !EpochRangeModifier
+    start_epoch: 0.0
+    end_epoch: eval(num_epochs)
+    
+  - !LearningRateModifier
+    start_epoch: 0.0
+    lr_class: CosineAnnealingWarmRestarts
+    lr_kwargs:
+      lr_min: eval(lr_min)
+      cycle_epochs: eval(int(num_epochs))
+    init_lr: eval(init_lr)
+
+# Phase 1 Sparse Transfer Learning / Recovery   << Keeps Sparsity
+sparse_transfer_learning_modifiers:
+  - !ConstantPruningModifier
+    start_epoch: 0.0
+    params: __ALL_PRUNABLE__
+
+# Phase 2 Apply quantization                    << Applies Quantizaton
+sparse_quantized_transfer_learning_modifiers:
+  - !QuantizationModifier
+    start_epoch: eval(quantization_start_epoch)
+```
+
+</details>
+
+Let's see how this recipe can be applied via CLI and Python.
+
+#### CLI Script
+
+With the command below, a sparse version of **[XXX]** is fine-tuned onto **[XXX]** dataset. SparseML
+first downloads the model and transfer learning recipe from the SparseZoo (which are 
+identified by their SparseZoo stubs) and kicks off a training loop.
+
+```bash
+sparseml.[xxx].train
+    --model_path zoo_stub
+    --dataset_path path/to/dataset
+    --recipe_path zoo_stub
+```
+Lets walk through the most important arguments:
+- `model_path`: specifies the location of the baseline model. It can be a SparseZoo stub or a 
+    path to a local directory containing a PyTorch model.
+- `dataset_path`: specifies the dataset used for the fine-tuning process.
+- `recipe_path`: specifies the location of the recipe. It can be a SparseZoo stub or a path
+    to a YAML file in a local directory.
+
+For full usage, run `sparseml.xxx.train --help`.
+
+#### Python API
+
+The CLI script is recommended for use, especially for Sparse Transfer Learning.
+However, if you have some sort of custom requirement where you cannot use the pre-made scripts, 
+SparseML can be integrated into a typical PyTorch loop with just a couple lines of code.
+
+Here is the pseudo-code:
+
+```Python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+model = Model(...)          # torch model - should be a sparse model
+optimizer = Optimizer(...)  # typical torch optimizer
+manager = ScheduledModifierManager.from_yaml(recipe)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# ...your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+
+Let's walk through it step by step. 
+
+The `model` and `optimizer` are typical PyTorch training objects. Since we are Sparse Transfer Learning, 
+the `model` should be a pre-sparsified model. A `manager` is initialized with a `recipe` (the same as in 
+the CLI example). `manager.modify()`, then, edits the `model` and `optimizer` with the 
+instructions from the `recipe`. As such, when the training loop is run, the pruned weights 
+remain at 0 when backprogation is applied!
+
+<details>
+    <summary>Click to view a working example</summary>
+
+```python
+import torch
+from torch.utils.data import DataLoader
+from torch.nn import CrossEntropyLoss
+from torch.optim import SGD
+from sparseml.pytorch.models import resnet50
+from sparseml.pytorch.datasets import ImagenetteDataset, ImagenetteSize
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+# Torch Model (for Sparse Transfer Learning, should be sparse)
+NUM_CLASSES = 10  # number of Imagenette classes
+model = resnet50(pretrained=True, num_classes=NUM_CLASSES, stub="xxx")
+optimizer = SGD(model.parameters(), lr=10e-6, momentum=0.9)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+# Setup Dataset
+batch_size = 64
+train_dataset = ImagenetteDataset(train=True, dataset_size=ImagenetteSize.s320, image_size=224)
+train_loader = DataLoader(train_dataset, batch_size, shuffle=True, pin_memory=True, num_workers=8)
+
+# SparseML Intrgation - edits model + optimizer with the recipe logic from Zoo
+recipe_path = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none?recipe_type=transer"
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch=len(train_loader))
+
+# Training Loop - typical training loop
+for epoch in range(manager.max_epochs):
+    for inputs, labels in train_loader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        optimizer.zero_grad()
+        with torch.set_grad_enabled(True):
+            outputs, _ = model(inputs)
+            loss = CrossEntropyLoss(outputs, labels)
+            _, preds = torch.max(outputs, 1)
+            loss.backward()
+            optimizer.step()
+
+manager.finalize(model)
+```
+</details>
+
+### Sparsification From Scratch
+
+In Sparsification From Scratch, you start with a dense model and apply pruning and quantization. As we 
+described in the [conceptual guide](/index/optimze-a-model), training aware pruning and quantization are the best
+algorithms for reaching high levels of sparsity without sacrificing accuracy. SparseML and this doc are focused 
+on applying training-aware techniques.
+
+There are pre-made sparsification recipes available for all models in SparseZoo, but you will need to create your 
+own recipe to apply sparsification to a new model. Checkout our guide on [creating recipes](/user-guide/recipes/creating) 
+for the details on how to create a good recipe.
+
+For the purposes of this demo, we will use the simplest possible recipe (which prunes all layers to the same level).
+The most important Modifiers for Sparsification Recipes are:
+- `GlobalMagnitudePruningModifier` instructs SparseML to gradually remove the smallest weights at the end of 
+each epoch over until each layer reaches at target level of sparsity 
+- `QuantizationModifier` instructs SparseML to quantize the model over the final epochs
+
+<details>
+<summary>Click to see the simple recipe</summary>
+
+```yaml
+modifiers:
+    - !GlobalMagnitudePruningModifier   # GMP (pruning algorithm)
+        init_sparsity: 0.05             # 5% starting sparsity
+        final_sparsity: 0.8             # 80% sparsity target
+        start_epoch: 0.0
+        end_epoch: 30.0                 # run over 30 epochs
+        update_frequency: 1.0           # prune 1x per epoch
+        params: __ALL_PRUNABLE__        # applies 80% target to all layers
+
+    - !SetLearningRateModifier
+        start_epoch: 0.0
+        learning_rate: 0.05
+
+    - !LearningRateFunctionModifier
+        start_epoch: 30.0           
+        end_epoch: 50.0
+        lr_func: cosine
+        init_lr: 0.05
+        final_lr: 0.001
+
+    - !QuantizationModifier             # QAT (quantization algorithm) 
+        start_epoch: 50.0               # start quantizing at epoch 50
+        freeze_bn_stats_epoch: 53.0
+
+    - !SetLearningRateModifier
+        start_epoch: 50.0
+        learning_rate: 10e-6
+
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 55.0
+```
+</details>
+
+Let's see how this recipe can be applied in the CLI or Python API.
+
+#### CLI Script
+
+With the command below, a dense version of **[XXX]** is sparsified using **[XXX]** dataset with 
+a pre-made sparsification recipe from SparseZoo.
+
+```bash
+sparseml.[xxx].train
+    --model_path zoo_stub
+    --dataset_path path/to/dataset
+    --recipe_path zoo_stub
+```
+Lets walk through the most important arguments:
+- `model_path`: specifies the location of the baseline model. It can be a SparseZoo stub or a path to a local model
+- `dataset_path`: specifies the dataset used for the sparsifcation process.
+- `recipe_path`: specifies the location of the recipe. It can be a SparseZoo stub or a path
+    to a YAML file in a local directory.
+
+We used a dense model and a pre-made recipe from the SparseZoo as an example. However, if you are Sparsifying from Scratch 
+you may want to use a model we don't have in SparseZoo (If we do have one in SparseZoo, you should be Sparse
+Transfer Learning instead!). 
+
+To use a custom model/recipe, first export your model to the `.pt` format 
+and create a `recipe.yaml` file (the simple example above should work for any model) in your filesystem.
+
+Running the following applies the custom recipe to your model:
+
+```bash
+sparseml.[xxx].train
+    --model_path path/to/model.pt
+    --dataset_path path/to/recipe
+    --recipe_path path/to/recipe.yaml
+```
+
+#### Python API
+
+The Python API allows you to integrate SparseML into a custom training pipeline.
+
+Because of the recipe driven approach, the code is almost exactly the same as above. Here is the pseudo-code again for reference:
+
+```python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+model = Model(...)          # trained torch model
+optimizer = Optimizer(...)  # typical torch optimizer
+manager = ScheduledModifierManager.from_yaml(recipe)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# ...your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+
+<details>
+<summary>Click to view a working example with a custom model and recipe</summary>
+
+We will apply the simple recipe from above to **[XXX]** model, which is not in SparseZoo.
+
+First, create a YAML file and name it `your_recipe.yaml`. You will need to update line **[XXX]** in the 
+example below with the local path to your recipe.
+
+```python
+from torch.utils.data import DataLoader
+from torch.nn import CrossEntropyLoss
+from torch.optim import SGD
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+# Trained Torch Model
+model = unsupported_model() #<< this example should use unsupported model
+optimizer = SGD(model.parameters(), lr=10e-6, momentum=0.9)
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+# Setup Dataset
+batch_size = 64
+train_dataset = Dataset(train=True)
+train_loader = DataLoader(train_dataset, batch_size, shuffle=True, pin_memory=True, num_workers=8)
+
+# SparseML Intergation
+recipe_path = "path/to/your_recipe.yaml" ### < PASTE PATH TO YOUR RECIPE HERE ###
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch=len(train_loader))
+
+# Training Loop
+for epoch in range(manager.max_epochs):
+    for inputs, labels in train_loader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        optimizer.zero_grad()
+        with torch.set_grad_enabled(True):
+            outputs, _ = model(inputs)
+            loss = CrossEntropyLoss(outputs, labels)
+            _, preds = torch.max(outputs, 1)
+            loss.backward()
+            optimizer.step()
+
+manager.finalize(model)
+```
+</details>
+
+### Advanced Usage
+
+As a reminder, you can run the following to see the full list of command-line arguments:
+
+```bash
+sparseml.[xxx].train --help
+```
+
+#### Using a Custom Dataset
+
+The examples above use datasets which are integrated into SparseML. However, you may want to use 
+a private dataset, specific to your application. For **[XXX]** use case, SparseML is integrated with **[YYY]** 
+integration, so you must supply data in **[YYY]**'s format.
+
+[Description of YYY's format]
+
+Once you have loaded your data into **[YYY]**'s format, SparseML accepts a dataset config 
+file in YAML format. For **[XXX]** use case, the config looks like the following:
+
+```yaml
+# data-config.yaml
+
+# show an example config file
+```
+
+Now, just run the CLI script as usual:
+
+```bash
+sparseml.[xxx].train
+    --model_path zoo_stub
+    --dataset_path path/to/dataset_config.yaml
+    --recipe_path zoo_stub_recipe
+```
+
+With the Python API, you can use just use `DataLoaders` as you would in typical training loops.
+
+#### Export to ONNX
+
+SparseML has exporting functionality that enables you to export your model into the open 
+ONNX format for usage with DeepSparse (or with other runtimes).
+
+From the CLI, run:
+```bash
+sparseml.xxx.export_onnx
+    --model_path [xxx]   
+```
+
+From the Python API, run:
+```
+import os
+import torch
+from sparseml.pytorch.models import mnist_net # replace with domain specific model
+from sparseml.pytorch.utils import ModuleExporter
+
+model = mnist_net()
+exporter = ModuleExporter(model, output_dir=os.path.join(".", "onnx-export"))
+exporter.export_onnx(sample_batch=torch.randn(1, 1, 28, 28))
+```
+
+Checkout the [user guide on ONNX exports](/user-guide/onnx-export) for more details.
+
+#### Additional Resources
+- [Optimize a Model Conceptual Guide](index/optimize-a-model)
+- [Creating Recipes](user-guide/recipes/creating)
+- Python API Docs (Coming Soon!)
+- CLI Docs (Coming Soon!)
+
+## 2. Deploy on CPUs
+
+DeepSparse enables you to deploy on CPUs with GPU-class performance for sparse models. 
+
+There are two pathways for deploying a **[XXX]** model with DeepSparse:
+1. **Pipeline** - premade Python APIs that wrap inference with pre and post-processing
+2. **Server** - premade REST APIs for building a model service with DeepSparse
+
+Both Pipeline and Server wrap the runtime with convienent pre-made APIs that create a 
+clean interface between an application and the **[XXX]** model, ultimately reducing the burden
+of adding DeepSparse to an application.
+
+Let's walk through an example of each.
+
+### Pipelines
+
+DeepSparse Pipelines wrap the inference runtime with pre and post-processing.
+
+For [XXX], the Pipeline handles [XXX preprocessing], runs inference on the raw tensors, and handles [XXX postprocessing].
+This means that users can just pass [XXX] raw input and recieve back [XXX] processed output, creating a clean interface
+between application and model logic. 
+
+`Pipeline.create` creates an instance of `[XXX]Pipeline`. Specify `[xxx]` as the task and a path
+to your model in ONNX format (either a SparseZoo stub or local model) and you are off!
+
+```python
+from deepsparse import Pipeline
+example_pipeline = Pipeline.create(
+    task="example_task",     # e.g. image_classification or question_answering
+    model_path="model.onnx", # local model or SparseZoo stub
+)
+
+# pass raw, unprocessed input 
+pipeline_inputs = ["The quick brown fox jumps over the lazy dog"]
+
+# get back post-processed outputs
+pipeline_outputs = example_pipeline(pipeline_inputs)
+```
+
+[XXX Space for comments on configuring the Pipeline for a Specific Use Case (e.g. labels)]
+
+#### Additional Resources
+
+Pipelines have many additional features and settings you can configure.
+Checkout the [Pipeline user guide](/coming-soon) or some additional ad-hoc tutorials:
+- [Multi-Stream Scheduling Conceptual Overview](/user-guide/deepsparse-engine/scheduler)
+- Multi-Stream in Pipelines [Docs Coming Soon]
+- Data Logging in Pipelines [Docs Coming Soon]
+- Dynamic Batch in Pipelines [Docs Coming Soon]
+- Bucketed Pipelines [Docs Coming Soon]
+
+### Server 
+
+DeepSparse Server wraps Pipelines with REST APIs using the FastAPI web framework and uvicorn web server.
+This enables you to spin up a model service with no additional code.
+
+Since Server is a wrapper around Pipelines, the Server inherits all of the functionality of Pipelines (including the 
+pre and post-processing phases), meaning you can pass raw unprocessed inputs to the Server and recieve post-processed
+predictions.
+
+DeepSparse Server is launched from the CLI, with configuration via either command line arguments or a config file.
+
+#### Launch with Command Line Args
+
+With the command line argument path, users specify a use case via the `task` argument (e.g. `image_classification` or `question_answering`) as
+well as a model (either a local ONNX file or a SparseZoo stub) via the `model_path` argument:
+```bash
+deepsparse.server task [xxx] --model_path [model_path]
+```
+
+[XXX Space for comments on configuring the Server's kwargs for the specific use case]
+
+#### Launch with Config File (Preferred)
+
+With the config file path, users create a YAML file that specifies the server configuration. A YAML file looks like the following:
+
+```yaml
+endpoints:
+    - task: [XXX]           # specifiy use case (e.g. image_classification, question_answering)
+      route: /predict       # specify the route of the endpoint
+      model: [XXX]          # specify sparsezoo stub or path to local onnx file
+      name: [XXX]
+      kwargs:
+```
+
+[XXX Space for comments on configuring the Server's kwargs for the specific use case]
+
+The Server is then launched with the following:
+
+```bash
+deepsparse.server config_file config.yaml
+```
+
+#### Client Side
+
+Clients interact with the Server via HTTP. Because the Server uses Pipelines internally,
+users can simply pass raw data to the Server and recieve back post-processed predictions.
+
+For example, a user would do the following to query a Question Answering endpoint:
+```
+import requests
+
+url = "http://localhost:5543/predict"
+
+obj = {
+    "question": "Who is Mark?", 
+    "context": "Mark is batman."
+}
+
+response = requests.post(url, json=obj)
+```
+
+Pipelines have many additional features and settings you can configure. 
+Checkout the [Server guide](/coming-soon) or some additional ad-hoc tutorials:
+- [Multi-Stream Scheduling Overview](/user-guide/deepsparse-engine/scheduler)
+- Multi-Stream Tutorial [Docs Coming Soon]
+- Data Logging Tutorial [Docs Coming Soon]
+- Dynamic Batch Tutorial [Docs Coming Soon]
+- Bucketed Tutorial [Docs Coming Soon]
+
+### Benchmarking Performance
+
+DeepSparse provides a useful benchmarking script to test performance.
+
+Below is an examples benchmarking a dense and sparse version of [XXX] model on DeepSparse with an 
+[XXX] core machine (AWS [XXX] instance):
+
+#### Dense (Unoptimized) [XXX] Performance
+
+```bash
+$ deepsparse.benchmark [xxx]
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 5.2836
+> Latency Mean (ms/batch): 378.2448
+> Latency Median (ms/batch): 378.1490
+> Latency Std (ms/batch): 2.5183
+> Iterations: 54
+```
+
+#### Sparse [XXX] Performance
+
+Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of [XXX].
+It achieved [XXX] items per second, a **[XXX]** increase in performance over the dense baseline.
+
+```bash
+$ deepsparse.benchmark [xxx]
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 18.9863
+> Latency Mean (ms/batch): 105.2613
+> Latency Median (ms/batch): 105.0656
+> Latency Std (ms/batch): 1.6043
+> Iterations: 190
+```
+
+For more on using the benchmarking script checkout our [benchmarking guide](/user-guide/deepsparse-engine/benchmarking)
+or run `deepsparse.benchmark --help`.
