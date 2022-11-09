@@ -10,8 +10,8 @@ index: 0
 This page contains the details of usage for the **[XXX]** Use Case with working code examples.
 
 We will demonstrate each workflow in the DeepSparse Platform:
-- (1) Optimize a Model for Inference with SparseML [(Follow Along In Google Colab)](https://colab.research.google.com/drive/13VSuy5PoH8wPZXuhowX4TPUoFCHIGBHQ#scrollTo=YNDMQPNrt836)
-- (2) Deploy on CPUs with DeepSparse
+- (1) Optimize a Model for Inference [(Follow Along In Google Colab)](https://colab.research.google.com/drive/13VSuy5PoH8wPZXuhowX4TPUoFCHIGBHQ#scrollTo=YNDMQPNrt836)
+- (2) Deploy on CPUs
 
 ## Installation
 
@@ -22,7 +22,8 @@ Section 2 requires [DeepSparse XXX Install](/get-started/install/deepsparse).
 ## 1. Optimize for Inference
 
 SparseML allows you to optimize your model for inference with techniques like pruning and 
-quantization (which together we call "sparsity").
+quantization (which together we call "sparsity"). When paired with a sparsity-aware runtime like
+DeepSparse, sparse models can gain signficiant performance improvements.
 
 There are two pathways for creating a sparse model with SparseML:
 - **Sparse Transfer Learning**: fine-tune from pre-sparsified models in the SparseZoo
@@ -49,11 +50,11 @@ For the **[XXX]** use case, SparseZoo has a sparsified version of **[XXX]** avai
 along with a pre-made transfer learning recipe. We will use SparseML to apply this transfer learning 
 recipe.
 
-Generally, you can use the Sparse Transfer Learning recipes from SparseZoo off the shelf, just 
-adjusting the number of epochs depending on your dataset size.
+Generally, you can use Sparse Transfer Learning recipes from SparseZoo off the shelf, possibly
+tweaking the number of epochs and learning rate depending on your dataset size.
 
 We have a [full guide on recipes](user-guide/recipes/creating), but to give some intuition, 
-a Sparse Transfer Learning recipe use two important modifiers:
+a Sparse Transfer Learning recipe uses two important modifiers:
 - `ConstantPruningModifier` tells SparseML to maintain sparsity as it fine tunes to all layers 
 - `QuantizationModifier` tells SparseML to quantize the model over the last few epochs
 
@@ -254,8 +255,8 @@ Let's see how this recipe can be applied in the CLI or Python API.
 
 #### CLI Script
 
-With the command below, a dense version of **[XXX]** is sparsified using **[XXX]** dataset, using 
-a pre-made sparsification recipe in SparseZoo.
+With the command below, a dense version of **[XXX]** is sparsified using **[XXX]** dataset with 
+a pre-made sparsification recipe from SparseZoo.
 
 ```bash
 sparseml.[xxx].train
@@ -269,11 +270,12 @@ Lets walk through the most important arguments:
 - `recipe_path`: specifies the location of the recipe. It can be a SparseZoo stub or a path
     to a YAML file in a local directory.
 
-We used a dense model from the SparseZoo and a pre-made recipe from the SparseZoo
-as an example. However, if you are Sparsifying from Scratch you may want to use a model we do not 
-have yet with a custom use case. To use the CLI script with a custom model/recipe, first export 
-your model to the `.pt` format and create a `recipe.yaml` file (the example we have above should work 
-for any model) in your local directory.
+We used a dense model and a pre-made recipe from the SparseZoo as an example. However, if you are Sparsifying from Scratch 
+you may want to use a model we don't have in SparseZoo (If we do have one in SparseZoo, you should be Sparse
+Transfer Learning instead!). 
+
+To use a custom model/recipe, first export your model to the `.pt` format 
+and create a `recipe.yaml` file (the simple example above should work for any model) in your filesystem.
 
 Running the following applies the custom recipe to your model:
 
@@ -306,9 +308,9 @@ manager.finalize(model)
 <details>
 <summary>Click to view a working example with a custom model and recipe</summary>
 
-For this example, we will apply the simple custom recipe from above to **[XXX]** model, which is not in SparseZoo.
+We will apply the simple recipe from above to **[XXX]** model, which is not in SparseZoo.
 
-First, create a YAML file with the simple recipe from above and name it `your_recipe.yaml`. You will need to update line **[XXX]** in the 
+First, create a YAML file and name it `your_recipe.yaml`. You will need to update line **[XXX]** in the 
 example below with the local path to your recipe.
 
 ```python
@@ -419,9 +421,9 @@ Checkout the [user guide on ONNX exports](/user-guide/onnx-export) for more deta
 
 ## 2. Deploy on CPUs
 
-DeepSparse enables you to deploy your models on CPUs, with GPU-class performance on sparse models. 
+DeepSparse enables you to deploy on CPUs with GPU-class performance for sparse models. 
 
-There are two pathways for deploying a [XXX] model with DeepSparse:
+There are two pathways for deploying a **[XXX]** model with DeepSparse:
 1. **Pipeline** - premade Python APIs that wrap inference with pre and post-processing
 2. **Server** - premade REST APIs for building a model service with DeepSparse
 
@@ -529,7 +531,7 @@ obj = {
 response = requests.post(url, json=obj)
 ```
 
-Pipelines have many additional features and settings you can configure the runtime's performance. 
+Pipelines have many additional features and settings you can configure. 
 Checkout the [Server guide](/coming-soon) or some additional ad-hoc tutorials:
 - [Multi-Stream Scheduling Overview](/user-guide/deepsparse-engine/scheduler)
 - Multi-Stream Tutorial [Docs Coming Soon]
@@ -541,10 +543,10 @@ Checkout the [Server guide](/coming-soon) or some additional ad-hoc tutorials:
 
 DeepSparse provides a useful benchmarking script to test performance.
 
-The code below provides an examples benchmarking a dense and sparse version of [XXX] model on DeepSparse with an 
+Below is an examples benchmarking a dense and sparse version of [XXX] model on DeepSparse with an 
 [XXX] core machine (AWS [XXX] instance):
 
-#### Dense (Unoptimized) [XXX] 
+#### Dense (Unoptimized) [XXX] Performance
 
 ```bash
 $ deepsparse.benchmark [xxx]
@@ -560,7 +562,7 @@ $ deepsparse.benchmark [xxx]
 > Iterations: 54
 ```
 
-### Sparse [XXX]
+#### Sparse [XXX] Performance
 
 Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of [XXX].
 It achieved [XXX] items per second, a **[XXX]** increase in performance over the dense baseline.
