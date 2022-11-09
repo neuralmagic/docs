@@ -1,0 +1,111 @@
+---
+title: "Custom Use Case"
+metaTitle: "Use a Custom Use Case"
+metaDescription: "Use a Custom Use Case and Model with the DeepSparse Engine to deploy for faster and cheaper inference on CPUs"
+index: 3000
+---
+
+# Custom Use Case
+
+This page explains how to run a model on the DeepSparse Engine for a custom task inside a Python API called `Pipelines.`
+
+`Pipelines` wrap key utilities around the DeepSparse Engine for easy testing and deployment.
+
+The DeepSparse Engine supports many operators within ONNX, enabling performance for most models and use cases outside of the ones available on the SparseZoo.
+The `CustomTaskPipeline` enables you to wrap your model with custom pre and post-processing functions for simple deployment and benchmarking.
+In this way, the simplicity of `Pipelines` is combined with the performance of DeepSparse for arbitrary use cases.
+
+## Install Requirements
+
+This example requires [DeepSparse General Install](/get-started/install/deepsparse) and [SparseML Torchvision Install](/get-started/install/sparseml).
+
+## Model Setup
+
+For custom model deployment, first export your model to the ONNX model format (create a `model.onnx` file).
+SparseML has available wrappers for ONNX export classes and APIs for a more straightforward export process.
+A sample export utilizing this API for a MobileNetV2 TorchVision model is given below.
+
+```python
+import torch
+from torchvision.models.mobilenetv2 import mobilenet_v2
+from sparseml.pytorch.utils import export_onnx
+
+model = mobilenet_v2(pretrained=True)
+sample_batch = torch.randn((1, 3, 224, 224))
+export_path = "custom_model.onnx"
+export_onnx(model, sample_batch, export_path)
+```
+
+Once the model is in an ONNX format, it is ready for inclusion in a `CustomTaskPipeline` or benchmarking.
+Examples for both are given below.
+
+## Inference Pipelines
+
+The `model.onnx` file can be passed into a DeepSparse `CustomTaskPipeline` utilizing the `model_path` argument alongside optional pre and post-processing functions.
+
+A sample image is downloaded that will be run through the example to test the `Pipeline`.
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, the pre and post-processing functions are defined, and the pipeline enabling the classification of the image file is instantiated:
+
+```python
+from deepsparse.pipelines.custom_pipeline import CustomTaskPipeline
+import torch
+from torchvision import transforms
+from PIL import Image
+
+IMAGENET_RGB_MEANS = [0.485, 0.456, 0.406]
+IMAGENET_RGB_STDS = [0.229, 0.224, 0.225]
+preprocess_transforms = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=IMAGENET_RGB_MEANS, std=IMAGENET_RGB_STDS),
+])
+
+def preprocess(inputs):
+    with open(inputs, "rb") as img_file:
+        img = Image.open(img_file)
+        img = img.convert("RGB")
+    img = preprocess_transforms(img)
+    batch = torch.stack([img])
+    return [batch.numpy()]  # deepsparse requires a list of numpy array inputs
+
+def postprocess(outputs):
+    return outputs  # list of numpy array outputs
+
+custom_pipeline = CustomTaskPipeline(
+    model_path="custom_model.onnx",
+    process_inputs_fn=preprocess,
+    process_outputs_fn=postprocess,
+)
+inference = custom_pipeline("basilica.jpg")
+print(inference)
+
+> [array([[-5.64189434e+00, -2.78636312e+00, -2.62499309e+00, ...
+```
+
+## Benchmarking
+
+The DeepSparse install includes a benchmark CLI for convenient and easy inference performance benchmarking: `deepsparse.benchmark`.
+The CLI takes in both SparseZoo stubs or paths to a local `model.onnx` file.
+
+The code below provides an example for benchmarking the previously exported MobileNetV2 model.
+The output shows that the model achieved 441 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark custom_model.onnx
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.2 (7dc5fa34) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: custom_model.onnx
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 441.2780
+> Latency Mean (ms/batch): 4.5244
+> Latency Median (ms/batch): 4.5054
+> Latency Std (ms/batch): 0.0774
+> Iterations: 4414
+```
