@@ -1,0 +1,307 @@
+---
+title: "Quick Tour"
+metaTitle: "Quick Tour"
+metaDescription: "Quick tour of the available functionality"
+index: 3000
+---
+
+# Quick Tour
+
+The DeepSparse Platform enables you to (1) Optimize a Model for Inference and (2) Deploy a Model on CPUs
+with GPU-class performance.
+
+This tour orients you to our offering by showing you the major pieces of functionality and providing
+pointers to more details.
+
+## 1. Optimize a Model for Inference with SparseML
+
+SparseML and SparseZoo enable users to create models that are optimized for inference. 
+By leveraging sparsification techniques like pruning and quantization, users reach GPU-class
+performance when deploying CPUs with a sparsity-aware inference runtime like DeepSparse.
+
+There are two workflows that allow users to accomplish this goal:
+1. **[Sparse Transfer Learning](/get-started/transfer-a-sparsified-model)**: fine-tune pre-sparsified models 
+onto custom data while maintaining sparsity
+2. **[Sparsification From Scratch](/get-started/sparsify-a-model)**: apply pruning and quantization to any model
+
+Sparse Transfer Learning is recommended for use cases with pre-sparsified models in SparseZoo.
+Sparsification From Scratch can be used to optimize any model but requires experimenting with 
+hyperparameters to reach high levels of sparsity with high accuracy.
+
+Each workflow can be applied via CLI scripts or Python code.
+
+### CLI Scripts
+
+For supported use cases, SparseML provides CLI scripts that enable users to kick off Sparse Transfer Learning 
+or Sparsification From Scratch runs with a single command.
+
+Each use case has slightly different arguments that align to their integrations (the Transformer scripts adhere
+to HuggingFace format while the YOLOv5 scripts adhere to Ultralytics format), but they generally look something like 
+the following:
+
+```bash
+sparseml.[use_case].train
+    --model    [LOCAL_PATH / SPARSEZOO_STUB]
+    --dataset  [LOCAL_PATH]
+    --recipe   [LOCAL_PATH / SPARSEZOO_RECIPE_STUB]
+    --other_configs [e.g. BATCH_SIZE, EPOCHS, etc.] 
+```
+
+Let's break down each argument:
+
+- `--model` points SparseML to a trained model which is the starting point for the training process. In Sparse Transfer Learning,
+this is usually a SparseZoo stub that points to the pre-sparsified model of choice. In Sparsification From Scratch, this is usually
+a path to a trained PyTorch or TensorFlow model in a local filesystem.
+
+- `--dataset` points SparseML to the dataset to be used (both STL and SFS require training data). Datasets must be provided in the form expected 
+by the underlying integration. For instance, if training YOLOv5, data must be provided in the YOLOv5 format and if training Transformers, 
+data must be provided in the HuggingFace format. 
+
+- `--recipe` points SparseML to a YAML file called a recipe. Recipes encode sparsity-related hyperparameters used by SparseML.
+For instance, a recipe for Sparsification From Scratch encodes the target sparsity level for each layer while a recipe for Sparse Transfer Learning
+instructs SparseML to maintain sparsity as the fine-tuning occurs. When Sparse Transfer Learning, you will almost always want to use a pre-made 
+transfer learning recipe from SparseZoo passed as a SparseZoo stub. When Sparsifying From Scratch on a new model, you will likely create a 
+custom recipe and run experiments with various hyperparameter settings.
+
+You can now see why SparseML makes Sparse Transfer Learning so easy. All you have to do is point SparseML to a 
+pre-sparsified model and pre-made transfer learning recipe in SparseZoo and to your own dataset and you are off!
+
+Sparsification from Scratch will require you to create a recipe and experiement with hyperparameters, 
+but the declarative nature of recipes makes makes it easy to focus on running experiments rather than writing code. 
+
+**Additional Resources**
+- Get Started With [Sparse Transfer Learning](/get-started/transfer-a-model)
+- Get Started With [Sparsification From Scratch](/get-started/sparsify-a-model)
+- Refer to [Use Cases](/use-cases) for details on usage
+- Refer to [Recipe User Guide](/user-guide/recipes) for details on recipes
+
+### Python API
+
+For users needing flexibility for unsupported use cases or a supported use case
+with custom training pipelines or infrastructure, SparseML also provides Python APIs that enable you to 
+integrate SparseML into a PyTorch or TensorFlow pipeline.
+
+As such, users can apply Sparse Transfer Learning and Sparsification From Scratch with just three additional
+lines of code around a training pipeline.
+
+The following code illustrates all that is needed:
+
+```Python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+model = Model(...)          # typical torch model
+optimizer = Optimizer(...)  # typical torch optimizer
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# ...your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+
+Let's break down this example step-by-step:
+- `model` and `optimizer` are the typical PyTorch objects used in every training loop.
+- `ScheduledModifierManager.from_yaml(recipe_path)` accepts a `recipe_path`, which points to the location of 
+a YAML file called a Recipe. We discussed recipes above, but as a reminder, they encode the hyperparameters 
+of the Sparse Transfer Learning or Sparsification From Scratch workflows.  
+- `manager.modify(...)` edits the `model` and `optimizer` objects to run the Sparse Transfer Learning or 
+Sparsification From Scratch algorithms with the hyperparameters encoded in the recipe.
+- The `model` and `optimizer` are then used as usual in a training loop. If a Sparsification from Scratch recipe was
+given to the `manager`, then the `optimizer` will gradually prune weights according to the recipe. If a Sparsification
+from Scratch recipe was passed, then pruned weights will remain at zero during gradient updates.
+
+**Additional Resources**
+- Refer to [Custom Integrations Guide](/get-started/sparsify-a-model/custom-integrations) for more details on the Python API.
+- Refer to [Recipe User Guide](/user-guide/recipes) for details on creating recipes.
+
+**Want to Learn More?**
+
+Checkout our [conceptual guide on optimizing for inference with sparsity](/index/optimize-workflow).
+
+## 2. Deploy on CPUs with DeepSparse
+
+DeepSparse is a CPU-only deep learning deployment platform. It wraps a sparsity-aware runtime that reaches GPU-class
+performance on inference-optimized sparse models with APIs that simplify the process of integrating a model into 
+an application.
+
+There are three primary interfaces for interacting with DeepSparse:
+1. **Pipeline** - Python APIs that wrap the runtime with pre-processing and post-processing
+2. **Server** - REST APIs that allow you to create a model service around a Pipeline
+3. **Engine** - Python APIs that provide direct access to the runtime
+
+Pipeline and Server are the preferred pathways for interacting with DeepSparse.
+
+### Pipelines
+
+DeepSparse Pipelines make it easy to integrate DeepSparse into an application, by wrapping pre and post-processing
+around the inference runtime. For example, a DeepSparse Pipeline in the NLP domain handles the tokenization process, 
+meaning you can pass raw strings and recieve answers and a DeepSparse Pipeline in the Object Detection domain handles 
+input normalization (mean and std transform) as well as the non-max supression of output, meaning you can just pass 
+raw images and recieve the bounding boxes. 
+
+For supported use cases, Pipelines are pre-made. For unsupported use cases, you can create a custom Pipeline by 
+specifying a pre and post-processing function, creating a consistent interface for interacting with DeepSparse.
+
+**Pipeline Usage - Python API**
+
+For a supported use case, the `Pipeline` class is workhorse that you will use. Simplify specify a use case via the 
+`task` argument and a model in ONNX format via the `model_path` argument and you are off!
+
+```python
+from deepsparse import Pipeline
+example_pipeline = Pipeline.create(
+    task="example_task",     # e.g. image_classification or question_answering
+    model_path="model.onnx", # local model or SparseZoo stub
+)
+
+# pass raw, unprocessed input 
+pipeline_inputs = ["The quick brown fox jumps over the lazy dog"]
+
+# get back post-processed outputs
+pipeline_outputs = example_pipeline(pipeline_inputs)
+```
+
+For an unsupported use case, you will use `CustomTaskPipeline` to create a Pipeline. Simply specify a 
+pre-processing and post-processing function and a model in ONNX format.
+
+``` python
+from deepsparse.pipelines.custom_pipeline import CustomTaskPipeline
+
+def preprocess(inputs):
+    pass # define your function
+def postprocess(outputs)
+    pass # define your function
+
+custom_pipeline = CustomTaskPipeline(
+    model_path="custom_model.onnx",
+    process_inputs_fn=preprocess,
+    process_outputs_fn=postprocess,
+)
+
+# pass raw, unprocessed input
+pipeline_inputs = ["The quick brown fox jumps over the lazy dog"]
+
+# get back post-processed outputs
+pipeline_outputs = custom_pipeline(pipeline_inputs)                       
+```
+
+**Additional Resources**
+
+- Get Started and [Use A Model](/get-started/use-a-model)
+- Get Started and [Use A Model in a Custom Use Case)](/get-started/use-a-model/custom-use-case)
+- Refer to [Use Cases](/use-cases) for Details on Usage of Each Supported Use Case
+- List of Supported Use Cases [Docs Coming Soon]
+
+Beyond pre-processing and post-processing, Pipelines also have other useful utilites like Data Logging, 
+Multi-Stream Inference, and Dynamic Batch. Checkout the documentation on the [Pipeline Class](/user-guide/pipelines)
+or the ad-hoc user guides:
+- [Multi-Stream Scheduling Overview](/user-guide/deepsparse-engine/scheduler)
+- Example Using Multi-Stream in Pipelines [Docs Coming Soon]
+- Data Logging in Pipelines [Docs Coming Soon]
+- Dynamic Batch [Docs Coming Soon]
+
+### Server 
+
+DeepSparse Server wraps Pipelines with REST API using FastAPI web framework and uvicorn web server.
+This enables you to spin up a model service around DeepSparse with no code.
+
+Since Server is a wrapper around Pipelines, the Server inherits all of the functionality of Pipelines (including the 
+pre and post-processing phases), meaning you can pass raw unprocessed inputs to the Server and recieve post-processed
+predictions.
+
+**Server Usage - Launch From CLI**
+
+DeepSparse Server is launched from the CLI, with configuration via either command line arguments or a config file.
+
+With the command line argument path, users specify a use case via the `task` argument (e.g. `image_classification` or `question_answering`) as
+well as a model (either a local ONNX file or a SparseZoo stub) via the `model_path` argument:
+```bash
+deepsparse.server task [use_case_name] --model_path [model_path]
+```
+
+With the config file path, users create a YAML file that specifies the server configuration. A YAML file looks like the following:
+
+```yaml
+num_workers: 4              # specify multi-stream (more than one worker)
+endpoints:
+    - task: [task_name]     # specifiy use case (e.g. image_classification, question_answering)
+      route: /predict       # specify the route of the endpoint
+      model: [model_path]   # specify sparsezoo stub or path to local onnx file
+      name: any_name_you_want
+
+#   - ... add as many endpoints as neeede
+```
+
+The Server is then launched with the following:
+
+```bash
+deepsparse.server config_file config.yaml
+```
+
+Clients interact with the Server via HTTP. Because the Server uses Pipelines internally,
+users can simply pass raw data to the Server and recieve back post-processed predictions.
+
+For example, a user would do the following to query a Question Answering endpoint:
+```
+import requests
+
+url = "http://localhost:5543/predict"
+
+obj = {
+    "question": "Who is Mark?", 
+    "context": "Mark is batman."
+}
+
+response = requests.post(url, json=obj)
+```
+
+**Additional Resources**
+
+- Get Started and [Deploy A Model with DeepSparse Server](/get-started/deploy-a-model)
+- Refer to [Use Cases](/use-cases) for detailed usage of each supported use case with Server
+- List of Supported Use Cases [Docs Coming Soon]
+
+The Server also has other useful utilites like Data Logging, Multi-Stream Inference, Multiple Model Inference and Dynamic Batch. 
+Checkout the documentation on the [Server Class](/user-guide/server) or the ad-hoc user guides:
+- [Multi-Stream Scheduling Overview](/user-guide/deepsparse-engine/scheduler)
+- Example Using Multi-Stream in Pipelines [Docs Coming Soon]
+- Data Logging in Pipelines [Docs Coming Soon]
+- Dynamic Batch [Docs Coming Soon]
+
+### Engine
+
+Engine is the lowest supported level of interaction available with the runtime.
+
+This pathway enables users that want more control over the runtime or want to run pre-processing and post-processing 
+manually to do so.
+
+### Engine Usage - Python API
+
+The `Engine` class is the workhorse for this pathway. The simply call the constructor with your desired parameters to 
+create an instance with the runtime. Once initialized, just a pass lists of numpy arrays (which are a batch of input tensors - the 
+same as would be passed to a PyTorch model) and the Engine will return a list of outputs.
+
+For example:
+
+```python
+from deepsparse import Engine
+from deepsparse.utils import generate_random_inputs
+onnx_filepath = "path/to/onnx/model.onnx"
+batch_size = 64
+
+# Generate random sample input
+inputs = generate_random_inputs(model=onnx_filepath, batch_size=batch_size)
+
+# Compile and run
+engine = Engine(onnx_filepath, batch_size)
+outputs = engine.run(inputs)
+```
+
+**Additional Resources**
+
+There is also a `MultiModelEngine` available for users who want to interact directly with an Engine running
+multiple models (note: if you want to run multiple models on the same CPU, this pathway is strongly preferred.) 
+- Checkout the [code on GitHub for details](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/engine.py#L645)
+
+We also have a lower-level C++ API. Stay tuned for new documentation on this pathway or reachout 
+in [Community Slack](https://app.slack.com/client/T020WGRLR8A/C020FPF3MQX) for details of this.
