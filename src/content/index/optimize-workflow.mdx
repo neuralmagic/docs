@@ -1,13 +1,13 @@
 ---
 title: "Optimize for Inference"
 metaTitle: "Optimize for Inference"
-metaDescription: "Overview of the capabilities for optimizing a model for inference with the Neural Magic Platform.
+metaDescription: "Overview of deployment capabilities in the Neural Magic Platform"
 index: 1000
 ---
 
 # Optimize a Model for Inference
 
-The Neural Magic Platform enables users to optimize models for inference.
+The Neural Magic Platform enables users to optimize models for inference on CPUs.
 
 ### Motivation 
 
@@ -23,8 +23,8 @@ performance and accuracy have been increasingly at odds.
 SparseML and SparseZoo work together to help users create performance-optimized models
 *while mimizing accuracy loss*, using sparsification techniques called pruning and quantization.
 
-Importantly, they use *training-aware* pruning and quantization algorithms. Training-aware techniques 
-apply the sparsification gradually, allowing the model to adjust by fine-tuning the remaining weights
+Importantly, they support *training-aware* pruning and quantization algorithms (as well as post-training). 
+Training-aware techniques apply the sparsification gradually, allowing the model to adjust by fine-tuning the remaining weights
 with the training dataset at each step. This technique is critical to maintain high accuracy at the high 
 levels of sparsity needed to reach GPU-class performance.
 
@@ -41,7 +41,7 @@ reducing the needed computation.
 
 There are two types of pruning that can be applied to a model:
 1. **Structured Pruning** - weights are pruned in groups (e.g. entire channels or nodes)
-2. **Unstructured Pruning** - any weight can be pruned in any pattern
+2. **Unstructured Pruning** - weights (or small groups of weights) can be pruned in any pattern
 
 With **Structured Pruning**, it is ***easy*** for an inference runtime to include optimizations that speed-up the model and most
 runtimes will benefit from this type of pruning. However, structured pruning can have large negative impacts on accuracy of the model,
@@ -79,14 +79,13 @@ with training data enables accuracy to recover to 99% of the baseline dense mode
 ***SparseML uses Training-Aware Unstructured Pruning and Training-Aware Quantization to create very
 sparse models that sacrifice very little accuracy.***
 
-For example, below is the sparsity profile of both an example CNN and Transformer:
+For example, below is the sparsity profile of both an example CNN and Transformer in SparseZoo:
 
 |                               |ResNet-50  |BERT-base  |
 |-------------------------------|-----------|-----------|
 |% Pruned                       |95%        |95%        |
 |Quantization                   |INT8       |INT8       |
 |Accuracy % of Dense Baseline   |99%        |99%        |
-|Throughput Improvment vs Dense |6.0x       |8.8x        |
 
 You can see the full scope of pre-sparsified models in [SparseZoo](https://sparsezoo.neuralmagic.com/).
 
@@ -101,7 +100,7 @@ Together, they enable two workflows:
 1. **Sparse Transfer Learning**: fine-tune a pre-sparsified foundation model (like ResNet-50 or BERT) from the SparseZoo
     onto a custom dataset
 2. **Sparsification From Scratch**: apply training-aware pruning and quantization algorithms to any trained
-    PyTorch, TensorFlow, and Hugging Face, with fine-grained control of hyperparameters
+    PyTorch, TensorFlow, and Hugging Face model, with fine-grained control of hyperparameters
 
 ### Sparse Transfer Learning
 
@@ -127,8 +126,7 @@ create accurate, inference-optimized sparse models for their specific use cases.
 
 ### Sparsification From Scratch
 
-Sparsification From Scratch can be applied to any model, providing power-users a path to create sparse versions of models 
-not yet supported in SparseZoo. 
+Sparsification From Scratch can be applied to any model, providing power-users a path to create sparse versions of any model. 
 
 As described in the conceptual section above, Training-Aware Unstructured Pruning and
 Training-Aware Quantization are the best techniques for creating models with the highest levels of sparsity
