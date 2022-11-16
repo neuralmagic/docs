@@ -22,10 +22,10 @@ DeepSparse Logging is designed to provide maximum flexibility for users to extra
 ## Metrics 
 DeepSparse Logging provides access to two types of metrics:
 - **System Logging Metrics** give operations teams access to granual performance metrics, diagnosing and isolating deployment system health. Examples include CPU utilization and query latency.
-     - See [below - UPDATE LINK](system-logging-metrics) for a full list of available metrics.
+     - See below for a full list of available metrics.
 
 - **Data Logging Metrics** give ML teams access to data at each stage of an ML pipeline, supporting downsteam tasks like measuring accuracy and data drift. Examples include raw inputs and projections thereof such as mean pixel value.
-     - See [below - UPDATE LINK](data-logging-functions) for a full list of built-in functions and how to create a custom function
+     - See below for a full list of built-in functions and how to create a custom function
 
 ## Configuration
 DeepSparse Logging is configured via YAML files.
@@ -43,25 +43,24 @@ stages: pipeline_inputs >> engine_inputs >> engine_outputs >> pipeline_outputs
 The following YAML format is used to specify the configuration:
 ```yaml
 loggers:
-     - prometheus
-     - custom_logger
+ - prometheus
+ - custom_logger
 
 # system_logging: on/off    # flag to turn all system logging on/off; defaults to on
 system_logging:
-    group: on/off           # flag to turn off a group; if omitted, defaults to on
+  group: on/off           # flag to turn off a group; if omitted, defaults to on
     
 data_logging:
-    stage:
-      mapping:
-        # first function
-        - func: builtins:foo            # [REQUIRED STR] function identifier  (built-in or path to custom)
-          frequency: 1000               # [OPTIONAL INT] logging frequency    (default: 1000 - logs once per 1000 predictions)
-          target: all                   # [OPTIONAL STR] logger               (default: all)
-        # second function
-        - func: path/to/custom.py:bar  
-          frequency: 10000
-          target: prometheus
-        # ... list of as many functions as desired
+  stage:
+    # first function
+    - func: builtins:foo            # [REQUIRED STR] function identifier  (built-in or path to custom)
+      frequency: 1000               # [OPTIONAL INT] logging frequency    (default: 1000 - logs once per 1000 predictions)
+      target: all                   # [OPTIONAL STR] logger               (default: all)
+    # second function
+    - func: path/to/custom.py:bar  
+      frequency: 10000
+      target: prometheus
+    # ... list of as many functions as desired
 ```
 
 <details>
@@ -69,35 +68,33 @@ data_logging:
 
 ```yaml
 loggers:
-    - prometheus
-    - custom_logger
+  - prometheus
+  - custom_logger
 
 system_logging:
-    deployment_details: off
-    request_details: off
-    prediction_latency: on 
-    dynamic_batch_latency: off
-    # resource_utilization: on      << omitted groups are turned on by default
+  deployment_details: off
+  request_details: off
+  prediction_latency: on 
+  dynamic_batch_latency: off
+  # resource_utilization: on      << omitted groups are turned on by default
     
 data_logging:
-     pipeline_inputs:
-       mapping:
-         - func: builtins/max                        # built-in function
-           frequency: 100                            # logs once per 100 predictions
-           target: prometheus                        # logs to prometheus
-           
-         - func: /path/to/logging_fns.py:my_fn       # custom function
-           # frequency:                              # not specified, defaults to once per 1000 predictions
-           # target:                                 # not specified, defaults to all loggers
+   pipeline_inputs:
+     - func: builtins/max                        # built-in function
+       frequency: 100                            # logs once per 100 predictions
+       target: prometheus                        # logs to prometheus
 
-     engine_inputs:
-       mapping:
-         - func: builtins/channel-mean               # pre-defined function (logs per channel mean pixel)
-           frequency: 10                             # logs once per 10 predictions
-           # target:                                 # not specified, defaults to all loggers
+     - func: /path/to/logging_fns.py:my_fn       # custom function
+       # frequency:                              # not specified, defaults to once per 1000 predictions
+       # target:                                 # not specified, defaults to all loggers
 
-     # engine_outputs:                               # not specified, so not logged
-     # pipeline_outputs:                             # not specified, so not logged
+   engine_inputs:
+     - func: builtins/channel-mean               # pre-defined function (logs per channel mean pixel)
+       frequency: 10                             # logs once per 10 predictions
+       # target:                                 # not specified, defaults to all loggers
+
+   # engine_outputs:                               # not specified, so not logged
+   # pipeline_outputs:                             # not specified, so not logged
 ```
 This configuration does the following system logging:
 - Deployment Details, Request Details, and Dynamic Batch Latency groups are turned off 
@@ -144,40 +141,38 @@ The logging is configured as described above. System Logging is defined globally
 # config.yaml
 
 loggers:
-     -prometheus
-     -custom_logger
+ -prometheus
+ -custom_logger
 
 system_logging:
-     deployment_details: off
-     request_details: off
-     prediction_latency: on 
-     dynamic_batch_latency: off
-     # resource_utilization:                    < not specified, so enabled by default
+ deployment_details: off
+ request_details: off
+ prediction_latency: on 
+ dynamic_batch_latency: off
+ # resource_utilization:                    < not specified, so enabled by default
 
 endpoints:
-     - task: question_answering
-       route: /dense/predict
-       model: zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none
-       batch_size: 1
-       data_logging:
-          - pipeline_inputs
-               mappings:
-                - func: builtins:sequence_length
-                  frequency: 500
-                  target: prometheus
+ - task: question_answering
+   route: /dense/predict
+   model: zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none
+   batch_size: 1
+   data_logging:
+      - pipeline_inputs
+          - func: builtins:sequence_length
+            frequency: 500
+            target: prometheus
                   
-                - func: path/to/custom/metrics.py:fn2
-                  # frequency:                  < defaults to every 1000 inferences
-                  # target:                     < defaults to all
+          - func: path/to/custom/metrics.py:fn2
+            # frequency:                  < defaults to every 1000 inferences
+            # target:                     < defaults to all
                   
-             - engine_inputs
-                mappings:
-                - func: buildins:identity
-                  frequency: 1000
-                  target: custom_logger
-                  
-             # - engine_outputs                 < nothing logged
-             # - pipeline_outputs               < nothing logged
+       - engine_inputs
+        - func: buildins:identity
+          frequency: 1000
+          target: custom_logger
+
+       # - engine_outputs                 < nothing logged
+       # - pipeline_outputs               < nothing logged
              
      - task: question_answering
        route: /sparse/predict
@@ -232,19 +227,17 @@ system_logging:
 
 data_logging:
   - pipeline_inputs
-       mappings:
-        - func: builtins:sequence_length
-          frequency: 500
-          target: prometheus
-        - func: path/to/custom/metrics.py:fn2
-          # frequency:                    < defaults to 1/1000 inferences
-          # target:                       < defaults to all loggers
+      - func: builtins:sequence_length
+        frequency: 500
+        target: prometheus
+      - func: path/to/custom/metrics.py:fn2
+        # frequency:                    < defaults to 1/1000 inferences
+        # target:                       < defaults to all loggers
    
    - engine_inputs
-        mappings:
-        - func: buildins:identity
-          frequency: 1000
-          target: custom_logger
+      - func: buildins:identity
+        frequency: 1000
+        target: custom_logger
           
      # - engine_outputs           < not specified, so nothing logged at this target
      # - pipeline_outputs         < not specified, so nothing logged at this target
@@ -304,10 +297,9 @@ loggers:
   
 data_logging:
   pipeline_inputs:
-    mapping:
-      - func: builtin:function
-      - frequency: 1000
-      - target: prometheus
+    - func: builtin:function
+      frequency: 1000
+      target: prometheus
 ``` 
 
 ### Custom Functions
@@ -333,8 +325,7 @@ loggers:
   
 data_logging:
   pipeline_inputs:
-    mapping:
-      - func: path/to/custom.py:my_function
-      - frequency: 1000
-      - target: prometheus
+    - func: path/to/custom.py:my_function
+      frequency: 1000
+      target: prometheus
 ``` 
