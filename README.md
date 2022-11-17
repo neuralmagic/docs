@@ -17,7 +17,7 @@ limitations under the License.
 <div align="center"><h2>Neural Magic Documentation</h2></div>
 
 <div align="center">
-<p>Neural Magic’s Deep Sparse Platform provides a suite of software components to select, build, and run performant<br>
+<p>The Neural Magic Platform provides a suite of software components to select, build, and run performant<br>
     deep learning models on CPU resources.</p>
 
 
@@ -39,7 +39,7 @@ limitations under the License.
     </a>
 </p>
   
-To learn more about specific projects founded by Neural Magic, check out documentation links below.
+[Our Documentation website](https://docs.neuralmagic.com/) is a great starting point. To learn more about specific Neural Magic products, review links below.
 
 To file a docs issue for a specific software component, use its repo issue tracker.
 
@@ -48,10 +48,10 @@ To file a docs issue for a specific software component, use its repo issue track
 | [SparseML](https://docs.neuralmagic.com/products/sparseml/)            | [Repo](https://github.com/neuralmagic/sparseml/)   | [Queue](https://github.com/neuralmagic/sparseml/issues/)   | [Index](https://github.com/neuralmagic/sparseml/releases/)   | Apache 2.0          |
 | [Sparsify](https://docs.neuralmagic.com//products/sparsify/)            | [Repo](https://github.com/neuralmagic/sparsify/)   | [Queue](https://github.com/neuralmagic/sparsify/issues/)   | [Index](https://github.com/neuralmagic/sparsify/releases/)   | Apache 2.0          |
 | [SparseZoo](https://docs.neuralmagic.com/products/sparsezoo/)          | [Repo](https://github.com/neuralmagic/sparsezoo/)  | [Queue](https://github.com/neuralmagic//products/sparsezoo/issues/)  | [Index](https://github.com/neuralmagic/sparsezoo/releases/)  | Apache 2.0          |
-| [DeepSparse Engine (CE)](https://docs.neuralmagic.com/products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | Neural Magic Engine (Community Edition) |
-| [DeepSparse Engine (EE)](https://docs.neuralmagic.com/products/deepsparse-ent) | - | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | MSLSA (Enterprise Edition) |
+| [DeepSparse Community](https://docs.neuralmagic.com/products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | [Neural Magic DeepSparse Community](https://github.com/neuralmagic/deepsparse/blob/main/LICENSE-NEURALMAGIC) |
+| [DeepSparse Enterprise](https://docs.neuralmagic.com/products/deepsparse-ent) | - | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | MSLSA (Enterprise) |
 
-For user help or questions, sign up or log in to our [**Deep Sparse Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
+For user help or questions, sign up or log in to our [**Neural Magic Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
 
 To contribute to Neural Magic documentation, please:</br>
 
