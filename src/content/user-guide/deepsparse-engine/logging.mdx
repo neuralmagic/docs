@@ -1,331 +1,319 @@
 ---
 title: "Logging"
-metaTitle: "System and Data Logging With DeepSparse"
-metaDescription: "Monitor your production deployment with DeepSparse Logging"
-index: 0
+metaTitle: "DeepSparse Logging"
+metaDescription: "System and Data Logging with DeepSparse"
+index: 6000
 ---
 
 # DeepSparse Logging
 
-DeepSparse Logging provides operational teams with access to the telemetry needed to monitor a deployment. 
+DeepSparse Logging provides you with access to telemetry needed to monitor a deployment. 
 
-For users seeking to put ML into production, these data are the raw materials that underpin the monitoring processes needed to create a system with consistently fresh and accurate predictions.
+There are many types of downstream monitoring tasks that you may want to perform. The difficulty of the tasks varies from relatively easy 
+(simple system performance analysis) to challenging (assessing the accuracy of the system in the wild by manually labeling 
+the input data distribution post-facto). Examples include:
+- System performance: what is the latency/throughput of a query?
+- Data quality: is there an issue getting data to my model?
+- Data distribution shift: does the input data distribution deviates over time to the point where the model stops to deliver reliable predictions?
+- Model accuracy: what is the percentage of correct predictions that a model achieves?
 
-There are many types of downstream monitoring tasks that ML teams may want to perform. Some are easier to do (such as looking at system performance) and some are harder (looking at model accuracy requires manually labeling some data afterwards). Examples include:
-- **System performance:** what is the latency/throughput of a query?
-- **Data quality:** is there an error in the model pipeline?
-- **Data distribution shift:** are the inputs and outputs from the system expected?
-- **Model accuracy:** what is the accuracy of the predictions vs human-labeled?
-
-DeepSparse Logging is designed to provide maximum flexibility for users to extract whatever data is needed from a production inference pipeline into the logging system of their choice. 
+DeepSparse Logging is designed to provide maximum flexibility for you to extract whatever data is needed from a 
+production inference pipeline into the logging system of your choice. 
 
 ## Metrics 
-DeepSparse Logging provides access to two types of metrics:
-- **System Logging Metrics** give operations teams access to granual performance metrics, diagnosing and isolating deployment system health. Examples include CPU utilization and query latency.
-     - See below for a full list of available metrics.
+DeepSparse Logging provides access to two types of metrics.
 
-- **Data Logging Metrics** give ML teams access to data at each stage of an ML pipeline, supporting downsteam tasks like measuring accuracy and data drift. Examples include raw inputs and projections thereof such as mean pixel value.
-     - See below for a full list of built-in functions and how to create a custom function
+### System Logging Metrics 
+
+System Logging Metrics give you access to granular performance metrics for quick and efficient diagnosis of deployment system health.
+
+There is one group of System Logging Metrics currently available: Prediction Latency.  For each inference request, DeepSparse logs the following:
+1. Pre-processing Time - milliseconds in the pre-processing step
+2. Engine Time - milliseconds in the engine forward pass step
+3. Post-processing Time - milliseconds in the post-processing step
+4. Total Time - milliseconds for the end-to-end response time
+
+### Data Logging Metrics
+
+Data Logging Metrics give ML teams access to data at each stage of an inference pipeline. 
+This facilitates inspection of the data, understanding of its properties, detecting edge cases and possible data drift.
+
+There are 4 stages in the inference pipeline where Data Logging can occur:
+1. `pipeline_inputs`: raw input passed to the inference pipeline by the user
+2. `engine_inputs`: pre-processed tensors passed to the engine for the forward passed
+3. `engine_outputs`: result of the engine forward pass (e.g. the raw logits)
+4. `pipeline_outputs`: raw output returned to the pipeline caller
+
+At each stage, you can specify functions to be applied to the data before Logging. Examples functions include the identity function
+(for logging the raw input/output), the mean function (e.g. for monitoring the mean pixel value of an image), or a count function (e.g.
+for monitoring the number of unknown tokens in an NLP pipeline).
+
+There are three types of functions that can be applied to target data at each stage:
+1. Built-in functions - pre-written functions provided by DeepSparse ([see list on GitHub](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/loggers/metric_functions/built_ins.py)) 
+2. Framework Functions - functions from `torch` or `numpy` (e.g. `torch.mean`, `np.mean`)
+3. Custom Functions - custom user-provided functions with dynamic imports
 
 ## Configuration
-DeepSparse Logging is configured via YAML files.
 
-**System Logging** is *enabled* by default and all metrics are pre-defined. It can be disabled 
-globally or at the group level by adding the key-value pairs with `on` or `off` status.
-        
-**Data Logging** is *disabled* by default. A YAML configuration file is used to specify which data or functions thereof to log. 
-There are 4 `stages` in the inference pipeline where Data Logging can occur:
+A YAML file is used to configure both System and Data Logging.
+- **System Logging** is *enabled* if a `logger` is specified
+- **Data Logging** is *disabled* by default. The config allows you to specify what data to log
 
-````
-stages: pipeline_inputs >> engine_inputs >> engine_outputs >> pipeline_outputs
-````
+The YAML file has the following form:
 
-The following YAML format is used to specify the configuration:
 ```yaml
 loggers:
- - prometheus
- - custom_logger
-
-# system_logging: on/off    # flag to turn all system logging on/off; defaults to on
-system_logging:
-  group: on/off           # flag to turn off a group; if omitted, defaults to on
+  logger_name1:
+  logger_name2:
+    arg1: 6100                    
     
 data_logging:
+  # either specify the pipeline stage ... 
   stage:
-    # first function
-    - func: builtins:foo            # [REQUIRED STR] function identifier  (built-in or path to custom)
-      frequency: 1000               # [OPTIONAL INT] logging frequency    (default: 1000 - logs once per 1000 predictions)
-      target: all                   # [OPTIONAL STR] logger               (default: all)
-    # second function
+    - func: built_in_fn_name
+      frequency: 1000
+      target_loggers:
+        - logger_name1
+  
+  # ... or a property of the data at a pipeline stage ...
+  stage.target:
+    - func: torch.fn_name
+      frequency: 1000
+      target_loggers:
+        - logger_name2
+
+  # ... or a slice/dict access to a target
+  stage.target[idx]:
+    - func: np.fn_name        
+      frequency: 1000          
     - func: path/to/custom.py:bar  
       frequency: 10000
-      target: prometheus
-    # ... list of as many functions as desired
+      # if no target_loggers, defaults to all
 ```
 
+Let's break it down piece by piece:
+
+- `loggers` is a dictionary of the form `{logger_name: {config}}` and identifies and provides the arguments for each logger.
+
+- `data_logging` is a dictionary of the form `{stage.target[idx]: [fn_config]}`. 
+For each item, you can provide a list of function configs tha specify which function to apply.
+
+- `stage.target[idx]` specifies if data at a particular `stage` should be logged. If the data at a particular `stage` has
+properties, an optional `target` can be used to unpack the data. If the `target` is a dict or a list, 
+you can access via slicing, indexing, or dict access, for example `stage.target[0:2][0, :-1]['key_3'][5]`.
+
+- `[fn_config]` is list of function configurations of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
+It specifies which the function, the logger, and the frequency of the logging.
+
 <details>
-     <summary>Click for a tangible example YAML snippit</summary>
+  <summary>Click for a tangible example for an image classification endpoint.</summary>
 
 ```yaml
 loggers:
-  - prometheus
-  - custom_logger
+  python:         # logs to stdout
+  prometheus:     # logs to prometheus on port 6100
+    port: 6100
 
-system_logging:
-  deployment_details: off
-  request_details: off
-  prediction_latency: on 
-  dynamic_batch_latency: off
-  # resource_utilization: on      << omitted groups are turned on by default
-    
-data_logging:
-   pipeline_inputs:
-     - func: builtins/max                        # built-in function
-       frequency: 100                            # logs once per 100 predictions
-       target: prometheus                        # logs to prometheus
+endpoints:
+  - task: image_classification
+    route: /image_classification/predict
+    model: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
+    name: image_classification_pipeline
+    data_logging:
+      pipeline_inputs.images:   # applies to the images (of the form stage.target:)
+        - func: np.shape        # framework function
+          frequency: 1
+          target_loggers:
+            - python          
 
-     - func: /path/to/logging_fns.py:my_fn       # custom function
-       # frequency:                              # not specified, defaults to once per 1000 predictions
-       # target:                                 # not specified, defaults to all loggers
-
-   engine_inputs:
-     - func: builtins/channel-mean               # pre-defined function (logs per channel mean pixel)
-       frequency: 10                             # logs once per 10 predictions
-       # target:                                 # not specified, defaults to all loggers
-
-   # engine_outputs:                               # not specified, so not logged
-   # pipeline_outputs:                             # not specified, so not logged
+      pipeline_inputs.images[0]:          # applies to the first image (of the form stage.target[idx]:)
+        - func: mean_pixels_per_channel   # built-in function
+          frequency: 2
+          target_loggers:
+            - prometheus        
+        - func: fraction_zeros  # built-in function
+          frequency: 2
+          target_loggers:
+            - prometheus
+      
+      engine_inputs:            # applies to the engine_inputs data (of the form stage:)
+        - func: identity        # built-in function
+          frequency: 1
+          target_loggers:
+            - python
+        - func: np.shape        # framework function
+          frequency: 1
+          target_loggers:
+            - python
 ```
-This configuration does the following system logging:
-- Deployment Details, Request Details, and Dynamic Batch Latency groups are turned off 
-- Prediction Latency and Resource Utilization groups are turned on
 
 This configuration does the following data logging at each respective stage of the pipeline:
-- Pipeline Inputs: `xxx` data is logged to Prometheus once every 100 predictions and a custom function called `my_fn` is applied once every 1000 predictions and is logged to all loggers.
-- Engine Inputs: The `xxx` function is applied once per 10 predictions and is logged to all loggers.
-- Engine Outputs + Pipeline Outputs: No logging occurs at this stage
+- System logging is enabled by default and logs to Prometheus
+- Logs the shape of the input batch provided by the user to stdout
+- Logs the mean pixels and % of 0 pixels of the first image in the batch to Prometheus
+- Logs the raw data and shape of the input passed to the engine
+- No logging occurs at any other pipeline stages
 
 </details>
 
 ## Loggers
-Logging to Prometheus works out-of-the-box and users can add custom loggers.
+
+DeepSparse Logging includes options to log to Standard Output and to Prometheus out of the box as well as 
+the ability to create a Custom Logger.
+
+### Python Logger
+
+Python Logger logs data to Standard Output. It is useful for debugging and inspecting an inference pipeline. It
+accepts no arguments and is configured with the following:
+
+```yaml
+loggers:
+  python:
+```
 
 ### Prometheus Logger
 
-[@DAMIAN] - need your help here
+DeepSparse is integrated with Prometheus. The Prometheus Logger accepts an optional `port` property 
+which specifies where the metrics will be exposed:
+
+```yaml
+loggers:
+  prometheus:
+    port: 6100  # < optional, if not provided defauls to 6100
+```
+
+There are four types of metrics in Prometheus (Counter, Gauge, Summary, and Histogram). Under the hood, DeepSparse uses the 
+[Summary metric](https://prometheus.io/docs/concepts/metric_types/#summary), so make sure the data you are logging is 
+compatible with this metric type.
+
+#### Additional Resources
+Checkout our example using [DeepSparse with Prometheus / Grafana](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-server-prometheus)
 
 ### Custom Logger
 
-[@DAMIAN] - need your help here
+If you need a custom logger (for example, to log high dimensional data like raw image inputs), 
+you can create a class that inherits from the `BaseLogger` and implements the `log` method. 
+The `log` method is called at each Pipeline stage (`pipeline_inputs`, `engine_inputs`, `engine_outputs`, `pipline_outputs`) 
+and should handle exposing the metric to the Logger. 
 
-There is a [tutorial creating a custom logger to an S3 Bucket](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-custom-logger) as an example.
+```python
+from deepsparse.logging import BaseLogger, MetricsCategories
+from typing import Any, Optional
+
+class CustomLogger(BaseLogger):
+    def log(self, identifier: str, value: Any, category: Optional[str]=None):
+        """
+        :param identifier: The name of the item that is being logged.
+            By default, in the simplest case, that would be a string in the form
+            of "<pipeline_name>/<logging_target>"
+            e.g. "image_classification/pipeline_inputs"
+        :param value: The item that is logged along with the identifier
+        :param category: The metric category that the log belongs to. 
+            By default, we recommend sticking to our internal convention
+            established in the MetricsCategories enum.
+        """
+```
+
+Once a custom logger is implemented, it can be referenced from a config file:
+
+```yaml
+loggers:
+  custom_logger:
+    path: path/to/customer-logger-script.py:CustomLogger
+    arg1: your_argument_1
+```
+
+See [our Prometheus logger implementation](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/loggers/prometheus_logger.py)
+for inspiration on implementing a logger.
 
 ## Usage 
 
-Both the `Server` and `Pipeline` interfaces can run with logging.
+DeepSparse Logging is currently supported for usage with DeepSparse Server. 
+
+Stay tuned for usage with Pipelines in our next release!
 
 ### Server Usage
 
-The startup command (`deepsparse.server`), accepts an optional YAML configuration file (which contains both logging-specific and general configuration details) via the `--config-file` argument. For example:
+The Server startup CLI command accepts a YAML configuration file (which contains both logging-specific and general 
+configuration details) via the `--config-file` argument.
 
 ```bash
 deepsparse.server --config-file server-config.yaml
 ```
 
-The logging is configured as described above. System Logging is defined globally at the `Server` level while Data Logging is defined at the `Endpoint` level. In the example below, we create a `Server` with two `Endpoints` (one with a dense and one with a sparse BERT model).
+Data Logging is configured at the endpoint level. In the example below, we create a Server with two Endpoints
+(one for image classification and one for sentiment analysis):
 
-<details>
-    <summary>Click to see server-config.yaml </summary>
-       
 ```yaml
-# config.yaml
-
 loggers:
- -prometheus
- -custom_logger
-
-system_logging:
- deployment_details: off
- request_details: off
- prediction_latency: on 
- dynamic_batch_latency: off
- # resource_utilization:                    < not specified, so enabled by default
-
+  prometheus:
+    port: 6100
+  python:
+ 
 endpoints:
- - task: question_answering
-   route: /dense/predict
-   model: zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none
-   batch_size: 1
-   data_logging:
-      - pipeline_inputs
-          - func: builtins:sequence_length
-            frequency: 500
-            target: prometheus
-                  
-          - func: path/to/custom/metrics.py:fn2
-            # frequency:                  < defaults to every 1000 inferences
-            # target:                     < defaults to all
-                  
-       - engine_inputs
-        - func: buildins:identity
-          frequency: 1000
-          target: custom_logger
+  - task: image_classification
+    route: /image_classification/predict
+    model: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
+    name: image_classification_pipeline
+    data_logging:
+      pipeline_inputs.images:
+        - func:
+          frequency: 1
+          target_loggers:
+            - python
 
-       # - engine_outputs                 < nothing logged
-       # - pipeline_outputs               < nothing logged
-             
-     - task: question_answering
-       route: /sparse/predict
-       model: zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/pruned95_obs_quant-none
-       batch_size: 1
-       # data_logging:                          < nothing logged at this endpoint 
+      pipeline_inputs.images[0]
+        - func: max_pixels_per_channel
+          frequency: 1
+          target_loggers:
+            - prometheus
+        - func: mean_pixels_per_channel
+          frequency: 1
+          target_loggers:
+            - prometheus
+        - func: fraction_zeros
+          frequency: 1
+          target_loggers:
+            - prometheus
+      
+      pipeline_outputs.scores[0]:
+        - func: identity
+          frequency: 1
+      
+      pipeline_outputs.labels[0]:
+        - func: identity
+          frequency: 1
+
+  - task: sentiment/analysis
+    route: /sentiment_analysis/predict
+    model: zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/12layer-pruned80_quant-none-vnni
+    name: sentiment_analysis_pipeline
+    data_logging:
+      engine_inputs:
+        - func: path/to/example_custom_fn.py:sequence_length
+          frequency: 1
+          
+      pipeline_outputs.scores[0]:
+        - func: identity
+          frequency: 1
 ```
 
-</details>
-
-### Pipeline Usage
-
-The `ManagerLogger` class handles logging and is passed as the `logger` argument to a `Pipeline`. `ManagerLogger` is initialized with the `config` argument, which is a path to a configuration file in the format described above. 
-
-For example, with the QA pipeline:
+The `example_custom_fn.py` file could look like the following:
 
 ```python
-from deepsparse import Pipeline
+import numpy as np
+from typing import List
 
-# SparseZoo model stub or path to ONNX file
-model_path = "zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni"
-
-# logger object referencing the local logging config file
-logger = ManagerLogger(config="pipeline-logging-config.yaml")
-
-# pipeline instantiated with the config file
-pipeline = Pipeline.create(
-    task="question-answering",
-    model_path=model_path,
-    logger=logger
-)
-
-my_name = qa_pipeline(question="What's my name?", context="My name is Snorlax")
+# Engine inputs to transformers is 3 lists of np.arrays representing
+# the encoded input, the attention mask, and token types.
+# Each of the np.arrays is of shape (batch, max_seq_len), so
+# engine_inputs[0][0] gives the encodings of the first item in the batch.
+# The number of non-zeros in this slice is the sequence length.
+def sequence_length(engine_inputs: List[np.ndarray]):
+  return np.count_nonzero(engine_inputs[0][0])
 ```
-
-<details> 
-    <summary>Click to see pipeline-logging-config.yaml</summary>
-    
-```yaml
-# pipeline-logging-config.yaml
-
-loggers:
-     -prometheus
-     -custom_logger
-
-system_logging:
-     deployment_details: off
-     request_details: off
-     prediction_latency: on 
-     dynamic_batch_latency: off
-     # resource_utilization:               < not specified, so enabled by default
-
-data_logging:
-  - pipeline_inputs
-      - func: builtins:sequence_length
-        frequency: 500
-        target: prometheus
-      - func: path/to/custom/metrics.py:fn2
-        # frequency:                    < defaults to 1/1000 inferences
-        # target:                       < defaults to all loggers
-   
-   - engine_inputs
-      - func: buildins:identity
-        frequency: 1000
-        target: custom_logger
-          
-     # - engine_outputs           < not specified, so nothing logged at this target
-     # - pipeline_outputs         < not specified, so nothing logged at this target
-```
-</details>
-
-If no `ManagerLogger` is passed to a `Pipeline`, then logging is disabled.
 
 ## Tutorials
-There are serveral examples integrating Prometheus and DeepSparse logging available:
+There are serveral examples integrating Prometheus and DeepSparse logging available on GitHub:
 - [Server with Prometheus / Grafana](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-server-prometheus)
-- [Pipeline with Prometheus / Grafana](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-pipeline-prometheus)
 - [Monitoring while running Kubernetes](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-kubernetes-prometheus)
-- [Custom Logger (S3 Bucket)](https://github.com/neuralmagic/deepsparse/tree/rs-logging-sdk/logging-sdk/tutorial-custom-logger)
-
-## System Logging Metrics
-
-**TO BE UPDATED** ONCE WE HAVE THE LIST OF METRICS FOR 1.3
-
-### Metric Groups
-The following metric groups are available:
-- Prediction Latency (`prediction_latency`)
-     
-### Metrics
-The following metrics are logged for each group:
-
-#### Prediction Latency
-Metric           |Metric Name              |Description                              |Granularity    |Usage  |Frequency      |
-|---------------- |-------------------------|-----------------------------------------|---------------|-------|---------------|
-|Total Time       |`sl_pl_total_time`       |End-to-end prediction time               |Per Pipeline   |All    |Per Prediction |
-|Preprocess Time  |`sl_pl_preprocess_time`  |Time spent in pre-processing step        |Per Pipeline   |All    |Per Prediction |
-|Engine Time      |`sl_pl_engine_time`      |Time spent in engine forward pass        |Per Pipeline   |All    |Per Prediction |
-|Postprocess Time |`sl_pl_postprocess_time` |Time spent in post-processing step       |Per Pipeline   |All    |Per Prediction |
-
-
-##  Data Logging Functions
-
-**TO BE UPDATED** ONCE WE HAVE LIST FOR 1.3
-  
-### Built-in Functions
-
-Built-in functions are predefined in DeepSparse. 
-   
-|Function Name  |Description                        |
-|---------------|-----------------------------------|
-|`mean_pixel_1` |Mean pixel value in first channel  |
-|`mean_pixel_2` |Mean pixel value in second channel |
-|`mean_pixel_3` |Mean pixel value in third channel  |
-
-They are applied in the form `func: builtins/function_name`. The YAML file would look as follows:
-``` yaml
-# config.yaml
-  
-loggers:
-  prometheus:
-    port:5555
-  
-data_logging:
-  pipeline_inputs:
-    - func: builtin:function
-      frequency: 1000
-      target: prometheus
-``` 
-
-### Custom Functions
-
-Users can define custom functions in Python in a file, for example `custom.py`.
-  
-```python
-# custom.py
-
-import numpy as np
-
-def my_function(engine_inputs: np.array) -> float:
-  return np.mean(engine_inputs)
-```
-
-The custom functions are then specified in the YAML configuration file in the form `func: path/to/custom.py:function_name`:
-``` yaml
-# config.yaml
-  
-loggers:
-  prometheus:
-    port:5555
-  
-data_logging:
-  pipeline_inputs:
-    - func: path/to/custom.py:my_function
-      frequency: 1000
-      target: prometheus
-``` 
