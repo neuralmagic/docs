@@ -130,7 +130,7 @@ endpoints:
         - func: mean_pixels_per_channel   # built-in function
           frequency: 2
           target_loggers:
-            - prometheus        
+            - python        
         - func: fraction_zeros  # built-in function
           frequency: 2
           target_loggers:
@@ -148,7 +148,7 @@ endpoints:
 ```
 
 This configuration does the following data logging at each respective stage of the pipeline:
-- System logging is enabled by default and logs to Prometheus
+- System logging is enabled by default and logs to Prometheus and StandardOuput
 - Logs the shape of the input batch provided by the user to stdout
 - Logs the mean pixels and % of 0 pixels of the first image in the batch to Prometheus
 - Logs the raw data and shape of the input passed to the engine
@@ -257,20 +257,20 @@ endpoints:
     name: image_classification_pipeline
     data_logging:
       pipeline_inputs.images:
-        - func:
+        - func: np.shape
           frequency: 1
           target_loggers:
             - python
 
-      pipeline_inputs.images[0]
+      pipeline_inputs.images[0]:
         - func: max_pixels_per_channel
           frequency: 1
           target_loggers:
-            - prometheus
+            - python
         - func: mean_pixels_per_channel
           frequency: 1
           target_loggers:
-            - prometheus
+            - python
         - func: fraction_zeros
           frequency: 1
           target_loggers:
@@ -279,10 +279,14 @@ endpoints:
       pipeline_outputs.scores[0]:
         - func: identity
           frequency: 1
+          target_loggers:
+            - prometheus
       
       pipeline_outputs.labels[0]:
         - func: identity
           frequency: 1
+          target_loggers:
+            - prometheus
 
   - task: sentiment_analysis
     route: /sentiment_analysis/predict
@@ -292,11 +296,23 @@ endpoints:
       engine_inputs:
         - func: path/to/example_custom_fn.py:sequence_length
           frequency: 1
+          target_loggers:
+            - python
+            - prometheus
           
       pipeline_outputs.scores[0]:
         - func: identity
           frequency: 1
+          target_loggers:
+            - python
+            - prometheus
 ```
+
+#### Custom Function
+
+The example above included a custom function for computing sequence lengths. Custom
+Functions should be defined in a local Python file. They should accept one argument
+and return a single output.
 
 The `example_custom_fn.py` file could look like the following:
 
