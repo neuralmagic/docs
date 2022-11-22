@@ -56,22 +56,20 @@ There are three types of functions that can be applied to target data at each st
 ## Configuration
 
 The Server YAML file is used to configure both System and Data Logging.
-- **System Logging** is *enabled* by default. If no `logger` is specified, a `PythonLogger` logs to `stdout`.
+- **System Logging** is *enabled* by default. If no `logger` is specified, a Python Logger is used.
 - **Data Logging** is *disabled* by default. The config allows you to specify what data to log:
 
-The YAML configured as follows.
+The YAML is configured as follows:
 
-`loggers` is a dictionary of the form `{logger_name: {arg_1: arg_value_1}}` and configures the loggers.
+`loggers` configures the loggers. It is a dict of the form `{logger_name: {arg_1: arg_value}}`. 
 
-`data_logging` is a dictionary of the form `{identifier: [log_config]}` and identifies what and how data should be logged.
+`data_logging` identifies which/how data should be logged for an endpoint. It is a dictionary of the form `{identifier: [log_config]}`. 
 
-`identifier` specifies at which pipeline `stage` the logging in the list of `log_config` should occur. There are three forms `identifier` could take:
-- `stage` - (one of `pipeline_inputs`, `engine_inputs`, `engine_outputs`, `pipeline_outputs`). Applies the each function in the `log_config` to the data type at the `stage`
-- `stage.property` - If the data type at a `stage` has a property, you can unpack before applying the functions in the `log_config` like so.
-- `stage.property[idx]` - If the `property` is a dict or a list, you can access via slicing, indexing, or dict access, for example `stage.property[0:2][0, :-1]['key_3'][5]`.
+`identifier` specifies the stages where logging should occur. It can either be a `stage` or `stage.property` if the data type
+at a particular stage has a property. If the data type at a `stage` is a dictionary or list, you can access via slicing, indexing, or dict access, 
+for example `stage[0][:,:,0]['key3']`.
 
-`[log_config]` is list of function configurations of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
-It specifies which the function, the logger, and the frequency of the logging.
+`log_config` specifies which the function to apply, which logger(s) to use, and how often to log. It is a dict of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
 
 ```yaml
 loggers:
@@ -91,21 +89,23 @@ endpoints:
           frequency: 1000
           target_loggers:
             - logger_name1
-
+            
+      # ... or a slice/dict access to a property ...
+      stage[slice]:
+        - func: path/to/custom.py:bar  
+          frequency: 10000
+            
       # ... or a property of the data at a pipeline stage ...
       stage.property:
         - func: torch.fn_name
           frequency: 1000
-          target_loggers:
-            - logger_name2
 
       # ... or a slice/dict access to a property
-      stage.property[idx]:
+      stage.property[slice]:
         - func: np.fn_name        
           frequency: 1000          
         - func: path/to/custom.py:bar  
           frequency: 10000
-          # if no target_loggers, defaults to all
 ```
 
 Here's a tangible example for an image classification endpoint.
@@ -147,13 +147,21 @@ endpoints:
           frequency: 1
           target_loggers:
             - python
+            
+      engine_inputs[0][0,:,:,0] # [np.array(BxHxWxC)]
+        - func: np.mean
+          frequency: 1
+          target_loggers:
+            - prometheus
+            - python
 ```
 
 This configuration does the following data logging at each respective stage of the pipeline:
-- System logging is enabled by default and logs to Prometheus and StandardOuput
+- System logging is enabled by default and logs to Prometheus and StdOut
 - Logs the shape of the input batch provided by the user to stdout
 - Logs the mean pixels and % of 0 pixels of the first image in the batch to Prometheus
-- Logs the raw data and shape of the input passed to the engine
+- Logs the raw data and shape of the input passed to the engine to Python
+- Logs the mean pixel of the first channel of the first item to Prometheus/StdOut
 - No logging occurs at any other pipeline stages
 
 ## Loggers
