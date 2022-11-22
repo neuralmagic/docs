@@ -38,13 +38,13 @@ There is one group of System Logging Metrics currently available: Inference Late
 Data Logging Metrics give ML teams access to data at each stage of an inference pipeline. 
 This facilitates inspection of the data, understanding of its properties, detecting edge cases and possible data drift.
 
-There are 4 stages in the inference pipeline where Data Logging can occur:
+There are 4 `stages` in the inference pipeline where Data Logging can occur:
 1. `pipeline_inputs`: raw input passed to the inference pipeline by the user
 2. `engine_inputs`: pre-processed tensors passed to the engine for the forward pass
 3. `engine_outputs`: result of the engine forward pass (e.g. the raw logits)
 4. `pipeline_outputs`: final output returned to the pipeline caller
 
-At each stage, you can specify functions to be applied to the data before logging. Example functions include the identity function
+At each `stage`, you can specify functions to be applied to the data before logging. Example functions include the identity function
 (for logging the raw input/output), the mean function (e.g. for monitoring the mean pixel value of an image), or a count function (e.g.
 for monitoring the number of unknown tokens in an NLP pipeline).
 
@@ -55,11 +55,23 @@ There are three types of functions that can be applied to target data at each st
 
 ## Configuration
 
-A YAML file is used to configure both System and Data Logging.
+The Server YAML file is used to configure both System and Data Logging.
 - **System Logging** is *enabled* by default. If not `logger` is specified, a `PythonLogger` logs to `stdout`.
-- **Data Logging** is *disabled* by default. The config allows you to specify what data to log
+- **Data Logging** is *disabled* by default. The config allows you to specify what data to log:
 
-The YAML file has the following form:
+The YAML configured as follows.
+
+`loggers` is a dictionary of the form `{logger_name: {arg_1: arg_value_1}}` and identifies and provides the arguments for each logger.
+
+`data_logging` is a dictionary of the form `{identifier: [log_config]}` and identifies which data should be logged to where and how often. 
+
+`identifier` specifies at which pipeline `stage` the logging in the list of `log_config` should occur. There are three forms `identifier` could take:
+- `stage` - (one of `pipeline_inputs`, `engine_inputs`, `engine_outputs`, `pipeline_outputs`). Applies the each function in the `log_config` to the data type at the `stage`
+- `stage.property` - If the data type at a `stage` has a property, you can unpack before applying the functions in the `log_config` like so.
+- `stage.property[idx]` - If the `property` is a dict or a list, you can access via slicing, indexing, or dict access, for example `stage.property[0:2][0, :-1]['key_3'][5]`.
+
+`[log_config]` is list of function configurations of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
+It specifies which the function, the logger, and the frequency of the logging.
 
 ```yaml
 loggers:
@@ -67,46 +79,36 @@ loggers:
   logger_name2:
     arg1: 6100                    
     
-data_logging:
-  # either specify the pipeline stage ... 
-  stage:
-    - func: built_in_fn_name
-      frequency: 1000
-      target_loggers:
-        - logger_name1
-  
-  # ... or a property of the data at a pipeline stage ...
-  stage.target:
-    - func: torch.fn_name
-      frequency: 1000
-      target_loggers:
-        - logger_name2
+endpoints:
+  - task: task_name
+    route: /name/predict
+    model: sparsezoo_stub
+    name: my_pipeline      
+    data_logging:
+      # either specify the pipeline stage ... 
+      stage:
+        - func: built_in_fn_name
+          frequency: 1000
+          target_loggers:
+            - logger_name1
 
-  # ... or a slice/dict access to a target
-  stage.target[idx]:
-    - func: np.fn_name        
-      frequency: 1000          
-    - func: path/to/custom.py:bar  
-      frequency: 10000
-      # if no target_loggers, defaults to all
+      # ... or a property of the data at a pipeline stage ...
+      stage.property:
+        - func: torch.fn_name
+          frequency: 1000
+          target_loggers:
+            - logger_name2
+
+      # ... or a slice/dict access to a property
+      stage.property[idx]:
+        - func: np.fn_name        
+          frequency: 1000          
+        - func: path/to/custom.py:bar  
+          frequency: 10000
+          # if no target_loggers, defaults to all
 ```
 
-Let's break it down piece by piece:
-
-- `loggers` is a dictionary of the form `{logger_name: {config}}` and identifies and provides the arguments for each logger.
-
-- `data_logging` is a dictionary of the form `{stage.target[idx]: [fn_config]}`. 
-For each item, you can provide a list of function configs tha specify which function to apply.
-
-- `stage.target[idx]` specifies if data at a particular `stage` should be logged. If the data at a particular `stage` has
-properties, an optional `target` can be used to unpack the data. If the `target` is a dict or a list, 
-you can access via slicing, indexing, or dict access, for example `stage.target[0:2][0, :-1]['key_3'][5]`.
-
-- `[fn_config]` is list of function configurations of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
-It specifies which the function, the logger, and the frequency of the logging.
-
-<details>
-  <summary>Click for a tangible example for an image classification endpoint.</summary>
+Here's a tangible example for an image classification endpoint.
 
 ```yaml
 loggers:
@@ -120,13 +122,13 @@ endpoints:
     model: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
     name: image_classification_pipeline
     data_logging:
-      pipeline_inputs.images:   # applies to the images (of the form stage.target:)
+      pipeline_inputs.images:   # applies to the images (of the form stage.property)
         - func: np.shape        # framework function
           frequency: 1
           target_loggers:
             - python          
 
-      pipeline_inputs.images[0]:          # applies to the first image (of the form stage.target[idx]:)
+      pipeline_inputs.images[0]:          # applies to the first image (of the form stage.property[idx])
         - func: mean_pixels_per_channel   # built-in function
           frequency: 2
           target_loggers:
@@ -136,7 +138,7 @@ endpoints:
           target_loggers:
             - prometheus
       
-      engine_inputs:            # applies to the engine_inputs data (of the form stage:)
+      engine_inputs:            # applies to the engine_inputs data (of the form stage)
         - func: identity        # built-in function
           frequency: 1
           target_loggers:
@@ -153,8 +155,6 @@ This configuration does the following data logging at each respective stage of t
 - Logs the mean pixels and % of 0 pixels of the first image in the batch to Prometheus
 - Logs the raw data and shape of the input passed to the engine
 - No logging occurs at any other pipeline stages
-
-</details>
 
 ## Loggers
 
