@@ -67,52 +67,11 @@ The YAML is configured as follows:
 
 `data_logging` identifies which/how data should be logged for an endpoint. It is a dictionary of the form `{identifier: [log_config]}`. 
 
-`identifier` specifies the stages where logging should occur. It can either be a `stage` or `stage.property` if the data type
+- `identifier` specifies the stages where logging should occur. It can either be a `stage` or `stage.property` if the data type
 at a particular stage has a property. If the data type at a `stage` is a dictionary or list, you can access via slicing, indexing, or dict access, 
 for example `stage[0][:,:,0]['key3']`.
 
-`log_config` specifies which the function to apply, which logger(s) to use, and how often to log. It is a dict of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
-
-```yaml
-# syntax-example.yaml
-loggers:
-  logger_name1:
-  logger_name2:
-    arg1: arg1_value                    
-    
-endpoints:
-  - task: task_name
-    route: /name/predict
-    model: sparsezoo_stub
-    name: my_pipeline      
-    data_logging:
-
-      # either specify the pipeline stage ... 
-      stage:
-        - func: built_in_fn_name
-          frequency: 1000
-          target_loggers:
-            - logger_name1
-        - func: path/to/custom.py:bar  
-          frequency: 10000
-          # target_loggers: < if not specified, deaults to all
-
-      # ... or a slice/dict access to a stage ...
-      stage[slice]:
-        - func: path/to/custom.py:bar  
-          frequency: 1000
-
-      # ... or a property of the data at a pipeline stage ...
-      stage.property:
-        - func: torch.fn_name
-          frequency: 1000
-
-      # ... or a slice/dict access to a property
-      stage.property[slice]:
-        - func: np.fn_name        
-          frequency: 1000          
-        
-```
+- `log_config` specifies which the function to apply, which logger(s) to use, and how often to log. It is a dict of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
 
 #### Tangible Example
 Here's an example for an image classification server:
@@ -183,7 +142,7 @@ DeepSparse is integrated with Prometheus. The Prometheus Logger accepts some opt
 loggers:
   prometheus:
     port: 6100
-    text_log_save_frequency: 10,
+    text_log_save_frequency: 10
     text_log_save_dir: /path/to/text/log/save/dir
     text_log_file_name: text_log_file_name
 ```
