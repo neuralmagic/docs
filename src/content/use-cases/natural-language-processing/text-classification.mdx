@@ -9,28 +9,27 @@ index: 2000
 
 This page explains how to create and deploy a sparse Transformer for Text Classification.
 
-SparseML Text Classification `Pipelines` integrate with Hugging Face’s Transformers library to enable the sparsification of a large set of transformers models.
-Sparsification is a powerful technique that results in faster, smaller, and cheaper deployable models.
+Sparsification is a powerful technique that results in faster, smaller, and less expensive deployable models.
 A sparse model can be deployed with Neural Magic's DeepSparse Engine with GPU-class performance directly on your CPU.
+SparseML Text Classification `Pipelines` integrate with Hugging Face’s Transformers library to enable the sparsification of a large set of Transformers models.
 
-This integration enables you to create a sparse model in two ways:
-- **Sparsification of Popular Transformer Models** - sparsify any popular Hugging Face Transformer model from scratch.
-- **Sparse Transfer Learning** - fine-tune a sparse model (or use one of our [sparse pre-trained models](https://sparsezoo.neuralmagic.com/?domain=nlp&sub_domain=text_classification)) on your own private dataset.
-
-Each option is useful in different situations:
-- **Sparsification from Scratch** enables you to create a sparse version of any model (even those not in the SparseZoo), but requires hand-tuning the hyperparameters of the sparsification algorithm.
-- **Sparse Transfer Learning** is the easiest path to creating a sparse model trained on your data. Simply pull a pre-sparsified model and transfer learning recipe from the SparseZoo and fine-tune on your data with a single command.
+This integration enables you to create a sparse model in two ways. Each option is useful in different situations:
+- **Sparsification of Popular Transformer Models**&mdash;sparsify any popular Hugging Face Transformer model from scratch. This enables you to create a sparse version of any model (even those not in the SparseZoo), but requires hand-tuning the hyperparameters of the sparsification algorithm.
+- **Sparse Transfer Learning**&mdash;fine-tune a sparse model (or use one of our [sparse pre-trained models](https://sparsezoo.neuralmagic.com/?domain=nlp&sub_domain=text_classification)) on your own private dataset. This is the easiest path to creating a sparse model trained on your data. Simply pull a pre-sparsified model and transfer learning recipe from the SparseZoo and fine-tune on your data with a single command.
 
 ## Installation Requirements
 
-This section requires [SparseML Torch Install](/get-started/install/sparseml) and [DeepSparse General Install](/get-started/install/deepsparse).
+This use case requires installation of:
 
-It is recommended to run Python 3.8 as some of the scripts within the transformers repository require it.
+- [SparseML Torch](/get-started/install/sparseml), and 
+- [DeepSparse Community Edition](/get-started/install/deepsparse).
+
+It is recommended to run Python 3.8 as some of the scripts within the Transformers repository require it.
 
 Transformers will not immediately install with this command. Instead, a sparsification-compatible version of Transformers will install on the first invocation of the Transformers code in SparseML.
 
 ## Tutorials
-There are some additional tutorials for this functionality on GitHub.
+Here are additional tutorials for this functionality.
 - [Sparse Sentiment Analysis with BERT](https://neuralmagic.com/use-cases/sparse-sentiment-analysis/)
 - [Crypto Sentiment Analysis example](https://github.com/neuralmagic/deepsparse/tree/500d132f27e97547b752c99dd06e17b8e53a1ba8/examples/twitter-nlp) + [accompanying video](https://www.youtube.com/watch?v=7UTKt-PDLvk)
 
@@ -53,13 +52,13 @@ sparseml.transformers.text_classification \
 
 The SparseML train script is a wrapper around a [Hugging Face script](https://huggingface.co/docs/transformers/run_scripts), and
 usage for most arguments follows the Hugging Face. The most important arguments for SparseML are:
-- `model_name_or_path`: specifies starting model. It can be a SparseZoo stub, Hugging Face model identifier, or a local directory
-  with `model.pt`, `tokenizer.json` and `config.json`
-- `recipe`: recipe containing the training hyperparamters (SparseZoo stub or a local file)
-- `task_name`: specifies the sentiment analysis task for the MNLI dataset
+- `model_name_or_path` specifies the starting model. It can be a SparseZoo stub, Hugging Face model identifier, or a local directory
+  with `model.pt`, `tokenizer.json` and `config.json`.
+- `recipe` points to a recipe file containing the training hyperparamters (SparseZoo stub or a local file).
+- `task_name` specifies the sentiment analysis task for the MNLI dataset.
 
 To utilize a custom dataset, use the `--train_file` and `--validation_file` arguments. To use a dataset from the Hugging Face hub, use `--dataset_name`.
-See the [Hugging Face Docs](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
+See the [Hugging Face documentation](https://huggingface.co/docs/transformers/run_scripts#run-a-script) for more details.
 
 Run the following to see the full list of options:
 ```bash
@@ -83,10 +82,7 @@ sparseml.transformers.text_classification \
     --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/12layer_pruned80_quant-none-vnni?recipe_type=transfer-text_classification
 ```
 
-This usage of the script is the same as the above.
-
-
-In this example, however, the starting model is a pruned-quantized version of BERT from SparseZoo (rather than a dense BERT)
+The usage of the script is the same as for Sparsifying Popular Transformer Models, above. However, in this example, the starting model is a pruned-quantized version of BERT from SparseZoo (rather than a dense BERT)
 and the recipe is a transfer learning recipe, which instructs Transformers to maintain sparsity (rather than a sparsification recipe
 that sparsifies the model from scratch).
 
@@ -101,7 +97,7 @@ For example, the `--distill_teacher` argument can be set to pull a dense SST2 mo
 --distill_teacher zoo:nlp/text_classification/bert-base/pytorch/huggingface/sst2/base-none
 ```
 
-Alternatively, the user may decide to train their own dense teacher model. The following command uses the dense BERT base model from the SparseZoo and fine-tunes it on the SST2 dataset for use as a dense teacher.
+Alternatively, you may decide to train your own dense teacher model. The following command uses the dense BERT base model from the SparseZoo and fine-tunes it on the SST2 dataset for use as a dense teacher.
 ```bash
 sparseml.transformers.text_classification \
     --model_name_or_path zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/base-none \
@@ -112,7 +108,7 @@ sparseml.transformers.text_classification \
     --recipe zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/base-none?recipe_type=transfer-text_classification
 ```
 
-Once the dense teacher is trained we may reuse it for KD in Sparsification or Sparse Transfer learning.
+Once the dense teacher is trained, you may reuse it for KD in sparsification or sparse transfer learning.
 Simply pass the path to the directory with the teacher model to the --distill_teacher argument. For example:
 
 ```bash
@@ -121,11 +117,11 @@ Simply pass the path to the directory with the teacher model to the --distill_te
 
 ## SparseML CLI
 
-The SparseML installation provides a CLI for sparsifying your models for a specific task; appending the `--help` argument displays a full list of options for training in SparseML:
+The SparseML installation provides a CLI for sparsifying your models for a specific task. Appending the `--help` argument displays a full list of options for training in SparseML:
 ```bash
 sparseml.transformers.text_classification --help
 ```
-output:
+The output is:
 ```bash
   --model_name_or_path MODEL_NAME_OR_PATH
                         Path to pretrained model, sparsezoo stub. or model identifier from huggingface.co/models (default: None)
@@ -145,9 +141,9 @@ To learn about the Hugging Face Transformers run-scripts in more detail, refer t
 ## Deploying with DeepSparse
 
 The artifacts of the training process are saved to the directory `--output_dir`. Once the script terminates, the directory will have everything required to deploy or further modify the model such as:
-- The recipe (with the full description of the sparsification attributes).
-- Checkpoint files (saved in the appropriate framework format).
-- Additional configuration files (e.g., tokenizer, dataset info).
+- The recipe (with the full description of the sparsification attributes)
+- Checkpoint files (saved in the appropriate framework format)
+- Additional configuration files (e.g., tokenizer, dataset info)
 
 
 ### Exporting the Sparse Model to ONNX
@@ -188,4 +184,4 @@ To learn more, refer to the [appropriate documentation in the DeepSparse reposit
 
 ## Support
 
-For Neural Magic Support, sign up or log in to our [Deep Sparse Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queue](https://github.com/neuralmagic/sparseml/issues).
+For Neural Magic Support, sign up or log into our [Deep Sparse Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queue](https://github.com/neuralmagic/sparseml/issues).
