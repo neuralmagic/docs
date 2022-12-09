@@ -1,0 +1,49 @@
+---
+title: "Docker"
+metaTitle: "Using/Creating a DeepSparse Docker Image"
+metaDescription: "Using/Creating a DeepSparse Docker Image for repeatable build processes"
+index: 3000
+---
+
+# Using/Creating a DeepSparse Docker Image
+
+DeepSparse is set up with a default Dockerfile for a minimal DeepSparse Docker image.
+This image is based off the latest official Ubuntu image.
+
+## Pull
+
+You can access the already-built image detailed at https://github.com/orgs/neuralmagic/packages/container/package/deepsparse:
+
+```bash
+docker pull ghcr.io/neuralmagic/deepsparse:1.0.2-debian11
+docker tag ghcr.io/neuralmagic/deepsparse:1.0.2-debian11 deepsparse_docker
+```
+
+## Extend
+
+To customize the Docker image, you can use the pre-built images as a base in your own `Dockerfile`:
+
+```Dockerfile
+from ghcr.io/neuralmagic/deepsparse:1.0.2-debian11
+
+...
+```
+
+## Build
+
+To build and launch this image, run the following from the `docker/` directory under the DeepSparse Repo:
+```bash
+$ docker build -t deepsparse_docker . && docker run -it deepsparse_docker ${python_command}
+```
+
+For example:
+
+```bash
+docker build -t deepsparse_docker . && docker run -it deepsparse_docker deepsparse.server --task question_answering --model_path "zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni"
+````
+
+To use a specific branch from DeepSparse, you can use the `GIT_CHECKOUT` build argument:
+
+```bash
+docker build --build-arg GIT_CHECKOUT=main -t deepsparse_docker .
+```

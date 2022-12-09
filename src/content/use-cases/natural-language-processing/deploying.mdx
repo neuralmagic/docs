@@ -13,16 +13,16 @@ DeepSparse allows accelerated inference, serving, and benchmarking of sparsified
 The Hugging Face integration enables you to easily deploy sparsified Transformers with DeepSparse for GPU-class performance directly on the CPU.
 
 This integration currently supports several fundamental NLP tasks out of the box:
-- **Question Answering** - posing questions about a document
-- **Sentiment Analysis** - assigning a sentiment to a piece of text
-- **Text Classification** - assigning a label or class to a piece of text (e.g duplicate question pairing)
-- **Token Classification** - attributing a label to each token in a sentence (e.g. Named Entity Recognition task)
+- **Question Answering**&mdash;posing questions about a document
+- **Sentiment Analysis**&mdash;assigning a sentiment to a piece of text
+- **Text Classification**&mdash;assigning a label or class to a piece of text (e.g., duplicate question pairing)
+- **Token Classification**&mdash;attributing a label to each token in a sentence (e.g., Named Entity Recognition task)
 
-We are actively working on adding more use cases, stay tuned!
+We are actively working on adding more use cases. Stay tuned!
 
 ## Installation Requirements
 
-This section requires the [DeepSparse Server Install](/get-started/install/deepsparse).
+This use case requires the installation of [DeepSparse Server](/get-started/install/deepsparse).
 
 ## Getting Started
 
@@ -34,11 +34,11 @@ To deploy a Transformer using DeepSparse, pass the model in the ONNX format alon
 This grants the engine the flexibility to serve any model in a framework-agnostic environment.
 
 DeepSparse `Pipelines` require the following files within a folder on the local server to properly load a Transformers model:
-- `model.onnx` - The exported Transformers model in the ONNX format
-- `tokenizer.json` - The [Hugging Face tokenizer file](https://huggingface.co/docs/transformers/fast_tokenizers)
-- `config.json` - The [Hugging Face configuration file](https://huggingface.co/docs/transformers/main_classes/configuration)
+- `model.onnx`&mdash;the exported Transformers model in the ONNX format
+- `tokenizer.json`&mdash;the [HuggingFace tokenizer file](https://huggingface.co/docs/transformers/fast_tokenizers)
+- `config.json`&mdash;the [HuggingFace configuration file](https://huggingface.co/docs/transformers/main_classes/configuration)
 
-There are two options to collecting these files:
+There are two options for collecting these files:
 
 
 <details>
@@ -48,13 +48,13 @@ There are two options to collecting these files:
 This pathway is relevant if you intend to deploy a model created using SparseML.
 
 After training your model with SparseML, locate the `.pt` file for the model you'd like to export and run the SparseML integrated Transformers ONNX export script below.
-For example, if you wanted to export a model you had trained to do question answering, use the below:
+For example, to export a model you had trained to do question answering, use the following:
 
 ```bash
 sparseml.transformers.export_onnx --task question-answering --model_path model_path
 ```
 
-This creates `model.onnx` file and exports it to the local filesystem. `tokenizer.json` and `config.json` are also stored in this directory.
+This creates a `model.onnx` file and exports it to the local filesystem. `tokenizer.json` and `config.json` are also stored in this directory.
 All of the examples below use SparseZoo stubs, but you can pass the path to the local directory in its place.
 
 </details>
@@ -67,26 +67,26 @@ All of the examples below use SparseZoo stubs, but you can pass the path to the 
 This pathway is relevant if you plan to use an off-the-shelf model from the SparseZoo.
 
 All of DeepSparse's `Pipelines` and APIs can use a SparseZoo stub in place of a local folder.
-The `Pipelines` use the stubs to locate and download the ONNX and config files from the SparseZoo repo.
+The `Pipelines` use the stubs to locate and download the ONNX and configuration files from the SparseZoo repository.
 
 </details>
 
-The examples below use option 2. However, you can pass the local path to the directory containing the config files in place
+The examples below use option 2. However, you can pass the local path to the directory containing the configuration files in place
 of the SparseZoo stub.
 
 ## Deployment APIs
 
 DeepSparse provides both a Python `Pipeline` API and an out-of-the-box model server
-that can be used for end-to-end inference in either existing python workflows or as an HTTP endpoint.
-Both options provide similar specifications for configurations and support a variety of NLP transformers
+that can be used for end-to-end inference in either existing Python workflows or as an HTTP endpoint.
+Both options provide similar specifications for configurations and support a variety of NLP Transformers
 tasks including question answering, text classification, sentiment analysis, and token classification.
 
 ### Python API
 `Pipelines` are the default interface for running inference with DeepSparse.
 
 Once a model is obtained, either through SparseML training or directly from SparseZoo,
-`deepsparse.Pipeline` can be used to easily facilitate end to end inference and deployment
-of the sparsified transformers model.
+`deepsparse.Pipeline` can be used to easily facilitate end-to-end inference and deployment
+of the sparsified Transformers model.
 
 If no model is specified to the `Pipeline` for a given task, the `Pipeline` will automatically
 select a pruned and quantized model for the task from the `SparseZoo` that can be used for accelerated
@@ -94,17 +94,16 @@ inference. Note that other models in the SparseZoo will have different tradeoffs
 and accuracy.
 
 ### HTTP Server
-As an alternative to Python API, DeepSparse Server allows you to serve ONNX models and pipelines in HTTP.
+As an alternative to the Python API, DeepSparse Server allows you to serve ONNX models and pipelines in HTTP.
 Both configuring and making requests to the server follow the same parameters and schemas as the
-`Pipelines` enabling simple deployment.  Once launched, a `/docs` endpoint is created with full
+`Pipelines`, enabling simple deployment.  Once launched, a `/docs` endpoint is created with full
 endpoint descriptions and support for making sample requests.
 
-Example deployments using NLP transformer models are provided below.
-For full documentation on deploying sparse transformer models with DeepSparse Server, see the
-[documentation](/user-guide/deploying-deepsparse/deepsparse-server).
+Example deployments using NLP Transformer models are provided below.
+Refer to the [full documentation on DeepSparse Server](/user-guide/deploying-deepsparse/deepsparse-server).
 
 ## Deployment Use Cases
-The following section includes example usage of the Pipeline and server APIs for various NLP transformers tasks.
+The following section includes example usage of the pipeline and server APIs for various NLP Transformers tasks.
 
 ### Question Answering
 The question answering tasks accepts a `question` and a `context`. The pipeline will predict an answer
@@ -186,10 +185,10 @@ response.text
 ```
 
 ### Text Classification
-The text classification task supports binary, multi class, and regression predictions over
+The text classification task supports binary, multi-class, and regression predictions over
 sentence inputs. The following example uses a pruned and quantized text classification
 DistilBERT model trained on the `qqp` dataset downloaded from a SparseZoo stub.
-The `qqp` dataset takes pairs of questions and predicts if they are a duplicate or not.
+The `qqp` dataset takes pairs of questions and predicts whether or not they are a duplicate.
 
 #### Python Pipeline
 ```python
@@ -309,4 +308,4 @@ To learn more about benchmarking, refer to the appropriate documentation.
 
 ## Support
 
-For Neural Magic Support, sign up or log in to our [Neural Magic Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queue](https://github.com/neuralmagic/sparseml/issues).
+For Neural Magic Support, sign up or log into our [Neural Magic Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queue](https://github.com/neuralmagic/sparseml/issues).
