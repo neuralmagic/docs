@@ -163,7 +163,7 @@ from deepsparse.pipelines.custom_pipeline import CustomTaskPipeline
 
 def preprocess(inputs):
     pass # define your function
-def postprocess(outputs)
+def postprocess(outputs):
     pass # define your function
 
 custom_pipeline = CustomTaskPipeline(
@@ -182,7 +182,7 @@ pipeline_outputs = custom_pipeline(pipeline_inputs)
 **Additional Resources**
 
 - Get Started and [Use A Model](/get-started/use-a-model)
-- Get Started and [Use A Model in a Custom Use Case)](/get-started/use-a-model/custom-use-case)
+- Get Started and [Use A Model in a Custom Use Case](/get-started/use-a-model/custom-use-case)
 - Refer to [Use Cases](/use-cases) for details on usage of supported use cases
 - List of Supported Use Cases [Docs Coming Soon]
 
@@ -210,17 +210,16 @@ DeepSparse Server is launched from the CLI, with configuration via either comman
 With the command line argument path, users specify a use case via the `task` argument (e.g. `image_classification` or `question_answering`) as
 well as a model (either a local ONNX file or a SparseZoo stub) via the `model_path` argument:
 ```bash
-deepsparse.server task [use_case_name] --model_path [model_path]
+deepsparse.server --task [use_case_name] --model_path [model_path]
 ```
 
 With the config file path, users create a YAML file that specifies the server configuration. A YAML file looks like the following:
 
 ```yaml
-num_workers: 4              # specify multi-stream (more than one worker)
 endpoints:
-    - task: [task_name]     # specifiy use case (e.g. image_classification, question_answering)
+    - task: task_name       # specifiy use case (e.g. image_classification, question_answering)
       route: /predict       # specify the route of the endpoint
-      model: [model_path]   # specify sparsezoo stub or path to local onnx file
+      model: model_path     # specify sparsezoo stub or path to local onnx file
       name: any_name_you_want
 
 #   - ... add as many endpoints as neeede
@@ -229,7 +228,7 @@ endpoints:
 The Server is then launched with the following:
 
 ```bash
-deepsparse.server config_file config.yaml
+deepsparse.server --config_file config.yaml
 ```
 
 Clients interact with the Server via HTTP. Because the Server uses Pipelines internally,
@@ -284,7 +283,7 @@ onnx_filepath = "path/to/onnx/model.onnx"
 batch_size = 64
 
 # Generate random sample input
-inputs = generate_random_inputs(model=onnx_filepath, batch_size=batch_size)
+inputs = generate_random_inputs(onnx_filepath, batch_size)
 
 # Compile and run
 engine = Engine(onnx_filepath, batch_size)
