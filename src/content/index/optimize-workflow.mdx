@@ -7,7 +7,7 @@ index: 1000
 
 # Optimize a Model for Inference
 
-The Neural Magic Platform enables users to optimize models for inference on CPUs.
+The Neural Magic Platform enables you to optimize your models for inference with sparsity.
 
 ### Motivation 
 
@@ -27,9 +27,6 @@ Importantly, they support *training-aware* pruning and quantization algorithms (
 Training-aware techniques apply the sparsification gradually, allowing the model to adjust by fine-tuning the remaining weights
 with the training dataset at each step. This technique is critical to maintain high accuracy at the high 
 levels of sparsity needed to reach GPU-class performance.
-
-<details>
-    <summary>Click for conceptual details on pruning and quantization algorithms</summary>
 
 ## Conceptual Guide
 
@@ -76,25 +73,13 @@ signficant drops in accuracy, as the model does not have a chance to re-adjust t
 complex algorithms. However, applying the pruning and quantization gradually and fine-tuning the non-zero weights 
 with training data enables accuracy to recover to 99% of the baseline dense model even as sparsity is pushed to very high levels.
 
-***SparseML uses Training-Aware Unstructured Pruning and Training-Aware Quantization to create very
-sparse models that sacrifice very little accuracy.***
-
-For example, below is the sparsity profile of both an example CNN and Transformer in SparseZoo:
-
-|                               |ResNet-50  |BERT-base  |
-|-------------------------------|-----------|-----------|
-|% Pruned                       |95%        |95%        |
-|Quantization                   |INT8       |INT8       |
-|Accuracy % of Dense Baseline   |99%        |99%        |
-
-You can see the full scope of pre-sparsified models in [SparseZoo](https://sparsezoo.neuralmagic.com/).
-
-</details>
+SparseML uses Training-Aware Unstructured Pruning and Training-Aware Quantization to create very
+sparse models that sacrifice very little accuracy.
 
 ## How to Create an Inference-Optimized Sparse Model
 
 SparseML and SparseZoo extend PyTorch and TensorFlow with features for 
-creating sparse models ***trained on custom data***.
+creating sparse models trained on custom data.
 
 Together, they enable two workflows:
 1. **Sparse Transfer Learning**: fine-tune a pre-sparsified foundation model (like ResNet-50 or BERT) from the SparseZoo
@@ -109,7 +94,7 @@ and is preferred for any scenario where a pre-sparsified foundation model exists
 
 Neural Magic's research team has invested many hours in creating state-of-the-art pruned and quantized verisons of popular foundation
 models trained on large open datasets. These state-of-the-art models (including the hyperparameters of 
-the sparsificaiton process) are publically available in the SparseZoo. 
+the sparsification process) are publically available in the SparseZoo. 
 
 SparseML enables users to fine-tune the pre-sparsified models in SparseZoo onto custom data *while maintaining the same 
 level of sparsity* (which we call "Sparse Transfer Learning"). Under the hood, SparseML extends PyTorch and TensorFlow 
@@ -132,9 +117,9 @@ As described in the conceptual section above, Training-Aware Unstructured Prunin
 Training-Aware Quantization are the best techniques for creating models with the highest levels of sparsity
 without suffering from much accuracy degradation.
 
-**Global Magnitude Pruning (GMP)** is the best algorithm for unstructured pruning:
-- With GMP, pruning occurs gradually over a training run. Over several epochs or training steps weights closest 
-to zero are iteratively removed. The non-zero weights are then fine-tuned to the objective function. 
+**Gradual Magnitude Pruning (GMP)** is the best algorithm for unstructured pruning:
+- With GMP, pruning occurs gradually over a training run. Over several epochs or training steps the least impactful weights are 
+iteratively removed. The non-zero weights are then fine-tuned to the objective function. 
 This iterative process enables the model to adjust to a new optimization space after pathways are removed before pruning again. 
 
 **Quantization Aware Training (QAT)** is the best algorithm for quantization:
