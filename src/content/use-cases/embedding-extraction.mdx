@@ -45,7 +45,7 @@ Pipelines can be used to handle pre-processing and post-processing of input, mak
 
 As an alternative to the Python API, DeepSparse Server allows you to
 serve an Embedding Extraction Pipeline over HTTP. Configuring the server uses the same parameters and schemas as the `Pipelines`. 
-Once launched, a `/docs` endpoint is created with full endpoint descriptions and support for making sample requests. For more detailed, checkout
+Once launched, a `/docs` endpoint is created with full endpoint descriptions and support for making sample requests. For more details, check out
 [the documentation for DeepSparse Server](/user-guide/deploying-deepsparse/deepsparse-server).
 
 ## Deployment Examples
@@ -58,10 +58,10 @@ Each example uses a SparseZoo stub to pull down the model, but a local path to a
 The Embedding Extraction Pipeline handles some useful actions around inference:
 
 - First, on initialization, the Pipeline (optionally) removes a projection head from a model. You can use 
-the `emb_extraction_layer` argument to specify which layer to return (use `-1` to get the last layer). 
+the `emb_extraction_layer` argument to specify which layer to return.
 If your ONNX model has no projection head, you can set `emb_extraction_layer=None` (the default) to skip this step.
 
-- Second, as with all DeepSparse Pipelines, it handles the pre-processing such that you can pass raw input.
+- Second, as with all DeepSparse Pipelines, it handles pre-processing such that you can pass raw input.
 You will notice that in addition to the typical `task` argument used in `Pipeline.create()`, 
 the Embedding Extraction Pipeline includes a  `base_task` argument. This argument tells the Pipeline the domain of the model, 
 such that the Pipeline can figure out what pre-processing to do.
@@ -70,59 +70,53 @@ This is an example of extracting the last layer from ResNet-50:
 
 ```python
 from deepsparse import Pipeline
-import numpy
 
-rn50_emb_pipeline = Pipeline.create(
+rn50_embedding_pipeline = Pipeline.create(
     task="embedding-extraction",
     base_task="image-classification", # tells the pipeline to expect images and normalize input with ImageNet means/stds
     model_path="zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/channel20_pruned75_quant-none-vnni",
-    emb_extraction_layer=-1, # extracts the last layer
+    emb_extraction_layer=-3, # extracts last layer before projection head
 )
 
-input_image = "my_image.png" # path to input image
+input_image = "goldfish.jpg" # path to input image
 embedding = rn50_embedding_pipeline(images=input_image) # returns final layer of resnet-model
+print(len(embedding.embeddings[0][0]))
+
+# Output: 2048 
 ```
 
-This is an example of extracting the last layer from DistilBERT sentiment analysis:
+### Transformers Embedding Extraction
 
-```python
-from deepsparse import Pipeline
+In the NLP domain, you can use `transformer_embedding_extraction` as the `task` for some extra utilities:
 
-distil_bert_emb_pipeline = Pipeline.create(
-    task="embedding-extraction",
-    base_task="sentiment-analysis",
-    model_path="zoo:nlp/sentiment_analysis/distilbert-none/pytorch/huggingface/sst2/pruned80_quant-none-vnni",
-    emb_extraction_layer=-1, # extracts the last layer
-)
+The first is automatic embedding layer detection. If you use `emb_extraction_layer=1` (the default),
+the Pipeline automatically detects the final transformer layer before the projection head and removes the 
+projection head for you.
 
-input_sequence = "The generalized embedding extraction Pipeline is the best!"
-embedding = distil_bert_emb_pipeline(images=input_sequence)
-```
-
-This is an example of using the final layer from a BERT model with no projection head (so the Pipeline does 
-not remove the projection head on initialization).
-
-```python
-from deepsparse import Pipeline
-
-bert_emb_pipeline = Pipeline.create(
-    task="embedding-extraction",
-    base_task="transformers_embedding_extraction",
-    model_path="zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni",
-    # emb_extraction_layer=None, # since there is no projection head on this model, can use the output 
-)
-
-input_sequence = "The generalized embedding extraction Pipeline is the best!"
-embedding = bert_emb_pipeline(images=input_sequence) # extracts the final layer of bert-model
-```
-
-In the NLP domain, you can use `transformer_embedding_extraction` as the `base_task` and 
-specify an `extraction_strategy` to perform a reduction on the sequence dimension 
-rather than returning an embedding for each token. The options are:
+The second is usage of the `extraction_strategy` to perform a reduction on the sequence dimension rather 
+than returning an embedding for each token. The options are:
 - `per_token`: returns the embedding for each token in the sequence (default)
 - `reduce_mean`: returns the average token of the sequence
 - `reduce_max`: returns the max token of the sequence
 - `cls_token`: returns the cls token from the sequence
+
+An example using automatic embedding layer detection looks like this:
+```python
+from deepsparse import Pipeline
+
+bert_emb_pipeline = Pipeline.create(
+    task="transformers_embedding_extraction",
+    model_path="zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni",
+#     emb_extraction_layer=-1,         # (default: detect last layer)
+#     extraction_strategy="per_token"  # (default: concat embedding for each token)
+)
+
+input_sequence = "The generalized embedding extraction Pipeline is the best!"
+embedding = bert_emb_pipeline(input_sequence)
+print(len(embedding.embeddings[0]))
+
+# Output: 98304 << 93804 = 768 * 128 = hidden_size * sequence_length
+```
 
 An example returing the average embeddings of the tokens looks like this:
 
@@ -130,14 +124,17 @@ An example returing the average embeddings of the tokens looks like this:
 from deepsparse import Pipeline
 
 bert_emb_pipeline = Pipeline.create(
-    task="embedding-extraction",
-    base_task="transformers_embedding_extraction",
+    task="transformers_embedding_extraction",
     model_path="zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni",
-    extraction_strategy="reduce_mean" # returns the average embedding of the tokens
+#     emb_extraction_layer=-1,         # (default: detect last layer)
+    extraction_strategy="reduce_mean"  # (default: concat embedding for each token)
 )
 
 input_sequence = "The generalized embedding extraction Pipeline is the best!"
-embedding = bert_emb_pipeline(images=input_sequence) # embeddings reduced along the sequence dimension
+embedding = bert_emb_pipeline(input_sequence)
+print(len(embedding.embeddings[0]))
+
+# Output: 768 << reduced along sequence dimension
 ```
 
 ### HTTP Server
@@ -146,11 +143,13 @@ The HTTP Server is a wrapper around the Pipeline. It can be launched from the co
 
 Config file:
 ```yaml
+# config.yaml
 endpoints:
-    task: embedding_extraction
-    model_path: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
-    base_task image_classification
-    emb_extraction_layer: -1
+    - task: embedding_extraction
+      model: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
+      kwargs:
+        base_task: image_classification
+        emb_extraction_layer: -3
 ```
 
 Spinning up:
@@ -160,10 +159,14 @@ deepsparse.server --config_file config.yaml
 
 Making a request:
 ```python
-import requests
-
-url = 'http://0.0.0.0:5543/predict/from_files'
-path = ['goldfish.jpeg'] # just put the name of images in here
-files = [('request', open(img, 'rb')) for img in path]
+import requests, json
+url = "http://0.0.0.0:5543/predict/from_files"
+paths = ["goldfish.jpg"]
+files = [("request", open(img, 'rb')) for img in paths]
 resp = requests.post(url=url, files=files)
+result = json.loads(resp.text)
+
+print(len(result["embeddings"][0][0]))
+
+# Output: 2048
 ```
