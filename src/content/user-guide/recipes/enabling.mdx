@@ -5,14 +5,14 @@ metaDescription: "Enabling Pipelines to work with SparseML Recipess"
 index: 2000
 ---
 
-# Enabling Pipelines to work with SparseML Recipes
+# Enabling Pipelines to Work with SparseML Recipes
 
-This page explains how to use recipes with common training pipelines to sparsify your custom model.
+You can use recipes with common training pipelines to sparsify your custom model.
 
 We currently support PyTorch, Keras, and TensorFlow. The pseudocode below will work for both sparse transfer learning and sparsifying from scratch,
 simply by passing the appropriate recipe.
 
-See [SparseML installation page](/get-started/install/sparseml) for installation requirements of each integration.
+See the [SparseML installation page](/get-started/install/sparseml) for installation requirements of each integration.
 
 ## PyTorch Pipelines
 
@@ -21,7 +21,7 @@ Inside are APIs designed to make model sparsification as easy as possible by int
 
 First, the `ScheduledModifierManager` is created. This class accepts a recipe file and parses the hyperparameters at initialization.
 The `modify()` function wraps an optimizer or optimizer-like object (contains a step function) to override the step invocation.
-With this setup, the training process can then be modified to sparsify the model.
+With this setup, the training process can be modified to sparsify the model.
 
 To enable all of this, the integration code is accomplished by writing a handful of lines:
 
@@ -87,11 +87,11 @@ Inside are APIs designed to make model sparsification as easy as possible by int
 
 The integration is done using the `ScheduledModifierManager` class, which can be created from a recipe file.
 This class handles modifying the TensorFlow graph for the desired algorithms.
-With this setup, the training process can then be modified to sparsify the model.
+With this setup, the training process can be modified to sparsify the model.
 
 ### Estimator-Based Pipelines
 
-Estimator-based pipelines are simpler to integrate with as compared to session-based pipelines.
+It is simpler to integrate with estimator-based pipelines as compared to session-based pipelines.
 The `ScheduledModifierManager` can override the necessary callbacks in the estimator to modify the graph using the `modify_estimator` function.
 
 ```python
@@ -110,12 +110,12 @@ manager.modify_estimator(estimator, steps_per_epoch=num_train_batches)
 ### Session-Based Pipelines
 
 Session-based pipelines need a little bit more compared to estimator-based pipelines; however,
-it is still designed to require only a few lines of code for integration.
+session-based pipelines are designed to require only a few lines of code for integration.
 After graph creation, the manager's `create_ops` method must be called.
 This will modify the graph as needed for the algorithms and return modifying ops and extras.
 After creating the session and training, call into `session.run` with the modifying ops after each step.
-Modifying extras contain objects such as tensorboard summaries of the modifiers to be used if desired.
-Finally, once completed, `complete_graph` must be called to remove the modifying ops for saving and export.
+Modifying extras contain objects such as TensorBoard summaries of the modifiers to be used, if desired.
+Finally, once completed, `complete_graph` must be called to remove the modifying ops for saving and exporting.
 
 ```python
 from sparseml.tensorflow_v1.utils import tf_compat
