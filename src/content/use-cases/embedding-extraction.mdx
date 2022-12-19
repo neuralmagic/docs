@@ -71,15 +71,16 @@ This is an example of extracting the last layer from ResNet-50:
 ```python
 from deepsparse import Pipeline
 
+# this step removes the projection head before compiling the model
 rn50_embedding_pipeline = Pipeline.create(
     task="embedding-extraction",
     base_task="image-classification", # tells the pipeline to expect images and normalize input with ImageNet means/stds
     model_path="zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/channel20_pruned75_quant-none-vnni",
-    emb_extraction_layer=-3, # extracts last layer before projection head
+    emb_extraction_layer=-3, # extracts last layer before projection head and softmax
 )
 
-input_image = "goldfish.jpg" # path to input image
-embedding = rn50_embedding_pipeline(images=input_image) # returns final layer of resnet-model
+# this step runs pre-processing, inference and returns an embedding
+embedding = rn50_embedding_pipeline(images="goldfish.jpg")
 print(len(embedding.embeddings[0][0]))
 
 # Output: 2048 
@@ -87,13 +88,13 @@ print(len(embedding.embeddings[0][0]))
 
 #### Pipeline API: Transformers
 
-In the NLP domain, you can use `transformer_embedding_extraction` as the `task` for some extra utilities.
+With Hugging Face Transformers, you can use `task=transformer_embedding_extraction` for some extra utilities.
 
-The first is automatic embedding layer detection. If you use `emb_extraction_layer=1` (the default),
+The first utility is automatic embedding layer detection. If you set `emb_extraction_layer=1` (the default),
 the Pipeline automatically detects the final transformer layer before the projection head and removes the 
 projection head for you.
 
-The second is usage of the `extraction_strategy` to perform a reduction on the sequence dimension rather 
+The second utility is automatic embedding dimenonality reduction. You `extraction_strategy` to perform a reduction on the sequence dimension rather 
 than returning an embedding for each token. The options are:
 - `per_token`: returns the embedding for each token in the sequence (default)
 - `reduce_mean`: returns the average token of the sequence
