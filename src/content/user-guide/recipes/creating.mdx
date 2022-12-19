@@ -7,22 +7,20 @@ index: 1000
 
 # Creating Sparsification Recipes
 
-This page explains how to create recipes.
-
 All SparseML Sparsification APIs are designed to work with recipes.
 The files encode the instructions needed for modifying the model and/or training process as a list of modifiers.
 Example modifiers can be anything from setting the learning rate for the optimizer to gradual magnitude pruning.
 The files are written in [YAML](https://yaml.org/) and stored in YAML or
-[markdown](https://www.markdownguide.org/) files using
+[Markdown](https://www.markdownguide.org/) files using
 [YAML front matter.](https://assemble.io/docs/YAML-front-matter.html)
-The rest of the SparseML system is coded to parse the recipe files into a native format for the desired framework
+The rest of the SparseML system is coded to parse the recipe files into a native format for the desired framework,
 and apply the modifications to the model and training pipeline.
 
 In a recipe, modifiers must be written in a list that includes "modifiers" in its name.
 
 The easiest ways to get or create recipes are by either using the pre-configured recipes in [SparseZoo](https://github.com/neuralmagic/sparsezoo) or using [Sparsify's](https://github.com/neuralmagic/sparsify) automatic creation.
 Especially for users performing sparse transfer learning from our pre-sparsified models in the SparseZoo, we highly reccomend using the
-pre-made transfer learning recipes found on SparseZoo. However, power users may be inclined to create their recipes by hand to enable more
+pre-made transfer learning recipes found on SparseZoo. However, power users may be inclined to create their recipes to enable more
 fine-grained control or add custom modifiers when sparsifying a new model from scratch.
 
 
@@ -55,10 +53,10 @@ modifiers:
 ## Modifiers Intro
 
 Recipes can contain multiple modifiers, each modifying a portion of the training process in a different way.
-In general, each modifier will have a start and an end epoch for when the modifier should be active.
+In general, each modifier will have a start and end epoch for when the modifier should be active.
 The modifiers will start at `start_epoch` and run until `end_epoch`.
-Note that it does not run through `end_epoch`.
-Additionally, all epoch values support decimal values such that they can be started somewhere in the middle of an epoch.
+Note that it does not run *through* `end_epoch`.
+Additionally, all epoch values support decimal values such that they can be started anywhere within an epoch.
 For example, `start_epoch: 2.5` will start in the middle of the second training epoch.
 
 The most commonly used modifiers are enumerated as subsections below.
@@ -67,18 +65,16 @@ The most commonly used modifiers are enumerated as subsections below.
 
 The `EpochRangeModifier` controls the range of epochs for training a model.
 Each supported ML framework has an implementation to enable easily retrieving this number of epochs.
-Note, that this is not a hard rule and if other modifiers have a larger `end_epoch` or smaller `start_epoch`
-then those values will be used instead.
+Note that this is not a hard rule and, if other modifiers have a larger `end_epoch` or smaller `start_epoch`,
+those values will be used instead.
 
 The only parameters that can be controlled for `EpochRangeModifier` are the `start_epoch` and `end_epoch`.
-Both parameters are required.
+Both parameters are required:
 
-Required Parameters:
+- `start_epoch` indicates the start range for the epoch (0 indexed).
+- `end_epoch` indicates the end range for the epoch.
 
-- `start_epoch`: The start range for the epoch (0 indexed)
-- `end_epoch`: The end range for the epoch
-
-Example:
+For example:
 
  ```yaml
      - !EpochRangeModifier
@@ -98,14 +94,14 @@ The modifier is generally used for transfer learning from an already pruned mode
 to enforce sparsity while quantizing.
 The weights remain trainable in this setup; however, the sparsity is unchanged.
 
-Required Parameters:
-- `params`: The parameters in the model to prune.
+The required parameter is:
+- `params`indicates the parameters in the model to prune.
 This can be set to a string containing `__ALL__` to prune all parameters, a list to specify the targeted parameters,
 or regex patterns prefixed by 're:' of parameter name patterns to match.
 For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
 Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
 
-Example:
+For example:
 
 ```yaml
     - !ConstantPruningModifier
@@ -115,41 +111,45 @@ Example:
 #### GMPruningModifier
 
 The `GMPruningModifier` prunes the parameter(s) in a model to a
-target sparsity (percentage of 0's for a layer's param/variable)
+target sparsity (percentage of 0s for a layer's parameter/variable)
 using [gradual magnitude pruning.](https://neuralmagic.com/blog/pruning-gmp/)
 This is done gradually from an initial to final sparsity (`init_sparsity`, `final_sparsity`)
 over a range of epochs (`start_epoch`, `end_epoch`) and updated at a specific interval defined by the `update_frequency`.
-For example, using the following settings `start_epoch: 0`, `end_epoch: 5`, `update_frequency: 1`,
-`init_sparsity: 0.05`, `final_sparsity: 0.8` will do the following:
-- at epoch 0 set the sparsity for the specified param(s) to 5%
-- once every epoch, gradually increase the sparsity towards 80%
-- by the start of epoch 5, stop pruning and set the final sparsity for the specified param(s) to 80%
+For example, using the following settings:
 
-Required Parameters:
+`start_epoch: 0`, `end_epoch: 5`, `update_frequency: 1`,
+`init_sparsity: 0.05`, `final_sparsity: 0.8` 
 
-- `params`: The parameters in the model to prune.
+will do the following.
+- At epoch 0, set the sparsity for the specified param(s) to 5%
+- Once every epoch, gradually increase the sparsity toward 80%
+- By the start of epoch 5, stop pruning and set the final sparsity for the specified parameter(s) to 80%
+
+The required parameters are:
+
+- `params` indicates the parameters in the model to prune.
 This can be set to a string containing `__ALL__` to prune all parameters, a list to specify the targeted parameters,
 or regex patterns prefixed by 're:' of parameter name patterns to match.
 For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
 Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
-- `init_sparsity`: The decimal value for the initial sparsity to start pruning with.
-At `start_epoch` will set the sparsity for the param/variable to this value.
+- `init_sparsity` is the decimal value for the initial sparsity with which to start pruning.
+`start_epoch` will set the sparsity for the parameter/variable to this value.
 Generally, this is kept at 0.05 (5%).
-- `final_sparsity`: The decimal value for the final sparsity to end pruning with.
-By the start of `end_epoch` will set the sparsity for the param/variable to this value.
-Generally, this is kept in a range from 0.6 to 0.95 depending on the model and layer.
+- `final_sparsity` is the decimal value for the final sparsity with which to end pruning.
+By the start of `end_epoch` will set the sparsity for the parameter/variable to this value.
+Generally, this is kept in a range from 0.6 to 0.95, depending on the model and layer.
 Anything less than 0.4 is not useful for performance.
-- `start_epoch`: The epoch to start the pruning at (0 indexed).
-This supports floating-point values to enable starting pruning between epochs.
- - `end_epoch`: The epoch before which to stop pruning.
-This supports floating-point values to enable stopping pruning between epochs.
- - `update_frequency`: The number of epochs/fractions of an epoch between each pruning step.
-It supports floating-point values to enable updating inside of epochs.
+- `start_epoch` sets the epoch at which to start the pruning (0 indexed).
+This supports floating point values to enable starting pruning between epochs.
+ - `end_epoch` sets the epoch before which to stop pruning.
+This supports floating point values to enable stopping pruning between epochs.
+ - `update_frequency` is the number of epochs/fractions of an epoch between each pruning step.
+It supports floating point values to enable updating inside of epochs.
 Generally, this is set to update once per epoch (`1.0`).
 However, if the loss for the model recovers quickly, it should be set to a lesser value.
-For example: set it to `0.5` for once every half epoch (twice per epoch).
+For example, set it to `0.5` for once every half epoch (twice per epoch).
 
-Example:
+For example:
 
 ```yaml
     - !GMPruningModifier
@@ -169,23 +169,23 @@ QAT emulates the precision loss of int8 quantization during training so weights 
 learned to limit any accuracy loss from quantization.
 Once the `QuantizationModifier` is enabled, it cannot be disabled (no `end_epoch`).
 Quantization zero points are set to be asymmetric for activations and symmetric for weights.
-Currently only available in PyTorch.
+Currently, quantization modifiers are available only in PyTorch.
 
 Notes:
 - ONNX exports of PyTorch QAT models will be QAT models themselves (emulated quantization).
-To convert your QAT ONNX model to a fully quantizerd model use
+To convert your QAT ONNX model to a fully quantizerd model, use
 the script `scripts/pytorch/model_quantize_qat_export.py` or the function
 `neuralmagicML.pytorch.quantization.quantize_qat_export`.
 - If performing QAT on a sparse model, you must preserve sparsity during QAT by
 applying a `ConstantPruningModifier` or have already used a `GMPruningModifier` with
 `leave_enabled` set to True.
 
-Required Parameters:
+The required parameter is:
 
-- `start_epoch`: The epoch to start QAT. This supports floating-point values to enable
+- `start_epoch` sets the epoch to start QAT. This supports floating-point values to enable
 starting pruning between epochs.
 
-Example:
+For example:
 
 ```yaml
     - !QuantizationModifier
@@ -196,20 +196,20 @@ Example:
 
 The learning rate modifiers set the learning rate (LR) for an optimizer during training.
 If you are using an Adam optimizer, then generally, these are not useful.
-If you are using a standard stochastic gradient descent optimizer, then these give a convenient way to control the LR.
+If you are using a standard stochastic gradient descent optimizer, these give a convenient way to control the LR.
 
 #### SetLearningRateModifier
 
-The `SetLearningRateModifier` sets the learning rate (LR) for the optimizer to a specific value at a specific point
+The `SetLearningRateModifier` sets the LR for the optimizer to a specific value at a specific point
 in the training process.
 
-Required Parameters:
+Required parameters are:
 
-- `start_epoch`: The epoch in the training process to set the `learning_rate` value for the optimizer.
-This supports floating-point values to enable setting the LR between epochs.
-- `learning_rate`: The floating-point value to set as the learning rate for the optimizer at `start_epoch`.
+- `start_epoch` is the epoch in the training process to set the `learning_rate` value for the optimizer.
+This supports floating point values to enable setting the LR between epochs.
+- `learning_rate` is the floating-point value to set as the LR for the optimizer at `start_epoch`.
 
-Example:
+For example:
 
 ```yaml
     - !SetLearningRateModifier
@@ -219,33 +219,33 @@ Example:
 
 #### LearningRateModifier
 
-The `LearningRateModifier` sets schedules for controlling the learning rate for an optimizer during training.
+The `LearningRateModifier` sets schedules for controlling the LR for an optimizer during training.
 If you are using an Adam optimizer, then generally, these are not useful.
-If you are using a standard stochastic gradient descent optimizer, then these give a convenient way to control the LR.
-Provided schedules to choose from are the following:
+If you are using a standard stochastic gradient descent optimizer, these give a convenient way to control the LR.
+Provided schedules from which to choose are:
 
-- `ExponentialLR`: Multiplies the learning rate by a `gamma` value every epoch.
-To use this one, `lr_kwargs` should be set to a dictionary containing `gamma`.
+- `ExponentialLR` multiplies the LR by a `gamma` value every epoch.
+To use this, `lr_kwargs` should be set to a dictionary containing `gamma`.
 For example: `{'gamma': 0.9}`
-- `StepLR`: Multiplies the learning rate by a `gamma` value after a certain epoch period defined by `step`.
-To use this one, `lr_kwargs` must be set to a dictionary containing `gamma` and `step_size`.
+- `StepLR` multiplies the LR by a `gamma` value after a certain epoch period defined by `step`.
+To use this, `lr_kwargs` must be set to a dictionary containing `gamma` and `step_size`.
 For example: `{'gamma': 0.9, 'step_size': 2.0}`
-- `MultiStepLR`: Multiplies the learning rate by a `gamma` value at specific epoch points defined by `milestones`.
-To use this one, `lr_kwargs` must be set to a dictionary containing `gamma` and `milestones`.
+- `MultiStepLR` multiplies the LR by a `gamma` value at specific epoch points defined by `milestones`.
+To use this, `lr_kwargs` must be set to a dictionary containing `gamma` and `milestones`.
 For example: `{'gamma': 0.9, 'milestones': [2.0, 5.5, 10.0]}`
 
-Required Parameters:
+Required parameters are:
 
-- `start_epoch`: The epoch to start modifying the LR at (0 indexed).
-This supports floating-point values to enable starting pruning between epochs.
-- `end_epoch`: The epoch to stop modifying the LR before.
-This supports floating-point values to enable stopping pruning between epochs.
-- `lr_class`: The LR class to use, one of [`ExponentialLR`, `StepLR`, `MultiStepLR`].
-- `lr_kwargs`: The named arguments for the `lr_class`.
-- `init_lr`: [Optional] The initial LR to set at `start_epoch` and to use for creating the schedules.
+- `start_epoch` sets the epoch at which to start modifying the LR (0 indexed).
+This supports floating point values to enable starting pruning between epochs.
+- `end_epoch` sets the epoch before which to stop modifying the LR.
+This supports floating point values to enable stopping pruning between epochs.
+- `lr_class` is the LR class to use, one of [`ExponentialLR`, `StepLR`, `MultiStepLR`].
+- `lr_kwargs` is the named argument for the `lr_class`.
+- `init_lr` [Optional] is the initial LR to set at `start_epoch` and to use for creating the schedules.
 If not given, the optimizer's current LR will be used at startup.
 
-Example:
+For example:
 
  ```yaml
      - !LearningRateModifier
@@ -262,18 +262,18 @@ Example:
 
 #### TrainableParamsModifier
 
-The `TrainableParamsModifier` controls the params that are marked as trainable for the current optimizer.
+The `TrainableParamsModifier` controls the parameters that are marked as trainable for the current optimizer.
 This is generally useful when transfer learning to easily mark which parameters should or should not be frozen/trained.
 
-Required Parameters:
+The required parameter is:
 
-- `params`: The names of parameters to mark as trainable or not.
+- `params` indicates the names of parameters to mark as trainable or not.
 This can be set to a string containing `__ALL__` to mark all parameters, a list to specify the targeted parameters,
 or regex patterns prefixed by 're:' of parameter name patterns to match.
 For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
 Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
 
-Example:
+For example:
 
 ```yaml
     - !TrainableParamsModifier
@@ -287,15 +287,15 @@ Example:
 The `SetWeightDecayModifier` sets the weight decay (L2 penalty) for the optimizer to a
 specific value at a specific point in the training process.
 
-Required Parameters:
+Required parameters are:
 
-- `start_epoch`: The epoch in the training process to set the `weight_decay` value for the
-optimizer. This supports floating-point values to enable setting the weight decay
+- `start_epoch` is the epoch in the training process to set the `weight_decay` value for the
+optimizer. This supports floating point values to enable setting the weight decay
 between epochs.
-- `weight_decay`: The floating-point value to set as the weight decay for the optimizer
+- `weight_decay` is the floating point value to set as the weight decay for the optimizer
 at `start_epoch`.
 
-Example:
+For example:
 
 ```yaml
     - !SetWeightDecayModifier
