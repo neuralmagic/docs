@@ -7,11 +7,11 @@ index: 6000
 
 # DeepSparse Logging
 
-DeepSparse Logging gives you telemetry to monitor a deployment. 
+This page explains how to use DeepSparse Logging to monitor your deployment.
 
-There are many types of monitoring tasks that you may want to perform with the data you log. The difficulty of the tasks varies from relatively easy 
-(simple system performance analysis) to challenging (assessing the accuracy of the system in the wild by manually labeling 
-the input data distribution post-factum). Examples include:
+There are many types of monitoring tasks that you may want to perform to confirm your production system is working correctly. 
+The difficulty of the tasks varies from relatively easy (simple system performance analysis) to challenging 
+(assessing the accuracy of the system in the wild by manually labeling the input data distribution post-factum). Examples include:
 - **System performance:** what is the latency/throughput of a query?
 - **Data quality:** is there an issue getting data to my model?
 - **Data distribution shift:** does the input data distribution deviates over time to the point where the model stops to deliver reliable predictions?
@@ -25,7 +25,7 @@ DeepSparse Logging provides access to two types of metrics.
 
 ### System Logging Metrics 
 
-System Logging gives you access to granular performance metrics for quick and efficient diagnosis of deployment system health.
+System Logging gives you access to granular performance metrics for quick and efficient diagnosis of system health.
 
 There is one group of System Logging Metrics currently available: Inference Latency. For each inference request, DeepSparse Server logs the following:
 1. Pre-processing Time - seconds in the pre-processing step
@@ -39,41 +39,43 @@ Data Logging gives you access to data at each stage of an inference pipeline.
 This facilitates inspection of the data, understanding of its properties, detecting edge cases and possible data drift.
 
 There are 4 stages in the inference pipeline where Data Logging can occur:
-1. `pipeline_inputs`: raw input passed to the inference pipeline by the user
-2. `engine_inputs`: pre-processed tensors passed to the engine for the forward pass
-3. `engine_outputs`: result of the engine forward pass (e.g. the raw logits)
-4. `pipeline_outputs`: final output returned to the pipeline caller
+- `pipeline_inputs`: raw input passed to the inference pipeline by the user
+- `engine_inputs`: pre-processed tensors passed to the engine for the forward pass
+- `engine_outputs`: result of the engine forward pass (e.g. the raw logits)
+- `pipeline_outputs`: final output returned to the pipeline caller
 
 At each stage, you can specify functions to be applied to the data before logging. Example functions include the identity function
-(for logging the raw input/output), the mean function (e.g. for monitoring the mean pixel value of an image), or a count function (e.g.
-for monitoring the number of unknown tokens in an NLP pipeline).
+(for logging the raw input/output) or the mean function (e.g. for monitoring the mean pixel value of an image).
 
 There are three types of functions that can be applied to target data at each stage:
-1. Built-in functions - pre-written functions provided by DeepSparse ([see list on GitHub](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/loggers/metric_functions/built_ins.py)) 
-2. Framework Functions - functions from `torch` or `numpy`
-3. Custom Functions - custom user-provided functions
+- Built-in functions: pre-written functions provided by DeepSparse ([see list on GitHub](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/loggers/metric_functions/built_ins.py)) 
+- Framework functions: functions from `torch` or `numpy`
+- Custom functions: custom user-provided functions
 
 ## Configuration
 
-The Server YAML file is used to configure both System and Data Logging.
-- **System Logging** is *enabled* by default. If no logger is specified, Python Logger is used.
-- **Data Logging** is *disabled* by default. The config allows you to specify what data to log.
+The YAML-based Server Config file is used to configure both System and Data Logging.
+- System Logging is *enabled* by default. If no logger is specified, Python Logger is used.
+- Data Logging is *disabled* by default. The config allows you to specify what data to log.
 
-#### YAML Syntax
+See [the Server documentation](/user-guide/deploying-deepsparse/deepsparse-server) for more details on the Server config file.
 
-The YAML is configured as follows:
+### Logging YAML Syntax
 
-`loggers` configures the loggers. It is a dictionary of the form `{logger_name: {arg_1: arg_value}}`. 
+There are two key elements that should be added to the Server Config to setup logging.
 
-`data_logging` identifies which/how data should be logged for an endpoint. It is a dictionary of the form `{identifier: [log_config]}`. 
+First is `loggers`. This element configures the loggers that are used by the Server. Each element is a dictionary of the form `{logger_name: {arg_1: arg_value}}`. 
 
-- `identifier` specifies the stages where logging should occur. It can either be a `stage` or `stage.property` if the data type
+Second is `data_logging`. This element identifies which/how data should be logged for an endpoint. It is a dictionary of the form `{identifier: [log_config]}`. 
+
+- `identifier` specifies the stages where logging should occur. It can either be a pipeline `stage` (see stages above) or `stage.property` if the data type
 at a particular stage has a property. If the data type at a `stage` is a dictionary or list, you can access via slicing, indexing, or dict access, 
 for example `stage[0][:,:,0]['key3']`.
 
-- `log_config` specifies which the function to apply, which logger(s) to use, and how often to log. It is a dict of the form `{func: name, frequency: freq, target_loggers: [logger_names]}`. 
+- `log_config` specifies which function to apply, which logger(s) to use, and how often to log. It is a dictionary of the form 
+`{func: name, frequency: freq, target_loggers: [logger_names]}`. 
 
-#### Tangible Example
+### Tangible Example
 Here's an example for an image classification server:
 
 ```yaml
@@ -136,28 +138,26 @@ loggers:
 
 ### Prometheus Logger
 
-DeepSparse is integrated with Prometheus. The Prometheus Logger accepts some optional arguments as follows:
+DeepSparse is integrated with Prometheus, enabling you to easily instrument your model service. 
+The Prometheus Logger accepts some optional arguments and is configured as follows:
 
 ```yaml
 loggers:
   prometheus:
     port: 6100
-    text_log_save_frequency: 10
-    text_log_save_dir: /path/to/text/log/save/dir
-    text_log_file_name: text_log_file_name
+    text_log_save_frequency: 10             # optional
+    text_log_save_dir: text/log/save/dir    # optional
+    text_log_file_name: text_log_file_name  # optional
 ```
 
 There are four types of metrics in Prometheus (Counter, Gauge, Summary, and Histogram). DeepSparse uses 
 [Summary](https://prometheus.io/docs/concepts/metric_types/#summary) under the hood, so make sure the data you 
 are logging to Prometheus is an Int or a Float.
 
-[Checkout our example of running DeepSparse Logging with Prometheus/Grafana](https://github.com/neuralmagic/deepsparse/tree/rs/logging-example/examples/logging-prometheus).
-
 ### Custom Logger
 
 If you need a custom logger, you can create a class that inherits from the `BaseLogger` 
-and implements the `log` method. The `log` method is called at each Pipeline stage (`pipeline_inputs`, 
-`engine_inputs`, `engine_outputs`, `pipline_outputs`) and should handle exposing the metric to the Logger. 
+and implements the `log` method. The `log` method is called at each pipeline stage and should handle exposing the metric to the Logger. 
 
 ```python
 from deepsparse.logging import BaseLogger, MetricsCategories
@@ -193,21 +193,16 @@ for inspiration on implementing a logger.
 
 DeepSparse Logging is currently supported for usage with DeepSparse Server. 
 
-Stay tuned for usage with Pipelines in our next release!
-
 ### Server Usage
 
 The Server startup CLI command accepts a YAML configuration file (which contains both logging-specific and general 
 configuration details) via the `--config-file` argument.
 
-```bash
-deepsparse.server --config-file server-config.yaml
-```
-
-Data Logging is configured at the endpoint level. In the example below, we create a Server with two Endpoints
+Data Logging is configured at the endpoint level. The configuration file below creates a Server with two Endpoints
 (one for image classification and one for sentiment analysis):
 
 ```yaml
+# server-config.yaml
 loggers:
   python:
   prometheus:
@@ -265,7 +260,7 @@ endpoints:
             - prometheus
 ```
 
-#### Custom Function
+#### Custom Data Logging Function
 
 The example above included a custom function for computing sequence lengths. Custom
 Functions should be defined in a local Python file. They should accept one argument
@@ -286,5 +281,34 @@ def sequence_length(engine_inputs: List[np.ndarray]):
   return np.count_nonzero(engine_inputs[0][0])
 ```
 
-## Tutorials
-Checkout out our [Example monitoring DeepSparse with Prometheus / Grafana](https://github.com/neuralmagic/deepsparse/tree/main/examples/logging-prometheus)
+#### Launching the Server and Logging Metrics
+
+Launch the server with the following (make sure [you have installed DeepSparse Server](/get-started/install/deepsparse)):
+
+```bash
+deepsparse.server --config-file server-config.yaml
+```
+
+Submit a request to the image classification endpoint with the following:
+
+```python
+import requests
+url = "http://0.0.0.0:5543/image_classification/predict/from_files"
+paths = ["goldfish.jpg"]
+files = [("request", open(img, 'rb')) for img in paths]
+resp = requests.post(url=url, files=files)
+print(resp.text)
+```
+
+Submit a request to the image classification endpoint with the following:
+
+```python
+import requests
+url = "http://0.0.0.0:5543/sentiment_analysis/predict"
+obj = {"sequences": "Snorlax loves my Tesla!"}
+files = [("request", open(img, 'rb')) for img in paths]
+resp = requests.post(url=url, json=files)
+print(resp.text)
+```
+
+You should see the metrics logged to the Server's standard output and to Prometheus (look at `http://0.0.0.0:6100` to quickly see which metrics are exposed).
