@@ -17,10 +17,10 @@ users may want to use this pathway to tune performance.
 The configuration file should be named `deepsparse-config.yaml`, with the following YAML:
 
 ```yaml
-thread_pinning: "core"
-default_precision: "bf16"
+thread_pinning: core
+default_precision: bf16
 kernel_sparsity_threshold: 0.9
-logging_level: "all"
+logging_level: all
 ```
 
 By default, the runtime looks for the `deepsparse-config.yaml` file in the `.config/neuralmagic` directory. If
@@ -38,23 +38,28 @@ Valid Options are the following:
 - `socket` - binds thread to cores within a socket
 - `none` - no thread pinning
 
-[XXX] - ***Can you add 1-2 brief sentences on when you might want to try a each option?***
+When running in isolation, 'core' is likely going to give the highest throughput. However, it can have adverse effects 
+on the performance of other applications on the system. 'numa' and 'socket' can be a good middle ground 
+in situations where other applications may be running on the system. The runtime 
+will still setup its threads in such a way that they will only access activations and kernels in their home node, 
+but the OS scheduler is free to migrate runtime threads within the numa node or socket."
 
 The default option is determined by heuristics depending on the scheduler and other options like batch splitting.
-
 
 **`default_precision`** sets the precision of the floating point numbers in the runtime, enabling
 users to choose between 32-bit Floats, 16-bit Floats, and 16-bit B-Floats.
 
 Valid options are the following:
-- `fp32` - sets default precision to 32-bit floats (i.e. no loss of precision).
-- `fp16` - sets default precision to 16-bit floats. This saves on memory and 
-- `bf16` - sets defaul precision to 16-bit floats. 
+- `fp32` - sets precision to 32-bit floats (i.e. no loss of precision)
+- `fp16` - sets precision to 16-bit floats
+- `bf16` - sets precision to bfloat16 (Brain Floating Point)
 
-[XXX] - ***Can we add a 2 sentence description of BF16. Just comment at a high level on what it is and approximately what speedup is able to be achieved***
+The default precision is `fp32`. 
 
-The default precision is `fp32`.
-
+Bfloat16 is a truncated (16-bit) version of FP32 eith the intent of accelerating machine learning.
+It preserves the approximate dynamic range of the 32-bit floating-point numbers by retaining 8 exponent bits,
+but supports only an 8-bit precision rather than a 24-bit significand. On devices with support Bfloat16,
+you should see speedups in the 25-50% range 
 
 **`kernel_sparsity_threshold`** defines the threshold at which the runtime switches between
 using sparse or dense versions of each operator. If the percentage of 0's in a weight matrix
@@ -64,8 +69,6 @@ Valid options are floats between `0` and `1.0`.
 
 The runtime uses heuristics on sparsity, architecture, size of operation, and others to 
 determine the default sparsity threshold.
-
-
 
 **`logging_level`** defines the verbosity of the logs that are printed by the runtime.
 
