@@ -7,7 +7,7 @@ index: 5000
 
 # Deploying Embedding Extraction Models with DeepSparse
 
-This page explains how to create an Embedding Extraction Pipeline with DeepSparse. 
+This page explains how to deploy an Embedding Extraction pipeline with DeepSparse.
 
 ## Installation Requirements
 
@@ -44,7 +44,7 @@ Pipelines can be used to handle pre-processing and post-processing of input, mak
 ### HTTP Server
 
 As an alternative to the Python API, DeepSparse Server allows you to
-serve an Embedding Extraction Pipeline over HTTP. Configuring the server uses the same parameters and schemas as the `Pipelines`. 
+serve an Embedding Extraction Pipeline over HTTP. Configuring the server uses the same parameters and schemas as the Pipelines. 
 Once launched, a `/docs` endpoint is created with full endpoint descriptions and support for making sample requests. For more details, check out
 [the documentation for DeepSparse Server](/user-guide/deploying-deepsparse/deepsparse-server).
 
@@ -88,14 +88,15 @@ print(len(embedding.embeddings[0][0]))
 
 #### Pipeline API: Transformers
 
-With Hugging Face Transformers, you can use `task=transformer_embedding_extraction` for some extra utilities.
+With Transformers, you can use `task=transformer_embedding_extraction` for some extra utilities associated
+with embedding extraction.
 
 The first utility is automatic embedding layer detection. If you set `emb_extraction_layer=1` (the default),
 the Pipeline automatically detects the final transformer layer before the projection head and removes the 
 projection head for you.
 
-The second utility is automatic embedding dimenonality reduction. You `extraction_strategy` to perform a reduction on the sequence dimension rather 
-than returning an embedding for each token. The options are:
+The second utility is automatic dimensionality reduction. You can use the `extraction_strategy` to perform a reduction 
+on the sequence dimension rather than returning an embedding for each token. The options are:
 - `per_token`: returns the embedding for each token in the sequence (default)
 - `reduce_mean`: returns the average token of the sequence
 - `reduce_max`: returns the max token of the sequence
@@ -128,7 +129,7 @@ bert_emb_pipeline = Pipeline.create(
     task="transformers_embedding_extraction",
     model_path="zoo:nlp/masked_language_modeling/bert-base/pytorch/huggingface/wikipedia_bookcorpus/pruned80_quant-none-vnni",
 #     emb_extraction_layer=-1,         # (default: detect last layer)
-    extraction_strategy="reduce_mean"  # (default: concat embedding for each token)
+    extraction_strategy="reduce_mean"
 )
 
 input_sequence = "The generalized embedding extraction Pipeline is the best!"
@@ -140,7 +141,8 @@ print(len(embedding.embeddings[0]))
 
 ### HTTP Server
 
-The HTTP Server is a wrapper around the Pipeline. It can be launched from the command line with a configuration file.
+The HTTP Server is a wrapper around the Pipeline. Therefore, it inherits all of the functionality we described above.
+It can be launched from the command line with a configuration file.
 
 Config file:
 ```yaml
