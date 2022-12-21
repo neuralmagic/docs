@@ -1,4 +1,4 @@
-from deepsparse.logging import BaseLogger, MetricsCategories
+from deepsparse.loggers import BaseLogger, MetricsCategories
 from typing import Any, Optional
 
 class CustomLogger(BaseLogger):
@@ -13,4 +13,5 @@ class CustomLogger(BaseLogger):
             By default, we recommend sticking to our internal convention
             established in the MetricsCategories enum.
         """
+        print("Logging from a custom logger")
         print(value)

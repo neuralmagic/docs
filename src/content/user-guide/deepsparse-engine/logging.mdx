@@ -20,6 +20,10 @@ The difficulty of the tasks varies from relatively easy (simple system performan
 DeepSparse Logging is designed to provide maximum flexibility for you to extract whatever data is needed from a 
 production inference pipeline into the logging system of your choice. 
 
+## Installation 
+
+This page requires the [DeepSparse Server Install](/get-started/install/deepsparse).
+
 ## Metrics 
 DeepSparse Logging provides access to two types of metrics.
 
@@ -175,6 +179,10 @@ class CustomLogger(BaseLogger):
             By default, we recommend sticking to our internal convention
             established in the MetricsCategories enum.
         """
+
+        # implement your logging logic here
+        print("Logging from a custom logger")
+        print(value)
 ```
 
 Once a custom logger is implemented, it can be referenced from a config file:
@@ -182,9 +190,46 @@ Once a custom logger is implemented, it can be referenced from a config file:
 ```yaml
 loggers:
   custom_logger:
-    path: path/to/customer-logger-script.py:CustomLogger
-    arg1: your_argument_1
+    path: example_custom_logger.py:CustomLogger
+    # arg_1: your_arg_1 << optionally add custom arguments
+
+endpoints:
+  - task: sentiment_analysis
+    route: /sentiment_analysis/predict
+    model: zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/12layer-pruned80_quant-none-vnni
+    name: sentiment_analysis_pipeline
+    data_logging:
+      pipeline_inputs:
+        - func: identity
+          frequency: 1
+          target_loggers:
+            - custom_logger
 ```
+
+Download the following for an example of a custom logger:
+
+```bash
+wget https://raw.githubusercontent.com/neuralmagic/docs/rs/logging-feature/src/files-for-examples/logging/example_custom_logger.py
+wget https://raw.githubusercontent.com/neuralmagic/docs/rs/logging-feature/src/files-for-examples/logging/server-config-with-custom-logger.yaml
+```
+
+Launch the server:
+
+```bash
+deepsparse.server --config-file server-config-with-custom-logger.yaml
+```
+
+Submit a request:
+
+```python
+import requests
+url = "http://0.0.0.0:5543/sentiment_analysis/predict"
+obj = {"sequences": "Snorlax loves my Tesla!"}
+resp = requests.post(url=url, json=obj)
+print(resp.text)
+```
+
+You should see data printed to the Server's standard output.
 
 See [our Prometheus logger implementation](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/loggers/prometheus_logger.py)
 for inspiration on implementing a logger.
@@ -192,10 +237,6 @@ for inspiration on implementing a logger.
 ## Usage 
 
 DeepSparse Logging is currently supported for usage with DeepSparse Server. 
-
-### Installation 
-
-This example requires the [DeepSparse Server Install](/get-started/install/deepsparse).
 
 ### Server Usage
 
@@ -246,7 +287,7 @@ endpoints:
 
   - task: sentiment_analysis
     route: /sentiment_analysis/predict
-    model: zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/12layer-pruned80_quant-none-vnni
+    model: zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/12layer_pruned80_quant-none-vnni
     name: sentiment_analysis_pipeline
     data_logging:
       engine_inputs:
