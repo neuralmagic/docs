@@ -1,4 +1,4 @@
-from deepsparse.loggers import BaseLogger, MetricsCategories
+from deepsparse.loggers import BaseLogger
 from typing import Any, Optional
 
 class CustomLogger(BaseLogger):
