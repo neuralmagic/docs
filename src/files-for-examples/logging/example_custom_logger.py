@@ -14,4 +14,5 @@ class CustomLogger(BaseLogger):
             established in the MetricsCategories enum.
         """
         print("Logging from a custom logger")
+        print(identifier)
         print(value)
