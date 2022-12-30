@@ -1,0 +1,56 @@
+# server-config.yaml
+loggers:
+  python:
+  prometheus:
+    port: 6100
+ 
+endpoints:
+  - task: image_classification
+    route: /image_classification/predict
+    model: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none
+    name: image_classification_pipeline
+    data_logging:
+      pipeline_inputs.images:
+        - func: np.shape
+          frequency: 1
+          target_loggers:
+            - python
+
+      pipeline_inputs.images[0]:
+        - func: max_pixels_per_channel
+          frequency: 1
+          target_loggers:
+            - python
+        - func: mean_pixels_per_channel
+          frequency: 1
+          target_loggers:
+            - python
+        - func: fraction_zeros
+          frequency: 1
+          target_loggers:
+            - prometheus
+      
+      pipeline_outputs.scores[0]:
+        - func: identity
+          frequency: 1
+          target_loggers:
+            - prometheus
+
+  - task: sentiment_analysis
+    route: /sentiment_analysis/predict
+    model: zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/12layer_pruned80_quant-none-vnni
+    name: sentiment_analysis_pipeline
+    data_logging:
+      engine_inputs:
+        - func: example_custom_fn.py:sequence_length
+          frequency: 1
+          target_loggers:
+            - python
+            - prometheus
+          
+      pipeline_outputs.scores[0]:
+        - func: identity
+          frequency: 1
+          target_loggers:
+            - python
+            - prometheus
