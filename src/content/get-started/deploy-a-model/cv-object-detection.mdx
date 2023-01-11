@@ -1,37 +1,153 @@
 ---
 title: "CV Object Detection"
-metaTitle: "Deploy an Object Detection Model"
-metaDescription: "Deploy an object detection model with DeepSparse Server for easier, faster, and cheaper inference on CPUs"
+metaTitle: "Deploy a CV Object Detection Model with DeepSparse"
+metaDescription: "Deploy an Object Detection Model with GPU-class performance on CPUs"
 index: 2000
 ---
 
-# Deploy an Object Detection Model
+# Use an Object Detection Model
 
-This page walks through an example of deploying an object detection model with DeepSparse Server.
+This page shows how to deploy and benchmark an object detection model with DeepSparse.
 
-DeepSparse Server is a server wrapper around `Pipelines`, including the object detection pipeline. As such,
-the server provides and HTTP interface that accepts images and image files as inputs and outputs the labeled predictions.
-In this way, DeepSparse combines the simplicity of servable pipelines with GPU-class performance on CPUs for sparse models.
+## Installation Requirements
 
-## Install Requirements
+This example requires [DeepSparse YOLO and Server Installation](/get-started/install/deepsparse).
 
-This example requires [DeepSparse Server+YOLO Install](/get-started/install/deepsparse).
+## Model Setup
 
-## Start the Server
+DeepSparse accepts models in [ONNX format](https://onnx.ai/). By using the industry-standard open format for Neural Networks, DeepSparse
+enables you to use models trained in almost any framework.
 
-Before starting the server, the model must be set up in the format expected for DeepSparse `Pipelines`.
-See an example of how to setup `Pipelines` in the [Use a Model](../../use-a-model) section.
+There are two pathways for collecting an ONNX file for use with DeepSparse.
 
-Once the `Pipelines` are set up, the `deepsparse.server` command launches a server with the model at `--model_path` inside. The `model_path` can either
-be a SparseZoo stub or a path to a local `model.onnx` file.
+#### SparseZoo Stub
 
-The command below shows how to start up DeepSparse Server for a sparsified YOLOv5l model trained on the COCO dataset from the SparseZoo.
-The output confirms the server was started on port `:5543` with a `/docs` route for general info and a `/predict/from_files` route for inference.
+[SparseZoo](https://sparsezoo.neuralmagic.com/) is an open-source repository of inference-optimized sparse models. DeepSparse is integrated with SparseZoo, so you can
+pass a "stub" to DeepSparse and it will download the ONNX file from SparseZoo. Example stubs for YOLOv5s are listed below:
+
+```bash
+# sparse (pruned-quantized) YOLOv5s
+zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94
+# dense YOLOv5s
+zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none
+  ```
+
+#### Local ONNX File
+
+Altenatively, if you trained your own YOLOv5 model, you can instead pass a path to a local ONNX file. 
+[Sparse Transfer Learning with YOLOv5](/get-started/transfer-a-model/cv-object-detection) explains how to train a sparse version
+of YOLOv5s with SparseML and export it to the ONNX format.
+
+Swap a path to the ONNX file in a local directory in place of the SparseZoo stub.
+
+## Benchmarking Performance
+
+DeepSparse offers best-in-class performance on CPUs.
+
+The DeepSparse package includes a convienent CLI script for quickly benchmarking performance in a variety of deployment scenarios. 
+The examples below were run on an AWS xxx instance (24 cores) with a single stream of batch 64 input with 640x640 pixel images.
+
+### Sparsified YOLOv5-s with DeepSparse
+
+Run the script to see checkout DeepSparse's throughput:
+
+```bash
+deepsparse.benchmark zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94 -s sync -b 64
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 18.9863
+> Latency Mean (ms/batch): 105.2613
+> Latency Median (ms/batch): 105.0656
+> Latency Std (ms/batch): 1.6043
+> Iterations: 190
+```
+
+DeepSparse achieves XXX Frames/Second.
+
+### Baseline - Dense YOLOv5-s with ONNX Runtime
+
+Let's compare DeepSparse's performance to ONNX Runtime on the same machine.
+
+If you do not have it already, install ONNX Runtime with `pip install onnx-runtime`.
+
+Run the script to checkout ONNX Runtime's throughput:
+```bash
+deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 5.2836
+> Latency Mean (ms/batch): 378.2448
+> Latency Median (ms/batch): 378.1490
+> Latency Std (ms/batch): 2.5183
+> Iterations: 54
+```
+
+ONNX Runtime achieves only XXX Frames/Second. DeepSparse is ****18x**** faster than ONNX Runtime.
+
+Run `deepsparse.benchmark --help` to checkout the full scope of scenarios you can test.
+
+## Deployment APIs
+
+Now that we have seen DeepSparse's exceptional performance characteristics, let's take a look at the Deployment APIs.
+
+### Pipeline
+
+Pipelines are the default Python interface for interacting with DeepSparse.
+
+Pipelines wrap pre-processing and post-processing around the model. DeepSparse's Object Detection Pipeline is integrated
+with Ultralytics YOLOv5, enabling you to pass raw images to DeepSparse and receiving the bounding boxes out-of-the-box.
+Let's walk through an example.
+
+First, download a sample image for usage with the Pipeline.
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, create an Object Detection Pipeline with a sparse YOLOv5s. The `Pipeline.create()` function downloads 
+the ONNX file from SparseZoo, compiles the model, and instantiates an Object Detection Pipeline that can be used for inference.
+
+```python
+from deepsparse import Pipeline
+
+# create pipeline
+sparsezoo_stub = "zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94"
+yolo_pipeline = Pipeline.create(
+    task="yolo",
+    model_path=sparsezoo_stub
+)
+```
+
+Now, you can pass raw images (either numpy arrays or files) to the Pipeline and recieve the post-processed 
+results. In the case of YOLOv5, this is the bounding boxes, classes, and scores.
+
+```
+# run inference
+prediction = yolo_pipeline(images=['basilica.jpg'])
+print(prediction.boxes)
+print(prediction.labels)
+print(prediction.scores)
+```
+
+### Server
+
+DeepSparse Server is a server wrapper around DeepSparse Pipelines. As such, the server provides and HTTP interface that 
+accepts images and image files as inputs and outputs the labeled predictions, making it easy to setup a model
+service for your application.
+
+First, start the server from the command line. the `deepsparse.server` command downloads the ONNX file from SparseZoo,
+compiles the model, instantiates an Object Detection Pipeline and spins up a Uvicorn web server with the FastAPI framework.
 
 ```bash
 $ deepsparse.server \
-    --task "yolo" \
-    --model_path "zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95"
+    --task yolo \
+    --model_path zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned_quant-aggressive_94
 
 > deepsparse.server.main INFO     created FastAPI app for inference serving
 > deepsparse.server.main INFO     created general routes, visit `/docs` to view available
@@ -44,24 +160,12 @@ $ deepsparse.server \
 > INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:5543 (Press CTRL+C to quit)
 ```
 
-## View the Request Specs
-
-As noted in the startup command, a `/docs` route was created; it contains OpenAPI specs and definitions for the expected inputs and responses.
+Next, as noted in the startup command, a `/docs` route was created; it contains OpenAPI specs and definitions for the expected inputs and responses.
 Visiting the `http://localhost:5543/docs` in a browser shows the available routes on the server.
 The important one for object detection is the `/predict/from_files` POST route which takes the form of a standard files argument.
 The files argument enables uploading one or more image files for object detection processing.
 
-## Make a Request
-
-With the expected input payload and method type defined, any HTTP request package can be used to make the request.
-
-First, a CURL request is made to download a sample image for use with the sample request.
-
-```bash
-wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
-```
-
-Next, for simplicity and generality, the Python requests package is used to make a POST method request to the `/predict/from_files` pathway on `localhost:5543` with the downloaded file.
+Finally, make a request from a client over HTTP. The example uses the Python requests package to make a POST method request to the `/predict/from_files` pathway on `localhost:5543` with the downloaded file.
 The predicted outputs can then be printed out or used in a later pipeline.
 
 ```python
@@ -77,9 +181,5 @@ print(resp.text)
 > {"predictions":[[[175.6397705078125,487.64117431640625,346.1619873046875,616.2821655273438,0.8640249371528625,3.0],...
 ```
 
-After that request completes, the server will also log the request as the following:
+## Additional Resources
 
-```bash
-> INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:5543 (Press CTRL+C to quit)
-> INFO:     127.0.0.1:50604 - "POST /predict/from_files HTTP/1.1" 200 OK
-```

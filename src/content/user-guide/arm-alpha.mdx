@@ -1,24 +1,64 @@
 ---
-title: "ARM Alpha"
-metaTitle: "ARM Alpha"
+title: "DeepSparse ARM Alpha"
+metaTitle: "DeepSparse ARM Alpha"
 metaDescription: "Description of how to trial DeepSparse on ARM"
 index: 6000
 ---
 
-# DeepSparse on ARM
+# DeepSparse ARM Alpha
 
-Neural Magic has released an Alpha version of DeepSparse for ARM platforms in December 2022's 1.3 release.
+DeepSparse has Alpha support for ARM platforms! 
 
-This page explains how to trial the ARM Alpha.
+This page explains how to trial it.
 
-[Sign-up for early access to the general release of DeepSparse on ARM](/link/to/form).
+[Sign-up for early access to the general release of DeepSparse on ARM](https://neuralmagic.com/deepsparse-arm-waitlist)
+
+## Feedback
+
+Neural Magic is offering a $50 Amazon Gift card for a 30 minute conversation to discuss: 
+- Experience with the ARM Alpha
+- Requests for features for DeepSparse on ARM
+- Requests for ARM platform support (e.g. Raspberry Pi, Rockchip, Qualcomm)
+
+[Reach out to us to set up time to chat](https://neuralmagic.com/contact/)
 
 ## Installation
 
-The ARM Alpha is included in the DeepSparse nightly package, available for download via PyPI. We recommend using a virtual enviornment.
+The ARM Alpha is included in the DeepSparse nightly package, available for download via PyPI. We recommend using a virtual enviornment with Python.
 
+Simply run the following on your Graviton instance:
 ```bash
 pip install deepsparse-nightly
+```
+
+## Alpha Status
+
+DeepSparse on ARM is currently in Alpha state. 
+
+It has the following limitations:
+- **Long Compile Times** (compiling BERT on `M6g.16xlarge` takes XXX minutes)
+- **Slower Performance than DeepSparse x86** 
+- **No Performance Gains from Quantization**
+- **Limited Set of Models** (we have tested ResNet-50, YOLOv5, YOLACT, and BERT)
+- **AWS Graviton Only**
+
+The general release of DeepSparse on ARM will deliver similiar compile times, performance, model, and platform support 
+as the x86 version.
+
+## Current Performance
+
+The following performance statistics were generated using `deepsparse-nightly==xxx` on an `M6g.16xlarge` instance (64 cores).
+
+<p align="center">
+    <img src="/Users/robertgshaw/dev/docs/src/images/arm-alpha-throughput-compare.png"/>
+</p>
+
+
+
+The following commands were used to generate the performance numbers, filling in the `SPARSEZOO_STUB` for the model you want to test:
+```
+deepsparse.benchmark $SPARSEZOO_STUB --scenario sync --batch_size 64 --engine deepsparse
+deepsparse.benchmark $SPARSEZOO_STUB --scenario sync --batch_size 64 --engine onnxruntime
 ```
 
 ## Requirements
@@ -27,16 +67,18 @@ pip install deepsparse-nightly
 
 The General Release of DeepSparse for ARM will offer support for ARMv8+ devices, including server
 systems like Ampere, edge devices like Rasbperry Pi, and mobile devices like Android and iPhone. 
-However, at this time, the **DeepSparse ARM Alpha has only runs on AWS Graviton instances**.
 
-The following AWS Instances are certfied for use with the DeepSparse ARM Alpha:
-- XXX
+**However, the ARM Alpha only runs on the following AWS Graviton2 and Graviton3 instances**:
+- Graviton2 General Purpose: `M6g`, `M6gd`, `T4g`
+- Graviton2 Compute Optimized: `C6g`, `C6gd`, `C6gn`
+- Graviton2 Memory Optimized: `R6g`, `R6gd`, `X2gd`
+- Graviton2 Storage Optimized: `Im4gn`, `Is4gen`
+- Graviton3 Compute Optimized: `C7g`, `C7gn`
 
 ### Model Requirements
 
-The General Release of DeepSparse for ARM will offer support for a broad range of models, equivalent to
-DeepSparse for x86. However, at this time, the **DeepSparse ARM Alpha has been tested and certified to 
-work with a limited subset of models**.
+The General Release of DeepSparse for ARM will offer support for all models in ONNX format. 
+**However, the ARM Alpha has been tested for accuracy on a subset a limited subset of models**.
 
 The following models have been tested for accuracy and performance with the DeepSparse ARM Alpha, 
 with their corresponding SparseZoo stubs.
@@ -123,48 +165,22 @@ deepsparse.benchmark zoo:nlp/question_answering/bert-base/pytorch/huggingface/sq
 > output
 ```
 
-Dense Performance:
-
-```bash
-deepsparse.benchmark zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/base-none -s sync -b 64
-
-> output
-> output
-> output
-```
-
-We can see that for the dense model, DeepSparse's throughtput beats ORT by XX.
+At batch 64, ONNX runtime achieves 19 items/second running BERT.
 
 Pruned Performance:
 
 ```bash
-deepsparse.benchmark zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none -s sync -b 64
+deepsparse.benchmark zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/pruned95_obs_quant-none -s sync -b 64 -e deepsparse
 
 > output
 > output
 > output
 ```
 
-When applying sparsity to the model, DeepSparse's throughput beats the ORT baseline by XX.
+At batch 64, DeepSparse achieves 55 items/second running a pruned version of BERT - **this is a 3.5 performance gain**!
 
-Pruned-Quantized Performance:
+## Next Steps
 
-```bash
-deepsparse.benchmark zoo:nlp/question_answering/bert-base/pytorch/huggingface/squad/12layer_pruned80_quant-none-vnni -s sync -b 64
+[Sign-up for early access to the general release of DeepSparse on ARM](https://neuralmagic.com/deepsparse-arm-waitlist).
 
-> output
-> output
-> output
-```
-
-When applying pruning and quantization to the model, DeepSparse's throughput beat the ORT baseline by XX.
-
-## Feedback / Early Access
-
-[Sign-up on the waitlist](link/to/form) to get early access to the general release of DeepSparse for ARM.
-
-Neural Magic is offering $50 for a 30 minute conversation to discuss:
-- Experience with the DeepSparse ARM Alpha
-- Requests for features associated with general release of DeepSparse for ARM (edge or server)
-
-[Reachout to us to set-up time to chat](https://neuralmagic.com/contact/).
+[Reachout to us to set-up time for platforms or feature request for DeepSparse on ARM](https://neuralmagic.com/contact/).
