@@ -11,7 +11,7 @@ This page explains how to deploy an Embedding Extraction Pipeline with DeepSpars
 
 ## Installation Requirements
 
-This section requires the [DeepSparse Server Install](/get-started/install/deepsparse).
+Deployment requires the [DeepSparse Server Install](/get-started/install/deepsparse).
 
 ## Getting Started
 
@@ -24,8 +24,8 @@ It (optionally) removes the projection head from the model, such that you can re
 you have trained in the embedding extraction scenario.
 
 There are two options for passing a model to the Embedding Extraction Pipeline:
-- Pass a Local ONNX File
-- Pass a SparseZoo Stub (which identifies an ONNX model in the SparseZoo)
+- Pass a local ONNX file
+- Pass a SparseZoo stub (which identifies an ONNX model in the SparseZoo)
 
 ## Deployment APIs
 
@@ -39,7 +39,7 @@ for configurations.
 Pipelines are the default interface for running inference with DeepSparse.
 
 Once a model is obtained, either through SparseML training or directly from SparseZoo, 
-Pipelines can be used to handle pre-processing and post-processing of input, making it easy to add DeepSparse to your application.
+Pipelines can be used to handle pre-processing and post-processing of input. This makes it easy to add DeepSparse to your application.
 
 ### HTTP Server
 
@@ -51,24 +51,24 @@ Once launched, a `/docs` endpoint is created with full endpoint descriptions and
 ## Deployment Examples
 
 The following section includes example usage of the Pipeline and Server APIs for various use cases. 
-Each example uses a SparseZoo stub to pull down the model, but a local path to an ONNX file can also be passed as the `model_path`.
+Each example uses a SparseZoo stub to pull down the model; but, a local path to an ONNX file can be passed as the `model_path`.
 
 ### Python API
 
 The Embedding Extraction Pipeline handles some useful actions around inference:
 
-- First, on initialization, the Pipeline (optionally) removes a projection head from a model. You can use 
+1. On initialization, the Pipeline (optionally) removes a projection head from a model. You can use 
 the `emb_extraction_layer` argument to specify which layer to return.
 If your ONNX model has no projection head, you can set `emb_extraction_layer=None` (the default) to skip this step.
 
-- Second, as with all DeepSparse Pipelines, it handles pre-processing such that you can pass raw input.
-You will notice that in addition to the typical `task` argument used in `Pipeline.create()`, 
+2. As with all DeepSparse Pipelines, the Embedding Extraction Pipeline handles pre-processing such that you can pass raw input.
+You will notice that, in addition to the typical `task` argument used in `Pipeline.create()`, 
 the Embedding Extraction Pipeline includes a  `base_task` argument. This argument tells the Pipeline the domain of the model, 
 such that the Pipeline can figure out what pre-processing to do.
 
-This is an example of extracting the last layer from ResNet-50:
+The following is an example of extracting the last layer from ResNet-50.
 
-Download an image to use with the Pipeline.
+Download an image to use with the Pipeline:
 ```
 wget https://raw.githubusercontent.com/neuralmagic/docs/rs/embedding-extraction-feature/files-for-examples/use-cases/embedding-extraction/goldfish.jpg
 ```
@@ -93,19 +93,19 @@ print(len(embedding.embeddings[0][0]))
 
 #### Pipeline API: Transformers
 
-With Transformers, you can use `task=transformer_embedding_extraction` for some extra utilities associated
-with embedding extraction.
+With Transformers, you can use `task=transformer_embedding_extraction` for extra utilities associated
+with embedding extraction, such as:
 
-The first utility is automatic embedding layer detection. If you set `emb_extraction_layer=1` (the default),
+- Automatic embedding layer detection. If you set `emb_extraction_layer=1` (the default),
 the Pipeline automatically detects the final transformer layer before the projection head and removes the 
 projection head for you.
 
-The second utility is automatic dimensionality reduction. You can use the `extraction_strategy` to perform a reduction 
+- Automatic dimensionality reduction. You can use the `extraction_strategy` to perform a reduction 
 on the sequence dimension rather than returning an embedding for each token. The options are:
-- `per_token`: returns the embedding for each token in the sequence (default)
-- `reduce_mean`: returns the average token of the sequence
-- `reduce_max`: returns the max token of the sequence
-- `cls_token`: returns the cls token from the sequence
+  - `per_token` returns the embedding for each token in the sequence (default)
+  - `reduce_mean` returns the average token of the sequence
+  - `reduce_max` returns the max token of the sequence
+  - `cls_token` returns the cls token from the sequence
 
 An example using automatic embedding layer detection looks like this:
 ```python
@@ -125,7 +125,7 @@ print(len(embedding.embeddings[0]))
 # Output: 98304 << 93804 = 768 * 128 = hidden_size * sequence_length
 ```
 
-An example returing the average embeddings of the tokens looks like this:
+An example returning the average embeddings of the tokens looks like this:
 
 ```python
 from deepsparse import Pipeline
@@ -147,9 +147,8 @@ print(len(embedding.embeddings[0]))
 ### HTTP Server
 
 The HTTP Server is a wrapper around the Pipeline. Therefore, it inherits all of the functionality we described above.
-It can be launched from the command line with a configuration file.
+It can be launched from the command line with a configuration file:
 
-Config file:
 ```yaml
 # config.yaml
 endpoints:
@@ -166,7 +165,7 @@ wget https://raw.githubusercontent.com/neuralmagic/docs/rs/embedding-extraction-
 deepsparse.server --config_file config.yaml
 ```
 
-Making a request:
+To make a request:
 ```python
 import requests, json
 url = "http://0.0.0.0:5543/predict/from_files"
