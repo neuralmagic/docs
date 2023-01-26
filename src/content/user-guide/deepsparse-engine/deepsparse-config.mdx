@@ -1,0 +1,77 @@
+---
+title: "Runtime Configuration"
+metaTitle: "Configuring DeepSparse's runtime via YAML files"
+metaDescription: "Configuring DeepSparse's runtime via YAML files"
+index: 6000
+---
+
+# Configuring DeepSparse's Runtime
+
+This page explains how to configure the low-level optimizations for DeepSparse's inference runtime. 
+
+DeepSparse has sensible defaults for the configuration options described below, but power
+users may want to use this pathway to tune performance.
+
+## Usage
+
+The configuration file should be named `deepsparse-config.yaml`, with the following YAML:
+
+```yaml
+thread_pinning: core
+default_precision: bf16
+kernel_sparsity_threshold: 0.9
+logging_level: all
+```
+
+By default, the runtime looks for the `deepsparse-config.yaml` file in the `.config/neuralmagic` directory. If
+the file exists, the runtime will parse the file and use the provided options. If not, the runtime falls back to the defaults.
+
+The config directory can be overriden using the `NM_CONFIG_DIR` environment variable. In this case, the runtime will look for `NM_CONFIG_DIR/deepsparse-config.yaml`.
+
+## Options
+
+**`thread_pinning`** enables binding of threads to cores or sockets.
+
+Valid options include:
+- `core` - binds thread to an individual core
+- `numa` - binds thread to cores within a numa node
+- `socket` - binds thread to cores within a socket
+- `none` - no thread pinning
+
+When running in isolation, 'core' is likely going to give the highest throughput. However, it can have adverse effects 
+on the performance of other applications on the system. 'numa' and 'socket' can be a good middle ground 
+in situations where other applications may be running on the system. The runtime 
+will still set up its threads in such a way that they will only access activations and kernels in their home node, 
+but the OS scheduler is free to migrate runtime threads within the numa node or socket.
+
+The default option is determined by heuristics depending on the scheduler and other options like batch splitting.
+
+**`default_precision`** sets the precision of the floating point numbers in the runtime, enabling
+users to choose between 32-bit dloats, 16-bit floats, and 16-bit bfloats.
+
+Valid options include:
+- `fp32` - sets precision to 32-bit floats (i.e., no loss of precision)
+- `fp16` - sets precision to 16-bit floats
+- `bf16` - sets precision to bfloat16 (Brain Floating Point)
+
+The default precision is `fp32`. 
+
+Bfloat16 is a truncated (16-bit) version of FP32 with the intent of accelerating machine learning.
+It preserves the approximate dynamic range of the 32-bit floating-point numbers by retaining 8 exponent bits,
+but supports only an 8-bit precision rather than a 24-bit significand. On devices that support bfloat16,
+you should see speedups in the 25-50% range 
+
+**`kernel_sparsity_threshold`** defines the threshold at which the runtime switches between
+using sparse or dense versions of each operator. If the percentage of 0's in a weight matrix
+is above the provided threshold, the sparse operators will be used.
+
+Valid options are floats between `0` and `1.0`.
+
+The runtime uses heuristics on sparsity, architecture, size of operation, and other attributes to 
+determine the default sparsity threshold.
+
+**`logging_level`** defines the verbosity of the logs that are printed by the runtime.
+
+Valid options, in decreasing verbosity, are `diagnose`, `warn`, `error`, `fatal`, and `off`. 
+
+The default is `warn`.
