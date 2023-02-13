@@ -1,5 +1,5 @@
 ---
-title: "Deploying"
+title: "Deploy with DeepSparse"
 metaTitle: "Image Classification Deployments with DeepSparse"
 metaDescription: "Image Classification deployments with DeepSparse to create cheaper and more performant models"
 index: 2000
@@ -7,157 +7,173 @@ index: 2000
 
 # Deploying Image Classification Models with DeepSparse
 
-This page explains how to deploy an Image Classification model with DeepSparse.
+This page explains how to benchmark and deploy an image classification model with DeepSparse.
 
-DeepSparse allows accelerated inference, serving, and benchmarking of sparsified image classification models.
-This integration enables you to easily deploy sparsified image classification models with DeepSparse for GPU-class performance directly on the CPU.
+DeepSparse accepts models in the open ONNX format, granting you the flexibility to serve your
+model in a framework-agnostic manner.
+
+There are three interfaces for interacting with DeepSparse.
+- `Engine` is the lowest-level API. It enables you to compile a model and make requests on raw input tensors
+- `Pipeline` is the default API. Similiar in concept to Hugging Face Pipelines, it wraps the `Engine` with pre-preprocessing
+and post-processing, allowing you to make requests on raw data and recieve post-processed predictions
+- `Server` is a REST API wrapper around `Pipeline` built on FastAPI and Uvicorn. It enables you to stand up a model serving
+endpoint running DeepSparse with a single CLI
 
 ## Installation Requirements
 
 This use case requires the installation of [DeepSparse Server](/get-started/install/deepsparse).
 
-## Getting Started
-
 Before you start using DeepSparse, confirm your machine is
 compatible with our [hardware requirements](/user-guide/deepsparse-engine/hardware-support).
 
-### Model Format
+## Benchmarking Performance
 
-To deploy an image classification model with DeepSparse , pass the model in the ONNX format.
-This grants DeepSparse the flexibility to serve any model in a framework-agnostic environment.
+Before deploying, we can use DeepSparse's benchmarking utility to demonstrate the performance gains running DeepSparse.
 
-There are two options for creating the model in ONNX format:
+#### ONNX Runtime Performance
 
-<details>
+As a baseline, let's check out ONNX Runtime's performance on ResNet-50, downloaded from SparseZoo.
 
-<summary><b>1) Export the ONNX/Config Files From SparseML</b></summary>
-
-This pathway is relevant if you intend to deploy a model created using SparseML library.
-
-After training your model with SparseML, locate the `.pth` file for the checkpoint you'd like to export and run the `SparseML` integrated export script below.
-
+Install with:
 ```bash
-sparseml.image_classification.export_onnx \
-    --arch-key resnet50 \
-    --dataset imagenet \
-    --dataset-path ~/datasets/ILSVRC2012 \
-    --checkpoint-path ~/checkpoints/resnet50_checkpoint.pth
+pip install onnxruntime
 ```
-This creates a `model.onnx` file.
 
-The examples below use SparseZoo stubs, but simply pass the path to `model.onnx` in place of the stubs to use the local model.
+Benchmark performance at batch 32 (numbers reported from a `c6i.8xlarge` AWS instance ... 16 cores).
+```
+deepsparse.benchmark zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/base-none -b 32 -s sync -nstreams 1 -e onnxruntime
 
-</details>
+>> XXX
+```
 
-<details>
+ONNX Runtime achieves XXX items/second.
 
-<summary><b>2) Pass a SparseZoo Stub To DeepSparse</b></summary>
+#### DeepSparse Performance
 
-This pathway is relevant if you plan to use an off-the-shelf model from the SparseZoo.
+Now, let's run DeepSparse on the 95% pruned-quantized version of ResNet-50 from SparseZoo.
+```
+deepsparse.benchmark zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/base-none -b 32 -s sync -nstreams 1
 
-All of DeepSparse's `Pipelines` and APIs can use a SparseZoo stub in place of a local folder.
-The `Pipelines` use the stubs to locate and download the ONNX and configuration files from the SparseZoo repository.
+>> XXX
+```
 
-All of DeepSparse's pipelines and APIs can use a SparseZoo stub in place of a local folder.
-The examples use SparseZoo stubs to highlight this pathway.
+DeepSparse achieves XXX items/second. This is an XXX speed-up over ONNX Runtime, on the same system!
 
-</details>
+Now that we have seen the performance gains from using DeepSparse with sparse models, let's see how to add DeepSparse to
+your application.
 
-The examples below use option 2. However, you can pass the local path to the ONNX file, as needed.
+## DeepSparse Engine
 
-## Deployment APIs
+Engine is the lowest-level API for interacting with DeepSparse. As much as possible, we recommended you use the Pipeline
+API but Engine is available as needed if you want to handle pre- or post-processing yourself.
 
-DeepSparse provides both a Python `Pipeline` API and an out-of-the-box model
-server that can be used for end-to-end inference in either Python
-workflows or as an HTTP endpoint. Both options provide similar specifications
-for configurations and support a variety of image classification models.
+With Engine, we can compile an ONNX file and run inference on raw tensors.
 
-### Python API
+Here's an example, using a 95% pruned-quantized ResNet-50 from SparseZoo:
 
-`Pipelines` are the default interface for running inference with DeepSparse.
+```python
+from deepsparse import compile_model
+from deepsparse.utils import generate_random_inputs, model_to_path
+import numpy as np
 
-Once a model is obtained, either through SparseML training or directly from SparseZoo,
-a `Pipeline` can be used to easily facilitate end-to-end inference and deployment
-of the sparsified image classification model.
+# download onnx from sparsezoo and compile with batchsize 1
+sparsezoo_stub = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none"
+batch_size = 1
+rn50_engine = compile_model(
+  model=sparsezoo_stub,   # sparsezoo stub or path to local ONNX
+  batch_size=batch_size   # defaults to batch size 1
+)
 
-If no model is specified to the `Pipeline` for a given task, the `Pipeline` will automatically
-select a pruned and quantized model for the task from the SparseZoo that can be used for accelerated
-inference. Note that other models in the SparseZoo will have different tradeoffs between speed, size,
-and accuracy.
+# input is raw numpy tensors, output is raw scores, probs
+inputs = generate_random_inputs(model_to_path(sparsezoo_stub), batch_size)
+scores, probs = rn50_engine(inputs)
+print(probs.shape)
+print(np.sum(probs))
 
-### HTTP Server
+# >> (1,1000)
+# >> 1.0
+```
 
-As an alternative to Python API, DeepSparse Server allows you to
-serve ONNX models and pipelines in HTTP. Configuring the server uses the same parameters and schemas as the `Pipelines`,
-enabling simple deployment. Once launched, a `/docs` endpoint is created with full
-endpoint descriptions and support for making sample requests.
+## DeepSparse Pipelines
 
-An example deployment using a 95% pruned ResNet-50 is given below.
+Pipeline is the default interface for interacting with DeepSparse. 
 
-Refer also to the [full documentation for DeepSparse Server](/user-guide/deploying-deepsparse/deepsparse-server).
+Just like Hugging Face Pipelines, DeepSparse Pipelines wrap pre- and post-processing around the inference performed by the Engine.
+This creates a clean API that allows you to pass raw images to DeepSparse and recieve back the post-processed prediction,
+making it easy to add DeepSparse to your application.
 
-## Deployment Examples
+We will use the `Pipeline.create()` constructor to create an instance of an image classifcation Pipeline
+with a 95% pruned-quantized version of ResNet-50. We can then pass the Pipeline raw image files or numpy arrays
+and recieve back the predictions. All of the pre-processing (resizing to 256x256, randomly cropping to 224x224, 
+and normalizing with ImageNet means / standard deviations) is handled by the Pipeline.
 
-The following section includes example usage of the `Pipeline` and server APIs for
-various image classification models. Each example uses a SparseZoo stub to pull down the model,
-but a local path to an ONNX file can also be passed as the `model_path`.
-
-### Python API
-
-Create a `Pipeline` to run inference with the following code. The `Pipeline` handles the pre-processing (e.g., subtracting by ImageNet
-means, dividing by ImageNet standard deviation) and post-processing so you can pass a raw image and receive a class without any extra code.
+Download the following image file for the example:
+```
+wget https://raw.githubusercontent.com/neuralmagic/docs/rs/embedding-extraction-feature/files-for-examples/user-guide/deepsparse/logging/goldfish.jpg
+```
 
 ```python
 from deepsparse import Pipeline
-cv_pipeline = Pipeline.create(
-  task='image_classification',
-  model_path='zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none',  # Path to checkpoint or SparseZoo stub
-  class_names=None # optional dict / json mapping class ids to labels (if not using ImageNet classes)
+from PIL import Image
+import numpy as np
+
+# download onnx from sparsezoo and compile with batch size 1
+sparsezoo_stub = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none"
+batch_size = 1
+ic_pipeline = Pipeline.create(
+  task="image_classification",
+  model_path=sparse_zoo_stub,   # sparsezoo stub or path to local ONNX
+  batch_size=1                  # default batch size is 1
 )
-input_image = "my_image.png" # path to input image
-inference = cv_pipeline(images=input_image)
+
+# run inference on image file
+prediction = ic_pipeline(images="goldfish.jpg")
+print(prediction)
+
+# >>> labels=[1] scores=[24.028440475463867] ... (label 1 in ImageNet is Goldfish!)
 ```
 
-### HTTP Server
+## DeepSparse Server
 
-Spinning up:
+Built on the popular FastAPI and Uvicorn stack, DeepSparse Server enables you to set-up a REST endpoint 
+for serving inferences over HTTP. Since DeepSparse Server wraps the Pipeline API, it
+inherits all of the utilities provided by Pipelines.
+
+The CLI command below launches an image classifcation pipeline with a 95% pruned-quantized 
+ResNet-50 identifed by its SparseZoo stub:
+
 ```bash
 deepsparse.server \
-    task image_classification \
-    --model_path "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none" \
-    --port 5543
+  --task image_classification \
+  --model_path "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none" # or path/to/onnx
 ```
 
-Making a request:
+You should see Uvicorn report that it is running on `http://0.0.0.0:5543`. Once launched, a `/docs` path is 
+created with full endpoint descriptions and support for making sample requests.
+
+Here is an example client request, using the Python `requests` library for formatting the HTTP:
 ```python
 import requests
 
+# Uvicorn is running on this port
 url = 'http://0.0.0.0:5543/predict/from_files'
-path = ['goldfish.jpeg'] # just put the name of images in here
+path = ['goldfish.jpg'] # just put the name of images in here
+
+# send the raw image
 files = [('request', open(img, 'rb')) for img in path]
 resp = requests.post(url=url, files=files)
+
+# recieve the post-processed output
+print(resp.text)
+# >> {"labels":[1],"scores":[24.028444290161133]} ... (label 1 in ImageNet is Goldfish!)
 ```
 
-## Benchmarking
+## Advanced Functionality
 
-The mission of Neural Magic is to enable GPU-class inference performance on commodity CPUs.
-Want to find out how fast our sparse ONNX models perform inference? You can quickly run benchmarking tests on your own with a single CLI command.
+DeepSparse Pipelines and Server have multiple utilities that simplify deployment across a variety of
+use cases. To learn more about the options for configuring your DeepSparse deployment, check-out the 
+documentation for each feature in the DeepSparse user guide:
 
-You only need to provide the model path of a SparseZoo ONNX model or your own local ONNX model to get started:
-```bash
-deepsparse.benchmark zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none
-```
-The output is:
-```bash
-Original Model Path: zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95-none
-Batch Size: 1
-Scenario: async
-Throughput (items/sec): 299.2372
-Latency Mean (ms/batch): 16.6677
-Latency Median (ms/batch): 16.6748
-Latency Std (ms/batch): 0.1728
-Iterations: 2995
-```
-
-To learn more about benchmarking, refer to the appropriate documentation.
-Also, check out our [Benchmarking Tutorial on GitHub](https://github.com/neuralmagic/deepsparse/tree/main/src/deepsparse/benchmark).
+- DeepSparse Pipelines Overview
+- DeepSparse Server Overview
+- DeepSparse Logging Overview
