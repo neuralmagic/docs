@@ -49,6 +49,7 @@ exports.createPages = ({ graphql, actions }) => {
         createRedirect({ fromPath: '/sparseml', toPath: '/products/sparseml', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparsezoo', toPath: '/products/sparsezoo', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/sparsify', toPath: '/archive/sparsify', isPermanent: true });
+        createRedirect({ fromPath: '/products/sparsify', toPath: '/archive/sparsify', isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-ent', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-enterprise', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
         
