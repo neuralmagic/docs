@@ -75,57 +75,49 @@ See the [DeepSparse Installation page](https://docs.neuralmagic.com/get-started/
 
 ## Performance
 
-DeepSparse's key feature is its performance on commodity CPUs. For unoptimized dense models, DeepSparse's performance is 
-competitive with other CPU-inference runtimes like ONNX Runtime. However, DeepSparse really shines when optimization techniques
-like pruning and quantization are applied to a model, reaching GPU-class latency and order-of-magnitude throughput gains
-over CPU throughput baselines.
+DeepSparse's key feature is its performance on commodity CPUs, especially with inference-optimized sparse models.
 
-We can use DeepSparse's benchmarking utility to compare ONNX Runtime and DeepSparse's performance on 
-BERT with a 16 core `c6i.8xlarge` AWS instance. In this example, we will pass [SparseZoo](https://sparsezoo.neuralmagic.com/) stubs to the benchmarking script, 
-which identify an ONNX file in Neural Magic's open-source repository of sparse models (but you can also pass a path to a local ONNX file).
+For unoptimized dense models, DeepSparse's performance is competitive with other CPU-inference runtimes like ONNX Runtime. 
+However, when optimization techniques like pruning and quantization are applied to a model, DeepSparse achieves an
+order-of-magnitude performance gain over CPU-alternatives.
 
-At batch 32 with sequence length 384, DeepSparse achieves an XXX performance gain over ONNX Runtime, running on the same system!
+### Benchmarking
 
-![Performance Benchmarking Chart](/Users/robertgshaw/dev/docs/src/images/bert-performance-chart.png)
+To demonstrate DeepSparse's performance gains from sparsity, let's compare DeepSparse and ONNX Runtime's performance on 
+BERT with DeepSparse's Benchmarking utility. 
 
-#### Dense Performance
+In SparseZoo, there is a 90% pruned-quantized version of BERT (i.e. 90% of the weights are removed and the weights are 
+quantized to INT8), which retains >99% of the accuracy of the baseline dense model. 
 
-For unoptimized dense models, DeepSparse's performance is competitive with CPU-based inference runtimes 
-like ONNX Runtime. 
+Running this model on a 32 core `c6i.16xlarge` AWS instance, **DeepSparse achieves a 12.5x performance gain over ONNX Runtime**!
 
-Make sure you have ONNX Runtime installed.
+![Performance Benchmarking Chart](https://raw.githubusercontent.com/neuralmagic/docs/rs/use-case-update/src/images/bert-performance-chart.png)
+
+To replicate the results, make sure you ONNX Runtime installed (`pip install onnxruntime`).
+
+ORT achieves 18.5 items/second running BERT:
 ```bash
-pip install onnxruntime
+deepsparse.benchmark zoo:nlp/text_classification/obert-base/pytorch/huggingface/mnli/base-none -b 64 -s sync -nstreams 1 -i [64,384] -e onnxruntime
+
+>> Original Model Path: zoo:nlp/text_classification/obert-base/pytorch/huggingface/mnli/base-none
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 18.5742
 ```
 
-At batch size 32, ORT achieves XXX items/second with the unoptimized BERT model.
-```bash
-deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/base-none -b 32 -s sync -nstreams 1
+DeepSparse achieves 226 items/second with the 90% pruned-quantized version of BERT model.
 ```
-
-At batch size 32, DeepSparse achieves XXX items/second with the unoptimized BERT model.
-```bash
-deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/base-none -b 32 -s sync -nstreams 1
-```
-
-#### Sparse Performance
-
-DeepSparse's performance shines when optimization techniques like pruning and quantization are
-applied to a model. We will compare ONNX Runtime against DeepSparse with a 90% pruned and quantized
-BERT model.
-
-At batch size 32, ORT achives XXX items/second with the pruned-quantized BERT model. There is no performance
-gain from sparsity. 
-```bash
 deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none -b 32 -s sync -nstreams 1 -e onnxruntime
 
+>> Original Model Path: zoo:nlp/text_classification/obert-base/pytorch/huggingface/mnli/pruned90_quant-none
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 226.6340
 ```
 
-At batch size 32, DeepSparse achieves XXX items/second with the pruned-quantized BERT model. This is an
-YYx performance gain over ONNX Runtime.
-```
-deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none -b 32 -s sync -nstreams 1
-```
+**Pro-Tip:** In this example, we passed [SparseZoo](https://sparsezoo.neuralmagic.com/) stubs to the benchmarking script, 
+which identify an ONNX file in Neural Magic's open-source repository of sparse models. You can also pass a
+path to a local ONNX file.
 
 ## Deployment APIs
 
