@@ -42,16 +42,13 @@ index: 1000
   </div>
 </div>
 
-**DeepSparse is a deep learning inference runtime with GPU-class performance on CPUs.**
+**DeepSparse is a CPU deep learning inference runtime with GPU-class performance.**
 
-Because DeepSparse reaches GPU-class performance with commodity CPUs, you no longer need to tie deployments to accelerators to reach the performance needed for production.
-
-Free from specialized hardware, deployments can take advantage of the flexibility and scalability of software-defined inference:
+Because DeepSparse reaches GPU-class latency with commodity CPUs, you no longer need to tie deployments to accelerators to reach the performance needed for production.
+Free from specialized hardware, deployments can then take advantage of the flexibility and scalability of software-defined inference:
 - Deploy the same model and runtime on any hardware from Intel to AMD to ARM (soon) and from cloud to data center to edge, including on pre-existing systems
-- Scale vertically from 1 to 192 cores, tailoring the footprint to an app's exact needs
-- Scale horizontally with standard Kubernetes, including using services like EKS/GKE
-- Scale abstractly with serverless instances like GCP Cloud Run and AWS Lambda
-- Integrate easily into "Deploy with code" provisioning systems like Terraform
+- Scale vertically to 192 cores, horizontally with Kubernetes, or abstractly with serverless
+- Integrate easily into "deploy with code" provisioning systems
 - No wrestling with drivers, operator support, and compatibility issues
 
 Simply put, with DeepSparse on CPUs, you can both simplify your deep learning deployment process and save on infrastructure costs required to support enterprise-scale workloads.
@@ -59,7 +56,8 @@ Simply put, with DeepSparse on CPUs, you can both simplify your deep learning de
 ## Hardware Support and System Requirements
 
 Review [CPU Hardware Support for Various Architectures](https://docs.neuralmagic.com/deepsparse/source/hardware.html) to understand system requirements.
-DeepSparse works natively on Linux. Mac and Windows require running Linux in a Docker or virtual machine; it will not run natively on those operating systems.
+
+DeepSparse runs natively on Linux. Mac and Windows require running Linux in a Docker or virtual machine.
 
 DeepSparse is tested on Python 3.7-3.10, ONNX 1.5.0-1.12.0, ONNX opset version 11+, and manylinux compliant systems. Using a virtual environment is highly recommended.
 
@@ -73,23 +71,15 @@ pip install deepsparse
 
 See the [DeepSparse Installation page](https://docs.neuralmagic.com/get-started/install/deepsparse) for further installation options.
 
-## Performance
+## Performance Benchmarking
 
-DeepSparse's key feature is its performance on commodity CPUs, especially with inference-optimized sparse models.
+DeepSparse's key feature is its performance on commodity CPUs. DeepSparse is competitive with other CPU runtimes
+like ONNX Runtime for unoptimized dense models. However, when optimization techniques like pruning and quantization 
+are applied to a model, DeepSparse can achieve an order-of-magnitude speedup.
 
-For unoptimized dense models, DeepSparse's performance is competitive with other CPU-inference runtimes like ONNX Runtime. 
-However, when optimization techniques like pruning and quantization are applied to a model, DeepSparse achieves an
-order-of-magnitude performance gain over CPU-alternatives.
-
-### Benchmarking
-
-To demonstrate DeepSparse's performance gains from sparsity, let's compare DeepSparse and ONNX Runtime's performance on 
-BERT with DeepSparse's Benchmarking utility. 
-
-In SparseZoo, there is a 90% pruned-quantized version of BERT (i.e. 90% of the weights are removed and the weights are 
-quantized to INT8), which retains >99% of the accuracy of the baseline dense model. 
-
-Running this model on a 32 core `c6i.16xlarge` AWS instance, **DeepSparse achieves a 12.5x performance gain over ONNX Runtime**!
+As an example, let's compare DeepSparse and ORT's performance on BERT. In SparseZoo, there is 90% pruned and quantized 
+BERT which retains >99% of the accuracy of the baseline dense model. 
+Running this model on a `c6i.16xlarge` instance, DeepSparse achieves a ***12x speedup*** over ORT!
 
 ![Performance Benchmarking Chart](https://raw.githubusercontent.com/neuralmagic/docs/rs/use-case-update/src/images/bert-performance-chart.png)
 
@@ -105,8 +95,9 @@ deepsparse.benchmark zoo:nlp/text_classification/obert-base/pytorch/huggingface/
 >> Throughput (items/sec): 18.5742
 ```
 
-DeepSparse achieves 226 items/second with the 90% pruned-quantized version of BERT model.
-```
+DeepSparse achieves 226 items/second running the pruned-quantized version of BERT:
+
+```bash
 deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none -b 32 -s sync -nstreams 1 -e onnxruntime
 
 >> Original Model Path: zoo:nlp/text_classification/obert-base/pytorch/huggingface/mnli/pruned90_quant-none
@@ -115,16 +106,14 @@ deepsparse.benchmark zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/s
 >> Throughput (items/sec): 226.6340
 ```
 
-**Pro-Tip:** In this example, we passed [SparseZoo](https://sparsezoo.neuralmagic.com/) stubs to the benchmarking script, 
-which identify an ONNX file in Neural Magic's open-source repository of sparse models. You can also pass a
-path to a local ONNX file.
+**Pro-Tip:** In place of a [SparseZoo](https://sparsezoo.neuralmagic.com/) stubs, you can pass a local ONNX file to test your model.
 
 ## Deployment APIs
 
 Now that we have seen DeepSparse's performance gains, let's take a look at how we can add DeepSparse to an application.
 
 DeepSparse includes three deployment APIs:
-- Engine is the lowest-level API. With Engine, you pass input tensors and recieve the raw logits.
+- Engine is the lowest-level API. With Engine, you pass tensors and recieve the raw logits.
 - Pipeline wraps the Engine with pre- and post-processing. With Pipeline, you pass raw data and
 recieve the prediction.
 - Server wraps Pipelines with a REST API using FastAPI. With Server, you send raw data to an endpoint over HTTP
@@ -162,6 +151,35 @@ print(output)
 # > [array([[-0.3380675 ,  0.09602544]], dtype=float32)] << raw scores
 ```
 
+#### Model Format
+
+DeepSparse can accept ONNX models from two sources:
+
+- **SparseZoo Stubs**: SparseZoo is Neural Magic's open-source repository of sparse models. You can pass a SparseZoo stub, a unique identifier for
+each model to DeepSparse, which downloads the necessary ONNX files from the remote repository. 
+
+- **Custom ONNX**: DeepSparse allows you to use your own model in ONNX format. Checkout the SparseML user guide for more details on exporting
+your sparse models to ONNX format. Here's a quick example using a custom ONNX file from the ONNX model zoo:
+
+```bash
+wget https://github.com/onnx/models/raw/main/vision/classification/mobilenet/model/mobilenetv2-7.onnx
+> Saving to: ‘mobilenetv2-7.onnx’
+```
+
+```python
+from deepsparse import compile_model
+from deepsparse.utils import generate_random_inputs
+onnx_filepath = "mobilenetv2-7.onnx"
+batch_size = 16
+
+# Generate random sample input
+inputs = generate_random_inputs(onnx_filepath, batch_size)
+
+# Compile and run
+engine = compile_model(onnx_filepath, batch_size)
+outputs = engine.run(inputs)
+```
+
 ### Pipeline
 
 Pipeline is the default API for interacting with DeepSparse. Similar to Hugging Face Pipelines,
@@ -189,6 +207,7 @@ print(prediction)
 # > labels=['positive'] scores=[0.9954759478569031]
 ```
 
+
 ### Server
 
 Server wraps Pipelines with REST APIs, that make it easy to stand up a model serving endpoint
@@ -210,17 +229,16 @@ Alternatively, the following configuration file can launch the Server.
 
 ```yaml
 # config.yaml
-
 endpoints:
   - task: sentiment-analysis
     route: /predict
     model: zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none
-    batch_size: 1
 ```
 
 Spinning up:
 ```bash
-deepsparse.server --config-file config.yaml
+deepsparse.server \
+  --config-file config.yaml
 ```
 
 You should see Uvicorn report that it is running on port 5543. Navigating to the `/docs` endpoint will
@@ -258,39 +276,22 @@ usage examples of each use case.
 - [Token Classification](/use-cases/use-cases/natural-language-processing/token-classification): `task="token-classification"`
 - [Question Answering](/use-cases/use-cases/natural-language-processing/question-answering): `task="question-answering"`
 
-## Model Format
+## Advanced Functionality
 
-DeepSparse can accept ONNX models from two sources:
+DeepSparse contains many additional utilties that simplify deployment. Check out the user guide for detailed exploration of the feature set:
+- DeepSparse Pipelines
+- DeepSparse Server
+- DeepSparse Benchmark
+- Logging
+- Scheduler
 
-- **SparseZoo Stubs**: SparseZoo is Neural Magic's open-source repository of sparse models. You can pass a SparseZoo stub, a unique identifier for
-each model to DeepSparse, which downloads the necessary ONNX files from the remote repository. 
+## Training a Sparse Model
 
-- **Custom ONNX**: DeepSparse allows you to use your own model in ONNX format. Checkout the SparseML user guide for more details on exporting
-your sparse models to ONNX format. Here's a quick example using a custom ONNx file from the ONNX model zoo:
-
-```bash
-> wget https://github.com/onnx/models/raw/main/vision/classification/mobilenet/model/mobilenetv2-7.onnx
-Saving to: ‘mobilenetv2-7.onnx’
-```
-
-Here is a custom ONNX benchmark example:
-```python
-from deepsparse import compile_model
-from deepsparse.utils import generate_random_inputs
-onnx_filepath = "mobilenetv2-7.onnx"
-batch_size = 16
-
-# Generate random sample input
-inputs = generate_random_inputs(onnx_filepath, batch_size)
-
-# Compile and run
-engine = compile_model(onnx_filepath, batch_size)
-outputs = engine.run(inputs)
-```
+For details on training a sparse model, check out the SparseML user guide.
 
 ## Community
 
-### Be Part of the Future... And the Future is Sparse!
+### Be Part of the Future ... And the Future is Sparse!
 
 Contribute with code, examples, integrations, and documentation as well as bug reports and feature requests! [Learn how here.](https://github.com/neuralmagic/deepsparse/blob/main/CONTRIBUTING.md)
 
