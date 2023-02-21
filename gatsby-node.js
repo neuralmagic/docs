@@ -51,13 +51,14 @@ exports.createPages = ({ graphql, actions }) => {
         createRedirect({ fromPath: '/sparsify', toPath: '/archive/sparsify', isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-ent', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-enterprise', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
-
+        
         // archived pages redirect
+        createRedirect({ fromPath: '/sparseml/source/installation.html', toPath: '/get-started/install/sparseml', isPermanent: true });
         createRedirect({ fromPath: '/source/getstarted.html', toPath: '/', isPermanent: true });
-        createRedirect({ fromPath: '/deepsparse/source/hardware.html', toPath: '/user-guide/deepsparse-engine/hardware-support', isPermanent: true });
+        createRedirect({ fromPath: '/deepsparse/source/hardware.html', toPath: '/user-guides/deepsparse-engine/hardware-support', isPermanent: true });
         createRedirect({ fromPath: '/sparsezoo/source/models.html', toPath: 'https://github.com/neuralmagic/sparsezoo/blob/main/docs/source/models.md', isPermanent: true });
         createRedirect({ fromPath: '/sparsezoo/source/recipes.html', toPath: 'https://github.com/neuralmagic/sparsezoo/blob/main/docs/source/recipes.md', isPermanent: true });
-        createRedirect({ fromPath: '/sparsify/source/userguide/01-intro.html', toPath: '/archive/sparsify/source/userguide/01-intro.html', isPermanent: true })
+        createRedirect({ fromPath: '/sparsify/source/userguide/01-intro.html', toPath: '/archive/sparsify/source/userguide/01-intro.html', isPermanent: true });
       })
     );
   });
