@@ -7,32 +7,34 @@ index: 6000
 
 # DeepSparse ARM Alpha
 
-In our recent 1.4 product release, we launched alpha support for DeepSparse on AWS Graviton and Ampere. We are working toward a general release across ARM servers, embedded (like Raspberry Pi), and mobile (like Android) platforms in the first half of 2023.
+In our recent 1.4 product release, we launched alpha support for DeepSparse on AWS Graviton and Ampere. We are working toward a general release across ARM server, embedded (like Raspberry Pi), and mobile (like Android) platforms in the first half of 2023.
 
 [Sign up to join the waitlist for the general release of DeepSparse on ARM](https://neuralmagic.com/deepsparse-arm-waitlist)
 
-### Want to Particpate in Our Trial?
+### Trial the Alpha 
+
+In this guide, we will walk through how to trial the DeepSparse ARM alpha, including:
+- Explaining the alpha status
+- Assessing current performance against the ONNX Runtime baseline
+- Setting up the DeepSparse ARM Alpha on an AWS Graviton or Ampere system
+- Benchmarking performance
+- Deploying a model
+
+### Want to Provide Feedback?
 
 Neural Magic is offering a gift card for a 45 minute conversation to discuss experience with the ARM Alpha and feature requests for DeepSparse on ARM (e.g. what platforms would you like to see supported?). 
 
 [Reach out to set up time to discuss](https://neuralmagic.com/contact/)
 
-### Table of Contents
 
-In this guide, we will do the following:
-- Explain the alpha status
-- Assess current performance against the ONNX Runtime baseline
-- Set up the DeepSparse ARM Alpha on an AWS Graviton or Ampere system
-- Benchmark performance
-- Deploy a model
 
 ## Understand Alpha Status
 
 DeepSparse on ARM is currently in Alpha state. It has the following limitations:
 - AWS Graviton and Ampere Only
-- Long Model Compilation Times (e.g., compiling BERT on a `c7g.8xlarge` instance takes ~2.5 minutes)
-- Slower Performance than DeepSparse on x86
-- Performance and Accuracy Support for Limited Set of Models (we have tested ResNet-50, YOLOv5, and BERT)
+- Long model compilation times (e.g., compiling BERT on a `c7g.8xlarge` instance takes ~2.5 minutes)
+- Slower performance than DeepSparse on x86
+- Performance and accuracy support for limited set of models (we have tested ResNet-50, YOLOv5, and BERT)
 
 Over the coming months as we approach general release, we will be finalizing DeepSparse on ARM to deliver similiar compile times, performance, model selection, and platform support as the x86 version.
 
@@ -51,9 +53,9 @@ The following throughput statistics were generated on an AWS Graviton3 `c7g.8xla
 The general release of DeepSparse for ARM will offer support for ARMv8+ devices, including server
 systems like Ampere, edge devices like Rasbperry Pi, and mobile devices like Android. 
 
-However, the ARM Alpha only runs on the following AWS Graviton and Ampere systems, including:
-- AWS Graviton3, such as `c7g`, `c7gn`
-- AWS Graviton2, such as `c6g`, `c6gd`, `c6gn`
+However, the ARM Alpha only runs on AWS Graviton and Ampere systems, including:
+- AWS Graviton3 Instances, such as `c7g`, `c7gn`
+- AWS Graviton2 Instances, such as `c6g`, `c6gd`, `c6gn`
 - GCP Ampere Instances, such as `t2a`
 - Ampere, such as `Altra` and `Altra Max`
 
@@ -93,7 +95,7 @@ deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/s
 
 #### DeepSparse Dense Performance
 
-With dense, unoptimized models, DeepSparse achieves a competitive performance with ONNX Runtime, reaching 16.5 items/second.
+With dense, unoptimized models, DeepSparse achieves competitive performance with ONNX Runtime, reaching 16.5 items/second.
 
 ```bash
 deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/base-none -b64 -s sync -nstreams 1
@@ -119,7 +121,7 @@ deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/s
 
 #### DeepSparse Sparse-Quantized Performance
 
-With sparsity and quantization applied to the model, DeepSparse achieves an additional performance speedup. With a 80% 4-block pruned-quantized version of BERT, DeepSparse achieves 71 items/second - **this is a 4.3x performance gain over the ORT baseline**!
+With sparsity and quantization applied to the model, DeepSparse achieves an additional performance speedup. With an 80% 4-block pruned-quantized version of BERT, DeepSparse achieves 71 items/second - **this is a 4.3x performance gain over the ORT baseline**!
 
 ```bash
 deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned80_quant-none-vnni -b64 -s sync
