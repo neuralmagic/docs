@@ -52,6 +52,24 @@ exports.createPages = ({ graphql, actions }) => {
         createRedirect({ fromPath: '/products/sparsify', toPath: '/archive/sparsify', isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-ent', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/products/deepsparse-enterprise', toPath: '/products/deepsparse/enterprise', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/sparsification', toPath: '/user-guides/sparsification', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/recipes', toPath: '/user-guides/recipes', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/recipes/creating', toPath: '/user-guides/recipes/creating', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/recipes/enabling', toPath: '/user-guides/recipes/enabling', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/onnx-export', toPath: '/user-guides/onnx-export', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine', toPath: '/user-guides/deepsparse-engine', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/hardware-support', toPath: '/user-guides/deepsparse-engine/hardware-support', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/scheduler', toPath: '/user-guides/deepsparse-engine/scheduler', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/benchmarking', toPath: '/user-guides/deepsparse-engine/benchmarking', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/diagnostics-debugging', toPath: '/user-guides/deepsparse-engine/diagnostics-debugging', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/numactl-utility', toPath: '/user-guides/deepsparse-engine/numactl-utility', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deepsparse-engine/logging', toPath: '/user-guides/deepsparse-engine/logging', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse', toPath: '/user-guides/deploying-deepsparse, redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/deepsparse-server', toPath: '/user-guides/deploying-deepsparse/deepsparse-server, redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/amazon-sagemaker', toPath: '/user-guides/deploying-deepsparse/amazon-sagemaker, redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/aws-lambda', toPath: '/user-guides/deploying-deepsparse/aws-lambda, redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/google-cloud-run', toPath: '/user-guides/deploying-deepsparse/google-cloud-run, redirectInBrowser: true, isPermanent: true });
+        
         
         // archived pages redirect
         createRedirect({ fromPath: '/sparseml/source/installation.html', toPath: '/get-started/install/sparseml', isPermanent: true });
