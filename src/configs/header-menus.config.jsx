@@ -103,6 +103,12 @@ const HeaderMenusConfig = {
       title: 'Resources',
       link: false,
       subItems: [
+          {
+          title: 'Support',
+          desc: 'Learn about various Support channels.',
+          img: ImgLabs,
+          link: 'https://neuralmagic.com/support',
+        },
         {
           title: 'Blogs & News',
           desc: 'Stay current & discover SOTA performance techniques.',
@@ -135,7 +141,7 @@ const HeaderMenusConfig = {
         },
         {
           title: 'Subscribe',
-          desc: 'Sing up for the regular Neural Magic email updates.',
+          desc: 'Sign up for the regular Neural Magic email updates.',
           img: ImgNewsletter,
           link: 'https://neuralmagic.wpengine.com/deep-sparse-community/#subscribe',
         },
