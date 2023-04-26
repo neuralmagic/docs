@@ -68,8 +68,8 @@ const HeaderMenusConfig = {
       link: false,
       subItems: [
         {
-          title: 'Deep Sparse Slack Community',
-          desc: 'Engage, discuss, and get direct access to our engineering teams.',
+          title: 'Neural Magic Slack Community',
+          desc: 'Engage, discuss, and get direct access to our engineering and product teams.',
           img: ImgSlack,
           link: 'https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ',
         },
