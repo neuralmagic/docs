@@ -64,13 +64,13 @@ exports.createPages = ({ graphql, actions }) => {
         createRedirect({ fromPath: '/user-guide/deepsparse-engine/diagnostics-debugging', toPath: '/user-guides/deepsparse-engine/diagnostics-debugging', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/user-guide/deepsparse-engine/numactl-utility', toPath: '/user-guides/deepsparse-engine/numactl-utility', redirectInBrowser: true, isPermanent: true });
         createRedirect({ fromPath: '/user-guide/deepsparse-engine/logging', toPath: '/user-guides/deepsparse-engine/logging', redirectInBrowser: true, isPermanent: true });
-        createRedirect({ fromPath: '/user-guide/deploying-deepsparse', toPath: '/user-guides/deploying-deepsparse, redirectInBrowser: true, isPermanent: true });
-        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/deepsparse-server', toPath: '/user-guides/deploying-deepsparse/deepsparse-server, redirectInBrowser: true, isPermanent: true });
-        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/amazon-sagemaker', toPath: '/user-guides/deploying-deepsparse/amazon-sagemaker, redirectInBrowser: true, isPermanent: true });
-        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/aws-lambda', toPath: '/user-guides/deploying-deepsparse/aws-lambda, redirectInBrowser: true, isPermanent: true });
-        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/google-cloud-run', toPath: '/user-guides/deploying-deepsparse/google-cloud-run, redirectInBrowser: true, isPermanent: true });
-        
-        
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse', toPath: '/user-guides/deploying-deepsparse', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/deepsparse-server', toPath: '/user-guides/deploying-deepsparse/deepsparse-server', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/amazon-sagemaker', toPath: '/user-guides/deploying-deepsparse/amazon-sagemaker', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/aws-lambda', toPath: '/user-guides/deploying-deepsparse/aws-lambda', redirectInBrowser: true, isPermanent: true });
+        createRedirect({ fromPath: '/user-guide/deploying-deepsparse/google-cloud-run', toPath: '/user-guides/deploying-deepsparse/google-cloud-run', redirectInBrowser: true, isPermanent: true });
+
+
         // archived pages redirect
         createRedirect({ fromPath: '/sparseml/source/installation.html', toPath: '/get-started/install/sparseml', isPermanent: true });
         createRedirect({ fromPath: '/source/getstarted.html', toPath: '/', isPermanent: true });
