@@ -26,7 +26,7 @@ const HeaderMenusConfig = {
       link: false,
       subItems: [
         {
-          title: 'DeepSparse Engine',
+          title: 'DeepSparse',
           desc: 'Sparsity-aware neural network inference engine for GPU-class performance on CPUs.',
           img: ImgDeepSparseEngine,
           link: 'https://neuralmagic.com/deepsparse-engine',
