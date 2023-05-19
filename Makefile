@@ -1,45 +1,29 @@
-.PHONY: build docs test
+.PHONY: build clean git_add
 
-BUILDDIR := $(PWD)
-PYCHECKDIRS := utils
-PYCHECKGLOBS := 'utils/**/*.py'
-DOCDIR := docs
-MDCHECKGLOBS := 'docs/**/*.md' 'docs/**/*.rst'
-MDCHECKFILES := CODE_OF_CONDUCT.md CONTRIBUTING.md DEVELOPING.md README.md
+EXCLUDED_DIRS := .cache node_modules public venv
 
-# run checks on all files for the repo
-quality:
-	@echo "Running copyright checks";
-	python utils/copyright.py quality $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
-	@echo "Running python quality checks";
-	black --check $(PYCHECKDIRS);
-	isort --check-only $(PYCHECKDIRS);
-	flake8 $(PYCHECKDIRS);
-
-# style the code according to accepted standards for the repo
-style:
-	@echo "Running copyrighting";
-	python utils/copyright.py style $(PYCHECKGLOBS) $(JSCHECKGLOBS) $(MDCHECKGLOBS) $(MDCHECKFILES)
-	@echo "Running python styling";
-	black $(PYCHECKDIRS);
-	isort $(PYCHECKDIRS);
-
-# create docs
-docs:
-	@echo "Running docs creation";
-	python utils/docs_builder.py --src $(DOCDIR) --dest $(DOCDIR)/build/html;
+git_add:
+	@bash -c ' \
+	  IFS=$$'\''\n'\''; \
+		for file in $$(git ls-files --others --exclude-from=.gitignore); do \
+			skip=0; \
+			for dir in $(EXCLUDED_DIRS); do \
+ 				if [[ $$file == $$dir* ]]; then \
+ 					skip=1; \
+					break; \
+				fi; \
+			done; \
+			if [[ $$skip -eq 0 ]]; then \
+				git add $$file; \
+			fi; \
+		done \
+	';
 
 # formats docs source build for github pages
 build:
-	make docs;
-	rm -rf _images/ && rm -rf _sources/ && rm -rf _static/ && \
-		cp -r docs/build/html/* ./;
-	make clean;
+	npm run build;
+	python utils/move_files.py ./public .;
 
 # clean package
 clean:
-	rm -rf .pytest_cache;
-	rm -rf docs/_build docs/build;
-	rm -rf build;
-	rm -rf dist;
-	find $(PYCHECKDIRS) | grep -E "(__pycache__|\.pyc|\.pyo)" | xargs rm -rf;
+	npm run clean;
