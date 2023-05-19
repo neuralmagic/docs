@@ -10,11 +10,14 @@ permissions:
 
 jobs:
   build:
+    if: github.event.commits[0].author.name != 'nm-automation'
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.CICD_GITHUB_PAT }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
@@ -37,7 +40,3 @@ jobs:
           make git_add
           git diff --quiet && git diff --staged --quiet || git commit -m "Automated build"
           git push
-        env:
-          GIT_ASKPASS: /bin/true
-          GIT_USERNAME: "nm-automation"
-          GIT_PASSWORD: ${{ secrets.CICD_GITHUB_PAT }}
