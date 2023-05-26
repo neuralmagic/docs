@@ -3,21 +3,7 @@
 EXCLUDED_DIRS := .cache node_modules public venv
 
 git_add:
-	@bash -c ' \
-	  IFS=$$'\''\n'\''; \
-		for file in $$(git ls-files --others --exclude-from=.gitignore); do \
-			skip=0; \
-			for dir in $(EXCLUDED_DIRS); do \
- 				if [[ $$file == $$dir* ]]; then \
- 					skip=1; \
-					break; \
-				fi; \
-			done; \
-			if [[ $$skip -eq 0 ]]; then \
-				git add $$file; \
-			fi; \
-		done \
-	';
+	git add $(git ls-files -m --exclude-standard);
 
 # formats docs source build for github pages
 build:
