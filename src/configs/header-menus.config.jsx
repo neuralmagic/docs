@@ -56,7 +56,7 @@ const HeaderMenusConfig = {
           link: 'https://neuralmagic.com/use-cases/#nlp',
         },
         {
-          title: 'Compute Vision',
+          title: 'Computer Vision',
           desc: 'Get started with sparse computer vision use cases. Apply your data and deploy on CPUs with ease.',
           img: ImgCV,
           link: 'https://neuralmagic.com/use-cases/#computervision',
@@ -128,7 +128,7 @@ const HeaderMenusConfig = {
           link: 'https://neuralmagic.com/neural-magic-events/',
         },
         {
-          title: 'On-Demand Videos',
+          title: 'NeuralFlix',
           desc: 'Listen to on-demand ML performance content on your time.',
           img: ImgVideos,
           link: 'https://neuralmagic.com/resources/on-demand-webinars/',
