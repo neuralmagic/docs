@@ -11,8 +11,8 @@ In this guide, we will walk through an example of how to use Neural Magic's stac
 
 We will walk through three APIs:
 - [DeepSparse Pipeline](#deepsparse-pipeline)
-- DeepSparse Server
-- DeepSparse Benchmarking
+- [DeepSparse Server](#deepsparse-pipeline)
+- [DeepSparse Benchmarking](#deepsparse-benchmarking)
 
 Make sure you have all the dependencies installed before diving in:
 
