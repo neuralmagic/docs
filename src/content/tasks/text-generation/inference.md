@@ -60,10 +60,10 @@ print(f"{prompt}{output.sequences[0]}")
 ### **Configuring Text Generation**
 
 Text generation inference is somewhat simple:
-- A prompt (sequence of tokens) is passed to the model and processed (often called "Prefill")
-- The model predicts a sequence of tokens one at a time, stopping only by reaching a stop token or a specified maximum length (often called "Decode").
+- A prompt is passed by the user to the model and is processed ("Prefill")
+- The model then predicts a sequence of tokens one at a time, stopping by reaching a stop token or a max length ("Decode").
 
-Given this iterative process where we make multple passes through the engine, DeepSparse uses multiple engines for the Prefill and Decode and implements an important optimization called KV-caching, which re-uses the intermediate key and value states during the "Decode" phase of inference.
+Given this iterative process where we make multple passes through the engine, DeepSparse uses separate engines for the Prefill and Decode stages and implements an important optimization called KV-caching, which re-uses the intermediate key and value states during the "Decode" phase of inference.
 
 Let's walk through some arguments to `Pipeline.create()` that can control the KV-cache/Prefill setup and Generation Strategy.
 
