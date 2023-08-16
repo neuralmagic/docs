@@ -26,7 +26,7 @@ DeepSparse Pipelines expose a similiar high-level API to Hugging Face Pipelines 
 
 Under the hood, however, DeepSparse Pipelines use the DeepSparse Runtime to accelerate inference. Developed by Neural Magic's HPC engineers, DeepSparse Runtime is highly optimized to accelerate performance by taking advantage of sparsity and quantization.
 
-See **[DeepSparse Benchmarking](#deepsparse-benchmarking)** to see the performance speedup from running sparse-quantized models.
+**[DeepSparse Benchmarking](#deepsparse-benchmarking)** shows the performance advantage from running sparse-quantized models with DeepSparse.
 
 ### **Basic Usage**
 
