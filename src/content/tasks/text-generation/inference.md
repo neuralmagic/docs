@@ -51,11 +51,11 @@ output = pipeline(sequences=[prompt])
 print(f"{prompt}{output.sequences[0]}")
 ```
 ```bash
-# >> def fibonacci(n):
-# >>   if n < 2:
-# >>       return n
-# >>   else:
-# >>       return fibonacci(n-1) + fibonacci(n-2)
+>> def fibonacci(n):
+>>   if n < 2:
+>>       return n
+>>   else:
+>>       return fibonacci(n-1) + fibonacci(n-2)
 ```
 
 ### **Configuring Text Generation**
@@ -101,21 +101,24 @@ pipeline = Pipeline.create(
 prompts = ["def fibonacci(n):"]
 output = pipeline(sequences=prompts)
 print(f"{prompts[0]}{output.sequences[0]}")
-
-# >> def fibonacci(n):
-# >>    if n < 2:
-# >>        return n
-# >>    else:
-# >>        return fibonacci(n-1) + fibonacci(n-2)
-# >>
-# >> def fibonacci(n):
-# >>    if n < 2:
-# >>       return n
-# >>    else:
-# >>        return fibon        << stopped at exactly 64 tokens generated >>
+```
+```bash
+>> def fibonacci(n):
+>>    if n < 2:
+>>        return n
+>>    else:
+>>        return fibonacci(n-1) + fibonacci(n-2)
+>>
+>> def fibonacci(n):
+>>    if n < 2:
+>>       return n
+>>    else:
+>>        return fibon        << stopped at exactly 64 tokens generated >>
 ```
 
 ### **Inference API**
+
+Let's walk through the arguments that can be passed to the `TextGenerationPipeline` for inference.
 
 #### **Input and Output Formats**
 
@@ -124,7 +127,6 @@ print(f"{prompts[0]}{output.sequences[0]}")
 - `return_logits` (`bool`): If True, the pipeline will return the logits for the generated text in addition to the generated text. Default False.
 - `fixed_sequences_length` (`bool`): If True, the pipeline will pad all sequences to the same length as the longest sequence in the batch. If False, no padding is applied resulting in variable length sequences across multiple sequences.
 - `streamer` (`TextStreamer`): A `TextStreamer` instance to use for streaming text generation. Limited support currently and being phased out in the next release.
-
 
 `TextGenerationOutput` is a data class which holds the results of a Pipeline:
 - `sequences` (`str` or `List[str]`): A single string or list of strings of generated text for the provided prompts.
@@ -245,7 +247,8 @@ zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery
 Dense FP32 Throughput:
 ```bash
 deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
-
+```
+```bash
 >> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
 >> Batch Size: 1
 >> Scenario: sync
@@ -256,7 +259,8 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 50Sparse-INT8 Throughput:
 ```bash
 deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
-
+```
+```bash
 >> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
 >> Batch Size: 1
 >> Scenario: sync
