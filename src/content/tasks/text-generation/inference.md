@@ -10,9 +10,9 @@ index: 1000
 In this guide, we will walk through an example of how to use Neural Magic's stack to run text generation inference with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
 We will walk through three APIs:
-- [DeepSparse Pipeline](#deepsparse-pipeline)
-- [DeepSparse Server](#deepsparse-pipeline)
-- [DeepSparse Benchmarking](#deepsparse-benchmarking)
+- **[DeepSparse Pipeline](#deepsparse-pipeline)** exposes a simple API for generating text
+- **[DeepSparse Server](#deepsparse-pipeline)** enables you to spin up a REST server running DeepSparse
+- **[DeepSparse Benchmarking](#deepsparse-benchmarking)** demonstrates the performance speedup from running sparse-quantized models with DeepSparse
 
 Make sure you have all the dependencies installed before diving in:
 
@@ -264,5 +264,5 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 We can see that running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61, a **2.5x throughput increase**!
 
 ## **Next Steps**
-- [Optimize an LLM with Sparsify](optimization.md) **--UPDATE-- WITH LINK**
+- [Optimize an LLM with Sparsify](optimization.md)
 - [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
