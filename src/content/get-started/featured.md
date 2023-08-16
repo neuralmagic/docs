@@ -1,11 +1,11 @@
 ---
-title: "LLM Quick Tour"
-metaTitle: "LLM Quick Tour"
-metaDescription: "Quick tour to get started running LLMs on DeepSparse"
+title: "Featured: LLMs"
+metaTitle: "Get Started Using Neural Magic with LLMs"
+metaDescription: "Quick tour to get started running LLMs with Neural Magic"
 index: 1000
 ---
 
-# **Get Started with LLMs**
+# **Get Started with Neural Magic + LLMs**
 
 Get up and running with Neural Magic LLMs! 
 
