@@ -135,7 +135,7 @@ Let's walk through the arguments that can be passed to the `TextGenerationPipeli
 
 #### **Example Usage**
 
-Here's a quick example configuring some of these arguments:
+Here's a quick example using some of these arguments:
 
 ```python
 from deepsparse import Pipeline
