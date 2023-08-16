@@ -7,7 +7,7 @@ index: 1000
 
 # **Inference with DeepSparse**
 
-In this guide, we will walk through an example of how to use Neural Magic's stack to run LLM infernece with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
+In this guide, we will walk through an example of how to use Neural Magic's stack to run text generation inference with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
 We will walk through two APIs:
 - DeepSparse Pipeline
