@@ -1,4 +1,11 @@
-# **Getting Started**
+---
+title: "LLM Quick Tour"
+metaTitle: "LLM Quick Tour"
+metaDescription: "Quick tour to get started running LLMs on DeepSparse"
+index: 1000
+---
+
+# **Get Started with LLMs**
 
 Get up and running with Neural Magic LLMs! 
 
@@ -6,7 +13,7 @@ This quick tour will show you how to use Neural Magic's stack to run LLMs perfor
 
 ## **Installation**
 
-Before your begin, make sure you have all the necessary libraries installed:
+Before your begin, install the latest nightly with DeepSparse.
 
 ```bash
 pip install deepsparse-nightly[transformers]==1.6.0.20230815
