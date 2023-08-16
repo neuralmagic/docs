@@ -9,15 +9,18 @@ index: 1000
 
 In this guide, we will walk through an example of how to use Neural Magic's stack to run text generation inference with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
-We will walk through two APIs:
+We will walk through three APIs:
 - DeepSparse Pipeline
 - DeepSparse Server
+- DeepSparse Benchmarking
 
 Make sure you have all the dependencies installed before diving in:
 
 ```bash
 pip install deepsparse-nightly[transformers,server]==1.6.0.20230815
 ```
+
+## **DeepSparse Benchmarking**
 
 ## **DeepSparse Pipeline**
 
@@ -53,40 +56,6 @@ print(f"{prompt}{output.sequences[0]}")
 # >>   else:
 # >>       return fibonacci(n-1) + fibonacci(n-2)
 ```
-### **Benchmarking Performance**
-
-Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
-
-```bash
-# dense-fp32 model
-zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
-# 50pruned-int8 model
-zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
-```
-
-Dense FP32 Throughput:
-```bash
-deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
-
->> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
->> Batch Size: 1
->> Scenario: sync
->> Throughput (items/sec): 24.1546
->> Latency Mean (ms/batch): 41.3132
-```
-
-50Sparse-INT8 Throughput:
-```bash
-deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
-
->> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
->> Batch Size: 1
->> Scenario: sync
->> Throughput (items/sec): 60.6657
->> Latency Mean (ms/batch): 16.4035
-```
-
-We can see that running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61, a **2.5x throughput increase**!
 
 ### **Configuring Text Generation**
 
@@ -260,6 +229,41 @@ Request with the following (note that we call the `/generate` endpoint):
 ```bash
 curl -X POST "http://localhost:5543/generate" -H "Content-Type: application/json" -d '{"sequences": "def fib(n):"}'
 ```
+
+## **Benchmarking Performance**
+
+Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
+
+```bash
+# dense-fp32 model
+zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
+# 50pruned-int8 model
+zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
+```
+
+Dense FP32 Throughput:
+```bash
+deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
+
+>> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
+>> Batch Size: 1
+>> Scenario: sync
+>> Throughput (items/sec): 24.1546
+>> Latency Mean (ms/batch): 41.3132
+```
+
+50Sparse-INT8 Throughput:
+```bash
+deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
+
+>> Original Model Path: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
+>> Batch Size: 1
+>> Scenario: sync
+>> Throughput (items/sec): 60.6657
+>> Latency Mean (ms/batch): 16.4035
+```
+
+We can see that running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61, a **2.5x throughput increase**!
 
 ## **Next Steps**
 - [Optimize an LLM with Sparsify](optimization.md) **--UPDATE-- WITH LINK**
