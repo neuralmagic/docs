@@ -49,7 +49,8 @@ prompt = "def fibonacci(n):"
 output = pipeline(sequences=[prompt])
 
 print(f"{prompt}{output.sequences[0]}")
-
+```
+```bash
 # >> def fibonacci(n):
 # >>   if n < 2:
 # >>       return n
