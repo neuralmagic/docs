@@ -228,7 +228,7 @@ Request with the following (note that we call the `/generate` endpoint):
 curl -X POST "http://localhost:5543/generate" -H "Content-Type: application/json" -d '{"sequences": "def fib(n):"}'
 ```
 
-## **Benchmarking Performance**
+## **DeepSparse Benchmarking**
 
 Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
 
