@@ -23,7 +23,7 @@ pip install deepsparse-nightly[transformers]==1.6.0.20230815
 
 DeepSparse Pipelines are the easiest and fastest way to run LLM inference with DeepSparse on CPUs.
 
-We start by creating an instance of `deepsparse.Pipeline` and specifying a model we want to use. For this guide, we will use the `salesforce/codegen-350m-mono` model.
+We start by creating an instance of `TextGenerationPipeline` and specifying a model we want to use. For this guide, we will use the `salesforce/codegen-350m-mono` model.
 
 ```python
 from deepsparse import Pipeline
