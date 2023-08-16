@@ -35,7 +35,7 @@ pipeline = Pipeline.create(task="text-generation", model_path=zoo_stub)
 
 `Pipeline.create()` first downloads a tokenizer and model in ONNX format. Here, we passed a SparseZoo stub as the `model_path`, identifying the relevant model artifacts hosted in [SparseZoo](zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none), Neural Magic's repository of pre-optimized models. Once the artifacts are downloaded, DeepSparse compiles the model to machine code and is now ready to run inference.
 
-We can then use `deepsparse.Pipeline` to generate text:
+We can then use `TextGenerationPipeline` to generate text:
 ```python
 prompt = "def fib(n):"
 output = pipeline(sequences=[prompt])
