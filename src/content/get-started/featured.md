@@ -96,6 +96,6 @@ We can see that running the optimized `50sparse-int8` model increased the number
 
 ## **Next Steps**
 
-- [Learn more about text generation with DeepSparse]() **--UPDATE-- WITH LINK**
-- [Learn more about how to sparsify an LLM with Sparsify One-Shot]() **--UPDATE-- WITH LINK**
+- [Learn more about text generation with DeepSparse](../tasks/text-generation/inference.md)
+- [Learn more about how to optimize an LLM with Sparsify](../tasks/text-generation/optimization.md)
 - [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
