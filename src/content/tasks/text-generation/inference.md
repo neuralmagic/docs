@@ -10,8 +10,8 @@ index: 1000
 In this guide, we will walk through an example of how to use Neural Magic's stack to run text generation inference with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
 We will walk through three APIs:
-- **[DeepSparse Pipeline](#deepsparse-pipeline)** exposes a simple API for generating text
-- **[DeepSparse Server](#deepsparse-pipeline)** enables you to spin up a REST server running DeepSparse
+- **[DeepSparse Pipeline](#deepsparse-pipeline)** exposes a simple API for generating text with DeepSparse
+- **[DeepSparse Server](#deepsparse-server)** enables you to spin up a REST server running DeepSparse
 - **[DeepSparse Benchmarking](#deepsparse-benchmarking)** demonstrates the performance speedup from running sparse-quantized models with DeepSparse
 
 Make sure you have all the dependencies installed before diving in:
