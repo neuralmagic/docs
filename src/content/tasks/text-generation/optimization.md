@@ -7,7 +7,7 @@ index: 2000
 
 # **Optimization with Sparsify**
 
-In this guide, we will walk through an example of how to use Neural Magic's stack to sparsify a Text Generation model, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
+In this guide, we will walk through an example of how to use Neural Magic's stack to sparsify a text generation model, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
 There are a few steps:
 - Export to ONNX
