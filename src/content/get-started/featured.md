@@ -49,7 +49,7 @@ print(f"{prompt}{output.sequences[0]}")
 # >>        a, b = b, a + b
 ```
 
->> Check out the Text Generation task reference for more details on using `deepsparse.Pipeline`
+>> Check out the [Text Generation task guide](tasks/text-generation/inference.md) for more details on using `deepsparse.Pipeline`
 
 ## **Speeding up Inference with Sparsity**
 

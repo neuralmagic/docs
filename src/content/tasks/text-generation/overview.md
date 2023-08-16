@@ -19,8 +19,8 @@ We currently have end-to-end support the following models and are rapidly expand
 - [`facebook/opt`](https://huggingface.co/facebook/opt-6.7b)
 
 ### **Get Started**
-- [Optimize a model with Sparsify](optimization.md)
-- [Run inference with DeepSparse](inference.md)
+- [Inference with DeepSparse](inference.md)
+- [Optimization with Sparsify](optimization.md)
 - [Check out pre-sparsified LLMs in the SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
 
 ### **Examples**
