@@ -235,11 +235,14 @@ curl -X POST "http://localhost:5543/generate" -H "Content-Type: application/json
 
 ## **DeepSparse Benchmarking**
 
-Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
+Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. 
+
+SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
 
 ```bash
 # dense-fp32 model
 zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
+
 # 50pruned-int8 model
 zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
 ```
