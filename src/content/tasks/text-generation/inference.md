@@ -10,7 +10,7 @@ index: 1000
 In this guide, we will walk through an example of how to use Neural Magic's stack to run text generation inference with DeepSparse, using [`Salesforce/codegen-350M-mono`](https://huggingface.co/Salesforce/codegen-350M-mono) as an example.
 
 We will walk through three APIs:
-- DeepSparse Pipeline
+- [DeepSparse Pipeline](#deepsparse-pipeline)
 - DeepSparse Server
 - DeepSparse Benchmarking
 
@@ -19,8 +19,6 @@ Make sure you have all the dependencies installed before diving in:
 ```bash
 pip install deepsparse-nightly[transformers,server]==1.6.0.20230815
 ```
-
-## **DeepSparse Benchmarking**
 
 ## **DeepSparse Pipeline**
 
