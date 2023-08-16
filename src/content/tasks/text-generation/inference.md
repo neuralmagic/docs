@@ -138,6 +138,8 @@ Let's walk through the arguments that can be passed to the `TextGenerationPipeli
 Here's a quick example configuring some of these arguments:
 
 ```python
+from deepsparse import Pipeline
+
 pipeline = Pipeline.create(
     task="text-generation", 
     model_path="zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none",
@@ -168,6 +170,7 @@ Here's a quick example:
 
 ```python
 from transformers import TextStreamer
+from deepsparse import Pipeline
 
 pipeline = Pipeline.create(
     task="text-generation", 
