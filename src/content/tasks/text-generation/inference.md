@@ -55,9 +55,7 @@ print(f"{prompt}{output.sequences[0]}")
 ```
 ### **Benchmarking Performance**
 
-Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. 
-
-SparseZoo hosts both a `dense-fp32` and `50sparse-int8` version of CodeGen, identified by the following stubs ([check out the model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
+Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. SparseZoo hosts both a `dense-fp32` and `50sparse-int8` versions of CodeGen, identified by the following stubs ([check out the model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
 
 ```bash
 # dense-fp32 model
