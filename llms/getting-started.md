@@ -5,17 +5,19 @@ Get up and running with Neural Magic LLMs!
 This quick tour will show you how to use Neural Magic's stack to run LLMs performantly on CPUs.
 
 ## **Installation**
+
 Before your begin, make sure you have all the necessary libraries installed:
 
 ```bash
-pip install deepsparse[transformers]
+pip install deepsparse-nightly[transformers]==1.6.0.20230815
 ```
 
-## **`deepsparse.Pipeline`**
+## **DeepSparse Pipelines**
 
-`deepsparse.Pipeline` is the easiest way to use a trained LLM for inference.
+DeepSparse Pipelines are the easiest and fastest way to run LLM inference with DeepSparse on CPUs.
 
 We start by creating an instance of `deepsparse.Pipeline` and specifying a model we want to use. For this guide, we will use the `salesforce/codegen-350m-mono` model.
+
 ```python
 from deepsparse import Pipeline
 
@@ -28,25 +30,27 @@ pipeline = Pipeline.create(task="text-generation", model_path=zoo_stub)
 
 We can then use `deepsparse.Pipeline` to generate text:
 ```python
-prompt = "def fibonacci(n):"
+prompt = "def fib(n):"
 output = pipeline(sequences=[prompt])
 
 print(f"{prompt}{output.sequences[0]}")
 
-# >> def fib():
+# >> def fib(n):
 # >>    a, b = 0, 1
 # >>    while True:
 # >>        yield a
 # >>        a, b = b, a + b
 ```
 
->> Check out the API reference for more details on using `deepsparse.Pipeline` for text generation
+>> Check out the Text Generation task reference for more details on using `deepsparse.Pipeline`
 
-### **Speeding up Inference with Sparsity**
+## **Speeding up Inference with Sparsity**
+
+**--UPDATE-- WITH BETTER NUMBERS ONCE WE HAVE THEM**
 
 You might be wondering: How is this any different from just running Hugging Face pipelines on CPUs?
 
-`deepsparse.Pipeline` exposes a similiar high-level interface as Hugging Face pipelines, but under the hood uses the DeepSparse Runtime, developed by Neural Magic's HPC engineers, to accelerate inference. The DeepSparse Runtime is especially optimized to gain a performance increase from running sparse-quantized LLMs.
+DeepSparse Pipelines expose a similiar high-level interface as Hugging Face Pipeliens, but under the hood uses DeepSparse Runtime, developed by Neural Magic's HPC engineers, to accelerate inference. The DeepSparse Runtime is especially optimized to run sparse-quantized LLMs very fast on CPUs.
 
 Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. 
 
@@ -82,3 +86,9 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 ```
 
 We can see that running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61, a **2.5x throughput increase**!
+
+## **Next Steps**
+
+- [Learn more about text generation with DeepSparse]() **--UPDATE-- WITH LINK**
+- [Learn more about how to sparsify an LLM with Sparsify One-Shot]() **--UPDATE-- WITH LINK**
+- [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
