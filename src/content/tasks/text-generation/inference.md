@@ -21,7 +21,7 @@ pip install deepsparse-nightly[transformers,server]==1.6.0.20230815
 
 ## **DeepSparse Pipeline**
 
-DeepSparse Pipelines exposes a similiar high-level interface as Hugging Face pipelines for running LLM inference.
+DeepSparse Pipelines expose a similiar high-level interface as Hugging Face pipelines for running LLM inference.
 
 Under the hood however, DeepSparse Pipelines uses the DeepSparse Runtime, developed by Neural Magic's HPC engineers, to accelerate inference. The DeepSparse Runtime is especially optimized to accelerate performance by taking advantage of sparsity and quantization.
 
