@@ -6,7 +6,11 @@ We will walk through two APIs:
 - DeepSparse Pipeline
 - DeepSparse Server
 
-Let's dive in!
+Make sure you have all the dependencies installed so we can dive in:
+
+```bash
+pip install deepsparse-nightly[transformers,server]==1.6.0.20230815
+```
 
 ## **DeepSparse Pipeline**
 
@@ -125,22 +129,20 @@ pipeline = Pipeline.create(
     max_generated_tokens=64,
 )
 
-prompt = "def fib()"
-
-# passing a single prompt, get back list of sequences
-output = pipeline(sequences=prompt)
+# passing a single prompt, get back list of sequences of length 1
+output = pipeline(sequences="def fib()")
 print(output.__dict__.keys())   # dict_keys(['sequences', 'logits', 'session_id'])
 print(type(output.sequences))   # <class 'list'>
 print(len(output.sequences))    # 1
 print(type(output.logits))      # <class 'NoneType'>
 
-# passing multiple prompts, get back multiple sequences
-output = pipeline(sequences=[prompt]*2)
-print(len(output.sequences))    # 2
+# passing N prompts, get back list of sequences of length N
+output = pipeline(sequences=["def fib()"]*5)
+print(len(output.sequences))    # 5
 
-# pass return_logits
-output = pipeline(sequences=[prompt]*2, return_logits=True)
-print(output.logits.shape)      # (1, 66, 51200)
+# pass return_logits=True, get back the logits in the output
+output = pipeline(sequences=["def fib()"]*2, return_logits=True)
+print(output.logits.shape)      # (2, 66, 51200)
 ```
 
 #### **Streamer Usage**
@@ -160,9 +162,62 @@ pipeline = Pipeline.create(
 
 output = pipeline(sequences="fib(n):", streamer=TextStreamer(pipeline.tokenizer))
 
-### prints tokens to command line as they are generated
+# >>> prints tokens to command line as they are generated
 ```
 
 ## **DeepSparse Server**
 
-`deepsparse.server` wraps Pipelines with a FastAPI Server
+DeepSparse Server wraps the DeepSparse Pipeline API with a FastAPI REST Server, making it easy to stand up a model serving endpoint running DeepSparse.
+
+### **Basic Usage**
+
+We spin up a server by passing a task and model path (which can be a path to a local deployment directory or a SparseZoo stub):
+
+```bash
+deepsparse.server --task text-generation --model_path zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
+```
+
+Run `deepsparse.server --help` to see the full list of arguments.
+
+Make a request over HTTP:
+
+```bash
+curl -X POST "http://localhost:5543/predict" -H "Content-Type: application/json" -d '{"sequences": "def fib(n):"}'
+```
+
+### **Configuring The Server**
+
+We can use a Server configuration file to pass configuration arguments to the constructor.
+
+A configuration file looks like the following:
+
+```yaml
+# config.yaml
+
+endpoints:
+    - task: text-generation
+      model: zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
+      route: /generate
+      name: text-generation
+      kwargs:
+        sequence_length: 256
+        max_generated_tokens: 32
+        force_max_tokens: True
+        deterministic: False
+```
+
+Spin up with the following:
+
+```bash
+deepsparse.server --config-file config.yaml
+```
+
+Request with the following (note that we call the `/generate` endpoint):
+
+```bash
+curl -X POST "http://localhost:5543/generate" -H "Content-Type: application/json" -d '{"sequences": "def fib(n):"}'
+```
+
+## **Next Steps**
+- [Learn more about how to sparsify an LLM with Sparsify One-Shot]() **--UPDATE-- WITH LINK**
+- [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
