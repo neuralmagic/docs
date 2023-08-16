@@ -228,5 +228,5 @@ curl -X POST "http://localhost:5543/generate" -H "Content-Type: application/json
 ```
 
 ## **Next Steps**
-- [Learn more about how to sparsify an LLM with Sparsify One-Shot]() **--UPDATE-- WITH LINK**
+- [Optimize an LLM with Sparsify](optimization.md) **--UPDATE-- WITH LINK**
 - [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
