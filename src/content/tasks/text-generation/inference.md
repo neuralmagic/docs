@@ -27,7 +27,7 @@ Under the hood, however, DeepSparse Pipelines use the DeepSparse Runtime develop
 
 ### **Basic Usage**
 
-DeepSparse Pipelines has two steps (a) construction and (b) inference.
+DeepSparse Pipelines have two steps: (a) construction and (b) inference.
 
 We construct a Pipeline by passing a task and model path:
 
