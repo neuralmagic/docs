@@ -25,7 +25,7 @@ pip install torch --index-url https://download.pytorch.org/whl/cpu
 
 Authenticate via the CLI:
 ```bash
-sparsify.login {YOUR_CLI_TOKEN}
+sparsify.login YOUR_CLI_TOKEN
 ```
 
 If you have not made a Sparsify account, sign up on the [web app](https://account.neuralmagic.com/signup) to obtain your CLI credentials.
