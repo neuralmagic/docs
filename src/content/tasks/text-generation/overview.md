@@ -25,5 +25,6 @@ We currently have end-to-end support the following models and are rapidly expand
 
 ### **Examples**
 
-- [Codegen Colab Notebook]() --UPDATE-- LINKS
-- [OPT Colab Notebook]() --UPDATE-- LINKS
+<a target="_blank" href="https://colab.research.google.com/github/neuralmagic/docs/blob/docs-refactor-phase1/src/content/tasks/text-generation/codegen-example.ipynb">
+  CodeGen Example<img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>

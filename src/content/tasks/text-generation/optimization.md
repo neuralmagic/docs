@@ -288,3 +288,7 @@ print(f"{prompt}{output.sequences[0]}")
 ## **Next Steps**
 - [Run LLM inference with DeepSparse](inference.md)
 - [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
+
+<a target="_blank" href="https://colab.research.google.com/github/neuralmagic/docs/blob/docs-refactor-phase1/src/content/tasks/text-generation/codegen-example.ipynb">
+  CodeGen Example <img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
+</a>
