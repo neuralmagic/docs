@@ -18,8 +18,9 @@ There are a few steps:
 Make sure you have all the dependencies installed:
 
 ```bash
-pip install sparsify-nightly==1.6.0.20230815
-pip install deepsparse-nightly==1.6.0.20230815[transformers]
+pip install sparsify-nightly==1.6.0.20230817
+pip install deepsparse-nightly==1.6.0.20230817[transformers] --upgrade
+pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
 Authenticate via the CLI:
@@ -208,17 +209,6 @@ mv deployment/model.onnx 50sparse-int8/model.onnx
 rm -rf deployment
 ```
 
-We can see that the `./50sparse-int8` directory has all the files we need:
-
-```bash
-ls 50sparse-int8
-
->>
->>
->>
->>
-```
-
 ## **Evaluate Model Accuracy**
 
 We can evaluate the accuracy of the model using the `deepsparse.transformers.eval_downstream` CLI, which allows us to compute perplexity.
@@ -226,9 +216,7 @@ We can evaluate the accuracy of the model using the `deepsparse.transformers.eva
 Run the following to evaluate the dense-fp32 model:
 
 ```bash
-deepsparse.transformers.eval_downstream /
-    ./dense-fp32 /
-    --dataset openai_humaneval
+deepsparse.transformers.eval_downstream ./dense-fp32 --dataset openai_humaneval
 ```
 
 We can see it achieves perplexity of 3.61
@@ -236,9 +224,7 @@ We can see it achieves perplexity of 3.61
 
 Run the following to evaluate the 50sparse-int8 model:
 ```bash
-deepsparse.transformers.eval_downstream /
-    ./50sparse-int8 /
-    --dataset openai_humaneval
+deepsparse.transformers.eval_downstream ./50sparse-int8 --dataset openai_humaneval
 ```
 
 We can see that it remains accurate, with perpelxity of 3.90
@@ -287,8 +273,9 @@ pipeline = Pipeline.create(
 
 prompt = "def fib(n):"
 output = pipeline(sequences=prompt)
-print(f"{prompt}{output.sequences[0]})
+print(f"{prompt}{output.sequences[0]}")
 ```
+
 ```bash
 >> def fib(n):
 >>    if n == 0:
