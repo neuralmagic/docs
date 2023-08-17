@@ -39,7 +39,13 @@ git clone https://huggingface.co/Salesforce/codegen-350M-mono
 ```
 
 ```bash
-sparseml.transformers.export_onnx --model_path ./codegen-350M-mono --task text-generation --sequence_length 256
+sparseml.transformers.export_onnx \
+  --model_path ./codegen-350M-mono \
+  --task text-generation \
+  --sequence_length 256
+```
+
+```bash
 mv ./deployment ./dense-fp32
 ```
 
