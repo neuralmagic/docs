@@ -25,6 +25,7 @@ We currently have end-to-end support the following models and are rapidly expand
 
 ### **Examples**
 
-<a target="_blank" href="https://colab.research.google.com/github/neuralmagic/docs/blob/docs-refactor-phase1/src/content/tasks/text-generation/codegen-example.ipynb">
-  CodeGen &emsp;<img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/>
-</a>
+|Model      | Description  | Link |
+|-----------|--------------|------|
+|CodeGen    | Apply pruning and quantization with one-shot; run inference with DeepSparse |<a target="_blank" href="https://colab.research.google.com/github/neuralmagic/docs/blob/docs-refactor-phase1/src/content/tasks/text-generation/codegen-example.ipynb"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a> |
+|OPT | Apply pruning and quantization with one-shot; run inference with DeepSparse | Coming soon |
