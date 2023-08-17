@@ -1,0 +1,232 @@
+---
+title: "Quick Tour"
+metaTitle: "Quick Tour"
+metaDescription: "Quick tour of the available functionality"
+index: 6000
+---
+# Taking a Quick Tour of Details
+
+The Neural Magic suite enables you to [optimize a model for inference](https://docs.neuralmagic.com/user-guides/conceptual/optimize-model-inference) and [deploy a model on CPUs](https://docs.neuralmagic.com/user-guides/conceptual/deploying-cpus) with GPU-class performance. This guide walks through the major functionality and provides pointers to more details.
+
+## **Optimize a Model for Inference With SparseML**
+
+SparseML and SparseZoo enable you to create models that are optimized for inference. With an inference-optimized model, you can reach GPU-class performance when deploying with DeepSparse on CPUs. Two workflows enable you to accomplish this goal:
+
+* **Sparse Transfer Learning** This workflow lets you fine-tune pre-sparsified models onto custom data. It is recommended for tasks with pre-sparsified models in SparseZoo. 
+* **Sparsification From Scratch** This workflow applies pruning and quantization to any model. It can be used to optimize any model but requires experimenting with hyperparameters to reach high levels of sparsity with high accuracy.
+
+Each workflow can be applied via CLI scripts or Python code.
+
+### CLI Scripts
+
+For supported tasks, SparseML provides CLI scripts that enable you to kick off either workflow with a single command.
+
+Each task has slightly different arguments that align to their integrations (the Transformer scripts adhere to Hugging Face format while the YOLOv5 scripts adhere to Ultralytics format), but they generally look like the following:
+
+```bash
+sparseml.[use_case].train
+    --model    [LOCAL_PATH / SPARSEZOO_STUB]
+    --dataset  [LOCAL_PATH]
+    --recipe   [LOCAL_PATH / SPARSEZOO_RECIPE_STUB]
+    --other_configs [e.g. BATCH_SIZE, EPOCHS, etc.] 
+```
+
+To break down each argument:
+
+* <strong><code>--model</code></strong> points SparseML to a trained model that is the starting point for the training process. In sparse transfer learning, this is usually a SparseZoo stub that points to the pre-sparsified model of choice. In sparsification from scratch, this is usually a path to a trained PyTorch or TensorFlow model in a local filesystem.
+* <strong><code>--dataset</code></strong> points SparseML to the dataset to be used (both sparse transfer learning and sparsification from scratch require training data). Datasets must be provided in the form expected by the underlying integration. For instance, if training YOLOv5, data must be provided in the YOLOv5 format. If training Transformers, data must be provided in the Hugging Face format.
+* <strong><code>--recipe</code></strong> points SparseML to a YAML file called a recipe. Recipes encode sparsity-related hyperparameters used by SparseML. For instance, a recipe for sparsification from scratch encodes the target sparsity level for each layer. A recipe for sparse transfer learning instructs SparseML to maintain sparsity as the fine-tuning occurs.
+
+You can see how SparseML makes sparse transfer learning so easy. You just point:
+
+1. SparseML to a pre-sparsified model and pre-made transfer learning recipe in SparseZoo, and
+2. To your own dataset and you are off!
+
+There are also pre-made sparsification from scratch recipes available in the SparseZoo. For models not yet in SparseZoo, SparseML's declarative recipes make it easy to specify hyperparameters, allowing you to focus on running experiments rather than writing code.
+
+✅ Learn more about:
+
+* [Sparse transfer learning](https://docs.neuralmagic.com/get-started/transfer-a-sparsified-model)
+* [Sparsification from scratch](https://docs.neuralmagic.com/get-started/sparsify-a-model)
+* [Tasks](https://docs.neuralmagic.com/tasks/) and details on use cases
+* Recipes by referring to the [Recipe User Guide](https://docs.neuralmagic.com/user-guides/conceptual/recipes)
+
+
+### Python API
+
+If you need flexibility for an unsupported task or a custom training setup, SparseML provides Python APIs that let you integrate SparseML into any PyTorch or TensorFlow pipeline.
+
+Because of the declarative nature of recipes, you can apply sparse transfer learning and sparsification from scratch with just three additional lines of code around a training pipeline. The following code illustrates all that is needed:
+
+```Python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+model = Model(...)          # typical torch model
+optimizer = Optimizer(...)  # typical torch optimizer
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# ...your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+
+To break down this example step-by-step:
+
+* **<code>model</code></strong> and <strong><code>optimizer</code></strong> are the typical PyTorch objects used in every training loop.
+* <strong><code>ScheduledModifierManager.from_yaml(recipe_path)</code></strong> accepts a <code>recipe_path</code>, which points to the location of a YAML file called a Recipe. The recipes encode the hyperparameters of the sparse transfer learning or sparsification from scratch workflows.
+* <strong><code>manager.modify(...)</code></strong> edits the <code>model</code> and <code>optimizer</code> objects to run the sparse transfer learning or sparsification from scratch algorithms specified in the recipe.
+* <strong><code>model</code></strong> and <strong><code>optimizer</code></strong> are then used as usual in a training loop. If a sparsification from scratch recipe was given to the <code>manager</code>, the <code>optimizer</code> will gradually prune weights according to the recipe. If a sparsification from scratch recipe was passed, pruned weights will remain at zero during gradient updates.
+
+✅ Learn more about:
+
+* [Optimizing for inference with sparsity](https://docs.neuralmagic.com/index/optimize-workflow)
+* Python API by referring to the [Custom Integrations Guide](https://docs.neuralmagic.com/get-started/sparsify-a-model/custom-integrations)
+* Creating recipes by referring to the [Recipe User Guide](https://docs.neuralmagic.com/user-guides/conceptual/recipes)
+
+## **Deploy on CPUs With DeepSparse**
+
+DeepSparse is a CPU-only deep learning deployment platform. It wraps a sparsity-aware runtime that reaches GPU-class performance on inference-optimized sparse models with APIs that simplify the process of integrating a model into an application.
+
+There are three primary interfaces for interacting with DeepSparse:
+
+* **Pipelines** Python APIs that wrap the runtime with pre- and post-processing
+* **Server** REST APIs that allow you to create a model service around a pipeline
+* **Engine** Python APIs that provide direct access to the runtime
+
+Pipeline and Server are the preferred pathways for interacting with DeepSparse.
+
+### Pipelines
+
+DeepSparse Pipelines make it easy to integrate DeepSparse into an application by wrapping pre- and post-processing around the inference runtime. For example, a DeepSparse Pipeline in the NLP domain handles the tokenization process, meaning you can pass raw strings and receive answers. A DeepSparse Pipeline in the object detection domain handles input normalization (mean and std transform) as well as the non-max suppression of output. You can just pass raw images and receive the bounding boxes.
+
+For supported tasks, Pipelines are pre-made. For unsupported tasks, you can create a custom Pipeline by specifying a pre- and post-processing function, creating a consistent interface for interacting with DeepSparse.
+
+**Pipeline Usage - Python API** For a supported task, the `Pipeline` class is a workhorse. Simply specify a task via the **<code>task</code></strong> argument and a model in ONNX format via the <code>model_path</code> argument.
+
+```python
+from deepsparse import Pipeline
+example_pipeline = Pipeline.create(
+    task="example_task",     # e.g. image_classification or question_answering
+    model_path="model.onnx", # local model or SparseZoo stub
+)
+
+# pass raw, unprocessed input 
+pipeline_inputs = ["The quick brown fox jumps over the lazy dog"]
+
+# get back post-processed outputs
+pipeline_outputs = example_pipeline(pipeline_inputs)
+```
+
+For an unsupported task, you will use `CustomTaskPipeline` to create a pipeline. Simply specify a pre- and post-processing function and a model in ONNX format.
+
+``` python
+from deepsparse.pipelines.custom_pipeline import CustomTaskPipeline
+
+def preprocess(inputs):
+    pass # define your function
+def postprocess(outputs):
+    pass # define your function
+
+custom_pipeline = CustomTaskPipeline(
+    model_path="custom_model.onnx",
+    process_inputs_fn=preprocess,
+    process_outputs_fn=postprocess,
+)
+
+# pass raw, unprocessed input
+pipeline_inputs = ["The quick brown fox jumps over the lazy dog"]
+
+# get back post-processed outputs
+pipeline_outputs = custom_pipeline(pipeline_inputs)                       
+```
+
+✅ Learn more about:
+
+* [Using a model](https://docs.neuralmagic.com/get-started/use-a-model)
+* [Using a model in a custom task](https://docs.neuralmagic.com/get-started/use-a-model/custom-use-case)
+* [Tasks](https://docs.neuralmagic.com/tasks) and details on usage of supported use cases
+
+Beyond pre- and post-processing, DeepSparse Pipelines have other useful utilities like data logging, multi-stream inference, and dynamic batch. Check out documentation on the [Pipeline Class](https://docs.neuralmagic.com/user-guides/pipelines) or the [Multi-Stream Scheduling Overview](https://docs.neuralmagic.com/user-guides/product/deepsparse-engine/scheduler).
+
+### Server
+
+DeepSparse Server wraps pipelines with REST API using FastAPI web framework and uvicorn web server. This enables you to spin up a model service around DeepSparse with no code.
+
+Since Server is a wrapper around pipelines, the Server inherits all of the functionality of pipelines (including the pre- and post-processing phases. You can pass raw unprocessed inputs to the Server and receive post-processed predictions.
+
+**Server Usage - Launch From CLI** DeepSparse Server is launched from the CLI with configuration via either command line arguments or a configuration file.
+
+With the command line argument path, you specify a task via the `task` argument (such as `image_classification` or `question_answering`) as well as a model (either a local ONNX file or a SparseZoo stub) via the `model_path` argument:
+
+```bash
+deepsparse.server --task [use_case_name] --model_path [model_path]
+```
+
+With the config file path, you create a YAML file that specifies the Server configuration. A YAML file looks like the following:
+
+```yaml
+endpoints:
+    - task: task_name       # specifiy use case (e.g., image_classification, question_answering)
+      route: /predict       # specify the route of the endpoint
+      model: model_path     # specify sparsezoo stub or path to local onnx file
+      name: any_name_you_want
+
+#   - ... add as many endpoints as neeede
+```
+
+The Server is then launched with the following:
+
+```bash
+deepsparse.server --config_file config.yaml
+```
+
+Clients interact with the Server via HTTP. Because the Server uses Pipelines internally, you can simply pass raw data to the Server and receive back post-processed predictions.  For example, you would do the following to query a Question Answering endpoint:
+
+```
+import requests
+
+url = "http://localhost:5543/predict"
+
+obj = {
+    "question": "Who is Mark?", 
+    "context": "Mark is batman."
+}
+
+response = requests.post(url, json=obj)
+```
+
+✅ Learn more about:
+
+* [Deploying a model with DeepSparse Server](https://docs.neuralmagic.com/get-started/deploy-a-model)
+* [Tasks](https://docs.neuralmagic.com/tasks) and detailed usage of each supported task with Server
+
+The Server has additional useful utilities like data logging, multi-stream inference, multiple model inference, and dynamic batch. Check out documentation on the [Server Class](https://docs.neuralmagic.com/user-guides/server) or the [Multi-Stream Scheduling Overview](https://docs.neuralmagic.com/user-guides/product/deepsparse-engine/scheduler).
+
+### Engine
+
+Engine is the lowest supported level of interaction available with the runtime. If you want more control over the runtime or want to run pre- and post-processing manually, this pathway enables you to do so.
+
+**Engine Usage - Python API ** The `Engine` class is the workhorse for this pathway. Simply call the constructor with your desired parameters to create an instance with the runtime. Once the engine is initialized, a pass list of numpy arrays (which are a batch of input tensors, the same as would be passed to a PyTorch model) and the engine will return a list of outputs. For example:
+
+```python
+from deepsparse import Engine
+from deepsparse.utils import generate_random_inputs
+onnx_filepath = "path/to/onnx/model.onnx"
+batch_size = 64
+
+# Generate random sample input
+inputs = generate_random_inputs(onnx_filepath, batch_size)
+
+# Compile and run
+engine = Engine(onnx_filepath, batch_size)
+outputs = engine.run(inputs)
+```
+
+A `MultiModelEngine` is available if you want to interact directly with an engine running multiple models. This pathway is strongly preferred if you want to run multiple models on the same CPU.)
+
+✅ Learn more about:
+
+* [Code on GitHub](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/engine.py#L645)
+
+We also have a lower-level C++ API. Stay tuned for new documentation on this pathway or reach out in [Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ) for details.
