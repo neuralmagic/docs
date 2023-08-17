@@ -122,16 +122,20 @@ class NumpyExportWrapper(torch.nn.Module):
                 if isinstance(arg, Tensor):
                     inputs[f"input_{index}"] = arg
                     batch_size = arg.size[0]
+
             for key, val in kwargs.items():
                 if isinstance(val, Tensor):
                     inputs[key] = val
                     batch_size = val.shape[0]
+
             start_index = len(self.numpy_data)
             for _ in range(batch_size):
                 self.numpy_data.append({})
+
             for input_key in iter(inputs):
               for idx, input in enumerate(inputs[input_key]):
                   self.numpy_data[start_index+idx][input_key] = input
+
             # return self.model(*args, **kwargs)
 
     def save(self, path: str = "data"):
