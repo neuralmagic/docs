@@ -17,7 +17,7 @@ We will walk through three APIs:
 Make sure you have all the dependencies installed before diving in:
 
 ```bash
-pip install deepsparse-nightly[transformers,server]==1.6.0.20230815
+pip install deepsparse-nightly==1.6.0.20230817[transformers,server]
 ```
 
 ## **DeepSparse Pipeline**

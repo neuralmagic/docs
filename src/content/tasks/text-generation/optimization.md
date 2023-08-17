@@ -20,7 +20,6 @@ Make sure you have all the dependencies installed:
 ```bash
 pip install sparsify-nightly==1.6.0.20230817
 pip install deepsparse-nightly==1.6.0.20230817[transformers] --upgrade
-pip install torch --index-url https://download.pytorch.org/whl/cpu
 ```
 
 Authenticate via the CLI:
