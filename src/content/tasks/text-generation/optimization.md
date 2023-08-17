@@ -12,16 +12,24 @@ In this guide, we will walk through an example of how to use Neural Magic's stac
 There are a few steps:
 - Export to ONNX
 - Apply One Shot Pruning and Quantization
-- Inject KV-Cache
-- Deploy on CPU with DeepSparse
+- Evaluate Accuracy
+- Inject KV Cache to Run Inference
 
-Make sure you have all the dependencies installed so we can dive in:
+Make sure you have all the dependencies installed:
 
 ```bash
 pip install sparsify-nightly==1.6.0.20230815
+pip install deepsparse-nightly==1.6.0.20230815[transformers]
 ```
 
-### **ONNX Export**
+Authenticate via the CLI:
+```bash
+sparsify.login {YOUR_CLI_TOKEN}
+```
+
+If you have not made a Sparsify account, sign up on the [web app](https://account.neuralmagic.com/signup) to obtain your CLI credentials.
+
+## **ONNX Export**
 
 Start by downloading and exporting the model to ONNX.
 
@@ -31,6 +39,7 @@ git clone https://huggingface.co/Salesforce/codegen-350M-mono
 
 ```bash
 sparseml.transformers.export_onnx --model_path ./codegen-350M-mono --task text-generation --sequence_length 256
+mv ./deployment ./dense-fp32
 ```
 
 ## **Apply One-Shot**
@@ -146,17 +155,11 @@ model.save()
 # Saved 1000 npz files to data
 ```
 
-### **Run One-Shot**
+### **Run FastOBCQ**
 
-With the data setup, we are ready to apply `FastOBCQ`. Using Sparsify One-Shot.
+With the data setup, we are ready to apply `FastOBCQ` using Sparsify One-Shot.
 
-First, login via your CLI token:
-
-```bash
-sparsify.login {YOUR_CLI_TOKEN}
-```
-
-Next, we will create a Recipe to run `FastOBCQ`. For CodeGen-350M-Mono, there is a [premade recipe](https://sparsezoo.neuralmagic.com/models/codegen_mono-350m-bigpython_bigquery_thepile-pruned50_quantized?hardware=deepsparse-c6i.12xlarge&comparison=codegen_mono-350m-bigpython_bigquery_thepile-base&tab=3) available in the SparseZoo:
+First, we will create a Recipe to run `FastOBCQ`. Recipes specify the algorithm to apply as well as the hyperparameters to use during the pruning and quantization process. For CodeGen-350M-Mono, there is a [premade recipe](https://sparsezoo.neuralmagic.com/models/codegen_mono-350m-bigpython_bigquery_thepile-pruned50_quantized?hardware=deepsparse-c6i.12xlarge&comparison=codegen_mono-350m-bigpython_bigquery_thepile-base&tab=3) available in the SparseZoo:
 
 ```yaml
 !FastOBCQModifier
@@ -190,11 +193,111 @@ Save the recipe to a YAML file called `recipe.yaml`. Apply the recipe with the f
 ```bash
 sparsify.run one-shot \
     --use-case text-generation \
-	--model ./fp32-dense/model.onnx \
+	--model ./dense-fp32/model.onnx \
 	--data ./data \
 	--recipe ./recipe.yaml
 ```
 
-### **Evaluate Model Accuracy**
+This will take a couple hours to run. The resulting ONNX model will be saved in a directory called `./deployment`.
 
-We can evaluate the accuracy of the model using the `deepsparse.transformers.eval_downstream` CLI.
+Let's copy over the tokenizer and configuration files from `./dense-fp32`:
+
+```bash
+cp -r dense-fp32 50sparse-int8
+mv deployment/model.onnx 50sparse-int8/model.onnx
+rm -rf deployment
+```
+
+We can see that the `./50sparse-int8` directory has all the files we need:
+
+```bash
+ls 50sparse-int8
+
+>>
+>>
+>>
+>>
+```
+
+## **Evaluate Model Accuracy**
+
+We can evaluate the accuracy of the model using the `deepsparse.transformers.eval_downstream` CLI, which allows us to compute perplexity.
+
+Run the following to evaluate the dense-fp32 model:
+
+```bash
+deepsparse.transformers.eval_downstream /
+    ./dense-fp32 /
+    --dataset openai_humaneval
+```
+
+We can see it achieves perplexity of 3.61
+
+
+Run the following to evaluate the 50sparse-int8 model:
+```bash
+deepsparse.transformers.eval_downstream /
+    ./50sparse-int8 /
+    --dataset openai_humaneval
+```
+
+We can see that it remains accurate, with perpelxity of 3.90
+
+## **Inject KV Cache to Run Inference With DeepSparse**
+
+With validation complete, we can now inject the KV-caching mechanism into the ONNX graph to enable performant inference with DeepSparse.
+
+We can use the following script to do so:
+
+```python
+# inject-kv-cache.py
+
+import click
+import os
+import onnx
+from sparseml.exporters.kv_cache_injector import KeyValueCacheInjector
+@click.command()
+@click.option('--input-file', help='Path to the input ONNX model file')
+@click.option('--output-file', help='Output path for the modified model')
+def modify_model(input_file, output_file):
+    model = onnx.load(input_file, load_external_data=False)
+    model = KeyValueCacheInjector(os.path.dirname(input_file)).apply(model)
+    onnx.save(model, output_file)
+    print(f"Modified model saved to: {output_file}")
+if __name__ == '__main__':
+    modify_model()
+```
+
+Run the following:
+
+```bash
+cp -r 50sparse-int8 50sparse-int8-kv_cache
+python3 inject-kv-cache.py --input_file 50sparse-int8/model.onnx 50sparse-int8-kv_cache/model.onnx
+```
+
+Now, we can run inference with DeepSparse using the following:
+
+```python
+from deepsparse import Pipeline
+
+pipeline = Pipeline.create(
+    task="text-generation", 
+    model_path="./50sparse-int8-kv_cache",
+    max_generated_tokens=128)
+
+prompt = "def fib(n):"
+output = pipeline(sequences=prompt)
+print(f"{prompt}{output.sequences[0]})
+```
+```bash
+>> def fib(n):
+>>    if n == 0:
+>>        return 0
+>>    if n == 1:
+>>        return 1
+>>    return fib(n-1) + fib(n-2)
+```
+
+## **Next Steps**
+- [Run LLM inference with DeepSparse](inference.md)
+- [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
