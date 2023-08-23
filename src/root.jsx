@@ -4,6 +4,8 @@ import { ThemeProvider, Global } from '@emotion/react';
 import Helmet from 'react-helmet';
 import { graphql } from 'gatsby';
 import { transitions, positions, Provider as AlertProvider } from 'react-alert'
+import { InstantSearch, SearchBox, Hits } from "react-instantsearch-dom";
+import algoliasearch from "algoliasearch/lite";
 
 import lightTheme from './themes';
 import styles from './styles';
@@ -49,32 +51,32 @@ const Root = ({ data, pageContext }) => {
   const metaDescription = data && data.mdx ? data.mdx.frontmatter.metaDescription : null;
 
   return (
-   <RootDiv>
-     <Helmet>
-       {metaTitle ? <title>{metaTitle}</title> : null}
-       {metaTitle ? <meta name="title" content={metaTitle} /> : null}
-       {metaDescription ? <meta name="description" content={metaDescription} /> : null}
-       {metaTitle ? <meta property="og:title" content={metaTitle} /> : null}
-       {metaDescription ? <meta property="og:description" content={metaDescription} /> : null}
-       {metaTitle ? <meta property="twitter:title" content={metaTitle} /> : null}
-       {metaDescription ? (
-         <meta property="twitter:description" content={metaDescription} />
-       ) : null}
-     </Helmet>
-     <ThemeProvider theme={lightTheme}>
-       <AlertProvider template={AlertTemplate} {...alertOptions}>
-         <Global styles={styles} />
-         <Header />
-         {isDocsPage ?
-           <DocsLayout mdxFields={data.mdx.fields}
-                     mdxFrontMatter={data.mdx.frontmatter}
-                     mdxTOC={data.mdx.tableOfContents}
-                     allMdx={data.allMdx}>
-            {data.mdx.body}
-           </DocsLayout>: ""}
-       </AlertProvider>
-     </ThemeProvider>
-   </RootDiv>
+    <RootDiv>
+      <Helmet>
+        {metaTitle ? <title>{metaTitle}</title> : null}
+        {metaTitle ? <meta name="title" content={metaTitle} /> : null}
+        {metaDescription ? <meta name="description" content={metaDescription} /> : null}
+        {metaTitle ? <meta property="og:title" content={metaTitle} /> : null}
+        {metaDescription ? <meta property="og:description" content={metaDescription} /> : null}
+        {metaTitle ? <meta property="twitter:title" content={metaTitle} /> : null}
+        {metaDescription ? (
+          <meta property="twitter:description" content={metaDescription} />
+        ) : null}
+      </Helmet>
+      <ThemeProvider theme={lightTheme}>
+        <AlertProvider template={AlertTemplate} {...alertOptions}>
+          <Global styles={styles} />
+          <Header />
+          {isDocsPage ?
+            <DocsLayout mdxFields={data.mdx.fields}
+              mdxFrontMatter={data.mdx.frontmatter}
+              mdxTOC={data.mdx.tableOfContents}
+              allMdx={data.allMdx}>
+              {data.mdx.body}
+            </DocsLayout> : ""}
+        </AlertProvider>
+      </ThemeProvider>
+    </RootDiv>
   );
 }
 
@@ -129,3 +131,17 @@ export const pageQuery = graphql`
     }
   }
 `;
+
+const searchClient = algoliasearch(
+  process.env.GATSBY_ALGOLIA_APP_ID,
+  process.env.GATSBY_ALGOLIA_SEARCH_KEY
+);
+
+const Search = () => (
+  <InstantSearch searchClient={searchClient} indexName="dev_neuralmagic_docs">
+    <SearchBox />
+    <Hits />
+  </InstantSearch>
+);
+
+export default Search;
