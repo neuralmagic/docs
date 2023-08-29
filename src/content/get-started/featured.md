@@ -5,11 +5,9 @@ metaDescription: "Quick tour to get started running LLMs with Neural Magic"
 index: 1000
 ---
 
-# **Get Started with Neural Magic + LLMs**
+# **Get Started With Neural Magic + LLMs**
 
-Get up and running with Neural Magic LLMs! 
-
-This quick tour will show you how to use Neural Magic's stack to run LLMs performantly on CPUs.
+This quick tour shows how to use Neural Magic's stack to run LLMs performantly on CPUs.
 
 ## **Installation**
 
@@ -19,11 +17,11 @@ Before your begin, install the latest nightly with DeepSparse.
 pip install deepsparse-nightly[transformers]==1.6.0.20230815
 ```
 
-## **DeepSparse Pipelines**
+## **Running LLM Inference With DeepSparse Pipelines**
 
 DeepSparse Pipelines are the easiest and fastest way to run LLM inference with DeepSparse on CPUs.
 
-We start by creating an instance of `TextGenerationPipeline` and specifying a model we want to use. For this guide, we will use the `salesforce/codegen-350m-mono` model.
+You start by creating an instance of `TextGenerationPipeline` and specifying a model you want to use. For this guide, you will use the `salesforce/codegen-350m-mono` model.
 
 ```python
 from deepsparse import Pipeline
@@ -33,9 +31,9 @@ zoo_stub = "zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpyt
 pipeline = Pipeline.create(task="text-generation", model_path=zoo_stub)
 ```
 
-`Pipeline.create()` first downloads a tokenizer and model in ONNX format. Here, we passed a SparseZoo stub as the `model_path`, identifying the relevant model artifacts hosted in [SparseZoo](zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none), Neural Magic's repository of pre-optimized models. Once the artifacts are downloaded, DeepSparse compiles the model to machine code and is now ready to run inference.
+`Pipeline.create()` downloads a tokenizer and model in ONNX format. Here, you passed a SparseZoo stub as the `model_path`, identifying the relevant model artifacts hosted in [SparseZoo](zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none), Neural Magic's repository of pre-optimized models. Once the artifacts are downloaded, DeepSparse compiles the model to machine code and is now ready to run inference.
 
-We can then use `TextGenerationPipeline` to generate text:
+You can then use `TextGenerationPipeline` to generate text:
 ```python
 prompt = "def fib(n):"
 output = pipeline(sequences=[prompt])
@@ -49,17 +47,17 @@ print(f"{prompt}{output.sequences[0]}")
 # >>        a, b = b, a + b
 ```
 
->> Check out the [Text Generation task guide](tasks/text-generation/inference.md) for more details on using `deepsparse.Pipeline`
+>> Check out the [Text Generation task guide](tasks/text-generation/inference.md) for more details on using `deepsparse.Pipeline`.
 
-## **Speeding up Inference with Sparsity**
+## **Speeding Up Inference With Sparsity**
 
 **--UPDATE-- WITH BETTER NUMBERS ONCE WE HAVE THEM**
 
-You might be wondering: How is this any different from just running Hugging Face pipelines on CPUs?
+How is this any different from just running Hugging Face Pipelines on CPUs?
 
-DeepSparse Pipelines expose a similiar high-level interface as Hugging Face Pipeliens, but under the hood uses DeepSparse Runtime, developed by Neural Magic's HPC engineers, to accelerate inference. The DeepSparse Runtime is especially optimized to run sparse-quantized LLMs very fast on CPUs.
+DeepSparse Pipelines expose a similiar high-level interface as Hugging Face Pipeliens, but under the hood we use DeepSparse Runtime, developed by Neural Magic's HPC engineers to accelerate inference. The DeepSparse Runtime is especially optimized to run sparse-quantized LLMs very fast on CPUs.
 
-Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse, using the `deepsparse.benchmark` CLI script. 
+Let's do some benchmarking to quantify the performance gains from running a sparse-quantized model with DeepSparse using the `deepsparse.benchmark` CLI script. 
 
 SparseZoo hosts both a `dense-fp32` and `50sparse-int8` version of CodeGen, identified by the following stubs ([check out the model cards](https://sparsezoo.neuralmagic.com/?useCase=text_generation&datasets=bigpython_bigquery_thepile&architectures=codegen_mono&subArchitectures=350m&ungrouped=true&sort=null)):
 
@@ -70,7 +68,7 @@ zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery
 zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
 ```
 
-Dense FP32 Throughput:
+Dense FP32 throughput:
 ```bash
 deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/base-none
 
@@ -81,7 +79,7 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 >> Latency Mean (ms/batch): 41.3132
 ```
 
-50Sparse-INT8 Throughput:
+50Sparse-INT8 throughput:
 ```bash
 deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingface/bigpython_bigquery_thepile/pruned50_quant-none
 
@@ -92,10 +90,10 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 >> Latency Mean (ms/batch): 16.4035
 ```
 
-We can see that running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61, a **2.5x throughput increase**!
+Running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61&mdash;a **2.5x throughput increase**!
 
-## **Next Steps**
+## **Learn More About ...**
 
-- [Learn more about text generation with DeepSparse](../tasks/text-generation/inference.md)
-- [Learn more about how to optimize an LLM with Sparsify](../tasks/text-generation/optimization.md)
-- [Check out our pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
+- [Text generation with DeepSparse](../tasks/text-generation/inference.md)
+- [Optimizing an LLM with Sparsify](../tasks/text-generation/optimization.md)
+- [Neural Magic's pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
