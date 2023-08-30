@@ -39,9 +39,9 @@ limitations under the License.
     </a>
 </p>
   
-[Our Documentation website](https://docs.neuralmagic.com/) is a great starting point. To learn more about specific Neural Magic products, review links below.
+[Our Documentation website](https://docs.neuralmagic.com/) is a great starting point. To learn more about specific Neural Magic products, review the links below.
 
-To file a docs issue for a specific software component, use its repo issue tracker.
+To file a documentation issue for a specific software component, use its repo issue tracker.
 
 | Docs                                                          | GitHub                                             | Issue Tracker                                              | Releases                                                     | License             |
 | ------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------- |
