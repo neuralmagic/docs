@@ -269,7 +269,7 @@ deepsparse.benchmark zoo:nlg/text_generation/codegen_mono-350m/pytorch/huggingfa
 Running the optimized `50sparse-int8` model increased the number of tokens/sec from 24 to 61&mdash;a **2.5x throughput increase**!
 
 ## **Learn More About ...**
-- [Optimizing an LLM with Sparsify](optimization.md)
+- [Optimizing an LLM with Sparsify](optimization.mdx)
 - [N pre-sparsified LLMs in SparseZoo](https://sparsezoo.neuralmagic.com/?useCase=text_generation)
 
 ## **Examples**
