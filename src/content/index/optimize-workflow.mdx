@@ -1,80 +1,66 @@
 ---
-title: "Optimize for Inference"
-metaTitle: "Optimize for Inference"
-metaDescription: "Overview of deployment capabilities in the Neural Magic Platform"
+title: "Basic Concepts"
+metaTitle: "Basic Conccepts"
+metaDescription: "Overview of Neural Magic Platform features"
 index: 1000
 ---
 
-# Optimize a Model for Inference
+# Basic Concepts
 
-The Neural Magic Platform enables you to optimize your models for inference with sparsity.
+[Infograophic Extract 3]
 
-### Motivation 
+## Model Selection
 
-There are multiple factors to consider when creating a deep learning model. In training, accuracy on the test-set 
-is the primary metric. In deployment, however, the performance (latency/throughput) of the model becomes 
-an important consideration at production scale.
+When selecting either your own model or one from SparseZoo, it is important to understand sparsification. As such, model selection is described as an integral part of the following discussions.
 
-However, as deep learning has exploded and state-of-the-art models have grown bigger and bigger,
-performance and accuracy have been increasingly at odds.
+## Sparsification
 
-### Sparsity: Improve Performance While Maintaining High Accuracy
+The process of sparsification takes a trained deep learning model and removes redundant information from the over-parameterized network, resulting in a faster and smaller model. Techniques for sparsification include everything from inducing sparsity using pruning and quantization (described more below) to distilling from a larger model to create a smaller version. When implemented correctly, these techniques result in significantly more performant and smaller models with limited to no effect on the baseline metrics.
 
-SparseML and SparseZoo work together to help users create performance-optimized models
-*while mimizing accuracy loss*, using sparsification techniques called pruning and quantization.
+Combining multiple sparsification algorithms will generally result in more compressed and faster models than any individual algorithm. This combination of algorithms is termed **compound sparsification**. For example, combining both pruning and quantization is very common to create sparse-quantized models that can be up to 4 times smaller. Additionally, it is common for NLP models to combine distillation, weight pruning, layer dropping, and quantization to create much smaller models that recover close to the original baseline.
 
-Importantly, they support *training-aware* pruning and quantization algorithms (as well as post-training). 
-Training-aware techniques apply the sparsification gradually, allowing the model to adjust by fine-tuning the remaining weights
-with the training dataset at each step. This technique is critical to maintain high accuracy at the high 
-levels of sparsity needed to reach GPU-class performance.
+Ultimately the power of sparsification is only realized when the deployment environment supports it. **DeepSparse** is specifically engineered to utilize sparse networks for GPU-class performance on CPUs.
 
-## Conceptual Guide
+## Model Optimization for Inference
 
-### What is Pruning?
+There are multiple factors to consider when creating a deep learning model. In training, accuracy on the test-set is the primary metric. In deployment, the performance (latency/throughput) of the model becomes an important consideration at production scale. However, as deep learning has exploded and state-of-the-art models have grown bigger and bigger, performance and accuracy are increasingly at odds.
 
-Pruning is the process of removing weights from a trained deep learning model by setting them to zero. Pruning can
-speed up a model, because inference runtimes implement optimizations that "skip" the multiply-adds by zero, 
-reducing the needed computation.
+### Sparsity
 
-There are two types of pruning that can be applied to a model:
-1. **Structured Pruning** - weights are pruned in groups (e.g. entire channels or nodes)
-2. **Unstructured Pruning** - weights (or small groups of weights) can be pruned in any pattern
+Sparsity improves performance while maintaining high accuracy. SparseZoo and SparseML work together to help you create performance-optimized models while minimizing accuracy loss by using sparsification techniques called pruning and quantization.
 
-With **Structured Pruning**, it is ***easy*** for an inference runtime to include optimizations that speed-up the model and most
-runtimes will benefit from this type of pruning. However, structured pruning can have large negative impacts on accuracy of the model,
-especially at the high levels of sparsity needed to see speedups.
+### Pruning
 
-With **Unstructured Pruning**, it is ***very hard*** for an inference runtime to include optimizations that speed-up the model
-(as far as we know, DeepSparse is the only production-grade runtime focused on speed-ups from unstructured pruning). The 
-benefit of unstructured pruning, however, is that sparsity can be pushed to very high levels while maintaining high levels of 
-accuracy. With both CNNs (`ResNet-50`) and Transformers (`BERT-base`), Neural Magic has pruned 95% of weights 
-while maintaining 99% of the accuracy as the baseline models.
+Pruning is the process of removing weights from a trained deep learning model by setting them to zero. Pruning can speed up a model because inference runtimes implement optimizations that "skip" the multiply-adds by zero, reducing the needed computation.
 
-### What is Quantization?
+Two types of pruning can be applied to a model:
 
-Quantization is a technique to reduce computation and memory usage by converting the parameters
-and activations of a model from a high precision format like FP32 (which is the default 
-for a deep learning model) to a low precision format like INT8.
+- **Structured pruning**<br>
+Weights are pruned in groups (for example, entire channels or nodes). With structured pruning, it is easy for an inference runtime to include optimizations that speed-up the mode. Most runtimes will benefit from this type of pruning. However, structured pruning can have large negative impacts on the accuracy of the model, especially at the high levels of sparsity needed to see speedups.
 
-By using lower precision, runtimes can reduce memory footprint and perform operations like
-matrix multiply faster. Additionally, quantization can be combined with unstructured pruning
-to gain additional speedup, a concept we call **Compound Sparsity**.
+- **Unstructured pruning**<br>
+Weights (or small groups of weights) are pruned in any pattern. With unstructured pruning, it is *very hard* for an inference runtime to include optimizations that speed-up the model. (As far as we know, DeepSparse is the only production-grade runtime focused on speedups from unstructured pruning.) The benefit of unstructured pruning, however, is that sparsity can be pushed to very high levels while maintaining high levels of accuracy. With both CNNs (ResNet-50) and transformers (BERT-base), Neural Magic has pruned 95% of weights while maintaining 99% of the accuracy of the baseline models.
+
+Neural Magic’s blog provides a detailed conceptual discussion of pruning.
+
+### Quantization
+
+Quantization is a technique to reduce computation and memory usage by converting the parameters and activations of a model from a high precision format like FP32 (which is the default for a deep learning model) to a low precision format like INT8.
+
+By using lower precision, runtimes can reduce memory footprint and perform operations (such as matrix multiply) faster. Additionally, quantization can be combined with unstructured pruning to gain additional speedup, a concept we call compound sparsity.
 
 ### Training-Aware Algorithms
 
 Broadly, there are two ways that pruning and quantization can be applied to a model:
-1. **Post-Training** - this is where sparsity is applied in one-pass with no training data 
-2. **Training Aware** - this is where sparsity is applied gradually and the non-zero weights are adjusted with training data
 
-**Post-Training** pruning and quantization optimizations are easier to apply to a model. However, these techniques often create 
-signficant drops in accuracy, as the model does not have a chance to re-adjust to the optimization space.
+- **Post-training**<br>
+Sparsity is applied in one pass with no training data. Post-training pruning and quantization optimizations are easier to apply to a model. However, these techniques often create significant drops in accuracy, as the model does not have a chance to readjust to the optimization space.
 
-**Training-Aware** pruning and quantization, by contrast, require setting up a training pipeline and implementing 
-complex algorithms. However, applying the pruning and quantization gradually and fine-tuning the non-zero weights 
-with training data enables accuracy to recover to 99% of the baseline dense model even as sparsity is pushed to very high levels.
+- **Training-aware**<br>
+Sparsity is applied gradually, and the non-zero weights are adjusted with training data. Training-aware pruning and quantization require setting up a training pipeline and implementing complex algorithms. However, applying the pruning and quantization gradually and fine-tuning the non-zero weights with training data enables accuracy to recover to 99% of the baseline dense model even as sparsity is pushed to very high levels.
 
-SparseML uses Training-Aware Unstructured Pruning and Training-Aware Quantization to create very
-sparse models that sacrifice very little accuracy.
+**SparseZoo** and **SparseML** use **training-aware unstructured pruning** and **training-aware quantization** (as well as post-training) to create very sparse models that sacrifice very little accuracy. Training-aware techniques apply the sparsification gradually, allowing the model to adjust by fine-tuning the remaining weights with the training dataset at each step. This technique is critical to maintaining high accuracy at the high levels of sparsity needed to reach GPU-class performance.
+
 
 ## How to Create an Inference-Optimized Sparse Model
 
