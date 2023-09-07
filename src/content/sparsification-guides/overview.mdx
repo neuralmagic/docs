@@ -5,4 +5,85 @@ metaDescription: "Overview of sparsification"
 index: 0
 ---
 
-# Sparsification
+# Sparsification Overview
+
+## Sparsification Workflows
+
+Source: https://docs.neuralmagic.com/get-started/sparsify-a-model
+https://docs.neuralmagic.com/products/sparseml 
+SparseZoo and SparseML extend PyTorch and TensorFlow with features for creating sparse models trained on custom data. Together, they enable two workflows:
+Sparse transfer learning
+This workflow fine-tunes a pre-sparsified foundation model (like ResNet-50 or BERT) from the SparseZoo onto a custom dataset while maintaining sparsity. This pathway works just like typical fine-tuning used in training CV and NLP model. Sparse transfer learning is strongly preferred if your model architecture is available in SparseZoo.
+Sparsification from scratch
+This workflow applies training-aware pruning and quantization algorithms to any trained PyTorch, TensorFlow, or Hugging Face model, with fine-grained control of hyperparameters. This pathway requires more experimentation, but allows you to create a sparse version of any model.
+Sparse Transfer Learning
+Sparse transfer learning is the easiest path to creating a sparse model trained on custom data. It is preferred for any scenario in which a pre-sparsified foundation model exists in SparseZoo.
+Neural Magic's research team has invested many hours in creating state-of-the-art pruned and quantized versions of popular foundation models trained on large open datasets. These models (including the hyperparameters of the sparsification process) are publicly available in the SparseZoo.
+SparseML enables you to fine-tune the pre-sparsified SparseZoo models onto custom data while maintaining the same level of sparsity (which we call sparse transfer learning). Under the hood, SparseML extends PyTorch and TensorFlow to update only non-zero weights during backprogation. You then can sparse transfer learn with just a single CLI command or five additional lines of code around a custom PyTorch training loop.
+This means any engineer (without deep knowledge of cutting-edge sparsity algorithms) can easily create accurate, inference-optimized sparse models for specific tasks.
+✅ Check out:
+Sparse transfer learning example
+Our pre-sparsified models on SparseZoo
+✅ Request:
+A model in our Community Slack
+Sparsification From Scratch
+SparseML enables you to create a sparse model from scratch. The library contains state-of-the-art sparsification algorithms, including pruning, distillation, and quantization techniques. Sparsification from scratch can be applied to any model, providing power-users a path to create sparse versions of a model.
+Training-aware unstructured pruning and training-aware quantization are the best techniques for creating models with the highest levels of sparsity without suffering from much accuracy degradation.
+Gradual magnitude pruning (GMP)
+GMP is the best algorithm for unstructured pruning. With GMP, pruning occurs gradually over a training run. Over several epochs or training steps, the least impactful weights are iteratively removed. The non-zero weights are then fine-tuned to the objective function. This iterative process enables the model to adjust to a new optimization space after pathways are removed before pruning again.
+Quantization-aware training (QAT)
+QAT is the best algorithm for quantization. With QAT, fake quantization operators are injected into the graph before quantizable nodes for activations, and weights are wrapped with fake quantization operators. The fake quantization operators interpolate the weights and activations down to INT8 on the forward pass, but enable a full update of the weights at FP32 on the backward pass. The updates to the weights at FP32 throughout the training process allow the model to adapt to the loss of information from quantization on the forward pass.
+[the following needs to be edited/tightened]
+Applying these algorithms correctly in an ad-hoc way is challenging. To solve this dilemma, Neural Magic created SparseML, which implements these algorithms on top of PyTorch and TensorFlow.
+Using SparseML, you can apply the algorithms to your trained PyTorch and TensorFlow models with just five additional lines of code around a training loop. This enables ML engineers to shift focus and time from (re)building sparsity algorithms to running experiments and tuning hyperparameters of the pruning and quantization process.
+These algorithms are built on top of sparsification recipes, enabling easy integration into custom ML training pipelines to sparsify most neural networks. Additionally, SparseML integrates with popular ML repositories like Hugging Face Transformers and Ultralytics YOLO. With these integrations, creating a recipe and passing it to a CLI is all you need to sparsify a model.
+Aside from sparsification algorithms, SparseML contains generic export pathways for performant deployments. These export pathways ensure the model saves in the correct format and rewrites the inference graphs for performance, such as quantized operator folding. The results are simple to export CLIs and APIs that guarantee performance for sparsified models in their given deployment environment.
+Ultimately, creating a sparse model from scratch is a form of architecture search. This is an inherently “research-like” exercise that requires tuning the hyperparameters of GMP and QAT, and running experiments to test accuracy with various changes to the model. SparseML dramatically increases the productivity of developers running these experiments.
+✅ Check out:
+Sparsifying from scratch example
+Guide on creating a hyperparameter recipe
+Blog on pruning a model
+✅ Request:
+A model in our Community Slack
+Sparsification Recipes
+SOURCES: https://docs.neuralmagic.com/user-guides/recipes 
+https://docs.neuralmagic.com/user-guides/recipes/creating 
+https://docs.neuralmagic.com/user-guides/recipes/enabling 
+Sparsification recipes are YAML or Markdown files that encode the instructions for how to sparsify or sparse transfer learn a model. These instructions include the sparsification algorithms to apply along with any hyperparameters. Recipes work with the SparseML library to easily apply sparse transfer learning or sparsification algorithms to any neural network and training pipeline.
+All SparseML sparsification APIs are designed to work with recipes. The files encode the instructions needed for modifying the model and training process as a list of modifiers. Example modifiers can be anything from setting the learning rate for the optimizer to gradual magnitude pruning. The rest of the SparseML system is coded to parse the recipe files into a native format for the desired framework and apply the modifications to the model and training pipeline.
+Tutorials
+PyTorch
+Sparse Transfer Learning with the CLI
+Sparse Transfer Learning with the Python API
+Sparsify From Scratch with the Python API
+Hugging Face Transformers
+Sparse Transfer Learning Overview with the Python API
+Sparse Transfer Learning Overview with the CLI
+Sparse Transfer Learning for Sentiment Analysis, for Text Classification, for Token Classification, for Question Answering
+Ultralytics YOLOv5
+Sparse Transfer Learning with the CLI
+Sparsify From Scatch with the CLI
+Links to Additional Examples
+PyTorch
+Hugging Face Transformers
+Ultralytics YOLOv5
+Sparsifying With SparseML
+There are three ways to sparsify a model using SparseML:
+Recipes
+Python API
+SparseML CLI
+Additional Resources
+✅ Check out:
+Sparse Transfer Learning
+Sparsification Code
+Sparsification Recipes
+Exporting to ONNX
+Documentation for SparseML, SparseZoo, Sparsify, DeepSparse
+Release History
+Official builds are hosted on PyPI:
+stable: sparseml
+nightly (dev): sparseml-nightly
+Additionally, more information can be found via GitHub Releases.
+License
+The project is licensed under the Apache License Version 2.0.
+
