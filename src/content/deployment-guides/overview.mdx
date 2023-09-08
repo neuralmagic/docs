@@ -7,3 +7,41 @@ index: 1000
 
 # Deployment Overview
 
+Deployment is accomplished with DeepSparse.
+
+DeepSparse is a CPU inference runtime that takes advantage of sparsity within neural networks to execute inference quickly and reduce compute. Coupled with SparseML, an open-source optimization library, DeepSparse enables you to take advantage of the flexibility and scalability of software-defined inference to:
+
+- Deploy the same model and runtime on any hardware from Intel to AMD to ARM, and from cloud to data center to edge, including pre-existing systems
+
+- Scale vertically from 1 to 192 cores, tailoring the footprint to the exact needs of an application
+
+- Scale horizontally with standard Kubernetes, including using services like EKS/GKE
+
+- Scale abstractly with serverless instances such as GCP Cloud Run and AWS Lambda
+
+- Integrate easily into "deploy with code" provisioning systems
+
+- Eliminate wrestling with drivers, operator support, or compatibility issues
+
+Simply put, deep learning deployments no longer need to choose between the performance of GPUs and the simplicity of software!
+
+DeepSparse is able to integrate into popular deep learning libraries (for example, Hugging Face, Ultralytics) allowing you to leverage DeepSparse for loading and deploying sparse models with ONNX. ONNX gives the flexibility to serve your model in a framework-agnostic environment. Support includes PyTorch, TensorFlow, Keras, and many other frameworks.
+
+DeepSparse achieves its performance using breakthrough algorithms to accelerate the computation. Two high-level ideas underpin the system:
+
+1. **DeepSparse is "sparsity-aware.”**<br>Neural Magic has implementations of common neural network operations that take advantage of structured and unstructured sparsity. Because the locations of the 0 weights in a sparse model are known at compile time, DeepSparse can "skip" the multiply-adds by 0. This reduces the number of instructions significantly, and the computation becomes memory-bound.
+
+2. **DeepSparse takes advantage of the large caches in CPUs.**<br>DeepSparse identifies and breaks down the computational graph into depth-wise chunks (called **tensor-columns**) that can be executed in parallel across many CPU cores. This pattern has a much better locality of reference in comparison to traditional layer-by-layer execution. In this way, DeepSparse minimizes data movement in and out of the large caches in a CPU, which is the performance bottleneck in a memory-bound system.
+
+These two ideas sum up GPU-class performance on commodity CPUs! As far as we know, DeepSparse is the only production-grade runtime that focuses on speedups from unstructured sparsity. The unstructured sparsity optimizations are hard to implement but are an important unlock because unstructured pruning allows us to reach the high levels of sparsity needed to see the performance gains without sacrificing accuracy.
+Beyond all the GPU-class performance and benefits of the scalability of CPU-only deployments, DeepSparse also wraps the runtime with APIs and utilities that simplify the process of adding inference to an application and monitoring a model in production. For instance:
+
+- Trained models are passed in the open ONNX file format, enabling easy exporting from common packages like PyTorch, Keras, and TensorFlow.
+
+- Benchmarking latency and performance is available via a single CLI call, with various arguments to test scenarios.
+
+- Pipelines utilities wrap the model execution with input pre-processing and output post-processing, simplifying deployment and adding functionality like multi-stream, bucketing, and dynamic shape.
+
+✅ Check out more about:
+- [Neural Magic’s technology](https://neuralmagic.com/technology/)
+- [Sparsification](/sparsification-guides/overview.mdx)
