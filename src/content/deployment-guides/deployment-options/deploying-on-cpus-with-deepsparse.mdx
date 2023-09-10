@@ -49,30 +49,82 @@ pipeline_outputs = custom_pipeline(pipeline_inputs)
 ```
 
 ✅ Learn more about:
-- Using a model
-- Using a model in a custom task
+- [Using a model](/model-selection-guides/using-your-own-model.mdx)
 - Tasks and details on usage of supported use cases
 
-Beyond pre- and post-processing, Pipelines have other useful utilities like data logging, multi-stream inference, and dynamic batch. Check out documentation on the Pipeline Class or the Multi-Stream Scheduling Overview.
+Beyond pre- and post-processing, Pipelines have other useful utilities like data logging, multi-stream inference, and dynamic batch. Check out documentation on the [`Pipeline` class](/sparsification-guides/integrating-sparseml-in-pipelines.mdx) or [multi-stream scheduling](/deployment-guides/inference-types.mdx).
 
 ## Server Usage: Launch From CLI
 
 DeepSparse Server is launched from the CLI with configuration via either command line arguments or a configuration file.
-With the command line argument path, you specify a task via the task argument (such as image_classification or question_answering) as well as a model (either a local ONNX file or a SparseZoo stub) via the model_path argument:
-[CODE]
-With the config file path, you create a YAML file that specifies the Server configuration. A YAML file looks like the following:
-[CODE]
+
+With the command line argument path, you specify a task via the `task` argument (such as `image_classification` or `question_answering`) as well as a model (either a local ONNX file or a SparseZoo stub) via the `model_path` argument:
+
+```bash
+deepsparse.server --task [use_case_name] --model_path [model_path]
+```
+
+With the configuration file path, you create a YAML file that specifies the Server configuration. A YAML file looks like the following:
+
+```yaml
+endpoints:
+    - task: task_name       # specifiy use case (e.g., image_classification, question_answering)
+      route: /predict       # specify the route of the endpoint
+      model: model_path     # specify sparsezoo stub or path to local onnx file
+      name: any_name_you_want
+
+#   - ... add as many endpoints as neeede
+```
+
 The Server is then launched with the following:
-[CODE]
+
+```bash
+deepsparse.server --config_file config.yaml
+```
+
+
 Clients interact with the Server via HTTP. Because the Server uses Pipelines internally, you can simply pass raw data to the Server and receive back post-processed predictions.  For example, you would do the following to query a Question Answering endpoint:
-[CODE]
+
+```
+import requests
+
+url = "http://localhost:5543/predict"
+
+obj = {
+    "question": "Who is Mark?", 
+    "context": "Mark is batman."
+}
+
+response = requests.post(url, json=obj)
+```
+
 ✅ Learn more about:
-Deploying a model with DeepSparse Server
-Tasks and detailed usage of each supported task with Server
-The Server has additional useful utilities like data logging, multi-stream inference, multiple model inference, and dynamic batch. Check out documentation on the Server Class or the Multi-Stream Scheduling Overview.
-The Engine class is the workhorse for this pathway. Simply call the constructor with your desired parameters to create an instance with the runtime. Once the engine is initialized, a pass list of numpy arrays (which are a batch of input tensors, the same as would be passed to a PyTorch model) and the engine will return a list of outputs. For example:
-[CODE]
-A MultiModelEngine is available if you want to interact directly with an engine running multiple models. This pathway is strongly preferred if you want to run multiple models on the same CPU.)
+- Deploying a model with DeepSparse Server
+- Tasks and detailed usage of each supported task with Server
+
+The Server has additional useful utilities like data logging, multi-stream inference, multiple model inference, and dynamic batch. Check out documentation on the Server Class or [multi-stream scheduling](/deployment-guides/inference-types.mdx).
+
+## Engine Usage: Python APIs
+
+The `Engine` class is the workhorse for this pathway. Simply call the constructor with your desired parameters to create an instance with the runtime. Once the engine is initialized, a pass list of numpy arrays (which are a batch of input tensors, the same as would be passed to a PyTorch model) and the engine will return a list of outputs. For example:
+
+```python
+from deepsparse import Engine
+from deepsparse.utils import generate_random_inputs
+onnx_filepath = "path/to/onnx/model.onnx"
+batch_size = 64
+
+# Generate random sample input
+inputs = generate_random_inputs(onnx_filepath, batch_size)
+
+# Compile and run
+engine = Engine(onnx_filepath, batch_size)
+outputs = engine.run(inputs)
+```
+
+A `MultiModelEngine` is available if you want to interact directly with an engine running multiple models. This pathway is strongly preferred if you want to run multiple models on the same CPU.)
+
 ✅ Learn more about:
-Code on GitHub
-We also have a lower-level C++ API. Stay tuned for new documentation on this pathway or reach out in Community Slack for details.
+- [Code on GitHub](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/engine.py#L645)
+
+We also have a lower-level C++ API. Stay tuned for new documentation on this pathway or reach out in [Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ) for details.
