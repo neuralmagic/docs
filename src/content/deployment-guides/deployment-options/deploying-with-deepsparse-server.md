@@ -16,7 +16,7 @@ This use case requires the installation of [DeepSparse Server](/installation-gui
 DeepSparse Server allows you to serve models and `Pipelines` for deployment in HTTP. The server runs on top of the popular FastAPI web framework and Uvicorn web server.
 The server supports any task from DeepSparse, such as `Pipelines` including NLP, image classification, and object detection tasks.
 An updated list of available tasks can be found
-[in the DeepSparse Pipelines Introduction](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/PIPELINES.md).
+in the [DeepSparse Pipelines Introduction](https://github.com/neuralmagic/deepsparse/blob/main/src/deepsparse/PIPELINES.md).
 
 Run the help CLI to look up the available arguments.
 
@@ -138,10 +138,8 @@ obj = {
 response = requests.post(url, json=obj)
 ```
 
-**PRO TIP:** While your server is running, you can always use the awesome swagger UI that's built into FastAPI to view your model's pipeline `POST` routes.
+**TIP:** While your server is running, you can always use the awesome swagger UI that's built into FastAPI to view your model's pipeline `POST` routes.
 The UI also enables you to easily make sample requests to your server.
 All you need is to add `/docs` at the end of your host URL:
 
     localhost:5543/docs
-
-<img src="https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/server/img/swagger_ui.png" alt="Swagger UI For Viewing Model Pipeline" width="1200" height="524" />
