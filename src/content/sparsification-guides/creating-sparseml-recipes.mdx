@@ -1,0 +1,461 @@
+---
+title: "Creating SparseML Recipes"
+metaTitle: "Creating SparseML Recipes"
+metaDescription: "Creating sparsification recipes with SparseML"
+index: 1000
+---
+
+# Creating SparseML Recipes
+
+To enable flexibility, ease of use, and repeatability, SparseML uses a declarative interface called `recipes` for specifying the sparsity-related algorithms and hyper-parameters that should be applied by SparseML.
+
+`recipes` are YAML-files formatted as a list of `modifiers`, which encode the instructions for SparseML. Example `modifiers` can be anything from setting the learning rate to encoding the hyperparameters of the gradual magnitude pruning algorithm. The SparseML system parses the `recipes` into a native format for each framework and applies the modifications to the model and training pipeline.
+
+The easiest ways to get or create recipes are by either using the pre-configured recipes in [SparseZoo](https://github.com/neuralmagic/sparsezoo) or using [Sparsify's](https://github.com/neuralmagic/sparsify) automatic creation.
+Especially for users performing sparse transfer learning from our pre-sparsified models in the SparseZoo, we highly recommend using the pre-made transfer learning recipes found on SparseZoo. However, power users may be inclined to create their recipes to enable more fine-grained control or add custom modifiers when sparsifying a new model from scratch.
+
+A sample recipe for pruning a model generally looks like:
+
+```yaml
+version: 0.1.0
+modifiers:
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 70.0
+
+    - !LearningRateModifier
+        start_epoch: 0
+        end_epoch: -1.0
+        update_frequency: -1.0
+        init_lr: 0.005
+        lr_class: MultiStepLR
+        lr_kwargs: {'milestones': [43, 60], 'gamma': 0.1}
+
+    - !GMPruningModifier
+        start_epoch: 0
+        end_epoch: 40
+        update_frequency: 1.0
+        init_sparsity: 0.05
+        final_sparsity: 0.85
+        mask_type: unstructured
+        params: ['sections.0.0.conv1.weight', 'sections.0.0.conv2.weight', 'sections.0.0.conv3.weight']
+```
+
+In a recipe, modifiers must be written in a list that includes modifiers in its name.
+
+Recipes can contain multiple modifiers, each modifying a portion of the training process in a different way. In general, each modifier will have a start and end epoch for when the modifier should be active. The modifiers will start at `start_epoch` and run until `end_epoch`. Note that it does not run *through* `end_epoch`. Additionally, all epoch values support decimal values such that they can be started anywhere within an epoch. For example, `start_epoch: 2.5` will start in the middle of the second training epoch.
+
+## Modifiers
+
+The most commonly used modifiers are described below.
+
+### Training Epoch Modifiers
+
+**`EpochRangeModifier`** controls the range of epochs for training a model.
+Each supported ML framework has an implementation to enable easily retrieving this number of epochs.
+Note that this is not a hard rule and, if other modifiers have a larger `end_epoch` or smaller `start_epoch`,
+those values will be used instead.
+
+The only parameters that can be controlled for `EpochRangeModifier` are the `start_epoch` and `end_epoch`.
+Both parameters are required:
+
+- **`start_epoch`** indicates the start range for the epoch (0 indexed).
+- **`end_epoch`** indicates the end range for the epoch.
+
+For example:
+
+ ```yaml
+     - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 25.0
+ ```
+
+### Pruning Modifiers
+
+The pruning modifiers (`ConstantPruningModifier` and `GMPruningModifier`) handle [pruning](https://neuralmagic.com/blog/pruning-overview/)
+the specified layer(s) in a given model.
+
+#### ConstantPruningModifier
+
+**`ConstantPruningModifier`** enforces the sparsity structure and level for an already pruned layer(s) in a model.
+The modifier generally is used for transfer learning from an already pruned model or
+to enforce sparsity while quantizing.
+The weights remain trainable in this setup; however, the sparsity is unchanged.
+
+Required parameter:
+
+- **`params`** indicates the parameters in the model to prune.
+This can be set to a string containing `__ALL__` to prune all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by 're:' of parameter name patterns to match.
+For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
+Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
+
+For example:
+
+```yaml
+    - !ConstantPruningModifier
+        params: __ALL__
+```
+
+#### GMPruningModifier
+
+**`GMPruningModifier`** prunes the parameter(s) in a model to a
+target sparsity (percentage of 0s for a layer's parameter/variable)
+using [gradual magnitude pruning.](https://neuralmagic.com/blog/pruning-gmp/)
+This is done gradually from an initial to final sparsity (`init_sparsity`, `final_sparsity`)
+over a range of epochs (`start_epoch`, `end_epoch`) and updated at a specific interval defined by the `update_frequency`.
+For example, using the following settings:
+
+`start_epoch: 0`, `end_epoch: 5`, `update_frequency: 1`,
+`init_sparsity: 0.05`, `final_sparsity: 0.8` 
+
+will do the following.
+
+- At epoch 0, set the sparsity for the specified param(s) to 5%
+- Once every epoch, gradually increase the sparsity toward 80%
+- By the start of epoch 5, stop pruning and set the final sparsity for the specified parameter(s) to 80%
+
+Required parameters:
+
+- **`params`** indicates the parameters in the model to prune.
+This can be set to a string containing `__ALL__` to prune all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by 're:' of parameter name patterns to match.
+For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
+Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
+- **`init_sparsity`** is the decimal value for the initial sparsity with which to start pruning.
+`start_epoch` will set the sparsity for the parameter/variable to this value.
+Generally, this is kept at 0.05 (5%).
+- **`final_sparsity`** is the decimal value for the final sparsity with which to end pruning.
+By the start of `end_epoch` will set the sparsity for the parameter/variable to this value.
+Generally, this is kept in a range from 0.6 to 0.95, depending on the model and layer.
+Anything less than 0.4 is not useful for performance.
+- **`start_epoch`** sets the epoch at which to start the pruning (0 indexed).
+This supports floating point values to enable starting pruning between epochs.
+ - **`end_epoch`** sets the epoch before which to stop pruning.
+This supports floating point values to enable stopping pruning between epochs.
+ - **`update_frequency`** is the number of epochs/fractions of an epoch between each pruning step.
+It supports floating point values to enable updating inside of epochs.
+Generally, this is set to update once per epoch (`1.0`).
+However, if the loss for the model recovers quickly, it should be set to a lesser value.
+For example, set it to `0.5` for once every half epoch (twice per epoch).
+
+For example:
+
+```yaml
+    - !GMPruningModifier
+        params: ['blocks.1.conv']
+        init_sparsity: 0.05
+        final_sparsity: 0.8
+        start_epoch: 5.0
+        end_epoch: 20.0
+        update_frequency: 1.0
+```
+
+### Quantization Modifiers
+
+**`QuantizationModifier`** sets the model to run with
+[quantization-aware training (QAT).](https://pytorch.org/docs/stable/quantization.html)
+QAT emulates the precision loss of int8 quantization during training so weights can be
+learned to limit any accuracy loss from quantization.
+Once the `QuantizationModifier` is enabled, it cannot be disabled (no `end_epoch`).
+Quantization zero points are set to be asymmetric for activations and symmetric for weights.
+Currently, quantization modifiers are available only in PyTorch.
+
+Notes:
+
+- ONNX exports of PyTorch QAT models will be QAT models themselves (emulated quantization).
+To convert your QAT ONNX model to a fully quantizerd model, use
+the script `scripts/pytorch/model_quantize_qat_export.py` or the function
+`neuralmagicML.pytorch.quantization.quantize_qat_export`.
+- If performing QAT on a sparse model, you must preserve sparsity during QAT by
+applying a `ConstantPruningModifier` or have already used a `GMPruningModifier` with
+`leave_enabled` set to True.
+
+Required parameter:
+
+- **`start_epoch`** sets the epoch to start QAT. This supports floating-point values to enable
+starting pruning between epochs.
+
+For example:
+
+```yaml
+    - !QuantizationModifier
+        start_epoch: 0.0
+```
+
+### Learning Rate Modifiers
+
+The learning rate modifiers (`SetLearningRateModifier` and `LearningRateModifier`) set the learning rate (LR) for an optimizer during training.
+If you are using an Adam optimizer, these generally are not useful.
+If you are using a standard stochastic gradient descent optimizer, these give a convenient way to control the LR.
+
+#### SetLearningRateModifier
+
+**`SetLearningRateModifier`** sets the LR for the optimizer to a specific value at a specific point
+in the training process.
+
+Required parameters:
+
+- **`start_epoch`** is the epoch in the training process to set the `learning_rate` value for the optimizer.
+This supports floating point values to enable setting the LR between epochs.
+- **`learning_rate`** is the floating-point value to set as the LR for the optimizer at `start_epoch`.
+
+For example:
+
+```yaml
+    - !SetLearningRateModifier
+        start_epoch: 5.0
+        learning_rate: 0.1
+```
+
+#### LearningRateModifier
+
+**`LearningRateModifier`** sets schedules for controlling the LR for an optimizer during training.
+If you are using an Adam optimizer, these generally are not useful.
+If you are using a standard stochastic gradient descent optimizer, these give a convenient way to control the LR.
+Provided schedules from which to choose are:
+
+- **`ExponentialLR`** multiplies the LR by a `gamma` value every epoch.
+To use this, `lr_kwargs` should be set to a dictionary containing `gamma`.
+For example: `{'gamma': 0.9}`
+- **`StepLR`** multiplies the LR by a `gamma` value after a certain epoch period defined by `step`.
+To use this, `lr_kwargs` must be set to a dictionary containing `gamma` and `step_size`.
+For example: `{'gamma': 0.9, 'step_size': 2.0}`
+- **`MultiStepLR`** multiplies the LR by a `gamma` value at specific epoch points defined by `milestones`.
+To use this, `lr_kwargs` must be set to a dictionary containing `gamma` and `milestones`.
+For example: `{'gamma': 0.9, 'milestones': [2.0, 5.5, 10.0]}`
+
+Required parameters:
+
+- **`start_epoch`** sets the epoch at which to start modifying the LR (0 indexed).
+This supports floating point values to enable starting pruning between epochs.
+- **`end_epoch`** sets the epoch before which to stop modifying the LR.
+This supports floating point values to enable stopping pruning between epochs.
+- **`lr_class`** is the LR class to use, one of [`ExponentialLR`, `StepLR`, `MultiStepLR`].
+- **`lr_kwargs`** is the named argument for the `lr_class`.
+
+Optional parameter:
+
+- **`init_lr`** is the initial LR to set at `start_epoch` and to use for creating the schedules.
+If not given, the optimizer's current LR will be used at startup.
+
+For example:
+
+ ```yaml
+     - !LearningRateModifier
+        start_epoch: 0.0
+        end_epoch: 25.0
+        lr_class: MultiStepLR
+        lr_kwargs:
+            gamma: 0.9
+            milestones: [2.0, 5.5, 10.0]
+        init_lr: 0.1
+ ```
+
+### Params/Variables Modifiers
+
+**`TrainableParamsModifier`** controls the parameters that are marked as trainable for the current optimizer.
+This is generally useful when transfer learning to easily mark which parameters should or should not be frozen/trained.
+
+Required parameter:
+
+- **`params`** indicates the names of parameters to mark as trainable or not.
+This can be set to a string containing `__ALL__` to mark all parameters, a list to specify the targeted parameters,
+or regex patterns prefixed by 're:' of parameter name patterns to match.
+For example: `['blocks.1.conv']` for PyTorch and `['mnist_net/blocks/conv0/conv']` for TensorFlow.
+Regex can also be used to match all conv params: `['re:.*conv']` for PyTorch and `['re:.*/conv']` for TensorFlow.
+
+For example:
+
+```yaml
+    - !TrainableParamsModifier
+      params: __ALL__
+```
+
+### Optimizer Modifiers
+
+**`SetWeightDecayModifier`** sets the weight decay (L2 penalty) for the optimizer to a
+specific value at a specific point in the training process.
+
+Required parameters:
+
+- **`start_epoch`** is the epoch in the training process to set the `weight_decay` value for the
+optimizer. This supports floating point values to enable setting the weight decay
+between epochs.
+- **`weight_decay`** is the floating point value to set as the weight decay for the optimizer
+at `start_epoch`.
+
+For example:
+
+```yaml
+    - !SetWeightDecayModifier
+        start_epoch: 5.0
+        weight_decay: 0.0
+```
+
+## SparseML Recipe Examples
+
+The following is an example of creating a sparsification recipe to prune a dense model from scratch and applying a recipe to a supported integration.
+
+SparseML has pre-made integrations with many popular model repositories, such as with Hugging Face Transformers and Ultralytics YOLOv5. For these integrations, a sparsification recipe is all you need, and you can apply state-of-the-art sparsification algorithms, including pruning, distillation, and quantization, with a single command line call.
+
+### Requirements
+
+[SparseML Torchvision Install](/installation-guides/product-suite-installation/sparseml) to required to apply the recipe.
+
+### Pruning and Pruning Recipes
+
+Pruning is a systematic way of removing redundant weights and connections within a neural network. An applied pruning algorithm must determine which weights are redundant and will not affect the accuracy.
+
+A standard algorithm for pruning is gradual magnitude pruning (GMP). With it, the weights closest to zero are iteratively removed over several epochs or training steps. The non-zero weights are then fine-tuned to the objective function. This iterative process enables the model to adjust to a new optimization space after pathways are removed before pruning again.
+
+Important hyperparameters that need to be set are:
+
+- Layers to prune and their target sparsity levels
+- Number of epochs for pruning
+- Frequency of pruning
+- Length of time to fine-tune after pruning
+- Learning rates (LR) for pruning and fine-tuning
+
+The proper hyperparameter values will differ for different model architectures, training schemes, and domains; but, there is some general intuition for safe starting values. The following are reasonable default values with which to start:
+
+- Final sparsity is set to 80% applied globally across all layers.
+- Running frequency is set to pruning once per epoch (up to a few times per epoch for shorter schedules).
+- The number of pruning epochs is set to 1/3 the original training epochs.
+- The number of fine-tuning epochs is set to 1/4 the original epochs.
+- Pruning LR is set to the midrange from the model's training start and final LRs.
+- The fine-tuning LRs cycle from the pruning LR to the final LR is used for training.
+
+SparseML conveniently encodes these hyperparameters into a YAML-based recipe file. The rest of the system parses the arguments in the YAML file to set the parameters of the algorithm. For example, the following `recipe.yaml` file is for the default values listed above:
+
+```yaml
+modifiers:
+    - !GlobalMagnitudePruningModifier
+        init_sparsity: 0.05
+        final_sparsity: 0.8
+        start_epoch: 0.0
+        end_epoch: 30.0
+        update_frequency: 1.0
+        params: __ALL_PRUNABLE__
+
+    - !SetLearningRateModifier
+        start_epoch: 0.0
+        learning_rate: 0.05
+
+    - !LearningRateFunctionModifier
+        start_epoch: 30.0
+        end_epoch: 50.0
+        lr_func: cosine
+        init_lr: 0.05
+        final_lr: 0.001
+
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 50.0
+```
+
+In this recipe:
+
+  - **`GlobalMagnitudePruningModifier`** applies gradual magnitude pruning globally across all the prunable parameters/weights in a model.
+  - **`GlobalMagnitudePruningModifier`** starts at 5% sparsity at epoch 0 and gradually ramps up to 80% sparsity at epoch 30, pruning at the start of each epoch.
+  - **`SetLearningRateModifier`** sets the pruning LR to 0.05 (midpoint between the original 0.1 and 0.001 training LRs).
+  - **`LearningRateFunctionModifier`** cycles the fine-tuning LR from the pruning LR to 0.001 with a cosine curve (0.001 was the final original training LR).
+  - **`EpochRangeModifier`** expands the training time to continue fine-tuning for an additional 20 epochs after pruning has ended.
+  - 30 pruning epochs and 20 fine-tuning epochs were chosen based on a 90 epoch training schedule. Be sure to adjust based on the number of epochs used for the initial training for your use case.
+
+### Quantization and Quantization Recipes
+
+A quantization recipe systematically reduces the precision for weights and activations within a neural network, generally from FP32 to INT8. Running a quantized model increases speed and reduces memory consumption while sacrificing very little in terms of accuracy.
+
+Quantization-aware training (QAT) is the standard algorithm. With QAT, fake quantization operators are injected into the graph before quantizable nodes for activations, and weights are wrapped with fake quantization operators. The fake quantization operators interpolate the weights and activations down to INT8 on the forward pass but enable a full update of the weights at FP32 on the backward pass. The updates to the weights at FP32 throughout the training process allow the model to adapt to the loss of information from quantization on the forward pass. QAT generally guarantees better recovery for a given model compared with post-training quantization (PTQ), where training is not used.
+
+Important hyperparameters for QAT are the learning rate (LR), the number of epochs to train for while quantized, and when to freeze batch normalization statistics for CNNs. Freezing batch normalization statistics enables the folding of these operators into convolutions for inference time and is an essential step for QAT. The proper hyperparameter values will differ for different model architectures, training schemes, and domains; but, there is some general intuition for safe starting values. The following are reasonably good values with which to start:
+
+- LR is set to 0.1 or 0.01 times the value of the final LR during training.
+- The number of quantized training epochs is set to 5.
+- Batch normalization statistics are frozen at the start of the third epoch.
+
+For example, the following `recipe.yaml` file is for the default values listed above:
+
+```yaml
+modifiers:
+    - !QuantizationModifier
+        start_epoch: 0.0
+        freeze_bn_stats_epoch: 3.0
+
+    - !SetLearningRateModifier
+        start_epoch: 0.0
+        learning_rate: 10e-6
+
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 5.0
+```
+
+In this recipe:
+
+  - **`QuantizationModifier`** applies QAT to all quantizable modules under the `model` scope.
+Note the `model` is used here as a general placeholder; to determine the name of the root module for your model, print out the root module and use that root name.
+  - **`QuantizationModifier`** starts at epoch 0 and freezes batch normalization statistics at the start of epoch 3.
+  - **`SetLearningRateModifier`** sets the quantization LR to 10e-6 (0.01 times the example final LR of 0.001).
+  - **`EpochRangeModifier`** sets the training time to continue training for the desired 5 epochs.
+
+### Pruning Plus Quantization Recipe
+
+To create a pruning and quantization recipe, the pruning and quantization recipes are merged from the previous sections. Quantization is added after pruning and fine-tuning are complete such that the training cycles end with it. This prevents stability issues from lacking precision when pruning and utilizing larger LRs.
+
+Combining the two previous recipes creates the following new `recipe.yaml` file:
+
+```yaml
+modifiers:
+    - !GlobalMagnitudePruningModifier
+        init_sparsity: 0.05
+        final_sparsity: 0.8
+        start_epoch: 0.0
+        end_epoch: 30.0
+        update_frequency: 1.0
+        params: __ALL_PRUNABLE__
+
+    - !SetLearningRateModifier
+        start_epoch: 0.0
+        learning_rate: 0.05
+
+    - !LearningRateFunctionModifier
+        start_epoch: 30.0
+        end_epoch: 50.0
+        lr_func: cosine
+        init_lr: 0.05
+        final_lr: 0.001
+
+    - !QuantizationModifier
+        start_epoch: 50.0
+        freeze_bn_stats_epoch: 53.0
+
+    - !SetLearningRateModifier
+        start_epoch: 50.0
+        learning_rate: 10e-6
+
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 55.0
+```
+
+### Applying a Recipe
+
+The recipe created can be applied using the SparseML integrations. For example, SparseML installs with a CLI utilizing Ultralytics YOLOv5 repo and training pathways, among others. To view instructions for the CLI, run the following command:
+
+```bash
+sparseml.yolov5.train --help
+```
+
+To use the recipe given in the previous section, save it locally as a `recipe.yaml` file. Next, it can be passed in for the `--recipe` argument in the YOLOv5 train CLI.
+
+By running the following command, you will apply the GMP and QAT algorithms encoded in the recipe to the dense version of YOLOv5s (which is pulled down from the SparseZoo). In this example, the fine-tuning is done onto the COCO dataset.
+
+```bash
+sparseml.yolov5.train \
+  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/base-none \
+  --data coco.yaml \
+  --hyp data/hyps/hyp.scratch.yaml \
+  --recipe recipe.yaml
+```

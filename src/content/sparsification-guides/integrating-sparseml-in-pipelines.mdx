@@ -1,0 +1,268 @@
+---
+title: "Integrating SparseML in Pipelines"
+metaTitle: "Integrating SparseML in Pipelines"
+metaDescription: "Instructions for integrating SparseML in pipelines"
+index: 1000
+---
+
+# Integrating SparseML in Pipelines
+
+SparseML enables easy integration in custom training pipelines. This flexibility enables easy sparsification for any neural network architecture for custom models and use cases. Once SparseML is installed, the necessary code can be plugged into most PyTorch, Keras, and TensorFlow training pipelines with only a few lines of code. The pseudocode below will work for both sparse transfer learning and sparsifying from scratch, simply by passing the appropriate recipe.
+
+## Requirements
+
+See the [SparseML installation requirements](/installation-guides/product-suite-installation/sparseml) for each integration.
+
+## Pipelines
+
+### PyTorch
+
+The PyTorch sparsification libraries are located under the `sparseml.pytorch.optim` package. Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into PyTorch training pipelines.
+
+First, the `ScheduledModifierManager` is created. This class accepts a recipe file and parses the hyperparameters at initialization. The `modify()` function wraps an optimizer or optimizer-like object (contains a step function) to override the step invocation. With this setup, the training process can be modified to sparsify the model.
+
+To enable all of this, the integration code is accomplished by writing a few lines:
+
+```python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+## fill in definitions below
+model = Model()  # model definition
+optimizer = Optimizer()  # optimizer definition
+train_data = TrainData()  # train data definition
+batch_size = BATCH_SIZE  # training batch size
+steps_per_epoch = len(train_data) // batch_size
+
+manager = ScheduledModifierManager.from_yaml(PATH_TO_RECIPE)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# PyTorch training code
+
+manager.finalize(model)
+```
+
+## Keras
+
+The Keras sparsification libraries are located under the `sparseml.keras.optim` package. Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into Keras training pipelines.
+
+The integration is done using the `ScheduledModifierManager` class, which can be created from a recipe file. This class modifies the Keras objects for the desired algorithms using the `modify` method. The edited model, optimizer, and any callbacks necessary to modify the training process are returned. The model and optimizer can be used typically, and the callbacks must be passed into the `fit` or `fit_generator function`. If using `train_on_batch`, the callbacks must be invoked after each call. After training is completed, call into the manager's `finalize` method to clean up the graph for exporting.
+
+To enable all of this, the integration code you will need to write is only a few lines:
+
+```python
+from sparseml.keras.optim import ScheduledModifierManager
+
+## fill in definitions below
+model = None  # your model definition
+optimizer = None  # your optimizer definition
+num_train_batches = len(train_data) / batch_size  # your number of batches per training epoch
+
+manager = ScheduledModifierManager.from_yaml("/PATH/TO/recipe.yaml")
+model, optimizer, callbacks = manager.modify(
+    model, optimizer, steps_per_epoch=num_train_batches
+)
+
+# Keras compilation and training code...
+# Be sure to compile the model after calling modify and pass the callbacks into the fit or fit_generator function.
+# Note, if you are using train_on_batch, then you will need to invoke the callbacks after every step.
+model.compile(...)
+model.fit(..., callbacks=callbacks)
+
+# finalize cleans up the graph for export
+save_model = manager.finalize(model)
+```
+
+## TensorFlow V1
+
+The TensorFlow sparsification libraries for TensorFlow version 1.X are located under the `sparseml.tensorflow_v1.optim` package. Inside are APIs designed to make model sparsification as easy as possible by integrating seamlessly into TensorFlow V1 training pipelines.
+
+The integration is done using the `ScheduledModifierManager` class, which can be created from a recipe file. This class handles modifying the TensorFlow graph for the desired algorithms. With this setup, the training process can be modified to sparsify the model.
+
+### Estimator-Based
+
+It is simpler to integrate with estimator-based pipelines as compared to session-based pipelines. The `ScheduledModifierManager` can override the necessary callbacks in the estimator to modify the graph using the `modify_estimator` function.
+
+```python
+from sparseml.tensorflow_v1.optim import ScheduledModifierManager
+
+## fill in definitions below
+estimator = None  # your estimator definition
+num_train_batches = len(train_data) / batch_size  # your number of batches per training epoch
+
+manager = ScheduledModifierManager.from_yaml("/PATH/TO/config.yaml")
+manager.modify_estimator(estimator, steps_per_epoch=num_train_batches)
+
+# Normal estimator training code...
+```
+
+### Session-Based
+
+Session-based pipelines need a little bit more compared to estimator-based pipelines; however, session-based pipelines are designed to require only a few lines of code for integration.
+
+After graph creation, the manager's `create_ops` method must be called. This will modify the graph as needed for the algorithms and return modifying ops and extras. After creating the session and training, call into `session.run` with the modifying ops after each step. Modifying extras contain objects such as TensorBoard summaries of the modifiers to be used, if desired. Finally, once completed, `complete_graph` must be called to remove the modifying ops for saving and exporting.
+
+For example:
+
+```python
+from sparseml.tensorflow_v1.utils import tf_compat
+from sparseml.tensorflow_v1.optim import ScheduledModifierManager
+
+
+## fill in definitions below
+with tf_compat.Graph().as_default() as graph:
+    # Normal graph setup....
+    num_train_batches = len(train_data) / batch_size  # your number of batches per training epoch
+
+    # Modifying graphs, be sure this is called after graph is created and before session is created
+    manager = ScheduledModifierManager.from_yaml("/PATH/TO/config.yaml")
+    mod_ops, mod_extras = manager.create_ops(steps_per_epoch=num_train_batches)
+
+    with tf_compat.Session() as sess:
+        # Normal training code...
+        # Call sess.run with the mod_ops after every batch update
+        sess.run(mod_ops)
+
+        # Call into complete_graph after training is done
+        manager.complete_graph()
+```
+
+## Custom Training Pipeline Example
+
+### Requirements
+
+[SparseML Torchvision installation](/installation-guides/product-suite-installation/sparseml) is required to run the recipe.
+
+### Integrating SparseML
+
+To enable sparsification of models with recipes, a few edits to the training pipeline code need to be made. Specifically, a `ScheduledModifierManager` instance is used to take over and inject the desired sparsification algorithms into the training process. To do this properly in PyTorch, the `ScheduledModifierManager` requires the instance of the model to modify, the optimizer used for training, and the number of `steps_per_epoch` to ensure algorithms are applied at the right time.
+
+For the integration, the following code illustrates all that is needed:
+
+```python
+from sparseml.pytorch.optim import ScheduledModifierManager
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+Walking through this code:
+
+1. The `ScheduledModifierManager` is imported from the SparseML Python package.
+2. An instance of the `ScheduledModifierManager` is created from a recipe stored as a local file or on the SparseZoo.
+3. The optimizer and model are modified by `ScheduledModifierManager` so that the recipe will be applied while training.
+A wrapped instance of the training optimizer is returned.
+4. After training has been completed, a finalize call is invoked on the `ScheduledModifierManager` to release all resources.
+
+A simple training example utilizing PyTorch and Torchvision with this SparseML integration is:
+
+```python
+import torch
+from torch.nn import Linear
+from torch.utils.data import DataLoader
+from torch.nn import CrossEntropyLoss
+from torch.optim import SGD
+
+from sparseml.pytorch.models import resnet50
+from sparseml.pytorch.datasets import ImagenetteDataset, ImagenetteSize
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+# Model creation
+NUM_CLASSES = 10  # number of Imagenette classes
+model = resnet50(pretrained=True, num_classes=NUM_CLASSES)
+
+# Dataset creation
+batch_size = 64
+train_dataset = ImagenetteDataset(train=True, dataset_size=ImagenetteSize.s320, image_size=224)
+train_loader = DataLoader(train_dataset, batch_size, shuffle=True, pin_memory=True, num_workers=8)
+
+# Device setup
+device = "cuda" if torch.cuda.is_available() else "cpu"
+model.to(device)
+
+# Loss setup
+criterion = CrossEntropyLoss()
+optimizer = SGD(model.parameters(), lr=10e-6, momentum=0.9)
+
+# Recipe - in this case, we pull down a recipe from the SparseZoo for ResNet-50
+# This can be a be a path to a local file
+recipe_path = "zoo:cv/classification/resnet_v1-50/pytorch/sparseml/imagenet/pruned95_quant-none?recipe_type=original"
+
+# SparseML Integration
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch=len(train_loader))
+
+# Training Loop
+for epoch in range(manager.max_epochs):
+    running_loss = 0.0
+    running_corrects = 0.0
+    for inputs, labels in train_loader:
+        inputs = inputs.to(device)
+        labels = labels.to(device)
+        optimizer.zero_grad()
+        with torch.set_grad_enabled(True):
+            outputs, _ = model(inputs)
+            loss = criterion(outputs, labels)
+            _, preds = torch.max(outputs, 1)
+            loss.backward()
+            optimizer.step()
+        running_loss += loss.item() * inputs.size(0)
+        running_corrects += torch.sum(preds == labels.data)
+
+    epoch_loss = running_loss / len(train_loader.dataset)
+    epoch_acc = running_corrects.double() / len(train_loader.dataset)
+    print("Training Loss: {:.4f} Acc: {:.4f}".format(epoch_loss, epoch_acc))
+
+manager.finalize(model)
+```
+
+### Creating a Recipe
+
+<!-- The recipe used in the [Supported Integrations page](get-started/sparsify-a-model/supported-integrationsget-started/sparsify-a-model/supported-integrationsget-started/sparsify-a-model/supported-integrations) will also work for custom integrations. -->
+To dive into the details of this recipe and how to edit it, visit [Supported Integrations](/get-started/sparsify-a-model/supported-integrations).
+The resulting recipe is included here for easy integration and testing.
+
+```yaml
+modifiers:
+    - !GlobalMagnitudePruningModifier
+        init_sparsity: 0.05
+        final_sparsity: 0.8
+        start_epoch: 0.0
+        end_epoch: 30.0
+        update_frequency: 1.0
+        params: __ALL_PRUNABLE__
+
+    - !SetLearningRateModifier
+        start_epoch: 0.0
+        learning_rate: 0.05
+
+    - !LearningRateFunctionModifier
+        start_epoch: 30.0
+        end_epoch: 50.0
+        lr_func: cosine
+        init_lr: 0.05
+        final_lr: 0.001
+
+    - !QuantizationModifier
+        start_epoch: 50.0
+        freeze_bn_stats_epoch: 53.0
+
+    - !SetLearningRateModifier
+        start_epoch: 50.0
+        learning_rate: 10e-6
+
+    - !EpochRangeModifier
+        start_epoch: 0.0
+        end_epoch: 55.0
+```
+
+### Sparsifying a Model
+
+The pipeline is ready to sparsify a model with the integration and recipe setup.
+To begin sparsifying the model:
+
+1. Save the recipe as a local file called `recipe.yaml`.
+2. Pass in the path to the recipe to the training script for the `recipe_path` argument for the `ScheduledModifierManager.from_yaml(recipe_path)` line.
+3. With that completed, start the training pipeline, and the result will be a sparsified model.
+

@@ -1,0 +1,116 @@
+---
+title: "Optimizing With an API or CLI"
+metaTitle: "Optimizing With an API or CLI"
+metaDescription: "Instructions for optimizing with an API or CLI"
+index: 1000
+---
+
+# Optimizing With an API or CLI
+
+Both SparseZoo and SparseML workflows (**sparse transfer learning** and **sparsification from scratch**) can be applied via Python code or CLI scripts.
+
+## Python API
+
+If you need flexibility for an unsupported task or a custom training setup, SparseML provides Python APIs that let you integrate SparseML into any PyTorch or TensorFlow pipeline.
+Because of the declarative nature of recipes, you can apply sparse transfer learning and sparsification from scratch with just three additional lines of code around a training pipeline.
+
+The following code illustrates all that is needed:
+
+```Python
+from sparseml.pytorch.optim import ScheduledModifierManager
+
+model = Model(...)          # typical torch model
+optimizer = Optimizer(...)  # typical torch optimizer
+manager = ScheduledModifierManager.from_yaml(recipe_path)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# ...your typical training loop, using model/optimizer as usual
+
+manager.finalize(model)
+```
+
+To break down this example step-by-step:
+
+- **`model`** and **`optimizer`** are the typical PyTorch objects used in every training loop.
+- **`ScheduledModifierManager.from_yaml(recipe_path)`** accepts a `recipe_path`, which points to the location of 
+a YAML file called a recipe. The recipes encode the hyperparameters of the sparse transfer learning or sparsification from scratch workflows.  
+- **`manager.modify(...)`** edits the `model` and `optimizer` objects to run the sparse transfer learning or 
+sparsification from scratch algorithms specified in the recipe.
+- **`model`** and **`optimizer`** are then used as usual in a training loop. If a sparsification from scratch recipe was
+given to the `manager`, the `optimizer` will gradually prune weights according to the recipe. If a sparsification
+from scratch recipe was passed, pruned weights will remain at zero during gradient updates.
+
+The workflow looks like this:
+
+
+```python
+model = Model()            # model definition
+optimizer = Optimizer()    # optimizer definition
+train_data = TrainData()   # train data definition
+batch_size = BATCH_SIZE    # training batch size
+steps_per_epoch = len(train_data) # batch_size
+
+from sparseml.pytorch.optim import ScheduledModifierManager
+manager = ScheduledModifierManager.from_yaml(PATH_TO_RECIPE)
+optimizer = manager.modify(model, optimizer, steps_per_epoch)
+
+# typical PyTorch training loop, using your model/optimizer as usual
+
+manager.finalize(model)
+```
+
+✅ Learn more about:
+- [Custom integrations](/sparsification-guides/integrating-sparseml-in-pipelines.mdx)
+- [Creating recipes](/sparsification-guides/creating-sparseml-recipes.mdx)
+
+✅ Check out:
+- [PyTorch integration documentation](https://github.com/neuralmagic/sparseml/tree/main/integrations/torchvision) for full usage examples of the Python API.
+- [Hugging Face integration documentation](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers) for details of using SparseML with the Hugging Face Trainer.
+
+## CLI Scripts
+
+For supported tasks, SparseML provides CLI scripts that enable you to kick off either workflow with a single command. SparseML offers pre-made training pipelines for common NLP and CV tasks via the CLI interface. The CLI enables you to kick off training runs with various utilities like dataset loading and pre-processing, checkpoint saving, metric reporting, and logging handled for you. This makes it easy to get up and running in common training pathways.
+
+For instance, we can use the following to kick off a YOLOv5 sparse transfer learning run onto the VOC dataset (using SparseZoo stubs to pull down a sparse model checkpoint and transfer learning recipe). Each task has slightly different arguments that align to their integrations (the Transformer scripts adhere to Hugging Face format while the YOLOv5 scripts adhere to Ultralytics format), but they generally look like the following:
+
+```bash
+sparseml.yolov5.train \
+  --weights zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned85_quant-none?recipe_type=transfer_learn \
+  --recipe zoo:cv/detection/yolov5-s/pytorch/ultralytics/coco/pruned85_quant-none?recipe_type=transfer_learn \
+  --data VOC.yaml \
+  --hyp hyps/hyp.finetune.yaml --cfg yolov5s.yaml --patience 0
+```
+
+Each task has slightly different arguments that align to their integrations (the Transformer scripts adhere to Hugging Face format while the YOLOv5 scripts adhere to Ultralytics format), but they generally look like the following:
+
+```bash
+sparseml.[use_case].train
+    --model    [LOCAL_PATH / SPARSEZOO_STUB]
+    --dataset  [LOCAL_PATH]
+    --recipe   [LOCAL_PATH / SPARSEZOO_RECIPE_STUB]
+    --other_configs [e.g. BATCH_SIZE, EPOCHS, etc.] 
+```
+
+To break down each argument:
+
+- **`--model`** points SparseML to a trained model that is the starting point for the training process. In sparse transfer learning, this is usually a SparseZoo stub that points to the pre-sparsified model of choice. In sparsification from scratch, this is usually a path to a trained PyTorch or TensorFlow model in a local filesystem.
+- **`--dataset`** points SparseML to the dataset to be used (both sparse transfer learning and sparsification from scratch require training data). Datasets must be provided in the form expected by the underlying integration. For instance, if training YOLOv5, data must be provided in the YOLOv5 format. If training Transformers, data must be provided in the Hugging Face format.
+- **`--recipe`** points SparseML to a YAML file called a recipe. Recipes encode sparsity-related hyperparameters used by SparseML. For instance, a recipe for sparsification from scratch encodes the target sparsity level for each layer. A recipe for sparse transfer learning instructs SparseML to maintain sparsity as the fine-tuning occurs.
+
+You can see how SparseML makes sparse transfer learning so easy. You just point:
+
+1. SparseML to a pre-sparsified model and pre-made transfer learning recipe in SparseZoo, and
+2. To your own dataset and you are off!
+
+There are also pre-made sparsification from scratch recipes available in the SparseZoo. For models not yet in SparseZoo, SparseML's declarative recipes make it easy to specify hyperparameters, allowing you to focus on running experiments rather than writing code.
+
+✅ Learn more about:
+- [Sparse transfer learning](https://docs.neuralmagic.com/get-started/transfer-a-sparsified-model)
+- [Sparsification from scratch](https://docs.neuralmagic.com/get-started/sparsify-a-model)
+- [Use Cases](https://docs.neuralmagic.com/use-cases) for details on usage
+- [Recipes](https://docs.neuralmagic.com/user-guides/recipes)
+
+✅ Check out:
+- [YOLOv5 CLI example](https://github.com/neuralmagic/sparseml/blob/main/integrations/ultralytics-yolov5/tutorials/sparse-transfer-learning.md) for details on the YOLOv5 training pipeline
+- [Hugging Face CLI example](https://github.com/neuralmagic/sparseml/blob/main/integrations/huggingface-transformers/tutorials/sparse-transfer-learning-bert.md) for details on the available NLP training pipelines
+- [Torchvision CLI example](https://github.com/neuralmagic/sparseml/blob/main/integrations/torchvision/tutorials/sparse-transfer-learning.md) for details on the image classification training pipelines

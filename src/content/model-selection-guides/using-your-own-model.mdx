@@ -1,0 +1,400 @@
+---
+title: "Using Your Own Model"
+metaTitle: "Using Your Own Model"
+metaDescription: "Instructions for using your own model"
+index: 1000
+---
+
+# Using Your Own Model
+
+This guide walks through use cases leveraging DeepSparse for testing and benchmarking ONNX models for integrated use cases:
+
+- **NLP text classification** utilizing Hugging Face Transformers pipelines and benchmarking for an NLP text classification use case.
+
+- **CV object detection** utilizing Ultralaytics YOLOv5 pipelines and benchmarking for a CV object detection use case.
+
+- **Custom use case** utilizing DeepSparse to create a pipeline for a custom model.
+
+More documentation, models, use cases, and examples are continually being added. If you don't see one you're interested in, search the [DeepSparse GitHub repo](https://github.com/neuralmagic/deepsparse), [SparseML GitHub repo](https://github.com/neuralmagic/sparseml), or [SparseZoo website](https://sparsezoo.neuralmagic.com/). Or, ask in the [Neural Magic Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ).
+
+## NLP Text Classification Model
+
+The following explains how to run a trained model with DeepSparse for NLP inside a Python API called `Pipelines`, which wraps key utilities around DeepSparse for easy testing and deployment.
+
+The text classification `Pipeline`, for example, wraps an NLP model with the proper pre- and post-processing pipelines, such as tokenization. This enables passing in raw text sequences and receiving the labeled predictions from DeepSparse without any extra effort. In this way, DeepSparse combines the simplicity of `Pipelines` with GPU-class performance on CPUs for sparse models.
+
+### Requirements
+
+This example requires [DeepSparse General Installation](/installation-guides/product-suite-installation/deepsparse).
+
+### Model Setup
+
+The first step is collecting an ONNX representaiton of the model and required configuration files.
+The text classification `Pipeline` is integrated with Hugging Face and uses Hugging Face standards
+and configurations for model setup. The following files are required:
+
+- **`model.onnx`**—Exported Transformers model in the ONNX format
+- **`tokenizer.json`**—Hugging Face tokenizer used with the model
+- **`tokenizer_config.json`**—Hugging Face tokenizer configuration used with the model
+- **`config.json`**—Hugging Face configuration file used with the model
+
+For an example of the configuration files, check out [BERT's model page on Hugging Face](https://huggingface.co/bert-base-uncased/tree/main).
+
+There are two options for passing these files to DeepSparse:
+
+<details>
+
+  <summary><b>1) Using SparseZoo stubs (recommended starting point)</b></summary>
+
+SparseZoo contains several pre-sparsified Transformer models, including the configuration files listed above. DeepSparse is integrated
+with SparseZoo, and supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+
+The SparseZoo stubs can be found on SparseZoo model pages, and DistilBERT examples are provided below:
+- [Sparse-quantized DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fpruned80_quant-none-vnni)
+```bash
+zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+  ```
+- [Dense DistilBERT](https://sparsezoo.neuralmagic.com/models/nlp%2Ftext_classification%2Fdistilbert-none%2Fpytorch%2Fhuggingface%2Fmnli%2Fbase-none)
+```bash
+zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+  ```
+
+These SparseZoo stubs are passed arguments to the `Pipeline` constructor in the examples below.
+
+</details>
+
+
+<details>
+
+<summary><b>2) Using a local model</b></summary>
+
+Alternatively, you can use a custom or fine-tuned model from your local drive. There are three steps to using a local model with `Pipelines`:
+
+1. Export the model to `model.onnx` (if you trained with SparseML, use [ONNX export](https://github.com/neuralmagic/sparseml/tree/main/integrations/huggingface-transformers#exporting-to-onnx)).
+2. Collect the configuration files listed above. These are generally stored with the resulting model files from Hugging Face training pipelines (as is the case with SparseML).
+3. Place the files into a directory.
+
+Pass the path of the local directory in the `--model_path` in place of the SparseZoo stubs in the examples below.
+
+</details>
+
+### Inference Pipelines
+
+With the text classification model set up, the model can be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
+The SparseZoo stub for the sparse-quantized DistilBERT model given at the beginning is used in the sample code below.
+The `Pipeline` automatically downloads the necessary files for the model from the SparseZoo and compiles them on your local machine in DeepSparse.
+Once compiled, the model `Pipeline` is ready for inference with text sequences.
+
+```python
+from deepsparse import Pipeline
+
+classification_pipeline = Pipeline.create(
+    task="text-classification",
+    model_path="zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni",
+)
+inference = classification_pipeline(
+    [[
+        "Fun for adults and children.",
+        "Fun for only children.",
+    ]]
+)
+print(inference)
+
+> labels=['contradiction'] scores=[0.9983579516410828]
+```
+
+Because DistilBERT is a language model trained on the MNLI dataset, it can additionally be used to perform zero-shot text classification for any text sequences.
+The code below gives an example of a zero-shot text classification pipeline.
+
+```python
+from deepsparse import Pipeline
+
+zero_shot_pipeline = Pipeline.create(
+    task="zero_shot_text_classification",
+    model_path="zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni",
+    model_scheme="mnli",
+    model_config={"hypothesis_template": "This text is related to {}"},
+)
+inference = zero_shot_pipeline(
+    sequences='Who are you voting for in 2020?',
+    labels=['politics', 'public health', 'Europe'],
+)
+print(inference)
+
+> sequences='Who are you voting for in 2020?' labels=['politics', 'Europe', 'public health'] scores=[0.9345628619194031, 0.039115309715270996, 0.026321841403841972]
+```
+
+### Benchmarking
+
+`deepsparse.benchmark` is a benchmark CLI included with the DeepSparse installation. It is used for convenient and easy inference benchmarking. The CLI takes in either a SparseZoo stub or a path to a local `model.onnx` file.
+
+#### Dense DistilBERT
+
+The code below provides an example for benchmarking a dense DistilBERT model with DeepSparse.
+The output shows that the model achieved 32.6 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 32.2806
+> Latency Mean (ms/batch): 61.9034
+> Latency Median (ms/batch): 61.7760
+> Latency Std (ms/batch): 0.4792
+> Iterations: 324
+```
+
+#### Sparsified DistilBERT
+
+Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of DistilBERT.
+It achieved 221.0 items per second, a **6.8X increase** in performance over the dense baseline.
+
+```bash
+$ deepsparse.benchmark zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:nlp/text_classification/distilbert-none/pytorch/huggingface/mnli/pruned80_quant-none-vnni
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 220.9794
+> Latency Mean (ms/batch): 9.0147
+> Latency Median (ms/batch): 9.0085
+> Latency Std (ms/batch): 0.1037
+> Iterations: 2210
+```
+
+## CV Object Detection Model
+
+The following explains how to run a trained model on DeepSparse for Object Detection inside a Python API called `Pipelines`, which wraps key utilities around DeepSparse for easy testing and deployment.
+
+The object detection `Pipeline,` for example, wraps a trained model with the proper pre- and post-processing pipelines such as NMS. This enables the passing of raw images and receiving the bounding boxes from the DeepSparse Engine without any extra effort. With all of this built on top of the DeepSparse Engine, the simplicity of `Pipelines` is combined with GPU-class performance on CPUs for sparse models.
+
+### Requirements
+
+This example requires [DeepSparse YOLO Installation](/installation-guides/product-suite-installation/deepsparse).
+
+### Model Setup
+
+There are two options for passing these files to DeepSparse:
+
+The object detection `Pipeline` uses Ultralytics YOLOv5 standards and configurations for model setup. The possible files/variables that can be passed in are:
+
+- **`model.onnx`**—Exported YOLOv5 model in the ONNX format
+- **`model.yaml`**—Ultralytics model configuration file containing configuration information about the model and its post-processing
+- **`class_names`**—A list, dictionary, or file containing the index to class name mappings for the trained model
+
+`model.onnx` is the only required file.
+The pipeline will default to a standard setup for the COCO dataset if the model configuration file or class names are not provided.
+
+There are two options for passing these files to DeepSparse:
+
+<details>
+<summary><b>1) Using the SparseZoo</b></summary>
+
+This pathway is relevant if you want to use a pre-sparsified state-of-the-art model off the shelf.
+
+SparseZoo is a repository of pre-trained and pre-sparsified models. DeepSparse supports SparseZoo stubs as inputs for automatic download and inclusion into easy testing and deployment.
+These models include dense and sparsified versions of YOLOv5 trained on the COCO dataset for performant and general detection, among others.
+The SparseZoo stubs can be found on SparseZoo model pages, and YOLOv5l examples are provided below:
+- [Sparse-quantized YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fpruned_quant-aggressive_95)
+```bash
+zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+  ```
+- [Dense YOLOv5l](https://sparsezoo.neuralmagic.com/models/cv%2Fdetection%2Fyolov5-l%2Fpytorch%2Fultralytics%2Fcoco%2Fbase-none)
+```bash
+zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+  ```
+
+These SparseZoo stubs can be passed as arguments to the `Pipeline` constructor in the examples below.
+
+</details>
+
+<details>
+<summary><b>2) Using a custom local model</b></summary>
+
+This pathway is relevant if you want to use a model fine-tuned on your data with SparseML or a custom model.
+
+There are three steps to using a local model with `Pipelines`:
+1. Create the `model.onnx` file (if you trained with SparseML, use the [ONNX export script](https://github.com/neuralmagic/sparseml/tree/main/integrations/ultralytics-yolov5#exporting-the-sparse-model-to-onnx)).
+2. Collect the `model.yaml` file and `class_names` listed above.
+3. Pass the local paths of the files in place of the SparseZoo stubs.
+
+</details>
+
+The examples below use the SparseZoo stubs. Pass the path to the local model in place of the stubs if you want to use a custom model.
+
+### Inference Pipelines
+
+With the object detection model set up, the model can be passed into a DeepSparse `Pipeline` utilizing the `model_path` argument.
+The SparseZoo stub for the sparse-quantized YOLOv5l model given at the beginning is used in the sample code below.
+It will automatically download the necessary files for the model from the SparseZoo and then compile them on your local machine with DeepSparse.
+Once compiled, the model `Pipeline` is ready for inference with images.
+
+First, a sample image is downloaded that will be run through the example to test the pipeline.
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, instantiate the `Pipeline` and pass in the image using the images argument:
+
+```python
+from deepsparse import Pipeline
+
+yolo_pipeline = Pipeline.create(
+    task="yolo",
+    model_path="zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95", # if using custom model, pass in local path to model.onnx
+    class_names=None,   # if using custom model, pass in a list of classes the model will clasify or a path to a json file containing them
+    model_config=None,  # if using custom model, pass in the path to a local model config file here
+)
+inference = yolo_pipeline(images=['basilica.jpg'], iou_thres=0.6, conf_thres=0.001)
+print(inference)
+
+> predictions=[[[174.3507843017578, 478.4552917480469, 346.09051513671875, 618.4129638671875, ...
+```
+
+### Benchmarking
+
+The DeepSparse installation includes a CLI for convenient performance benchmarking.
+You can pass a SparseZoo stub or a local `model.onnx` file.
+
+#### Dense YOLOv5l
+
+The code below provides an example for benchmarking a dense YOLOv5l model with DeepSparse.
+The output shows that the model achieved 5.3 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/base-none
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 5.2836
+> Latency Mean (ms/batch): 378.2448
+> Latency Median (ms/batch): 378.1490
+> Latency Std (ms/batch): 2.5183
+> Iterations: 54
+```
+
+#### Sparsified YOLOv5l
+
+Running on the same server, the code below shows how the benchmarks change when utilizing a sparsified version of YOLOv5l.
+It achieved 19.0 items per second, a **3.6X** increase in performance over the dense baseline.
+
+```bash
+$ deepsparse.benchmark zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.0 (8eaddc24) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: zoo:cv/detection/yolov5-l/pytorch/ultralytics/coco/pruned_quant-aggressive_95
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 18.9863
+> Latency Mean (ms/batch): 105.2613
+> Latency Median (ms/batch): 105.0656
+> Latency Std (ms/batch): 1.6043
+> Iterations: 190
+```
+
+## Custom Use Case
+
+The following explains how to run a model on DeepSparse for a custom task inside a Python API called `Pipelines`, which wraps key utilities around DeepSparse for easy testing and deployment.
+
+DeepSparse supports many operators within ONNX, enabling performance for most models and use cases outside of the ones available on the SparseZoo. The `CustomTaskPipeline` enables you to wrap your model with custom pre- and post-processing functions for simple deployment and benchmarking. In this way, DeepSparse combines the simplicity of Pipelines with GPU-class performance for any use case.
+
+### Requirements
+
+This example requires [DeepSparse General Installation](/installation-guides/product-suite-installation/deepsparse) and [SparseML Torchvision Installation](/installation-guides/product-suite-installation/sparseml).
+
+### Model Setup
+
+For custom model deployment, export your model to the ONNX model format (create a `model.onnx` file).
+SparseML has available wrappers for ONNX export classes and APIs for a more straightforward export process.
+A sample export utilizing this API for a MobileNetV2 TorchVision model is given below.
+
+```python
+import torch
+from torchvision.models.mobilenetv2 import mobilenet_v2
+from sparseml.pytorch.utils import export_onnx
+
+model = mobilenet_v2(pretrained=True)
+sample_batch = torch.randn((1, 3, 224, 224))
+export_path = "custom_model.onnx"
+export_onnx(model, sample_batch, export_path)
+```
+
+Once the model is in an ONNX format, it is ready for inclusion in a `CustomTaskPipeline` for benchmarking.
+Examples for both are given below.
+
+### Inference Pipelines
+
+The `model.onnx` file can be passed into a DeepSparse `CustomTaskPipeline` utilizing the `model_path` argument alongside optional pre- and post-processing functions.
+
+A sample image is downloaded that will be run through the example to test the `Pipeline`.
+
+```bash
+wget -O basilica.jpg https://raw.githubusercontent.com/neuralmagic/deepsparse/main/src/deepsparse/yolo/sample_images/basilica.jpg
+```
+
+Next, the pre- and post-processing functions are defined, and the pipeline enabling the classification of the image file is instantiated:
+
+```python
+from deepsparse.pipelines.custom_pipeline import CustomTaskPipeline
+import torch
+from torchvision import transforms
+from PIL import Image
+
+IMAGENET_RGB_MEANS = [0.485, 0.456, 0.406]
+IMAGENET_RGB_STDS = [0.229, 0.224, 0.225]
+preprocess_transforms = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=IMAGENET_RGB_MEANS, std=IMAGENET_RGB_STDS),
+])
+
+def preprocess(inputs):
+    with open(inputs, "rb") as img_file:
+        img = Image.open(img_file)
+        img = img.convert("RGB")
+    img = preprocess_transforms(img)
+    batch = torch.stack([img])
+    return [batch.numpy()]  # deepsparse requires a list of numpy array inputs
+
+def postprocess(outputs):
+    return outputs  # list of numpy array outputs
+
+custom_pipeline = CustomTaskPipeline(
+    model_path="custom_model.onnx",
+    process_inputs_fn=preprocess,
+    process_outputs_fn=postprocess,
+)
+inference = custom_pipeline("basilica.jpg")
+print(inference)
+
+> [array([[-5.64189434e+00, -2.78636312e+00, -2.62499309e+00, ...
+```
+
+### Benchmarking
+
+`deepsparse.benchmark` is a benchmark CLI included with the DeepSparse installation. It is used for convenient and easy inference benchmarking. The CLI takes in either SparseZoo stubs or paths to a local `model.onnx` file.
+
+The code below provides an example for benchmarking the previously exported MobileNetV2 model.
+The output shows that the model achieved 441 items per second on a 4-core CPU.
+
+```bash
+$ deepsparse.benchmark custom_model.onnx
+
+> DeepSparse Engine, Copyright 2021-present / Neuralmagic, Inc. version: 1.0.2 (7dc5fa34) (release) (optimized) (system=avx512, binary=avx512)
+> Original Model Path: custom_model.onnx
+> Batch Size: 1
+> Scenario: async
+> Throughput (items/sec): 441.2780
+> Latency Mean (ms/batch): 4.5244
+> Latency Median (ms/batch): 4.5054
+> Latency Std (ms/batch): 0.0774
+> Iterations: 4414
+```

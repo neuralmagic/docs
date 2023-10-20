@@ -1,0 +1,183 @@
+---
+title: "Overview"
+metaTitle: "Deployment Overview"
+metaDescription: "Overview of deployment concepts"
+index: 1000
+---
+
+# Deployment Overview
+
+<img src="/src/images/infographic-concepts.png">
+
+Deployment is accomplished with DeepSparse.
+
+DeepSparse is a CPU inference runtime that takes advantage of sparsity within neural networks to execute inference quickly and reduce compute. Coupled with SparseML, an open-source optimization library, DeepSparse enables you to take advantage of the flexibility and scalability of software-defined inference to:
+
+- Deploy the same model and runtime on any hardware from Intel to AMD to ARM, and from cloud to data center to edge, including pre-existing systems
+
+- Scale vertically from 1 to 192 cores, tailoring the footprint to the exact needs of an application
+
+- Scale horizontally with standard Kubernetes, including using services like EKS/GKE
+
+- Scale abstractly with serverless instances such as GCP Cloud Run and AWS Lambda
+
+- Integrate easily into "deploy with code" provisioning systems
+
+- Eliminate wrestling with drivers, operator support, or compatibility issues
+
+Simply put, deep learning deployments no longer need to choose between the performance of GPUs and the simplicity of software!
+
+DeepSparse is able to integrate into popular deep learning libraries (for example, Hugging Face, Ultralytics) allowing you to leverage DeepSparse for loading and deploying sparse models with ONNX. ONNX gives the flexibility to serve your model in a framework-agnostic environment. Support includes PyTorch, TensorFlow, Keras, and many other frameworks.
+
+DeepSparse achieves its performance using breakthrough algorithms to accelerate the computation. Two high-level ideas underpin the system:
+
+1. **DeepSparse is "sparsity-aware.”**<br>Neural Magic has implementations of common neural network operations that take advantage of structured and unstructured sparsity. Because the locations of the 0 weights in a sparse model are known at compile time, DeepSparse can "skip" the multiply-adds by 0. This reduces the number of instructions significantly, and the computation becomes memory-bound.
+
+2. **DeepSparse takes advantage of the large caches in CPUs.**<br>DeepSparse identifies and breaks down the computational graph into depth-wise chunks (called **tensor-columns**) that can be executed in parallel across many CPU cores. This pattern has a much better locality of reference in comparison to traditional layer-by-layer execution. In this way, DeepSparse minimizes data movement in and out of the large caches in a CPU, which is the performance bottleneck in a memory-bound system.
+
+These two ideas sum up GPU-class performance on commodity CPUs! As far as we know, DeepSparse is the only production-grade runtime that focuses on speedups from unstructured sparsity. The unstructured sparsity optimizations are hard to implement but are an important unlock because unstructured pruning allows us to reach the high levels of sparsity needed to see the performance gains without sacrificing accuracy.
+Beyond all the GPU-class performance and benefits of the scalability of CPU-only deployments, DeepSparse also wraps the runtime with APIs and utilities that simplify the process of adding inference to an application and monitoring a model in production. For instance:
+
+- Trained models are passed in the open ONNX file format, enabling easy exporting from common packages like PyTorch, Keras, and TensorFlow.
+
+- Benchmarking latency and performance is available via a single CLI call, with various arguments to test scenarios.
+
+- Pipelines utilities wrap the model execution with input pre-processing and output post-processing, simplifying deployment and adding functionality like multi-stream, bucketing, and dynamic shape.
+
+✅ Check out more about:
+- [Neural Magic’s technology](https://neuralmagic.com/technology/)
+- [Sparsification](/sparsification-guides/overview.mdx)
+
+## Deploying on CPUs With DeepSparse
+
+There are three primary interfaces for interacting with DeepSparse:
+
+- **Engine** is the lowest-level API. It is a Python API that provides direct access to the runtime. With the engine, you pass tensors and receive the raw logits.
+
+- **Pipeline** is a Python API that wraps the engine with pre- and post-processing. With the pipeline, you pass raw data and receive the prediction.
+
+- **Server** wraps the pipelines with a REST API using FastAPI. This allows you to create a model service around a pipeline. With the server, you send raw data over HTTP and receive the prediction.
+
+Pipeline and Server are the preferred pathways for interacting with DeepSparse.
+
+### Engine
+
+The example below downloads a 90% pruned-quantized BERT model for sentiment analysis in ONNX format from SparseZoo, compiles the model, and runs inference on randomly generated input.
+
+```python
+from deepsparse import Engine
+from deepsparse.utils import generate_random_inputs, model_to_path
+
+# download onnx, compile
+zoo_stub = "zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none"
+batch_size = 1
+compiled_model = Engine(model=zoo_stub, batch_size=batch_size)
+
+# run inference (input is raw numpy tensors, output is raw scores)
+inputs = generate_random_inputs(model_to_path(zoo_stub), batch_size)
+output = compiled_model(inputs)
+print(output)
+
+# > [array([[-0.3380675 ,  0.09602544]], dtype=float32)] << raw scores
+```
+
+### Pipeline
+
+Pipeline is the default API for interacting with DeepSparse. DeepSparse Pipelines are Python APIs that wrap the runtime with prewritten pre- and post-processing (as well as other) utilities, making it easy to call the invoked model from within an application. For natural language processing (NLP), this means you can pass strings to DeepSparse and receive predictions. For object detection (computer vision, CV), this means you pass a raw image to DeepSparse and get back bounding boxes after non-maximal suppression (NMS) has been applied.
+
+DeepSparse supports the following tasks out of the box:
+
+- CV: Image Classification
+- CV: Object Detection
+- CV: Segmentation
+- NLP: Sentiment Analysis
+- NLP: Text Classification
+- NLP: Token Classification
+- NLP: Document Classification
+- NLP: Extractive Question Answering
+- NLP: HayStack Information Retrieval
+- Embedding Extraction
+
+The example below downloads a 90% pruned-quantized BERT model for sentiment analysis in ONNX format from SparseZoo, sets up a pipeline, and runs inference on sample data.
+
+```python
+from deepsparse import Pipeline
+
+# download onnx, set up pipeline
+zoo_stub = "zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none"  
+sentiment_analysis_pipeline = Pipeline.create(
+  task="sentiment-analysis",    # name of the task
+  model_path=zoo_stub,          # zoo stub or path to local onnx file
+)
+
+# run inference (input is a sentence, output is the prediction)
+prediction = sentiment_analysis_pipeline("I love using DeepSparse Pipelines")
+print(prediction)
+# > labels=['positive'] scores=[0.9954759478569031]
+```
+
+We are continually adding more tasks. Additionally, DeepSparse offers a `CustomTaskPipeline`, which enables you to add custom pre- and post-processing for unsupported tasks in a consistent way. Want a new use case? Reach out in our Community Slack.
+
+✅ Check out:
+- Example [pipeline recipes](/sparsification-guides/integrating-sparseml-in-pipelines.mdx)
+- [Use cases Page](https://github.com/neuralmagic/deepsparse/tree/main/docs/use-cases) for more details on supported tasks
+- [Pipelines User Guide](https://github.com/neuralmagic/deepsparse/blob/main/docs/user-guide/deepsparse-pipelines.md) for more usage details
+
+### Server
+
+Built on FastAPI and uvicorn, DeepSparse Server is a wrapper around DeepSparse Pipelines that enables you to invoke inference via REST APIs. This means you can create a model-serving endpoint running DeepSparse in the cloud and datacenter with just a single command line call. Additionally, because DeepSparse Server is CPU-only, a model service with DeepSparse:
+
+- Easily can be scaled up and down elastically with Kubernetes,
+- Can run on serverless services like Lambda and Cloud Run, and
+- Is integrated with managed service endpoints like SageMaker and Hugging Face endpoints.
+
+DeepSparse Server is launched from the command line, configured via arguments or a server configuration file. The following downloads a 90% pruned-quantized BERT model for sentiment analysis in ONNX format from SparseZoo and launches a sentiment analysis endpoint:
+
+```bash
+deepsparse.server \
+  --task sentiment-analysis \
+  --model_path zoo:nlp/sentiment_analysis/obert-base/pytorch/huggingface/sst2/pruned90_quant-none
+```
+
+Sending a request:
+
+```python
+import requests
+
+url = "http://localhost:5543/predict" # Server's port default to 5543
+obj = {"sequences": "Snorlax loves my Tesla!"}
+
+response = requests.post(url, json=obj)
+print(response.text)
+# {"labels":["positive"],"scores":[0.9965094327926636]}
+```
+
+✅ Check out:
+- [Use cases Page](https://github.com/neuralmagic/deepsparse/tree/main/docs/use-cases) for more details on supported tasks
+- [Server User Guide](https://github.com/neuralmagic/deepsparse/blob/main/docs/user-guide/deepsparse-server.md) for more usage details
+
+## Deploying a Model
+
+DeepSparse comes pre-installed with a server to enable easy and performant model deployments. The server provides an HTTP interface to communicate and run inferences on the deployed model rather than the Python APIs or CLIs. It is a production-ready model serving solution built on Neural Magic's sparsification solutions resulting in faster and cheaper deployments.
+
+The inference server is built with performance and flexibility in mind, with support for multiple models and multiple simultaneous streams. It is also designed to be a plug-and-play solution for many ML Ops deployment solutions, including Kubernetes and Amazon SageMaker.
+
+## Additional DeepSparse Deployment Features
+
+DeepSparse has multiple modes that allow you to tune a deployment. Examples include:
+
+- [Benchmarking tools](/deployment-guides/benchmarking.mdx) compare performance and tune configurations.
+- [Synchronous scheduling](/deployment-guides/inference-types.mdx) minimizes latency by using all cores on a single input.
+- [Asynchronous scheduling](/deployment-guides/inference-types.mdx) controls the number of streams that can be executed simultaneously for handling multiple clients.
+
+DeepSparse has utilities that make it easy to handle dynamic inputs. Examples include:
+
+- Dynamic batch handles various batch sizes without needing to recompile the model.
+- Bucketing handles NLP sequences of variable length without padding to `max_seq_len`.
+
+DeepSparse has capabilities to support MLOps-related monitoring. Examples include:
+
+- [System logging](/deployment-guides/deepsparse-logging.mdx) monitors granular request latency data with Prometheus and Grafana.
+- [Data logging](/deployment-guides/deepsparse-logging.mdx) logs input and output data (and projections thereof) for use with data drift detection or retraining.
+
+All this means that DeepSparse is not only fast and CPU-only, but also easy to add to your application. With DeepSparse, you can spend less time writing scaffolding-code and focus more on building a great system.

@@ -1,0 +1,80 @@
+---
+title: "Deploying on CPUs"
+metaTitle: "Deploying on CPUs"
+metaDescription: "DeepSparse deployment overview"
+index: 5000
+---
+# Deploying on CPUs
+
+## **How DeepSparse Works**
+
+DeepSparse achieves its performance using breakthrough algorithms to accelerate the computation. Two high-level ideas underpin the system:
+
+1. **DeepSparse is "sparsity-aware.” **Neural Magic has implementations of common neural network operations that take advantage of structured and unstructured sparsity. Because the locations of the 0 weights in a sparse model are known at compile time, DeepSparse can "skip" the multiply-adds by 0. This reduces the number of instructions significantly, and the computation becomes memory-bound.
+  
+2. **DeepSparse takes advantage of the large caches in CPUs**. DeepSparse identifies and breaks down the computational graph into depth-wise chunks (called **tensor-columns**) that can be executed in parallel across many CPU-cores. This pattern has a much better locality of reference in comparison to traditional layer-by-layer execution. In this way, DeepSparse minimizes data movement in and out of the large caches in a CPU, which is the performance bottleneck in a memory-bound system.
+
+These two ideas sum up GPU-class performance on commodity CPUs! As far as we know, DeepSparse is the only production-grade runtime that focuses on speedups from unstructured sparsity. The unstructured sparsity optimizations are hard to implement but are an important unlock because unstructured pruning allows us to reach the high levels of sparsity needed to see the performance gains without sacrificing accuracy.
+
+✅ Check out:
+
+* [More on Neural Magic’s technology](https://neuralmagic.com/technology/)
+* [More on sparsity](https://docs.neuralmagic.com/user-guides/conceptual/optimizing-model-inference)
+
+Beyond all the GPU-class performance and benefits of the scalability of CPU-only deployments, DeepSparse also wraps the runtime with APIs and utilities that simplify the process of adding inference to an application and monitoring a model in production.
+
+## DeepSparse Pipelines
+
+DeepSparse pipelines are Python APIs that wrap the runtime with prewritten pre- and post-processing utilities that make it easy to call the invoked model from within an application. For NLP, this means you can pass strings to DeepSparse and receive predictions back. For object detection, this means you pass a raw image to DeepSparse and get back bounding boxes after NMS has been applied.
+
+DeepSparse supports the following tasks out of the box:
+
+* CV: Image Classification
+* CV: Object Detection
+* CV: Segmentation
+* NLP: Sentiment Analysis
+* NLP: Text Classification
+* NLP: Token Classification
+* NLP: Document Classification
+* NLP: Extractive Question Answering
+* NLP: HayStack Information Retrieval
+* Embedding Extraction
+
+We are continually adding more tasks. Additionally, DeepSparse offers a CustomTaskPipeline, which enables you to add custom pre- and post-processing for unsupported tasks in a consistent way.
+
+Want a new use case? Reach out in our [Community Slack](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ).
+
+## DeepSparse Server
+
+Built on FastAPI and uvicorn, DeepSparse Server is a wrapper around DeepSparse pipelines that enable you to invoke inference via REST APIs. This means you can create a model-serving endpoint running DeepSparse in the cloud and datacenter with just a single command line call. Additionally, because DeepSparse Server is CPU-only, a model service with DeepSparse:
+
+* Easily can be scaled up and down elastically with Kubernetes,
+* Can run on serverless services like Lambda and Cloud Run, and
+* Is integrated with managed service endpoints like SageMaker and Hugging Face endpoints.
+
+## Additional Features
+
+DeepSparse has multiple modes that allow you to tune a deployment. Examples include:
+
+* Synchronous Scheduling—Minimize latency by using all cores on a single input.
+* Asynchronous Scheduling—Control the number of streams that can be executed simultaneously for handling multiple clients.
+* Benchmarking—Compare performance and tune configurations.
+
+DeepSparse has utilities that make it easy to handle dynamic inputs. Examples include:
+
+* Dynamic Batch—Handle various batch sizes without needing to recompile the model.
+* Bucketing—Handle NLP sequences of variable length without padding to `max_seq_len`.
+
+DeepSparse has capabilities to support MLOps-related monitoring. Examples include:
+
+* System Logging—Monitor granular request latency data with Prometheus and Grafana.
+* Data Logging—Log input and output data (and projections thereof) for use with data drift detection or retraining.
+
+What does all of this mean? DeepSparse is not only fast and CPU-only, but also **_easy_** to add to your application. With DeepSparse, you can spend less time writing scaffolding-code and focus more on building a great system.
+
+[We love to hear feature requests in our Community Slack!](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ)
+
+✅ Check out:
+
+* [Example Pipeline in Use a Model](https://docs.neuralmagic.com/get-started/use-a-model/)
+* [Example Server in Deploy a Model](https://docs.neuralmagic.com/get-started/deploy-a-model/)
