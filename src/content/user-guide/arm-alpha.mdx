@@ -1,0 +1,177 @@
+---
+title: "DeepSparse ARM Alpha"
+metaTitle: "DeepSparse ARM Alpha"
+metaDescription: "Description of how to trial DeepSparse on ARM"
+index: 6000
+---
+
+# DeepSparse ARM Alpha
+
+In our recent 1.4 product release, Neural Magic launched alpha support for DeepSparse on AWS Graviton and Ampere. We are working toward a general release across ARM server, embedded (like Raspberry Pi), and mobile (like Android) platforms in the first half of 2023.
+
+[Sign up to join the waitlist for the general release of DeepSparse on ARM](https://neuralmagic.com/deepsparse-arm-waitlist)
+
+### Trial the Alpha 
+
+In this guide, we will walk through how to trial the DeepSparse ARM alpha, including:
+- Explaining the alpha status
+- Assessing current performance against the ONNX Runtime baseline
+- Setting up the DeepSparse ARM on an AWS Graviton or Ampere system
+- Benchmarking performance
+- Deploying a model
+
+### Want to Provide Feedback?
+
+Neural Magic is offering a gift card for a 45 minute conversation to discuss experience with the ARM Alpha and feature requests for DeepSparse on ARM (e.g. what platforms would you like to see supported?). 
+
+[Reach out to set up time to discuss](https://neuralmagic.com/contact/)
+
+## Understand Alpha Status
+
+DeepSparse on ARM is currently in Alpha state. It has the following limitations:
+- AWS Graviton and Ampere Only
+- Long model compilation times (e.g., compiling BERT on a `c7g.8xlarge` instance takes ~2.5 minutes)
+- Slower performance than DeepSparse on x86
+- Performance and accuracy support for limited set of models (we have tested ResNet-50, YOLOv5, and BERT)
+
+Over the coming months as we approach general release, we will be finalizing DeepSparse on ARM to deliver similiar compile times, performance, model selection, and platform support as the x86 version.
+
+## Current Performance
+
+With the Alpha launch, DeepSparse offers competitive dense performance with ONNX Runtime along with signficant performance gains running sparse models. The following throughput statistics were generated on an AWS Graviton3 `c7g.8xlarge` instance (32 cores):
+
+<p align="center">
+    <img width="100%" src="https://raw.githubusercontent.com/neuralmagic/docs/arm-alpha-new/src/images/arm-benchmarks.png"/>
+</p>
+
+As we approach general release, we will push sparse performance signficiantly further with continued optimizations, including adding support for speedup from unstructured sparsity combined with quantization. For instance, on a 16 core x86 AVX512 machine, DeepSparse runs a 90% pruned-INT8 quantized BERT model runs 2x faster than a 90% pruned-FP32 BERT model. On ARM, these models currently run at the same speed.
+
+## Get Set Up
+
+### System Requirements
+
+The general release of DeepSparse for ARM will offer support for ARMv8+ devices, including server
+systems like Ampere, edge devices like Rasbperry Pi, and mobile devices like Android. 
+
+However, the ARM Alpha only runs on AWS Graviton and Ampere systems, including:
+- AWS Graviton3 Instances, such as `c7g`, `c7gn`
+- AWS Graviton2 Instances, such as `c6g`, `c6gd`, `c6gn`
+- GCP Ampere Instances, such as `t2a`
+- Ampere, such as `Altra` and `Altra Max`
+
+### Model Requirements
+
+The general release of DeepSparse on ARM will offer support for the same set of models as DeepSparse on x86. At current, we have tested accuracy and performance on a limited subset of models, including BERT, ResNet-50, and YOLOv5.
+
+### Install via `pip`
+
+The ARM Alpha is available for download via PyPI on the nightly package. Run the following:
+```bash
+pip install deepsparse-nightly[server]
+```
+
+Note: if you are running on Ubuntu on AWS Graviton3, your install may fail with `ERROR: Failed building wheel for psutil`. Run the following to install the necessary packages needed to build the wheel for `psutil`:
+```
+sudo apt-get install gcc python3-dev
+```
+
+## Benchmark Performance
+
+Let's benchmark DeepSparse's throughtput on BERT-base on an AWS `c7g.8xlarge` instance using the `deepsparse.benchmark` utility.
+
+#### ONNX Runtime Baseline
+
+Make sure you have ONNX Runtime installed (`pip install onnxruntime`).
+
+ORT achieves 15 items/second running the standard BERT model at batch 64 with sequence length 384.
+```bash
+deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/base-none -b64 -s sync -nstreams 1 -e onnxruntime
+
+>> Original Model Path: zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/base-none
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 14.9156
+```
+
+#### DeepSparse Dense Performance
+
+With dense, unoptimized models, DeepSparse achieves competitive performance with ONNX Runtime, reaching 16.5 items/second.
+
+```bash
+deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/base-none -b64 -s sync -nstreams 1
+
+>> Original Model Path: zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/base-none
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 16.5698
+```
+
+#### DeepSparse Sparse Performance
+
+With sparsity applied to the model, DeepSparse achieves significant performance speedups over ONNX Runtime. With a 90% pruned version of BERT, DeepSparse achieves 50 items/second - **this is a 3.5x performance gain over the ORT baseline**!
+
+```bash
+deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned90-none -b64 -s sync -nstreams 1
+
+>> Original Model Path: zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned90-none
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 50.5135
+```
+
+#### DeepSparse Sparse-Quantized Performance
+
+With sparsity and quantization applied to the model, DeepSparse achieves an additional performance speedup. With an 80% 4-block pruned-quantized version of BERT, DeepSparse achieves 71 items/second - **this is a 4.7x performance gain over the ORT baseline**!
+
+```bash
+deepsparse.benchmark zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned80_quant-none-vnni -b64 -s sync
+
+>> Original Model Path: zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned80_quant-none-vnni
+>> Batch Size: 64
+>> Scenario: sync
+>> Throughput (items/sec): 71.3083
+```
+
+*Note that DeepSparse on ARM currently only sees a performance gain over the FP32 baseline from INT8 quantization with 4-block pruned models, where weights are pruned in groups of 4. In the general release of ARM, we will support performance speedups from quantization applied to unstructured sparse models, just like the x86 version.*
+
+## Deploy a Model
+
+Just like DeepSparse on x86, DeepSparse on ARM provides both a Python Pipeline API and an out-of-the-box model server.
+
+Here's an example Pipeline for the sentiment analysis task:
+```python
+from deepsparse import Pipeline
+
+zoo_stub = "zoo:nlp/sentiment_analysis/bert-base/pytorch/huggingface/sst2/pruned90-none"
+sa_pipeline = Pipeline.create(task="sentiment-analysis", model_path=zoo_stub)
+inference = sa_pipeline("Snorlax loves my Tesla!")
+print(inference)
+
+> labels=['LABEL_1'] scores=[0.997743546962738]  # positive sentiment
+```
+
+Here's an example spinning up a REST endpoint for the question answering task:
+```bash
+deepsparse.server \
+    --task question-answering \
+    --model_path "zoo:nlp/question_answering/obert-base/pytorch/huggingface/squad/pruned80_quant-none-vnni"
+```
+
+Making a request:
+```python
+import requests
+url = "http://localhost:5543/predict" # Server's port default to 5543
+obj = {
+    "question": "Who is Mark?",
+    "context": "Mark is batman."
+}
+response = requests.post(url, json=obj)
+print(response.text)
+
+> '{"score":0.9534820914268494,"start":8,"end":14,"answer":"batman"}'
+```
+
+## Next Steps
+
+- [Reach out to us to set up time to discuss your experience and feature / platform requests](https://neuralmagic.com/contact/)
+- [Sign up for early access to the general release of DeepSparse on ARM](https://neuralmagic.com/deepsparse-arm-waitlist)
