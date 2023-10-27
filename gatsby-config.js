@@ -6,7 +6,7 @@ const plugins = [
   {
     resolve: `gatsby-plugin-layout`,
     options: {
-        component: require.resolve(`./src/root.jsx`)
+      component: require.resolve(`./src/root.jsx`)
     }
   },
   'gatsby-plugin-emotion',
@@ -57,6 +57,15 @@ const plugins = [
         include: `${__dirname}/src/images/icons/`
       }
     }
+  },
+  {
+    resolve: `gatsby-plugin-algolia`,
+    options: {
+      appId: process.env.GATSBY_ALGOLIA_APP_ID,
+      apiKey: process.env.GATSBY_ALGOLIA_ADMIN_KEY,
+      queries: require("./src/utils/algolia-queries"),
+      chunkSize: 10000, // default: 1000
+    },
   },
   `gatsby-plugin-meta-redirect`, // keep it in last in list
 ];
