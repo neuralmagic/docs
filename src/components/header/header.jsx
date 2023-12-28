@@ -15,6 +15,53 @@ import MobileMenuItem from "./mobile-menu-item";
 
 const Container = styled.div`
   width: 100%;
+  display: flex;
+  flex-direction: column;
+`;
+
+const NotificationContainer = styled.div`
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-items: center;
+  box-sizing: border-box;
+  background-color: #092040;
+  text-align: center;
+  padding-top: 16px;
+  padding-bottom: 16px;
+`;
+
+const NotificationText = styled.span`
+  width: 100%;
+  max-width: 1360px;
+  color: #FFFFFF;
+  box-sizing: border-box;
+
+  ${minMediaQueries["xl"]} {
+    padding-left: 80px;
+    padding-right: 80px;
+  }
+
+  ${maxMediaQueries["xl"]} {
+    padding-left: 40px;
+    padding-right: 40px;
+  }
+
+  ${maxMediaQueries["lg"]} {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+
+  ${maxMediaQueries["md"]} {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+`;
+
+const HeaderContainer = styled.div`
+  width: 100%;
   max-width: 1360px;
   height: 80px;
   display: flex;
@@ -84,43 +131,54 @@ const MobileMenuContainer = styled.div`
 
 const Header = ({data}) => {
   return (
-    <Container>
-      <Link to={'https://neuralmagic.com'}>
-        <NMImage src={NMLogo} alt={'Neural Magic Logo'} />
-        <NMImageMobile src={NMLogoMobile} alt={'Neural Magic Logo'} />
-      </Link>
-      <MenuContainer>
-        {
-          HeaderMenusConfig.items.map((config, index) =>
-            <MenuItem key={config.title}
-                      text={config.title}
-                      to={config.link}>
+      <Container>
+        <NotificationContainer>
+          <NotificationText>
+            🚨 Warning: The current docs site is outdated. Neural Magic's upcoming 1.7 release will bring updated content.
+            Meanwhile, please refer to our GitHub repositories for the latest docs:
+            &nbsp; <a href="https://github.com/neuralmagic/deepsparse" style={{color: "#3171A8"}}>DeepSparse</a>,
+            &nbsp; <a href="https://github.com/neuralmagic/sparseml" style={{color: "#3171A8"}}>SparseML</a>,
+            &nbsp; <a href="https://github.com/neuralmagic/sparsezoo" style={{color: "#3171A8"}}>SparseZoo</a>.
+          </NotificationText>
+        </NotificationContainer>
+        <HeaderContainer>
+          <Link to={'https://neuralmagic.com'}>
+            <NMImage src={NMLogo} alt={'Neural Magic Logo'} />
+            <NMImageMobile src={NMLogoMobile} alt={'Neural Magic Logo'} />
+          </Link>
+          <MenuContainer>
+            {
+              HeaderMenusConfig.items.map((config, index) =>
+                <MenuItem key={config.title}
+                          text={config.title}
+                          to={config.link}>
+                  {
+                    config.subItems.map((subConfig) => (
+                      <MenuSubItem key={subConfig.title}
+                                   title={subConfig.title}
+                                   desc={subConfig.desc}
+                                   imgSrc={subConfig.img}
+                                   to={subConfig.link} />
+                    ))
+                  }
+                </MenuItem>
+              )
+            }
+          </MenuContainer>
+          <MobileMenuContainer>
+            <MobileSidenav>
               {
-                config.subItems.map((subConfig) => (
-                  <MenuSubItem key={subConfig.title}
-                               title={subConfig.title}
-                               desc={subConfig.desc}
-                               imgSrc={subConfig.img}
-                               to={subConfig.link} />
-                ))
+                HeaderMenusConfig.items.map((config) =>
+                  <MobileMenuItem key={config.title}
+                                  text={config.title}
+                                  to={config.link}
+                                  subItems={config.subItems} />
+                )
               }
-            </MenuItem>
-          )
-        }
-      </MenuContainer>
-      <MobileMenuContainer>
-        <MobileSidenav>
-          {
-            HeaderMenusConfig.items.map((config) =>
-              <MobileMenuItem key={config.title}
-                              text={config.title}
-                              to={config.link}
-                              subItems={config.subItems} />
-            )
-          }
-        </MobileSidenav>
-      </MobileMenuContainer>
-    </Container>
+            </MobileSidenav>
+          </MobileMenuContainer>
+        </HeaderContainer>
+      </Container>
   );
 }
 
