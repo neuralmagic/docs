@@ -135,7 +135,7 @@ const Header = ({data}) => {
         <NotificationContainer>
           <NotificationText>
             🚨 Note: The current Docs site is outdated.
-            Neural Magic's 1.7 release slated for January 2024 will include a Docs refresh.
+            Neural Magic's 1.7 release slated for March 2024 will include a Docs refresh.
             Meanwhile, please consult our GitHub repositories for the content:
             &nbsp; <a href="https://github.com/neuralmagic/deepsparse" style={{color: "#3171A8"}}>DeepSparse</a>,
             &nbsp; <a href="https://github.com/neuralmagic/sparseml" style={{color: "#3171A8"}}>SparseML</a>,
