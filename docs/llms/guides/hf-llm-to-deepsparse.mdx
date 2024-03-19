@@ -1,0 +1,103 @@
+---
+sidebar_position: 2
+title: Convert LLMs From Hugging Face
+---
+
+
+# I have a Hugging Face model; how do I use it with DeepSparse?
+
+This guide is for people interested in exporting their Hugging Face-compatible LLMs to work in DeepSparse.
+
+### Step 1: Install SparseML With Hugging Face Transformers Support
+
+SparseML provides tools for optimizing machine learning models for deployment. To install it along with the necessary support for Hugging Face Transformers, open your terminal and run:
+```bash
+pip install sparseml-nightly[transformers]
+```
+
+> #### Note on system requirements
+> Due to inefficiencies in PyTorch ONNX export, a lot of system memory is required to export the models for inference. There are [improvements coming in torch>=2.2 so use the latest version possible](https://github.com/pytorch/pytorch/commit/b4a49124c8165a374a3ef49e14807ac05b3fc030).
+
+### Step 2: Prepare Your Model
+
+Before exporting your model, you need to download its weights from the Hugging Face Hub.
+
+Use the Hugging Face CLI tool to download the model of your choice. For example, to download the TinyLlama model, run:
+```bash
+huggingface-cli download TinyLlama/TinyLlama-1.1B-Chat-v1.0 --local-dir original_model --local-dir-use-symlinks False
+```
+This command saves the model to a directory named `original_model` in your current working directory.
+### Step 3: Export the Model to ONNX
+
+Now, you'll export the model to the ONNX format, which is compatible with DeepSparse.
+
+Run the following command to export your model:
+```bash
+sparseml.export --task text-generation original_model/
+```
+This process creates a new folder named `deployment/` containing the exported model in ONNX format.
+
+**Optional: Uploading the Model back to Hugging Face Hub**:
+If desired, you can upload the exported model back to the Hugging Face Hub for easy access or sharing. Replace `username/your-model-id` with your Hugging Face username and a new model ID.
+```bash
+huggingface-cli upload --repo-type model username/your-model-id-ds original_model/deployment/
+```
+
+Make sure to add the `-ds` ending and use the `deepsparse` in your README to make it easy to find compatible models!
+
+### Step 4: Run Inference With DeepSparse
+
+After exporting your model, you can run inference using DeepSparse.
+
+1. **Install DeepSparse LLM**:
+Install the DeepSparse library, which is specifically designed for running inference on large language models (LLMs) efficiently.
+```bash
+pip install deepsparse-nightly[llm]
+```
+
+2. **Load Your Model and Run Inference**:
+Use the following Python code to load your model and generate a response to a prompt:
+```python
+from deepsparse import TextGeneration
+
+# Replace the model_path with the path to your exported model or use a model from the DeepSparse Zoo
+model = TextGeneration(model_path="path_to_your_exported_model")
+prompt = "Your prompt here"
+print(model(prompt).generations[0].text)
+```
+
+Replace `"path_to_your_exported_model"` with the actual path to your ONNX model file. If you uploaded your model to the Hugging Face Hub, you can use the model's Hugging Face Hub path instead.
+
+
+## Benchmark Example
+
+Benchmarking was performed on an AWS m7i.4xlarge instance using `deepsparse-nightly[llm]==1.7.0.20240103` with FP32 dense and sparse Llama models finetuned on GSM8k - full details of those models can be found in the [release blog](https://neuralmagic.com/blog/fast-llama-2-on-cpus-with-sparse-fine-tuning-and-deepsparse/).
+
+These benchmarks used [models from SparseZoo](https://sparsezoo.neuralmagic.com/?architectures=llama2&datasets=gsm8k&ungrouped=true), as seen from the prepended `zoo:`, but you can also use exported models hosted on Hugging Face by prepending with `hf:` such as [`hf:neuralmagic/TinyLlama-1.1B-Chat-v0.4-pruned50-quant-ds`](https://huggingface.co/neuralmagic/TinyLlama-1.1B-Chat-v0.4-pruned50-quant-ds).
+
+| Sparsity | Decode tokens/s | Decode Speedup | Prefill tokens/s (128 token input) | Prefill Speedup |
+| -------- | --------------- | -------------- | ---------------------------------- | --------------- |
+| 0%       | 3.63            | 1.00           | 66.06                              | 1.00            |
+| 50%      | 6.44            | 1.77           | 91.53                              | 1.39            |
+| 60%      | 7.79            | 2.14           | 101.71                             | 1.54            |
+| 70%      | 9.82            | 2.70           | 115.87                             | 1.75            |
+| 80%      | 13.17           | 3.62           | 140.62                             | 2.13            |
+
+Benchmarking commands:
+```bash
+export NM_BENCHMARK_KV_TOKENS=1
+
+# Decode benchmarking: Time to generate a token aka generated token/s
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 1 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-base
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 1 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned50
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 1 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned60
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 1 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned70
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 1 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned80
+
+# Prefill benchmarking: Time to process 128 tokens aka prefill token/s
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 128 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-base
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 128 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned50
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 128 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned60
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 128 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned70
+deepsparse.benchmark --sequence_length 2048 --input_ids_length 128 --num_cores 8 zoo:llama2-7b-gsm8k_llama2_pretrain-pruned80
+```

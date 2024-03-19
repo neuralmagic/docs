@@ -1,0 +1,99 @@
+# LLM Serving on Windows
+
+Here is a guide for running a large language model (LLM) for text generation on Windows using Windows Subsystem for Linux (WSL) and DeepSparse Server
+
+### Prerequisites
+- Windows 10 or 11 Operating System
+- Basic familiarity with command-line operations
+
+## Step 1: Install Windows Subsystem for Linux (WSL)
+
+**Enable WSL**:
+   - See the [official documentation](https://learn.microsoft.com/en-us/windows/wsl/install) for the most up-to-date instructions
+   - Open PowerShell as Administrator and run: `wsl --install`. This command will install WSL and a Linux distribution (usually Ubuntu).
+   - After the installation, set up your Linux distribution following the on-screen instructions.
+   - Restart your computer if required.
+
+## Step 2: Set Up Python Environment
+
+**Open your Linux distribution (e.g., Ubuntu) from the Start Menu.**
+
+**Install Python**: 
+   - Update package lists: `sudo apt update`
+   - Install Python: `sudo apt install python3-pip python3-venv`
+
+**Create a Virtual Environment**:
+   - Navigate to the desired directory: `cd /path/to/your/directory`
+   - Create a virtual environment: `python3 -m venv llm-env`
+   - Activate the environment: `source llm-env/bin/activate`
+
+## Step 3: Install DeepSparse and OpenAI
+**Install DeepSparse with LLM and Server dependencies and OpenAI for easy integration**: 
+   - In your virtual environment, run: `pip install deepsparse-nightly[llm,server] openai`
+
+## Step 4: Start DeepSparse Server
+**Run the DeepSparse Server**: 
+   - Execute: `deepsparse.server --task text-generation --integration openai --model_path hf:neuralmagic/mpt-7b-chat-pruned50-quant`
+   - This command downloads and starts a server hosting the model as a RESTful endpoint with an OpenAI API compatible endpoint.
+   - If you want to run other models, explore the [other optimized models on SparseZoo](https://sparsezoo.neuralmagic.com/?task=text_generation).
+   - If you would like to learn about non-server inference, [check out the text generation pipeline documentation](https://github.com/neuralmagic/deepsparse/blob/main/docs/llms/text-generation-pipeline.md).
+   - Keep this terminal open. The server must remain running to handle requests.
+
+![Screenshot 2023-11-12 142904](https://github.com/neuralmagic/examples/assets/3195154/8ea079a1-b7c8-40e0-9e65-920f8d820a3d)
+
+## Step 5: Interact With the Model
+**Open Another Terminal**:
+   - Ensure that your virtual environment is activated in this new terminal as well.
+
+**Python Script to Interact With the DeepSparse OpenAI Server**
+```python
+from openai import OpenAI
+
+client = OpenAI(base_url="http://localhost:5543/v1", api_key="EMPTY")
+
+# List models API
+models = client.models.list()
+# Choose the first model
+model = models.data[0][1]
+print(f"Accessing model API '{model}'")
+
+prompt = "Write a recipe for banana bread"
+template = f"### Instruction:\n{prompt}\n### Response:\n"
+
+print(f"Prompt:\n{template}")
+
+# Chat API
+stream = False
+completion = client.chat.completions.create(
+    model=model,
+    messages=template,
+    stream=stream,
+    temperature=1,
+    max_tokens=200,
+)
+
+print("Response:")
+if stream:
+    for c in completion:
+        print(c)
+else:
+    print(completion.choices[0].message.content)
+```
+
+**Run the Python Script**:
+   - Copy the provided Python code into a file, say `llm_client.py`.
+   - Run the script: `python llm_client.py`
+   - This script interacts with the DeepSparse Server and generates text based on your prompt.
+
+![Screenshot 2023-11-12 150608](https://github.com/neuralmagic/examples/assets/3195154/b3247a24-e810-414c-90e6-7e8f30502385)
+
+## Notes
+- **WSL Version**: Ensure you have WSL 2 for better performance and compatibility.
+- **Virtual Environment**: Using a virtual environment is recommended to avoid conflicts with system-wide Python packages.
+- **DeepSparse Server**: The server command might require adjustments depending on the model you wish to use or any updates to the DeepSparse package.
+
+### Troubleshooting
+- If you encounter issues, check the Python version (`python3 --version`) and ensure all dependencies are correctly installed (`pip list`).
+- For WSL-related problems, refer to the [Microsoft WSL documentation](https://docs.microsoft.com/en-us/windows/wsl/).
+
+By following these steps, you should be able to run a large language model for text generation on your Windows system using WSL and DeepSparse Server.

@@ -1,0 +1,221 @@
+---
+tags:
+- deployment
+- llm
+- text generation
+- deepsparse
+- sparsezoo
+keywords:
+- LLM deployment
+- DeepSparse Server
+- model inference
+- Neural Magic deployment
+description: Deploy large language models (LLMs) for text generation using Neural Magic's DeepSparse. This doc includes code examples, performance benchmarking, and server setup.
+sidebar_label: Deploy
+sidebar_position: 2
+---
+
+# Deploying LLMs
+
+This guide focuses on the deployment of LLMs for text-generation tasks. You'll learn how to:
+
+- <b>Create Pipelines:</b> Integrate sparsified LLMs from SparseZoo into your deployments at the Python API level.
+- <b>Set Up Servers:</b> Run LLMs as performant HTTP services using DeepSparse Server.
+- <b>Benchmark Performance:</b> Measure and compare the speed and accuracy of sparsified vs. baseline models.
+
+## Prerequisites
+
+- <b>Deployment Environment:</b> A system that meets the minimum hardware and software requirements as outlined in the [Install Guide](./install/#prerequisites).
+- <b>DeepSparse LLM Installation:</b> An environment with DeepSparse for LLMs installed as outlined in the [Install Guide](./install#llms---causal-language-modeling).
+- <b>Background:</b> Familiarity with Generative AI and deploying ML models through Python and HTTP APIs is recommended.
+
+## Deploying a Sparsified Llama Model
+
+We'll use a sparsified Llama 2 7B model (chat-focused) from the SparseZoo to demonstrate the deployment process.
+This model is pruned to 50% sparsity and quantized to 8 bits for weights and activations, resulting in a smaller, faster, and more efficient model.
+The model is referenced by the following SparseZoo stub:
+```text
+zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized
+```
+
+For other models that work with these examples, browse through the [Generative AI models in the SparseZoo](https://sparsezoo.neuralmagic.com/?modelSet=generative_ai) to find one that fits your needs.
+
+### Pipeline
+
+In this section, you'll learn how to directly integrate a sparsified LLM from SparseZoo into your Python code, enabling text generation capabilities within your application.
+DeepSparse Pipelines are designed to mirror the Hugging Face Transformers API closely, ensuring a familiar experience if you've worked with Transformers before.
+The following code demonstrates how to create a pipeline for text generation using the sparsified Llama 2 7B model:
+
+```python
+from deepsparse import TextGeneration
+
+pipeline = TextGeneration(
+    "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized"
+)
+result = pipeline("Large language models are")
+print(result)
+```
+
+The resulting output printed to the console will be the generated text from the model based on the input prompt.
+
+### Server
+
+To make your LLM accessible as a web service, you'll wrap it in a DeepSparse Server.
+The Server lets you interact with the model using HTTP requests, making integrating with web applications, microservices, or other systems easy.
+DeepSparse Server has an OpenAI-compatible integration for request and response formats for seamless integration.
+The following command starts a DeepSparse Server with the sparsified Llama 2 7B model:
+
+```bash
+deepsparse.server \
+  --integration openai \
+  "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized"
+```
+
+With the server running, you can send an HTTP request that conforms to the OpenAI spec to generate text.
+Below are examples of using `curl` and `python` to send a request to the server:
+<Tabs>
+    <TabItem value="python" label="Python" default>
+
+        ```python
+        import requests
+        import json
+
+        url = "http://localhost:5543/v1/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        data = {
+            "model": "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized",
+            "messages": "Large language models are",
+            "stream": True
+        }
+
+        response = requests.post(url, headers=headers, data=json.dumps(data))
+
+        if response.status_code == 200:
+            for chunk in response.iter_content(chunk_size=128):
+                print(chunk.decode('utf-8'))  # Decode and print each data chunk
+        else:
+            print("Request failed with status code:", response.status_code)
+        ```
+
+    </TabItem>
+
+    <TabItem value="bash" label="Bash">
+
+        ```bash
+        curl http://localhost:5543/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -d '{
+                "model": "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized",
+                "messages": "Large language models are",
+                "stream": true
+            }'
+        ```
+
+    </TabItem>
+</Tabs>
+
+The resulting output will be the generated text from the model based on the input prompt.
+
+### Performance
+
+It's crucial to assess the performance of your deployed LLM.
+Neural Magic provides tools for benchmarking speed (e.g., tokens per second) and evaluating accuracy using established metrics like perplexity.
+
+#### Benchmarking
+
+<details>
+    <summary>Baseline</summary>
+
+    To compare the performance of the sparsified model, we utilize a baseline, unoptimized version of the model from the SparseZoo.
+    The stub for the corresponding model is:
+    ```text
+    zoo:llama2-7b-llama2_pretrain-base
+    ```
+
+    The following command utilizes the baseline stub and DeepSparse to establish the unoptimized model's performance:
+
+    <Tabs>
+        <TabItem value="python" label="Python" default>
+
+            ```python
+            from deepsparse import benchmark_model
+
+            result = benchmark_model("zoo:llama2-7b-llama2_pretrain-base")
+            print(result)
+            ```
+
+        </TabItem>
+        <TabItem value="bash" label="Bash">
+
+            ```bash
+            deepsparse.benchmark "zoo:llama2-7b-llama2_pretrain-base"
+            ```
+
+        </TabItem>
+    </Tabs>
+
+    On an 8-core AMD CPU, the baseline model achieves a throughput of around `2.7` tokens per second.
+</details>
+
+The following command utilizes the sparsified model and DeepSparse to establish the optimized model's performance:
+<Tabs>
+    <TabItem value="python" label="Python" default>
+
+        ```python
+        from deepsparse import benchmark_model
+
+        result = benchmark_model("zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized")
+        print(result)
+        ```
+
+    </TabItem>
+    <TabItem value="bash" label="Bash">
+
+        ```bash
+        deepsparse.benchmark "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized"
+        ```
+
+    </TabItem>
+</Tabs>
+
+On an 8-core AMD CPU, the sparsified model achieves a throughput of around `13.1` tokens per second, which is `4.9` times faster than the baseline model!
+
+#### Accuracy
+
+The following command utilizes the sparsified model and DeepSparse to establish the optimized model's perplexity on the OpenAI HumanEval dataset:
+<Tabs>
+    <TabItem value="python" label="Python" default>
+
+        ```python
+        from deepsparse import evaluate
+
+        eval = evaluate(
+            "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized",
+            datasets="openai_humaneval",
+            integration="perplexity"
+        )
+        print(eval)
+        ```
+
+    </TabItem>
+    <TabItem value="bash" label="Bash">
+
+        ```bash
+        deepsparse.evaluate \
+            "zoo:llama2-7b-ultrachat200k_llama2_pretrain-pruned50_quantized" \
+            --datasets "openai_humaneval" \
+            --integration "perplexity"
+        ```
+
+    </TabItem>
+</Tabs>
+
+The above command will result in a perplexity evaluation of around `3.6` on the OpenAI HumanEval dataset.
+
+---
+
+Want to dive into more about deployments with Neural Magic? Here are a few paths to consider:
+
+- <b>Specialize in LLMs:</b> Dive deeper into text generation techniques within our [LLMs section](../llms).
+- <b>Expand to Other Domains:</b> Explore how to deploy optimized models for [Computer Vision](../computer-vision) or [Natural Language Processing](../nlp) tasks.
+- <b>Tailor to Your Needs:</b> Learn about flexible deployment options in our [Custom Integrations section](../custom-integrations).
