@@ -7,16 +7,15 @@
 import navLinks from "./navlinks";
 import footerLinks from "./footerlinks";
 import { themes as prismThemes } from 'prism-react-renderer';
-
-const redirects = require('./redirects.json');
+import redirects from './redirects.js';
 
 
 const config = {
   title: 'Neural Magic Documentation',
   tagline: 'The Neural Magic Platform provides a suite of software components to select, build, and run performant deep learning models.',
   favicon: 'img/favicon.ico',
-  url: 'https://docs.neuralmagic.com',
-  baseUrl: '/',
+  url: 'https://neuralmagic.github.io',
+  baseUrl: '/docs-v2',
   organizationName: 'neuralmagic',
   projectName: 'docs',
   onBrokenLinks: 'warn',
