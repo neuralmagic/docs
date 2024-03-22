@@ -104,7 +104,7 @@ const config = {
     },
     algolia: {
       appId: 'CIS4HPXHOK',
-      apiKey: '8e19373017819c7e2b9f2153fe58e08f',
+      apiKey: '70618dadfafecf13dd8800db83e1cf6e',
       indexName: 'neuralmagic',
       contextualSearch: true,
       searchPagePath: 'search',
