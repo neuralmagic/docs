@@ -40,7 +40,7 @@ const config = {
   presets: [
     [
       'classic',
-      ({
+      {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
@@ -57,9 +57,7 @@ const config = {
         theme: {
           customCss: './src/css/custom.scss',
         },
-      }),
-      {
-        gtag: {
+        googleAnalytics: {
           trackingID: 'G-L2QW513YN1',
           anonymizeIP: true,
         },
