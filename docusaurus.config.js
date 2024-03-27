@@ -44,7 +44,7 @@ const config = {
         docs: {
           routeBasePath: '/',
           sidebarPath: './sidebars.js',
-          editUrl: 'https://github.com/neuralmagic/docs-v2/tree/main',
+          editUrl: 'https://github.com/neuralmagic/docs/tree/main',
           editCurrentVersion: true,
           versions: {
             current: {
