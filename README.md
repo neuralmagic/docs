@@ -67,6 +67,10 @@ To contribute to Neural Magic documentation, please:</br>
 
  </div>
 
+## Website
+
+This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
+
 ### Installation
 
 ```
