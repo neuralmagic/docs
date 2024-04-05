@@ -12,7 +12,7 @@ import redirects from './redirects.js';
 
 const config = {
   title: 'Neural Magic Documentation',
-  tagline: 'The Neural Magic Platform provides a suite of software components to select, build, and run performant deep learning models.',
+  tagline: 'Neural Magic provides a suite of software components to select, build, and run performant deep learning models.',
   favicon: 'img/favicon.ico',
   url: 'https://docs.neuralmagic.com',
   baseUrl: '/',
