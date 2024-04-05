@@ -51,7 +51,7 @@ To file a documentation issue for a specific software component, use its repo is
 | [DeepSparse Community](https://docs.neuralmagic.com/products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | [Neural Magic DeepSparse Community](https://neuralmagic.com/legal/deepsparse-license-agreement/) |
 | [DeepSparse Enterprise](https://docs.neuralmagic.com/products/deepsparse-ent) | - | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | [MSLSA (Enterprise)](https://neuralmagic.com/legal/master-software-license-and-service-agreement/) |
 
-For user help or questions, sign up or log in to our [**Neural Magic Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
+For user help or questions, sign up or log in to our [**Neural Magic Community Slack**](https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-2gbar46r6-2Tu~SS5iQdHgczAKlQ2jJA). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
 
 To contribute to Neural Magic documentation, please:</br>
 
