@@ -93,7 +93,7 @@ const config = {
     },
     footer: {
       style: 'dark',
-      copyright: `Copyright © ${new Date().getFullYear()} Neuralmagic, Inc.`,
+      copyright: `© ${new Date().getFullYear()} Neuralmagic, Inc.`,
       links: [
         ...footerLinks
       ]
