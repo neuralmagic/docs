@@ -68,7 +68,7 @@ export default function DocItemTOCDesktop({...props}) {
                 <h3 className={styles.sectionTitle}>Support</h3>
                 <div className={styles.sectionLinks}>
                     <li>
-                        <a href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-q1a1cnvo-YBoICSIw3L1dmQpjBeDurQ" target="_blank" className={styles.link}><SlackIcon /> Community Slack</a>
+                        <a href="https://join.slack.com/t/discuss-neuralmagic/shared_invite/zt-2gbar46r6-2Tu~SS5iQdHgczAKlQ2jJA" target="_blank" className={styles.link}><SlackIcon /> Community Slack</a>
                         <a href="https://support.neuralmagic.com" target="_blank" className={styles.link}><SupportIcon /> Enterprise Support</a>
                     </li>
                 </div>
