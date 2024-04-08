@@ -1,0 +1,37 @@
+# Deploying with Docker
+
+nm-vllm offers official docker image for deployment.
+The image can be used to run OpenAI compatible server.
+The image is available on Github Packages as [`neuralmagic/nm-vllm-openai`](https://github.com/neuralmagic/nm-vllm/pkgs/container/nm-vllm-openai).
+
+```bash
+docker run --runtime nvidia --gpus all \
+    -v ~/.cache/huggingface:/root/.cache/huggingface \
+    --env "HUGGING_FACE_HUB_TOKEN=<secret>" \
+    -p 8000:8000 \
+    --ipc=host \
+    ghcr.io/neuralmagic/nm-vllm-openai:latest \
+    --model mistralai/Mistral-7B-v0.1
+```
+
+> You can either use the ``ipc=host`` flag or ``--shm-size`` flag to allow the container to access the host's shared memory. nm-vllm uses PyTorch, which uses shared memory to share data between processes under the hood, particularly for tensor parallel inference.
+
+
+You can build and run nm-vllm from source via the provided dockerfile. To build nm-vllm:
+
+```bash
+DOCKER_BUILDKIT=1 docker build . --target vllm-openai --tag neuralmagic/nm-vllm-openai # optionally specifies: --build-arg max_jobs=8 --build-arg nvcc_threads=2
+```
+
+> By default nm-vllm will build for all GPU types for widest distribution. If you are just building for the current GPU type the machine is running on, you can add the argument `--build-arg torch_cuda_arch_list=""` for nm-vllm to find the current GPU type and build for that.
+
+
+To run nm-vllm:
+
+```bash
+docker run --runtime nvidia --gpus all \
+    -v ~/.cache/huggingface:/root/.cache/huggingface \
+    -p 8000:8000 \
+    --env "HUGGING_FACE_HUB_TOKEN=<secret>" \
+    neuralmagic/nm-vllm-openai <args...>
+```
