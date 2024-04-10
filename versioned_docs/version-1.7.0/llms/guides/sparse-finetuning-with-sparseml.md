@@ -327,7 +327,7 @@ pip install -e .
 ```
 Evaluate on the `gsm8k 0-shot` task:
 ```bash
-MODEL_PATH=/cache/shubhra/gsm8k_tutorial/scripts/models/llama7b_sparse_gsm8k_linear_e2_gc0_lr3e-5
+MODEL_PATH=<MODEL_PATH>
 TASK=gsm8k
 python main.py \
  --model sparseml \
