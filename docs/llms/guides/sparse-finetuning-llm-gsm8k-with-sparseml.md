@@ -42,23 +42,23 @@ zoo:llama2-7b-llama2_pretrain-base
 ## Dense fine-tuning
 We then fine-tune the above pre-trained dense model on the GSM8K dataset to obtain a model that we can later optimize using sparsification.
 ```bash
-accelerate launch 
-    --config_file example_fsdp_config.yaml 
-    --no_python sparseml.transformers.text_generation.finetune
-    --model PATH_TO_MODEL or ZOO_STUB
-    --dataset "gsm8k"
-    --dataset_config_name "main"
-    --output_dir PATH_TO_OUTPUT
-    --splits "train"
-    --num_train_epochs 2
-    --precision "bfloat16"
-    --gradient_checkpointing True
-    --bf16 True
-    --learning_rate 0.00005
-    --lr_scheduler_type "linear"
-    --max_seq_length 1024
-    --per_device_train_batch_size 32
-    --max_grad_norm 2
+accelerate launch \
+    --config_file example_fsdp_config.yaml \
+    --no_python sparseml.transformers.text_generation.finetune \
+    --model PATH_TO_MODEL or ZOO_STUB \
+    --dataset "gsm8k" \
+    --dataset_config_name "main" \
+    --output_dir PATH_TO_OUTPUT \
+    --splits "train" \
+    --num_train_epochs 2 \
+    --precision "bfloat16" \
+    --gradient_checkpointing True \
+    --bf16 True \
+    --learning_rate 0.00005 \
+    --lr_scheduler_type "linear" \
+    --max_seq_length 1024 \
+    --per_device_train_batch_size 32 \
+    --max_grad_norm 2 \
     --warmup_steps 20
 ```
 Note: *Some of these hyper-parameters may need further tuning to enhance the overall accuracy of the fine-tuned model. The values mentioned above were obtained through a quick hyper-parameter search. Parameters that could have a significant impact and are worth considering for tuning include: `learning_rate`, `max_grad_norm`, `warmup_steps`, `max_seq_length`.*
@@ -125,19 +125,19 @@ Use the dense fine-tuned model obtained above and sparsify it to 50% in a onesho
 
 Command:
 ```bash
-accelerate launch 
-    --config_file example_fsdp_config.yaml 
-    --no_python sparseml.transformers.text_generation.oneshot
-    --model PATH_TO_MODEL
-    --dataset "gsm8k"
-    --dataset_config_name "main"
-    --concatenate_data OPTIONAL
-    --recipe PATH_TO_RECIPE
-    --output_dir PATH_TO_OUTPUT
-    --splits "train"
-    --pad_to_max_length False
-    --oneshot_device DEVICE
-    --num_calibration_samples 1024
+accelerate launch \
+    --config_file example_fsdp_config.yaml \
+    --no_python sparseml.transformers.text_generation.oneshot \
+    --model PATH_TO_MODEL \
+    --dataset "gsm8k" \
+    --dataset_config_name "main" \
+    --concatenate_data OPTIONAL \
+    --recipe PATH_TO_RECIPE \
+    --output_dir PATH_TO_OUTPUT \
+    --splits "train" \
+    --pad_to_max_length False \
+    --oneshot_device DEVICE \
+    --num_calibration_samples 1024 \
     --max_seq_len 4096
 ```
 Note: *You may wish to tweak the `num_calibration_samples` above to obtain better accuracy.*
@@ -209,26 +209,26 @@ The one-shot sparse model generated previously can undergo further sparse fine-t
 
 Command:
 ```bash
-accelerate launch 
-    --config_file example_fsdp_config.yaml 
-    --no_python sparseml.transformers.text_generation.finetune
-    --model PATH_TO_MODEL
-    --dataset "gsm8k"
-    --dataset_config_name "main"
-    --output_dir PATH_TO_OUTPUT
-    --splits "train"
-    --num_train_epochs 2
-    --precision "bfloat16"
-    --gradient_checkpointing True
-    --bf16 True
-    --learning_rate 0.00005
-    --lr_scheduler_type "linear"
-    --max_seq_length 1024
-    --per_device_train_batch_size 32
-    --max_grad_norm None
-    --warmup_steps 20
-    --distill_teacher PATH_TO_TEACHER
-    --recipe PATH_TO_RECIPE
+accelerate launch \
+    --config_file example_fsdp_config.yaml \
+    --no_python sparseml.transformers.text_generation.finetune \
+    --model PATH_TO_MODEL \
+    --dataset "gsm8k" \
+    --dataset_config_name "main" \
+    --output_dir PATH_TO_OUTPUT \
+    --splits "train" \
+    --num_train_epochs 2 \
+    --precision "bfloat16" \
+    --gradient_checkpointing True \
+    --bf16 True \
+    --learning_rate 0.00005 \
+    --lr_scheduler_type "linear" \
+    --max_seq_length 1024 \
+    --per_device_train_batch_size 32 \
+    --max_grad_norm None \
+    --warmup_steps 20 \
+    --distill_teacher PATH_TO_TEACHER \
+    --recipe PATH_TO_RECIPE 
 ```
 
 Recipe:
