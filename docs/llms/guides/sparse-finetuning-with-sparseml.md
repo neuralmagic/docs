@@ -23,14 +23,14 @@ sidebar_position: 4
 This guide details the steps for going from a pre-trained, unoptimized Llama2 7B model to a 50% sparse Llama2 7B model that has been fine-tuned on the GSM8K dataset and recovers fully and goes beyond the dense baseline accuracy. 
 
 ## Overview
-- [Dense finetuning](#Dense fine-tuning): Finetune the pre-trained, unoptimized Llama2 7B model on the [GSM8K dataset](https://huggingface.co/datasets/gsm8k) from HuggingFace.
-- [Oneshot Sparsification](#Oneshot Sparsification): Oneshot sparsify the dense fine-tuned model to 50% sparsity.
-- [Sparse finetuning](#Sparse fine-tuning): Further fine-tune the oneshot 50% sparse model on the GSM8K dataset to recover some of the accuracy that is lost during the oneshot sparsification step.
+- [Dense fine-tuning](#dense-fine-tuning): Finetune the pre-trained, unoptimized Llama2 7B model on the [GSM8K dataset](https://huggingface.co/datasets/gsm8k) from HuggingFace.
+- [Oneshot Sparsification](#oneshot-sparsification): Oneshot sparsify the dense fine-tuned model to 50% sparsity.
+- [Sparse finetuning](#sparse-fine-tuning): Further fine-tune the oneshot 50% sparse model on the GSM8K dataset to recover some of the accuracy that is lost during the oneshot sparsification step.
 
 ## Prerequisites
 
-- <b>Training Environment:</b> A system that meets the minimum hardware and software requirements as outlined in the [Install Guide](./install/sparseml#prerequisites). To replicate the setup used for fine-tuning in this guide, use 4 NVIDIA A100 GPUs for both dense and sparse fine-tuning steps.
-- <b>SparseML LLM Installation:</b> An environment with SparseML for LLMs installed as outlined in the [Install Guide](./install/sparseml#generative-ai-hugging-face).
+- <b>Training Environment:</b> A system that meets the minimum hardware and software requirements as outlined in the [Install Guide](/get-started/install/sparseml#prerequisites). To replicate the setup used for fine-tuning in this guide, use 4 NVIDIA A100 GPUs for both dense and sparse fine-tuning steps.
+- <b>SparseML LLM Installation:</b> An environment with SparseML for LLMs installed as outlined in the [Install Guide](/get-started/install/sparseml#generative-ai-hugging-face).
 - <b>Background:</b> Familiarity with Generative AI and working with large language models is recommended.
 
 ## Base Model
@@ -93,7 +93,7 @@ use_cpu: false
 ```
 
 ### Dense fine-tuned model accuracy
-[Evaluating](#Evaluation Setup) the dense fine-tuned model on the `gsm8k 0-shot` task, results in a baseline accuracy of `37.52%`. We'll consider this accuracy as our baseline for calculating recovery for the oneshot sparse and sparse fine-tuned models we'll get later. Detailed results are provided below:
+[Evaluating](#evaluation-setup) the dense fine-tuned model on the `gsm8k 0-shot` task, results in a baseline accuracy of `37.52%`. We'll consider this accuracy as our baseline for calculating recovery for the oneshot sparse and sparse fine-tuned models we'll get later. Detailed results are provided below:
 ```json
 {
   "results": {
@@ -177,7 +177,7 @@ pruning_stage:
 To learn more about the OWL non-uniform sparsity profile method, visit [this link](https://github.com/luuyin/OWL/tree/main?tab=readme-ov-file#script-example-of-pruning-llama-7b-using-owl-sparsegpt).
 
 ### Oneshot 50% sparse model accuracy
-[Evaluating](#Evaluation Setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.81%` and translates to a `90.11%` recovery over our [dense baseline](#Dense fine-tuned model accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.81%` and translates to a `90.11%` recovery over our [dense baseline](#Dense fine-tuned model accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
@@ -290,7 +290,7 @@ test_stage:
 Note: *Some of these hyper-parameters may need further tuning to enhance the overall accuracy of the fine-tuned model. The values mentioned above were obtained through a quick hyper-parameter search. Parameters that could have a significant impact and are worth considering for tuning include: `learning_rate`, `max_grad_norm`, `warmup_steps`, `max_seq_length`.*
 
 ### Fine-tuned 50% sparse model accuracy
-[Evaluating](#Evalution Setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.59%` and shows clear improvement over the [oneshot accuracy](#Oneshot 50% sparse model accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.59%` and shows clear improvement over the [oneshot accuracy](#Oneshot 50% sparse model accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
