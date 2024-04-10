@@ -14,7 +14,7 @@ keywords:
 - SparseML
 - GSM8K dataset
 description: Guide on sparse fine-tuning Llama2 7B model on GSM8K dataset, including steps, commands, and recipes for optimization.
-sidebar_label: Sparse Fine-Tuning on GSM8K dataset
+sidebar_label: Sparse Fine-Tuning LLMs
 sidebar_position: 4
 ---
 
