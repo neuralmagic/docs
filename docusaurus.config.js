@@ -110,8 +110,7 @@ const config = {
       appId: 'CIS4HPXHOK',
       apiKey: '70618dadfafecf13dd8800db83e1cf6e',
       indexName: 'neuralmagic',
-      contextualSearch: true,
-      searchPagePath: 'search',
+      contextualSearch: false,
     },
   }
 };
