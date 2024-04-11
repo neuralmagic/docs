@@ -224,7 +224,7 @@ accelerate launch \
     --learning_rate 0.00005 \
     --lr_scheduler_type "linear" \
     --max_seq_length 1024 \
-    --per_device_train_batch_size 32 \
+    --per_device_train_batch_size 16 \
     --max_grad_norm None \
     --warmup_steps 20 \
     --distill_teacher PATH_TO_TEACHER \
@@ -331,7 +331,7 @@ MODEL_PATH=<MODEL_PATH>
 TASK=gsm8k
 python main.py \
  --model sparseml \
- --model_args pretrained=MODEL_PATH,trust_remote_code=True \
+ --model_args pretrained=${MODEL_PATH},trust_remote_code=True \
  --tasks $TASK \
  --batch_size 48 \
  --no_cache \
