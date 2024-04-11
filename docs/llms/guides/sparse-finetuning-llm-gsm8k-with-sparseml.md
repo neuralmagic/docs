@@ -131,7 +131,6 @@ accelerate launch \
     --model PATH_TO_MODEL \
     --dataset "gsm8k" \
     --dataset_config_name "main" \
-    --concatenate_data OPTIONAL \
     --recipe PATH_TO_RECIPE \
     --output_dir PATH_TO_OUTPUT \
     --splits "train" \
