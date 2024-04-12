@@ -34,18 +34,18 @@ This guide details the steps for going from a pre-trained, unoptimized Llama2 7B
 - <b>Background:</b> Familiarity with Generative AI and working with large language models is recommended.
 
 ## Base Model
-To obtain an optimized sparse model trained on the GSM8K dataset, we first start with the pre-trained, unoptimized Llama2 7B model. You can obtain this model using the following SparseZoo stub:
+To obtain an optimized sparse model trained on the GSM8K dataset, we first start with the pre-trained, unoptimized [Llama2 7B model from HuggingFace](https://huggingface.co/meta-llama/Llama-2-7b-hf): 
 ```
-zoo:llama2-7b-llama2_pretrain-base
+meta-llama/Llama-2-7b-hf
 ```
 
 ## Dense fine-tuning
-We then fine-tune the above pre-trained dense model on the GSM8K dataset to obtain a model that we can later optimize using sparsification.
+We fine-tune the above pre-trained dense model on the GSM8K dataset to obtain a model that we can later optimize using sparsification.
 ```bash
 accelerate launch \
     --config_file example_fsdp_config.yaml \
     --no_python sparseml.transformers.text_generation.finetune \
-    --model PATH_TO_MODEL or ZOO_STUB \
+    --model meta-llama/Llama-2-7b-hf \
     --dataset "gsm8k" \
     --dataset_config_name "main" \
     --output_dir PATH_TO_OUTPUT \
