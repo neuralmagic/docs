@@ -125,9 +125,7 @@ Use the dense fine-tuned model obtained above and sparsify it to 50% in a onesho
 
 Command:
 ```bash
-accelerate launch \
-    --config_file example_fsdp_config.yaml \
-    --no_python sparseml.transformers.text_generation.oneshot \
+sparseml.transformers.text_generation.oneshot \
     --model PATH_TO_MODEL \
     --dataset "gsm8k" \
     --dataset_config_name "main" \
