@@ -1,10 +1,8 @@
 export default [
   { "from":  "/test/redirect", "to":  "/next/" },
   { "from":  "/get-started/sparsify-a-model", "to":  "/get-started/optimize" },
-
-  // { "from":  "/user-guides/recipes", "to":  "/guides/recipes/" },
-  // { "from":  "/user-guides/onnx-export", "to":  "/guides/onnx/export" },
-
+  { "from":  "/user-guides/recipes", "to":  "/guides/sparsification/#recipes" },
+  { "from":  "/user-guides/onnx-export", "to":  "/guides/onnx/" },
   { "from":  "/sparseml/", "to":  "/products/sparseml/" },
   { "from":  "/sparsezoo/", "to":  "/products/sparsezoo/" },
   { "from":  "/sparsify/", "to":  "https://github.com/neuralmagic/sparsify" },
@@ -69,13 +67,9 @@ export default [
   { "from": "/user-guides/deploying-deepsparse/aws-lambda", "to": "/guides/deploying-deepsparse/aws-lambda" },
   { "from": "/user-guides/deploying-deepsparse/deepsparse-server", "to": "/guides/deploying-deepsparse/deepsparse-server" },
 
-  // { "from": "/user-guides/onnx-export", "to": "/guides/onnx/export" },
-  // { "from": "/user-guides/onnx-export/", "to": "/guides/onnx/export" },
-  // { "from": "/user-guides/recipes", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/recipes/", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/recipes/creating", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/recipes/creating/", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/recipes/enabling", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/recipes/enabling/", "to": "/guides/recipes/" },
-  // { "from": "/user-guides/sparsification", "to": "/guides/sparsification/" },
+  { "from": "/user-guides/onnx-export", "to": "/guides/onnx/#exporting-models-to-onnx" },
+  { "from": "/user-guides/recipes", "to": "/guides/sparsification/#recipes" },
+  { "from": "/user-guides/recipes/creating", "to": "/guides/sparsification/#recipes" },
+  { "from": "/user-guides/recipes/enabling", "to": "/guides/sparsification/#recipes" },
+  { "from": "/user-guides/sparsification", "to": "/guides/sparsification/" },
 ]
