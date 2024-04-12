@@ -222,7 +222,7 @@ accelerate launch \
     --lr_scheduler_type "linear" \
     --max_seq_length 1024 \
     --per_device_train_batch_size 16 \
-    --max_grad_norm None \
+    --max_grad_norm 0 \
     --warmup_steps 20 \
     --distill_teacher PATH_TO_TEACHER \
     --recipe PATH_TO_RECIPE 
