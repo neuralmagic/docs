@@ -174,13 +174,13 @@ pruning_stage:
 To learn more about the OWL non-uniform sparsity profile method, visit [this link](https://github.com/luuyin/OWL/tree/main?tab=readme-ov-file#script-example-of-pruning-llama-7b-using-owl-sparsegpt).
 
 ### Oneshot 50% sparse model accuracy
-[Evaluating](#evaluation-setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.81%` and translates to a `90.11%` recovery over our [dense baseline](#dense-finetuned-model-accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.13%` and translates to a `88.29%` recovery over our [dense baseline](#dense-finetuned-model-accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
     "gsm8k": {
-      "acc": 0.33813495072024263,
-      "acc_stderr": 0.0130308291451722
+      "acc": 0.33131159969673996,
+      "acc_stderr": 0.012964999679688661,
     }
   },
   "versions": {
@@ -287,13 +287,13 @@ test_stage:
 Note: *Some of these hyper-parameters may need further tuning to enhance the overall accuracy of the fine-tuned model. The values mentioned above were obtained through a quick hyper-parameter search. Parameters that could have a significant impact and are worth considering for tuning include: `learning_rate`, `max_grad_norm`, `warmup_steps`, `max_seq_length`.*
 
 ### Fine-tuned 50% sparse model accuracy
-[Evaluating](#evaluation-setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.59%` and shows clear improvement over the [oneshot accuracy](#oneshot-50%-sparse-model-accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.05%` and shows clear improvement over the [oneshot accuracy](#oneshot-50%-sparse-model-accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
     "gsm8k": {
-      "acc": 0.3858984078847612,
-      "acc_stderr": 0.01340907747131918
+      "acc": 0.38059135708870356,
+      "acc_stderr": 0.013373971277729818
     }
   },
   "versions": {
