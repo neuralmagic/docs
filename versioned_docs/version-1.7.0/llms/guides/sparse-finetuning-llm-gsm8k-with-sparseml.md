@@ -316,11 +316,13 @@ Note: *Some of these hyper-parameters may need further tuning to enhance the ove
 
 ## Evaluation Setup
 To evaluate model performance we use [lm-evaluation-harness framework](https://github.com/neuralmagic/lm-evaluation-harness).
-Clone the forked repository with SparseML support and install it:
+Make a fresh environment for evaluation and follow the steps below in the order specified: 
 ```bash
 git clone https://github.com/neuralmagic/lm-evaluation-harness.git
 cd lm-evaluation-harness
 pip install -e .
+pip uninstall transformers -y
+pip install sparseml[transformers,torch]
 ```
 Evaluate on the `gsm8k 0-shot` task:
 ```bash
