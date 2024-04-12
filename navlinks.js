@@ -16,10 +16,11 @@ const navLinks = [
         label: 'Products',
         position: 'right',
         items: [
+            {label: 'nm-vllm', to: 'https://neuralmagic.com/nm-vllm'},
             {label: 'DeepSparse', to: 'https://neuralmagic.com/deepsparse'},
             {label: 'SparseML', to: 'https://neuralmagic.com/sparseml'},
             {label: 'SparseZoo', to: 'https://sparsezoo.neuralmagic.com/'},
-            {label: 'Labs by Neural Magic', to: 'http://neuralmagic.com/labs'},
+
         ]
     },
     {
@@ -28,12 +29,11 @@ const navLinks = [
         position: 'right',
         items: [
             {label: 'Blog', to: 'https://neuralmagic.com/blog/'},
-            {label: 'Support', to: 'https://neuralmagic.com/support'},
             {label: 'Research Papers', to: 'http://neuralmagic.com/resources/technical-papers/'},
-            {label: 'Upcoming Events', to: 'http://neuralmagic.com/neural-magic-events/'},
-            {label: 'NeuralFlix', to: 'http://neuralmagic.com/video'},
-            {label: 'Our Technology', to: 'http://neuralmagic.com/technology'},
-            {label: 'Subscribe', to: 'http://neuralmagic.com/deep-sparse-community'},
+            {label: 'Support', to: 'https://neuralmagic.com/support'},
+            {label: 'Events', to: 'https://neuralmagic.com/community/#events'},
+            {label: 'Videos', to: 'https://www.youtube.com/channel/UCo8dO_WMGYbWCRnj_Dxr4EA'},
+            {label: 'Developers', to: 'http://neuralmagic.com/community'},
         ]
     },
     {
@@ -41,10 +41,13 @@ const navLinks = [
         label: 'Company',
         position: 'right',
         items: [
-            {label: 'Team & Investors', to: 'http://neuralmagic.com/about'},
+            {label: 'About Us', to: 'http://neuralmagic.com/about'},
+            {label: 'Our Technology', to: 'http://neuralmagic.com/our-technology'},
             {label: 'Careers', to: 'https://apply.workable.com/neural-magic/'},
             {label: 'Contact', to: 'http://neuralmagic.com/contact'},
             {label: 'Legal', to: 'http://neuralmagic.com/legal'},
+            {label: 'neuralmagic.com', to: 'http://neuralmagic.com/'},
+            
         ]
     },
 ];
