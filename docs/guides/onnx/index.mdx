@@ -1,0 +1,57 @@
+---
+tags:
+- onnx
+- model export
+- cpu inference
+keywords:
+- onnx model format
+- neural network interchange
+- cross-platform compatibility
+- deepsparse
+description: Overview of ONNX, its role in DeepSparse for CPU inference, and guidance on exporting models to the ONNX format.
+sidebar_label: ONNX
+sidebar_position: 4
+---
+
+# ONNX: Model Definitions for DeepSparse
+
+ONNX (Open Neural Network Exchange) is an open-source format representing machine learning models, including deep neural networks.
+It provides a standardized way to exchange models between different frameworks and tools, promoting cross-platform compatibility.
+
+## Why ONNX Matters for DeepSparse
+
+DeepSparse leverages ONNX for optimized CPU inference pathways. Here's why it's important:
+
+- <b>Framework Flexibility:</b> Exporting models to ONNX allows you to deploy sparsified and optimized neural networks created in various training frameworks (e.g., PyTorch, TensorFlow) to DeepSparse's CPU inference engine.
+- <b>Hardware Portability:</b> ONNX, combined with DeepSparse, can run on various CPU architectures (x86, ARM, etc.), ensuring your optimized models work across diverse hardware environments.
+- <b>Performance Optimization:</b> DeepSparse's ONNX runtime is specifically tuned to deliver efficient inference performance on CPUs, taking advantage of platform-specific optimizations.
+
+## Exporting Models to ONNX
+
+Converting your trained model to the ONNX format depends on the original training framework.
+SparseML is the default pathway for exporting models to ONNX within the Neural Magic ecosystem.
+It supports exporting standard PyTorch models to ONNX, including unoptimized and sparsified models.
+
+Here's a basic example of exporting a PyTorch GPT2 from HuggingFace to ONNX using SparseML:
+
+```python
+from sparseml import export
+
+# Load your PyTorch model
+from sparseml.transformers import SparseAutoModelForCausalLM, SparseAutoTokenizer
+model = SparseAutoModelForCausalLM.from_pretrained("gpt2")
+tokenizer = SparseAutoTokenizer.from_pretrained("gpt2")
+
+# Export the model to ONNX
+export(
+    model=model,
+    tokenizer=tokenizer,
+    target_path="./onnx-export",
+)
+```
+
+For unsupported frameworks or the above doesn't work for your custom models, you can export models to ONNX using the native APIs of the training framework or supported third-party pathways:
+- [PyTorch](https://pytorch.org/docs/stable/onnx.html)
+- [TensorFlow](https://github.com/onnx/tensorflow-onnx)
+- [Keras](https://github.com/onnx/keras-onnx)
+- [JAX](https://github.com/google/jaxonnxruntime)
