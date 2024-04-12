@@ -6,6 +6,7 @@ const navLinks = [
         items: [
             {label: 'Neural Magic', to: 'https://github.com/neuralmagic/'},
             {label: 'Docs', to: 'https://github.com/neuralmagic/docs'},
+            {label: 'nm-vllm', to: 'https://github.com/neuralmagic/nm-vllm'},
             {label: 'DeepSparse', to: 'https://github.com/neuralmagic/deepsparse'},
             {label: 'SparseML', to: 'https://github.com/neuralmagic/sparseml'},
             {label: 'SparseZoo', to: 'https://github.com/neuralmagic/sparsezoo'},
