@@ -68,6 +68,7 @@ export default [
   { "from": "/user-guides/deploying-deepsparse/deepsparse-server", "to": "/guides/deploying-deepsparse/deepsparse-server" },
 
   { "from": "/user-guides/onnx-export", "to": "/guides/onnx/#exporting-models-to-onnx" },
+  { "from": "/archive/sparseml/source/onnx_export.html", "to": "/guides/onnx/#exporting-models-to-onnx" },
   { "from": "/user-guides/recipes", "to": "/guides/sparsification/#recipes" },
   { "from": "/user-guides/recipes/creating", "to": "/guides/sparsification/#recipes" },
   { "from": "/user-guides/recipes/enabling", "to": "/guides/sparsification/#recipes" },
