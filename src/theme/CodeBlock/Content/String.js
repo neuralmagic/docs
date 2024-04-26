@@ -1,19 +1,19 @@
-import React from 'react';
-import clsx from 'clsx';
-import {useThemeConfig, usePrismTheme} from '@docusaurus/theme-common';
+import React from "react";
+import clsx from "clsx";
+import { useThemeConfig, usePrismTheme } from "@docusaurus/theme-common";
 import {
   parseCodeBlockTitle,
   parseLanguage,
   parseLines,
   containsLineNumbers,
   useCodeWordWrap,
-} from '@docusaurus/theme-common/internal';
-import {Highlight} from 'prism-react-renderer';
-import Line from '@theme/CodeBlock/Line';
-import CopyButton from '@theme/CodeBlock/CopyButton';
-import WordWrapButton from '@theme/CodeBlock/WordWrapButton';
-import Container from '@theme/CodeBlock/Container';
-import styles from './styles.module.css';
+} from "@docusaurus/theme-common/internal";
+import { Highlight } from "prism-react-renderer";
+import Line from "@theme/CodeBlock/Line";
+import CopyButton from "@theme/CodeBlock/CopyButton";
+import WordWrapButton from "@theme/CodeBlock/WordWrapButton";
+import Container from "@theme/CodeBlock/Container";
+import styles from "./styles.module.css";
 
 // Prism languages are always lowercase
 // We want to fail-safe and allow both "php" and "PHP"
@@ -23,30 +23,34 @@ function normalizeLanguage(language) {
 }
 
 function parseOutput(content) {
-  if (!content.includes('<output>') || !content.includes('</output>')) {
+  if (!content.includes("<output>") || !content.includes("</output>")) {
     return { code: content, output: null };
   }
 
   const codeRegex = /.*<output>([\s\S]*?)<\/output>/i;
-  const code = content.replace(codeRegex, '').trim();
+  const code = content.replace(codeRegex, "").trim();
   let output = content.match(codeRegex)?.[1].trim();
 
   const commentRegex = /^[ \t]*(\/\/|\/\*|\*\/|#|--)/gm;
-  output = output.split('\n').map(line => line.replace(commentRegex, '')).join('\n').trim();
+  output = output
+    .split("\n")
+    .map((line) => line.replace(commentRegex, ""))
+    .join("\n")
+    .trim();
 
   return { code, output };
 }
 
 export default function CodeBlockString({
   children,
-  className: blockClassName = '',
+  className: blockClassName = "",
   metastring,
   title: titleProp,
   showLineNumbers: showLineNumbersProp,
   language: languageProp,
 }) {
   const {
-    prism: {defaultLanguage, magicComments},
+    prism: { defaultLanguage, magicComments },
   } = useThemeConfig();
   const language = normalizeLanguage(
     languageProp ?? parseLanguage(blockClassName) ?? defaultLanguage,
@@ -58,7 +62,7 @@ export default function CodeBlockString({
   // "title=\"xyz\"" => title: "\"xyz\""
   const title = parseCodeBlockTitle(metastring) || titleProp;
   const parsedCode = parseOutput(children);
-  const {lineClassNames, code} = parseLines(parsedCode.code, {
+  const { lineClassNames, code } = parseLines(parsedCode.code, {
     metastring,
     language,
     magicComments,
@@ -73,22 +77,25 @@ export default function CodeBlockString({
         language &&
           !blockClassName.includes(`language-${language}`) &&
           `language-${language}`,
-      )}>
+      )}
+    >
       {title && <div className={styles.codeBlockTitle}>{title}</div>}
       <div className={styles.codeBlockContent}>
-        <Highlight theme={prismTheme} code={code} language={language ?? 'text'}>
-          {({className, style, tokens, getLineProps, getTokenProps}) => (
+        <Highlight theme={prismTheme} code={code} language={language ?? "text"}>
+          {({ className, style, tokens, getLineProps, getTokenProps }) => (
             <pre
               /* eslint-disable-next-line jsx-a11y/no-noninteractive-tabindex */
               tabIndex={0}
               ref={wordWrap.codeBlockRef}
-              className={clsx(className, styles.codeBlock, 'thin-scrollbar')}
-              style={style}>
+              className={clsx(className, styles.codeBlock, "thin-scrollbar")}
+              style={style}
+            >
               <code
                 className={clsx(
                   styles.codeBlockLines,
                   showLineNumbers && styles.codeBlockLinesWithNumbering,
-                )}>
+                )}
+              >
                 {tokens.map((line, i) => (
                   <Line
                     key={i}
@@ -105,12 +112,12 @@ export default function CodeBlockString({
         </Highlight>
 
         {parsedCode.output && (
-            <div className={styles.codeBlockOutput}>
-              <div className={styles.codeBlockOutputDivider} />
-              <div className={styles.codeBlockOutputContent}>
-                {parsedCode.output}
-              </div>
+          <div className={styles.codeBlockOutput}>
+            <div className={styles.codeBlockOutputDivider} />
+            <div className={styles.codeBlockOutputContent}>
+              {parsedCode.output}
             </div>
+          </div>
         )}
 
         <div className={styles.buttonGroup}>
