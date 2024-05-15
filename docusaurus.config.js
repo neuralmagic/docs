@@ -36,6 +36,10 @@ const config = {
         redirects: redirects,
       },
     ],
+    [
+      './src/plugins/scarf-tracking.js',
+      {},
+    ],
   ],
   presets: [
     [
