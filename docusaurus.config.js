@@ -40,6 +40,10 @@ const config = {
       './src/plugins/scarf-tracking.js',
       {},
     ],
+    [
+      './src/plugins/reo-tracking.js',
+      {},
+    ],
   ],
   presets: [
     [
