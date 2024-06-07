@@ -29,23 +29,23 @@ This guide details the steps for going from a pre-trained, unoptimized Llama2 7B
 
 ## Prerequisites
 
-- <b>Training Environment:</b> A system that meets the minimum hardware and software requirements as outlined in the [Install Guide](/get-started/install/sparseml#prerequisites). To replicate the setup used for fine-tuning in this guide, use 4 NVIDIA A100 GPUs for both dense and sparse fine-tuning steps.
+- <b>Training Environment:</b> A system that meets the minimum hardware and software requirements as outlined in the [Install Guide](/get-started/install/sparseml#prerequisites). To replicate the setup used for fine-tuning in this guide, use 4 NVIDIA A100 80 GB GPUs for both dense and sparse fine-tuning steps and a system with at least 16 GB memory. 
 - <b>SparseML LLM Installation:</b> An environment with SparseML for LLMs installed as outlined in the [Install Guide](/get-started/install/sparseml#generative-ai-hugging-face).
 - <b>Background:</b> Familiarity with Generative AI and working with large language models is recommended.
 
 ## Base Model
-To obtain an optimized sparse model trained on the GSM8K dataset, we first start with the pre-trained, unoptimized Llama2 7B model. You can obtain this model using the following SparseZoo stub:
+To obtain an optimized sparse model trained on the GSM8K dataset, we first start with the pre-trained, unoptimized [Llama2 7B model from HuggingFace](https://huggingface.co/meta-llama/Llama-2-7b-hf): 
 ```
-zoo:llama2-7b-llama2_pretrain-base
+meta-llama/Llama-2-7b-hf
 ```
 
 ## Dense fine-tuning
-We then fine-tune the above pre-trained dense model on the GSM8K dataset to obtain a model that we can later optimize using sparsification.
+We fine-tune the above pre-trained dense model on the GSM8K dataset to obtain a model that we can later optimize using sparsification.
 ```bash
 accelerate launch \
     --config_file example_fsdp_config.yaml \
     --no_python sparseml.transformers.text_generation.finetune \
-    --model PATH_TO_MODEL or ZOO_STUB \
+    --model meta-llama/Llama-2-7b-hf \
     --dataset "gsm8k" \
     --dataset_config_name "main" \
     --output_dir PATH_TO_OUTPUT \
@@ -63,7 +63,7 @@ accelerate launch \
 ```
 Note: *Some of these hyper-parameters may need further tuning to enhance the overall accuracy of the fine-tuned model. The values mentioned above were obtained through a quick hyper-parameter search. Parameters that could have a significant impact and are worth considering for tuning include: `learning_rate`, `max_grad_norm`, `warmup_steps`, `max_seq_length`.*
 
-The example_fsdp_config.yaml used above contains the following setup for FSDP. Set the `num_processes` to the number of GPUs available. For our setup, we used 4 NVIDIA A100 GPUs so we set `num_processes` to `4`.  
+The example_fsdp_config.yaml used above contains the following setup for FSDP. Set the `num_processes` to the number of GPUs available. For our setup, we used 4 NVIDIA A100 80 GB GPUs so we set `num_processes` to `4`. 
 ```yaml
 compute_environment: LOCAL_MACHINE
 debug: false
@@ -92,7 +92,7 @@ tpu_use_sudo: false
 use_cpu: false
 ```
 
-### Dense fine-tuned model accuracy
+### Dense finetuned model accuracy
 [Evaluating](#evaluation-setup) the dense fine-tuned model on the `gsm8k 0-shot` task, results in a baseline accuracy of `37.52%`. We'll consider this accuracy as our baseline for calculating recovery for the oneshot sparse and sparse fine-tuned models we'll get later. Detailed results are provided below:
 ```json
 {
@@ -125,13 +125,10 @@ Use the dense fine-tuned model obtained above and sparsify it to 50% in a onesho
 
 Command:
 ```bash
-accelerate launch \
-    --config_file example_fsdp_config.yaml \
-    --no_python sparseml.transformers.text_generation.oneshot \
+sparseml.transformers.text_generation.oneshot \
     --model PATH_TO_MODEL \
     --dataset "gsm8k" \
     --dataset_config_name "main" \
-    --concatenate_data OPTIONAL \
     --recipe PATH_TO_RECIPE \
     --output_dir PATH_TO_OUTPUT \
     --splits "train" \
@@ -177,13 +174,13 @@ pruning_stage:
 To learn more about the OWL non-uniform sparsity profile method, visit [this link](https://github.com/luuyin/OWL/tree/main?tab=readme-ov-file#script-example-of-pruning-llama-7b-using-owl-sparsegpt).
 
 ### Oneshot 50% sparse model accuracy
-[Evaluating](#evaluation-setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.81%` and translates to a `90.11%` recovery over our [dense baseline](#Dense fine-tuned model accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the oneshot 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `33.13%` and translates to a `88.29%` recovery over our [dense baseline](#dense-finetuned-model-accuracy). In the next step we'll see how to improve the recovery of this model using sparse fine-tuning. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
     "gsm8k": {
-      "acc": 0.33813495072024263,
-      "acc_stderr": 0.0130308291451722
+      "acc": 0.33131159969673996,
+      "acc_stderr": 0.012964999679688661,
     }
   },
   "versions": {
@@ -224,8 +221,8 @@ accelerate launch \
     --learning_rate 0.00005 \
     --lr_scheduler_type "linear" \
     --max_seq_length 1024 \
-    --per_device_train_batch_size 32 \
-    --max_grad_norm None \
+    --per_device_train_batch_size 16 \
+    --max_grad_norm 0 \
     --warmup_steps 20 \
     --distill_teacher PATH_TO_TEACHER \
     --recipe PATH_TO_RECIPE 
@@ -290,13 +287,13 @@ test_stage:
 Note: *Some of these hyper-parameters may need further tuning to enhance the overall accuracy of the fine-tuned model. The values mentioned above were obtained through a quick hyper-parameter search. Parameters that could have a significant impact and are worth considering for tuning include: `learning_rate`, `max_grad_norm`, `warmup_steps`, `max_seq_length`.*
 
 ### Fine-tuned 50% sparse model accuracy
-[Evaluating](#evaluation-setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.59%` and shows clear improvement over the [oneshot accuracy](#Oneshot 50% sparse model accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
+[Evaluating](#evaluation-setup) the fine-tuned 50% sparse model on the `gsm8k 0-shot` task, results in an accuracy of `38.05%` and shows clear improvement over the [oneshot accuracy](#oneshot-50%-sparse-model-accuracy). The sparse fine-tuning step not only helped improve over the oneshot accuracy but even surpassed the dense baseline model. Detailed results for the oneshot 50% sparse model are provided below:
 ```json
 {
   "results": {
     "gsm8k": {
-      "acc": 0.3858984078847612,
-      "acc_stderr": 0.01340907747131918
+      "acc": 0.38059135708870356,
+      "acc_stderr": 0.013373971277729818
     }
   },
   "versions": {
@@ -331,7 +328,7 @@ MODEL_PATH=<MODEL_PATH>
 TASK=gsm8k
 python main.py \
  --model sparseml \
- --model_args pretrained=MODEL_PATH,trust_remote_code=True \
+ --model_args pretrained=${MODEL_PATH},trust_remote_code=True \
  --tasks $TASK \
  --batch_size 48 \
  --no_cache \
