@@ -1,5 +1,5 @@
 <!--
-Copyright (c) 2021 - present / Neuralmagic, Inc. All Rights Reserved.
+Copyright (c) 2021 - 2025 / Neuralmagic, Inc. All Rights Reserved.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -16,96 +16,21 @@ limitations under the License.
 
 <div align="center"><h2>Neural Magic Documentation</h2></div>
 
-<div align="center">
-<p>The Neural Magic Platform provides a suite of software components to select, build, and run performant<br>
-    deep learning models on CPU resources.</p>
+## 🚨 2025 End of Life Announcement: DeepSparse, SparseML, SparseZoo, and Sparsify
 
+Dear Community,
 
-<p align="center">
-    <a href="https://docs.neuralmagic.com/">
-        <img alt="Documentation" src="https://img.shields.io/website/http/docs.neuralmagic.com/index.html.svg?down_color=red&down_message=offline&up_message=online&style=for-the-badge" height=25>
-    </a>
-    <a href="https://github.com/neuralmagic/docs/blob/main/CODE_OF_CONDUCT.md">
-        <img alt="Contributor Covenant" src="https://img.shields.io/badge/Contributor%20Covenant-v2.1%20adopted-ff69b4.svg?color=yellow&style=for-the-badge" height=25>
-    </a>
-     <a href="https://www.youtube.com/channel/UCo8dO_WMGYbWCRnj_Dxr4EA">
-        <img src="https://img.shields.io/badge/-YouTube-red?&style=for-the-badge&logo=youtube&logoColor=white" height=25>
-    </a>
-     <a href="https://medium.com/limitlessai">
-        <img src="https://img.shields.io/badge/medium-%2312100E.svg?&style=for-the-badge&logo=medium&logoColor=white" height=25>
-    </a>
-    <a href="https://twitter.com/neuralmagic">
-        <img src="https://img.shields.io/twitter/follow/neuralmagic?color=darkgreen&label=Follow&style=social" height=25>
-    </a>
-</p>
-  
-[Our Documentation website](https://docs.neuralmagic.com/) is a great starting point. To learn more about specific Neural Magic products, review the links below.
+We’re reaching out with heartfelt thanks and important news. Following [Neural Magic’s acquisition by Red Hat in January 2025](https://www.redhat.com/en/about/press-releases/red-hat-completes-acquisition-neural-magic-fuel-optimized-generative-ai-innovation-across-hybrid-cloud), we’ve shifted our focus to commercial and open-source offerings built around [vLLM (virtual large language models)](https://www.redhat.com/en/topics/ai/what-is-vllm).
 
-To file a documentation issue for a specific software component, use its repo issue tracker.
+As part of this transition, we ceased development and deprecated the community versions of **DeepSparse (including DeepSparse Enterprise), SparseML, SparseZoo, and Sparsify on June 2, 2025**. These tools no longer will receive updates or support.
 
-| Docs                                                          | GitHub                                             | Issue Tracker                                              | Releases                                                     | License             |
-| ------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------ | ------------------- |
-| [SparseML](https://docs.neuralmagic.com/products/sparseml/)            | [Repo](https://github.com/neuralmagic/sparseml/)   | [Queue](https://github.com/neuralmagic/sparseml/issues/)   | [Index](https://github.com/neuralmagic/sparseml/releases/)   | Apache 2.0          |
-| [Sparsify](https://docs.neuralmagic.com/products/sparsify/)            | [Repo](https://github.com/neuralmagic/sparsify/)   | [Queue](https://github.com/neuralmagic/sparsify/issues/)   | [Index](https://github.com/neuralmagic/sparsify/releases/)   | Apache 2.0          |
-| [SparseZoo](https://docs.neuralmagic.com/products/sparsezoo/)          | [Repo](https://github.com/neuralmagic/sparsezoo/)  | [Queue](https://github.com/neuralmagic/sparsezoo/issues/)  | [Index](https://github.com/neuralmagic/sparsezoo/releases/)  | Apache 2.0          |
-| [DeepSparse Community](https://docs.neuralmagic.com/products/deepsparse/) | [Repo](https://github.com/neuralmagic/deepsparse/) | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | [Neural Magic DeepSparse Community](https://neuralmagic.com/legal/deepsparse-license-agreement/) |
-| [DeepSparse Enterprise](https://docs.neuralmagic.com/get-started/install/deepsparse#enterprise-installation) | - | [Queue](https://github.com/neuralmagic/deepsparse/issues/) | [Index](https://github.com/neuralmagic/deepsparse/releases/) | [MSLSA (Enterprise)](https://neuralmagic.com/legal/master-software-license-and-service-agreement/) |
+From day one, our mission was to democratize AI through efficient, accessible tools. We’ve learned so much from your feedback, creativity, and collaboration—watching these tools become vital parts of your ML journeys has meant the world to us.
 
-For user help or questions, sign up or log in to our [**Neural Magic Community Slack**](https://neuralmagic.com/community/). We are growing the community member by member and happy to see you there. Bugs, feature requests, or additional questions can also be posted to our [GitHub Issue Queues](https://github.com/neuralmagic/) for the related repository.
+Though we’ve wound down the community editions, we remain committed to our original values. Now as part of Red Hat, we’re excited to evolve our work around vLLM and deliver even more powerful solutions to the ML community.
 
-To contribute to Neural Magic documentation, please:</br>
+To learn more about our next chapter, visit [ai.redhat.com](ai.redhat.com). Thank you for being part of this incredible journey.
 
-  Open a [GitHub issue](https://github.com/neuralmagic/docs/issues/) and give it
-  the `documentation` label.</br>
-  Submit a [pull request](https://github.com/neuralmagic/docs/pulls/) with your
-  proposed documentation changes.</br>
-  Get started with
-  [writing and formatting on GitHub.](https://help.github.com/en/github/writing-on-github/getting-started-with-writing-and-formatting-on-github)
-  
-  To learn more about Neural Magic, [check our website.](https://www.neuralmagic.com)
-</div>
+_With gratitude, The Neural Magic Team (now part of Red Hat)_
 
- </div>
-
-## Website
-
-This website is built using [Docusaurus](https://docusaurus.io/), a modern static website generator.
-
-### Installation
-
-```
-$ yarn
-```
-
-### Local Development
-
-```
-$ yarn start
-```
-
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
-
-### Build
-
-```
-$ yarn build
-```
-
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
-
-### Deployment
-
-Using SSH:
-
-```
-$ USE_SSH=true yarn deploy
-```
-
-Not using SSH:
-
-```
-$ GIT_USER=<Your GitHub username> yarn deploy
-```
-
-If you are using GitHub pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+---
 
